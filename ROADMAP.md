@@ -14,9 +14,9 @@ This roadmap is a step-by-step checklist for building your productivity assistan
 ---
 
 ## v0.1.0-alpha: Project Initialization
-- [ ] Initialize Git repository
-- [ ] Create project folders: `frontend/`, `backend/`, `docs/`
-- [ ] Set up README, ROADMAP, and FEATURES docs
+- [x] Initialize Git repository
+- [x] Create project folders: `frontend/`, `backend/`, `docs/`
+- [x] Set up README, ROADMAP, and FEATURES docs
 
 ## v0.2.0-alpha: Backend Environment
 - [ ] Set up Python virtual environment

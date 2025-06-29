@@ -7,6 +7,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [Unreleased]
 -
 
+## [v0.1.0-dev2] - 2025-06-29
+- Created `frontend/`, `backend/`, and `docs/` directories in the project root
+- Uploaded project to a private GitHub repository
+- Added sample architecture overview at `docs/architecture.md` for future expansion
+- Updated changelog and roadmap to reflect completed project initialization tasks
+
 ## [v0.1.0-dev1] - 2025-06-29
 - Created initial project roadmap with detailed, versioned milestones for rewarding progress
 - Defined and documented all core and advanced features in FEATURES.md
