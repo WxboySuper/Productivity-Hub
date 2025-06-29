@@ -7,12 +7,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [Unreleased]
 -
 
+## [v0.2.0-dev2] - 2025-06-29
+- Add secret key configuration for session management in backend/app.py
+- Moved database initialization logic to a separate function in backend/app.py
+- Switched to using absolute path for SQLite database in backend/app.py
+
 ## [v0.2.0-dev1] - 2025-06-29
 - Set up Python virtual environment under the .venv/ directory
 - Initialized Flask app structure in backend/
 - Created requirements.txt for backend dependencies including Flask and Flask-SQLAlchemy
 - Updated .gitignore to exclude .venv/ instead of venv/
 - Added initial SQLite database setup in backend/app.py
+- Updated ROADMAP.md to reflect changes made in this version
 
 ## [v0.1.0-alpha] - 2025-06-29
 ### Added
