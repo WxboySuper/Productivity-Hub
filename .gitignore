@@ -1,0 +1,23 @@
+# .gitignore
+# Python
+venv/
+__pycache__/
+*.pyc
+instance/
+.env
+
+# Node/React
+node_modules/
+build/
+dist/
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Misc
+*.sqlite3
