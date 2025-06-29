@@ -7,6 +7,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [Unreleased]
 -
 
+## [v0.1.0-alpha] - 2025-06-29
+### Added
+- Initial project roadmap with detailed, versioned milestones for rewarding progress
+- Core and advanced features documented in FEATURES.md
+- Tech stack and setup instructions in README.md
+- Custom versioning and changelog process in VERSIONING.md
+- CONTRIBUTING.md for workflow guidance
+- DEPLOYMENT.md for VPS deployment steps
+- MIT LICENSE for open usage
+- .gitignore for Python, Node, and OS files
+- CHANGELOG.md for detailed change tracking
+- Project uploaded to private GitHub repository
+- Created `frontend/`, `backend/`, and `docs/` directories
+- Sample architecture overview at `docs/architecture.md`
+
 ## [v0.1.0-dev2] - 2025-06-29
 - Created `frontend/`, `backend/`, and `docs/` directories in the project root
 - Uploaded project to a private GitHub repository
