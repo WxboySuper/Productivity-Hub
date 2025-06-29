@@ -19,9 +19,9 @@ This roadmap is a step-by-step checklist for building your productivity assistan
 - [x] Set up README, ROADMAP, and FEATURES docs
 
 ## v0.2.0-alpha: Backend Environment
-- [ ] Set up Python virtual environment
-- [ ] Initialize Flask app
-- [ ] Set up SQLite database
+- [x] Set up Python virtual environment
+- [x] Initialize Flask app
+- [x] Set up SQLite database
 
 ## v0.3.0-alpha: Basic Models
 - [ ] Create User, Task, and Project models in Flask

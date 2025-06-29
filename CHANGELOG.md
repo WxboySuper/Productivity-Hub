@@ -7,6 +7,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [Unreleased]
 -
 
+## [v0.2.0-dev1] - 2025-06-29
+- Set up Python virtual environment under the .venv/ directory
+- Initialized Flask app structure in backend/
+- Created requirements.txt for backend dependencies including Flask and Flask-SQLAlchemy
+- Updated .gitignore to exclude .venv/ instead of venv/
+- Added initial SQLite database setup in backend/app.py
+
 ## [v0.1.0-alpha] - 2025-06-29
 ### Added
 - Initial project roadmap with detailed, versioned milestones for rewarding progress
