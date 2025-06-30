@@ -1,13 +1,32 @@
 # DeepSource configuration file
 # Learn how to configure: https://docs.deepsource.com/docs/configuration
-version = 1
-exclude_patterns = ["venv", "node_modules", "bower_components", "out", "bin", "build", "dist"]
-test_patterns = ["**/test_*.py", "**/__tests__/**", "**/*.spec.ts", "**/*.spec.js", "**/*.test.ts", "**/*.test.js"]
+version = 2
+
+test_patterns = [
+  "**/test_*.py",
+  "**/__tests__/**",
+  "**/*.spec.ts",
+  "**/*.spec.js",
+  "**/*.test.ts",
+  "**/*.test.js"
+]
+
+exclude_patterns = [
+  "venv",
+  "node_modules",
+  "bower_components",
+  "out",
+  "bin",
+  "build",
+  "dist",
+  "migrations"
+]
 
 [[analyzers]]
-  name = "python"
-  enabled = true
+name = "python"
+
+  [analyzers.meta]
+  runtime_version = "3.x.x"
 
 [[analyzers]]
-  name = "javascript"
-  enabled = true
+name = "javascript"

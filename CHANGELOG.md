@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/), with personal tweaks for rewarding milestones and highly detailed dev versions.
 
+## [v0.5.0-dev1] - 2025-07-01
+- Updated .deepsource.toml to add exclusion patterns
 
 ## [v0.4.0-alpha] - 2025-07-01
 ### Added
