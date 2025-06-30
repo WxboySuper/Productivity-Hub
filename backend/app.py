@@ -1,8 +1,10 @@
-from flask import Flask
+from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 import os
 import logging
+from email_validator import validate_email, EmailNotValidError
+from werkzeug.security import generate_password_hash, check_password_hash
 
 # Logging Configuration
 logging.basicConfig(
@@ -17,6 +19,7 @@ logger.info("Logging is configured.")
 # Flask Application Setup
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///productivity_hub.db')
 logger.info("Flask app configuration is set up.")
 
 db = SQLAlchemy(app)
@@ -33,6 +36,12 @@ class User(db.Model):
 
     tasks = db.relationship('Task', backref='user', lazy=True, cascade='all, delete-orphan')
     projects = db.relationship('Project', backref='user', lazy=True, cascade='all, delete-orphan')
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
 
 class Task(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -66,6 +75,42 @@ def home():
     """Home route."""
     logger.info("Home route accessed.")
     return "Welcome to the Productivity Hub Backend!"
+
+@app.route('/api/register', methods=['POST'])
+def register():
+    """User registration endpoint."""
+    logger.info("Register endpoint accessed.")
+    data = request.get_json()
+    username = data.get('username')
+    email = data.get('email')
+    password = data.get('password')
+
+    # Validate Input
+    if not username or not email or not password:
+        logger.error("Missing required fields: username, email, or password.")
+        return jsonify({"error": "Missing required fields"}), 400
+
+    # Validate Email
+    try:
+        validate_email(email)
+        logger.info("Email %s is valid.", email)
+    except EmailNotValidError as e:
+        logger.error("Invalid email: %s", e)
+        return jsonify({"error": str(e)}), 400
+
+    # Check if user exists
+    if User.query.filter((User.username == username) | (User.email == email)).first():
+        logger.warning("Username or email already exists.")
+        return jsonify({"error": "username or email already exists"}), 400
+
+    # Create User
+    user = User(username=username, email=email)
+    user.set_password(password)
+    db.session.add(user)
+    db.session.commit()
+
+    logger.info("User %s registered successfully.", username)
+    return jsonify({"message": "User registered successfully"}), 201
 
 if __name__ == '__main__':
     init_db()

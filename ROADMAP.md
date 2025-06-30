@@ -27,7 +27,7 @@ This roadmap is a step-by-step checklist for building your productivity assistan
 - [x] Create User, Task, and Project models in Flask
 
 ## v0.4.0-alpha: User Authentication
-- [ ] Implement user registration
+- [x] Implement user registration
 - [ ] Implement user login
 - [ ] Implement user logout
 

@@ -7,6 +7,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [Unreleased]
 -
 
+## [v0.4.0-dev1] - 2025-06-30
+- Implemented user registration endpoint at `/api/register` with input validation and error handling
+- Integrated email validation using `email-validator` package
+- Added password hashing and checking methods to the User model
+- Added logging for registration attempts and errors
+- Updated SQLAlchemy database URI to use environment variable or default to `sqlite:///productivity_hub.db`
+- Tested registration endpoint with valid and invalid data
+
 ## [v0.3.0-alpha] - 2025-06-30
 ### Added
 - User, Task, and Project models in `backend/app.py` using SQLAlchemy
