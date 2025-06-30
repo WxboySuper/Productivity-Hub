@@ -7,6 +7,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [Unreleased]
 -
 
+## [v0.3.0-dev2] - 2025-06-29
+- Added Logging to backend/app.py for better debugging
+- Updated secret key configuration to use environment variable for security
+- Integrated Flask-Migrate for database migrations
+- Added cascade options to User, Task, and Project models for better data integrity
+- Added validation constraints for email and password fields in User model
+- Added validation for Task priority field
+
 ## [v0.3.0-dev1] - 2025-06-29
 - Updated basic User model to be more complete with additional fields and relationships
 - Added Task and Project models with relationships to User
