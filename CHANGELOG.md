@@ -7,6 +7,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [Unreleased]
 -
 
+## [v0.4.0-dev3] - 2025-07-01
+- Added `/api/login` endpoint for user login
+- Added DeepSource integration for code quality checks
+
 ## [v0.4.0-dev2] - 2025-06-30
 - Added request content-type validation to `/api/register` endpoint
 - Added input validation for empty fields in registration data

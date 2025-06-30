@@ -141,6 +141,36 @@ def register():
     logger.info("User %s registered successfully.", username)
     return jsonify({"message": "User registered successfully"}), 201
 
+@app.route('/api/login', methods=['POST'])
+def login():
+    """User login endpoint."""
+    logger.info("Login endpoint accessed.")
+
+    if not request.is_json:
+        logger.error("Request must be JSON.")
+        return jsonify({"error": "Content-Type must be application/json"}), 400
+
+    data = request.get_json()
+    username_or_email = data.get('username') or data.get('email')
+    password = data.get('password')
+
+    # Validate Input
+    if not username_or_email or not password or not username_or_email.strip() or not password.strip():
+        logger.error("Missing required fields: username/email or password.")
+        return jsonify({"error": "Missing required fields"}), 400
+
+    # Find user by username or email
+    user = User.query.filter(
+        (User.username == username_or_email) | (User.email == username_or_email)
+    ).first()
+
+    if not user or not user.check_password(password):
+        logger.warning("Invalid login attempt for user: %s", username_or_email)
+        return jsonify({"error": "Invalid username/email or password"}), 401
+
+    logger.info("User %s logged in successfully.", user.username)
+    return jsonify({"message": "Login successful"}), 200
+
 if __name__ == '__main__':
     init_db()
     logger.info("Database initialized.")
