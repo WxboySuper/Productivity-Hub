@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/), with personal tweaks for rewarding milestones and highly detailed dev versions.
 
+## [v0.5.0-dev3] - 2025-07-01
+- Updated `.deepsource.toml` to try again at adding exclusion pattern for migrations
+
 ## [v0.5.0-dev2] - 2025-07-01
 - Updated `.deepsource.toml` to fix issue with version number
 
