@@ -164,7 +164,16 @@ def login():
         (User.username == username_or_email) | (User.email == username_or_email)
     ).first()
 
-    if not user or not user.check_password(password):
+    # Always perform password check to prevent timing attacks
+    if user:
+        password_valid = user.check_password(password)
+    else:
+        # Perform dummy hash check to maintain consistent timing
+        check_password_hash('dummy hash', password)
+        password_valid = False
+
+    if not user or not password_valid:
+        # Log the invalid login attempt
         logger.warning("Invalid login attempt for user: %s", username_or_email)
         return jsonify({"error": "Invalid username/email or password"}), 401
 

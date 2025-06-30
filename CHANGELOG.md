@@ -7,6 +7,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [Unreleased]
 -
 
+## [v0.4.0-dev4] - 2025-07-01
+- Implemented constant-time password validation to prevent timing attacks
+
 ## [v0.4.0-dev3] - 2025-07-01
 - Added `/api/login` endpoint for user login
 - Added DeepSource integration for code quality checks
