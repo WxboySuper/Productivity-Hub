@@ -19,7 +19,8 @@ exclude_patterns = [
   "bin",
   "build",
   "dist",
-  "backend/migrations"
+  "migrations",
+  "env"
 ]
 
 [[analyzers]]
