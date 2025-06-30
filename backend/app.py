@@ -5,6 +5,7 @@ import os
 import logging
 from email_validator import validate_email, EmailNotValidError
 from werkzeug.security import generate_password_hash, check_password_hash
+import re
 
 # Logging Configuration
 logging.basicConfig(
@@ -70,6 +71,20 @@ def init_db():
     with app.app_context():
         db.create_all()
 
+def is_strong_password(password):
+    """Check if the password is strong."""
+    if len(password) < 8:
+        return False
+    if not re.search(r"[A-Z]", password):
+        return False
+    if not re.search(r"[a-z]", password):
+        return False
+    if not re.search(r"[0-9]", password):
+        return False
+    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
+        return False
+    return True
+
 @app.route('/')
 def home():
     """Home route."""
@@ -80,13 +95,19 @@ def home():
 def register():
     """User registration endpoint."""
     logger.info("Register endpoint accessed.")
+
+    if not request.is_json:
+        logger.error("Request must be JSON.")
+        return jsonify({"error": "Content-Type must be application/json"}), 400
+
     data = request.get_json()
+
     username = data.get('username')
     email = data.get('email')
     password = data.get('password')
 
     # Validate Input
-    if not username or not email or not password:
+    if not username or not email or not password or not username.strip() or not email.strip() or not password.strip():
         logger.error("Missing required fields: username, email, or password.")
         return jsonify({"error": "Missing required fields"}), 400
 
@@ -98,16 +119,24 @@ def register():
         logger.error("Invalid email: %s", e)
         return jsonify({"error": str(e)}), 400
 
-    # Check if user exists
-    if User.query.filter((User.username == username) | (User.email == email)).first():
-        logger.warning("Username or email already exists.")
-        return jsonify({"error": "username or email already exists"}), 400
+    # Validate Password Strength
+    if not is_strong_password(password):
+        logger.error("Weak password provided.")
+        return jsonify({"error": "Password must be at least 8 characters long and include uppercase, lowercase, numbers, and special characters."}), 400
 
-    # Create User
-    user = User(username=username, email=email)
-    user.set_password(password)
-    db.session.add(user)
-    db.session.commit()
+    # Remove pre-check for existing user and rely on DB constraints
+    try:
+        user = User(username=username, email=email)
+        user.set_password(password)
+        db.session.add(user)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        logger.error("User registration failed: %s", e)
+        # Check for unique constraint violation
+        if 'UNIQUE constraint failed' in str(e):
+            return jsonify({"error": "username or email already exists"}), 400
+        return jsonify({"error": "Registration failed"}), 500
 
     logger.info("User %s registered successfully.", username)
     return jsonify({"message": "User registered successfully"}), 201

@@ -7,6 +7,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [Unreleased]
 -
 
+## [v0.4.0-dev2] - 2025-06-30
+- Added request content-type validation to `/api/register` endpoint
+- Added input validation for empty fields in registration data
+- Updated user existence check to be handled gracefully
+- Added password strength validation to ensure strong passwords
+
 ## [v0.4.0-dev1] - 2025-06-30
 - Implemented user registration endpoint at `/api/register` with input validation and error handling
 - Integrated email validation using `email-validator` package
