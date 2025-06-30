@@ -189,6 +189,17 @@ def login():
     logger.info("User %s logged in successfully.", user.username)
     return jsonify({"message": "Login successful"}), 200
 
+@app.route('/api/logout', methods=['POST'])
+def logout():
+    """
+    User logout endpoint.
+    Clears the user's session, effectively logging them out.
+    """
+    logger.info("Logout endpoint accessed.")
+    session.pop('user_id', None)
+    logger.info("User logged out successfully.")
+    return jsonify({"message": "Logout successful"}), 200
+
 if __name__ == '__main__':
     init_db()
     logger.info("Database initialized.")

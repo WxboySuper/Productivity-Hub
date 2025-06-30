@@ -28,8 +28,8 @@ This roadmap is a step-by-step checklist for building your productivity assistan
 
 ## v0.4.0-alpha: User Authentication
 - [x] Implement user registration
-- [ ] Implement user login
-- [ ] Implement user logout
+- [x] Implement user login
+- [x] Implement user logout
 
 ## v0.5.0-alpha: Core API Endpoints
 - [ ] Create REST API endpoints for Tasks (CRUD)
