@@ -1,6 +1,6 @@
 # DeepSource configuration file
 # Learn how to configure: https://docs.deepsource.com/docs/configuration
-version = 2
+version = 1
 
 test_patterns = [
   "**/test_*.py",
