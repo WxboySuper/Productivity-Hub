@@ -21,7 +21,18 @@ This guide will help you deploy Productivity Hub to your Hostinger VPS.
 
 ## Security
 
-- Set a strong `SECRET_KEY` in your environment variables before deploying to production. This is required for secure session management in Flask.
+- **Generate a strong `SECRET_KEY`:**
+  Run this Python one-liner to generate a secure key:
+  ```sh
+  python -c "import secrets; print(secrets.token_urlsafe(32))"
+  ```
+- **Set `SECRET_KEY` as an environment variable** on your server. Do not commit it to version control.
+  - Common methods:
+    - Add to `/etc/environment` (system-wide)
+    - Set in your process manager (e.g., in a systemd unit file with `Environment=SECRET_KEY=...`)
+    - Use a `.env` file and load with [python-dotenv](https://pypi.org/project/python-dotenv/) (for local/dev)
+- **Never commit your `SECRET_KEY` to Git or share it publicly.**
+- This is required for secure session management in Flask.
 
 ## Updating the App
 - Pull latest changes from Git

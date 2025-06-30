@@ -4,8 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/), with personal tweaks for rewarding milestones and highly detailed dev versions.
 
-## [Unreleased]
--
+
+## [v0.4.0-dev8] - 2025-07-01
+- Updated COPILOT_INSTRUCTIONS.md to clarify changelog policy: discourage use of "Unreleased" section, require all changes to be listed under the next dev version, and specify that stable releases should only update CHANGELOG.md after all dev changes are tested
+- Expanded documentation policy to require additional docs in docs/ for new features/changes
+- Clarified workflow: stay within request scope, document and ask before making out-of-scope changes, and ensure incremental progression per ROADMAP.md
+- Reiterated code quality and security best practices
+- Added explicit instruction to keep the changelog list running in the current dev version until it is expressly noted that the dev version has been pushed and a new dev version should begin (e.g., do not start dev9 until dev8 is confirmed as pushed)
+- Added a section to docs/architecture.md detailing recommended Flask session cookie security settings: SESSION_COOKIE_SECURE, SESSION_COOKIE_HTTPONLY, and SESSION_COOKIE_SAMESITE, with rationale for each
+- Clarified in docs/architecture.md that CSRF protection is not yet implemented for state-changing requests, and provided recommendations for adding CSRF protection (e.g., Flask-WTF for forms, custom headers for APIs) before production deployment
+- Minor word tweak in docs/FEATURES.md to stay consistent with the rest of the documentation
 
 ## [v0.4.0-dev7] - 2025-07-01
 - Updated `architecture.md` to include authentication and session management details

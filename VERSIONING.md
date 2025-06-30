@@ -12,7 +12,8 @@ This project uses a custom versioning approach to make every step of development
   - These tags help document pushes and progress before a main version is ready
 
 ## Changelog Formatting Reference
-- **[Unreleased]**: Top section for ongoing work not yet released.
+- **[Unreleased]**: Top section for ongoing work not yet released. (Not recommended; see COPILOT_INSTRUCTIONS.md)
+- **Preferred:** List all changes under the next dev version (e.g., v0.4.0-dev1, v0.4.0-dev2, etc.). When ready for a stable release, summarize and finalize in a new version header (e.g., v0.4.0) with only the CHANGELOG.md updated.
 - **[vX.Y.Z(-tag)] - YYYY-MM-DD**: Header for each version or dev milestone.
   - Place the most recent version (including dev/pre-release) at the top, above older versions.
   - When a final version is released, place it above its dev/pre-release versions for clarity.

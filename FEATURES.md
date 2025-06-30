@@ -3,7 +3,7 @@
 A high-level list of features for reference. For the step-by-step development checklist, see `ROADMAP.md`.
 
 ## Core Features
-- User authentication (register, login, logout) using Flask session, with optional social login (Google, Discord) via Flask-Dance/Authlib
+- User authentication (register, login, logout) using Flask sessions, with optional social login (Google, Discord) via Flask-Dance/Authlib
 - Task management (CRUD, categories, priorities, deadlines, recurrence)
 - Project management (CRUD, progress tracking)
 - Task scheduling (calendar, reminders, drag-and-drop)
