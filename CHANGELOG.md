@@ -7,6 +7,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [Unreleased]
 -
 
+## [v0.3.0-dev1] - 2025-06-29
+- Updated basic User model to be more complete with additional fields and relationships
+- Added Task and Project models with relationships to User
+
 ## [v0.2.0-alpha] - 2025-06-29
 ### Added
 - Python virtual environment setup under `.venv/`
