@@ -7,6 +7,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [Unreleased]
 -
 
+## [v0.3.0-alpha] - 2025-06-30
+### Added
+- User, Task, and Project models in `backend/app.py` using SQLAlchemy
+- Relationships between User, Task, and Project (including cascade and backrefs)
+- Validation constraints for User (unique username/email, indexed email, password hash)
+- Task model fields for title, description, due date, priority, completion, timestamps
+- Project model fields for name, description, timestamps
+- Cascade and foreign key behaviors for safe deletion and data integrity
+- Logging for backend events and debugging
+- Flask-Migrate integration for database migrations
+
+### Changed
+- Improved model structure and relationships for future extensibility
+- Updated code to use environment variable for secret key
+
 ## [v0.3.0-dev2] - 2025-06-29
 - Added Logging to backend/app.py for better debugging
 - Updated secret key configuration to use environment variable for security
