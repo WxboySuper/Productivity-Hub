@@ -7,6 +7,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [Unreleased]
 -
 
+## [v0.4.0-dev5] - 2025-07-01
+- Implemented session management for user login/logout
+- Added helper function `get_current_user()` to retrieve the current user from the session
+
 ## [v0.4.0-dev4] - 2025-07-01
 - Implemented constant-time password validation to prevent timing attacks
 

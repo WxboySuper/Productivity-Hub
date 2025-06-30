@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 import os
@@ -84,6 +84,13 @@ def is_strong_password(password):
     if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
         return False
     return True
+
+def get_current_user():
+    """Helper function to get the current user from the session."""
+    user_id = session.get('user_id')
+    if user_id:
+        return User.query.get(user_id)
+    return None
 
 @app.route('/')
 def home():
@@ -177,6 +184,8 @@ def login():
         logger.warning("Invalid login attempt for user: %s", username_or_email)
         return jsonify({"error": "Invalid username/email or password"}), 401
 
+    # Set session on successful login
+    session['user_id'] = user.id
     logger.info("User %s logged in successfully.", user.username)
     return jsonify({"message": "Login successful"}), 200
 
