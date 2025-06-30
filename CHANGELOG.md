@@ -7,6 +7,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [Unreleased]
 -
 
+## [v0.4.0-dev7] - 2025-07-01
+- Updated `architecture.md` to include authentication and session management details
+- Updated `DEPLOYMENT.md` to mention the need for a secure `SECRET_KEY` in production
+- Updated `FEATURES.md` to include user authentication features and current status
+- Updated `README.md` to reflect recent changes and improvements
+
 ## [v0.4.0-dev6] - 2025-07-01
 - Added `/api/logout` endpoint for user logout
 - Implemented session clearing on logout

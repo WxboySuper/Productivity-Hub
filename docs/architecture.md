@@ -38,4 +38,15 @@ This document provides a high-level overview of the Productivity Hub architectur
 
 ---
 
+## Authentication & Session Management
+
+- **Registration:** Users register via `/api/register` with username, email, and strong password. Email and password are validated server-side.
+- **Login:** Users authenticate via `/api/login` using username or email and password. Password validation uses constant-time comparison to prevent timing attacks. On successful login, the user's ID is stored in the Flask session (`session['user_id']`).
+- **Session:** Flask's built-in session is used for user authentication state. The session is secured with a secret key and stores only the user ID.
+- **Logout:** Users log out via `/api/logout` (POST), which clears the session.
+- **Current User Helper:** The backend provides a `get_current_user()` helper to retrieve the logged-in user from the session for use in protected endpoints.
+- **Security:** All authentication endpoints require JSON requests. Passwords are hashed using Werkzeug's `generate_password_hash` and checked with `check_password_hash`.
+
+---
+
 *Expand this document as your project grows!*

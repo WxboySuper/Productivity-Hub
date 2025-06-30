@@ -19,6 +19,10 @@ This guide will help you deploy Productivity Hub to your Hostinger VPS.
 8. Set up a web server (e.g., Nginx) to serve the app
 9. Configure your domain and HTTPS
 
+## Security
+
+- Set a strong `SECRET_KEY` in your environment variables before deploying to production. This is required for secure session management in Flask.
+
 ## Updating the App
 - Pull latest changes from Git
 - Rebuild frontend and restart backend

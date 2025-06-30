@@ -43,3 +43,45 @@ See [FEATURES.md](./FEATURES.md) for a high-level feature list.
 
 ## License
 MIT
+
+---
+
+## Authentication API
+
+### Register
+
+POST `/api/register`
+```json
+{
+  "username": "yourname",
+  "email": "your@email.com",
+  "password": "StrongPassword123!"
+}
+```
+
+### Login
+
+POST `/api/login`
+```json
+{
+  "username": "yourname",
+  "password": "StrongPassword123!"
+}
+```
+or
+```json
+{
+  "email": "your@email.com",
+  "password": "StrongPassword123!"
+}
+```
+
+### Logout
+
+POST `/api/logout`
+
+Clears the session and logs the user out.
+
+---
+
+**Note:** All endpoints require `Content-Type: application/json`.
