@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/), with personal tweaks for rewarding milestones and highly detailed dev versions.
 
 
+## [v0.4.0-alpha] - 2025-07-01
+### Added
+- User authentication endpoints: `/api/register`, `/api/login`, and `/api/logout` with robust input validation and error handling
+- Session-based authentication using Flask session (user ID stored on login, cleared on logout)
+- Constant-time password validation to prevent timing attacks
+- Helper function `get_current_user()` to retrieve the current user from the session
+- Logging for all authentication events and errors
+- Documentation updates: authentication/session management in `architecture.md`, API usage in `README.md`, security note in `DEPLOYMENT.md`, and implementation status in `FEATURES.md`
+- Section in `architecture.md` detailing recommended Flask session cookie security settings: `SESSION_COOKIE_SECURE`, `SESSION_COOKIE_HTTPONLY`, and `SESSION_COOKIE_SAMESITE`, with rationale for each
+- Clarification in `architecture.md` that CSRF protection is not yet implemented for state-changing requests, and recommendations for adding CSRF protection (e.g., Flask-WTF for forms, custom headers for APIs) before production deployment
+
+### Changed
+- Improved security and user experience for authentication endpoints
+- Updated documentation to reflect new authentication and session management features
+- Expanded documentation policy to require additional docs in `docs/` for new features/changes
+- Clarified workflow: stay within request scope, document and ask before making out-of-scope changes, and ensure incremental progression per `ROADMAP.md`
+- Reiterated code quality and security best practices
+- Minor word tweak in `FEATURES.md` to stay consistent with the rest of the documentation
+
 ## [v0.4.0-dev8] - 2025-07-01
 - Updated COPILOT_INSTRUCTIONS.md to clarify changelog policy: discourage use of "Unreleased" section, require all changes to be listed under the next dev version, and specify that stable releases should only update CHANGELOG.md after all dev changes are tested
 - Expanded documentation policy to require additional docs in docs/ for new features/changes
