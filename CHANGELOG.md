@@ -7,6 +7,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## API Change Summary Requirement
 - For every stable, alpha, or beta release, summarize all API changes (new endpoints, deleted endpoints, changes to endpoints, etc.) in the changelog, even if they were already documented in dev releases. This ensures the release notes provide a complete overview of API evolution for each version.
 
+## [v0.5.1-alpha] - 2025-07-02
+### Added
+- Automated test for `auth_client` fixture moved from `conftest.py` to `test_auth.py` for proper test organization.
+- Expanded and clarified automated tests for CSRF protection, 404 error handling, and pagination edge cases in `test_auth.py`, `test_projects.py`, and `test_tasks.py`.
+
+### Changed
+- Refactored all test files to use endpoint constants instead of hardcoded strings for maintainability.
+- Improved assertion patterns in tests for clarity and predictability.
+- Updated test organization: all test logic now resides in dedicated test files, and `conftest.py` contains only fixtures and shared setup logic.
+- Replaced all `assert ... or ...` patterns with `assert ... in (...)` for status code checks in tests.
+
+### Fixed
+- Resolved DeepSource issues: BAN-B101 (no assert outside test functions), PYL-R1714 (use `in` for multiple comparisons), and PYL-W0621 (no variable redefinition in fixtures).
+
+### Review
+- Codebase reviewed for code quality, maintainability, documentation, and policy compliance per `COPILOT_INSTRUCTIONS.md`.
+- All tests pass and coverage is comprehensive.
+
+### API Change Summary
+- No API changes in this release. All changes are internal refactors, test improvements, and code quality fixes.
+
 ## [v0.5.1-dev4] - 2025-07-02
 - Moved the test function `test_auth_client_fixture_works` from `conftest.py` to `test_auth.py` to follow best practices: all test logic now resides in dedicated test files, and `conftest.py` contains only fixtures and shared setup logic.
 
