@@ -55,6 +55,12 @@ This roadmap is a step-by-step checklist for building your productivity assistan
 ## v0.10.0-beta: Dashboard Layout
 - [ ] Create dashboard layout
 
+## v0.10.1-alpha: Password Reset (Backend & Frontend)
+- [ ] Implement password reset endpoint (backend)
+- [ ] Add password reset UI (frontend)
+- [ ] Add email sending for password reset (backend)
+- [ ] Add tests for password reset
+
 ## v0.11.0-beta: Task Views
 - [ ] Implement List view
 - [ ] Implement Kanban view

@@ -42,6 +42,7 @@ This file defines persistent workflow and documentation instructions for GitHub 
 - Any requested changes should also be accompanied by a clear explanation of why the change is needed or beneficial and explain what the change is doing.
 - If a review response is simply acknowledging good changes, indicate that clearly without requesting further changes.
 - Clearly indicate whether a review response is requesting changes to any files or is simply describing good changes.
+- Include even minor change suggestions in the review response, as they can help improve code quality and maintainability.
 - Ensure all changes are correctly documented in the appropriate documentation files (CHANGELOG.md, API.md, ROADMAP.md, etc.).
 - When reviewing, always check for adherence to:
   - Best practices (security, code quality, maintainability, explicit error handling, etc.)
@@ -57,6 +58,17 @@ This file defines persistent workflow and documentation instructions for GitHub 
   - Confirm that all endpoints, models, and features are documented and versioned
   - Add any additional reviewer rules here as the workflow evolves.
 - **If Specified as a end of a version review**: At the end of a version, before a stable release, perform an extra thorough review of the entire codebase to ensure stability with all features added and changes made. This review should check for regressions, incomplete features, missing documentation, and overall readiness for release.
+    - This DOES NOT mean to ignore the previously stated review policy, but rather to perform an additional review of the entire codebase to ensure that all features are complete and ready for release. Still use the same review policy, but be extra thorough in checking for any issues that may have been missed in previous reviews and the widen the scope of the review to target the entire codebase.
+
+## Testing Policy
+- All features and functions must have automated tests created and passing before any version (including dev versions) is pushed.
+- Exception: tests for current features will be implemented in v0.5.0-dev13. This policy is now required for all future development.
+
+## Logging Policy
+- All functions and major advancements within functions must include logging statements. Logging should be widespread and thorough throughout the codebase, covering all features, endpoints, and important logic branches. This ensures traceability, easier debugging, and better maintainability.
+
+## Testing Steps Policy
+- With any and all changes or change suggestions (normal, NOT reviews), practical testing steps must be provided or additional automated tests must be included to ensure the feature or change works correctly. This applies to all new features, bug fixes, and refactors and not to changes or suggestions within reviews, reviews have their own policies.
 
 ## How to Use
 - Reference this file in your prompt: "Follow the workflow in COPILOT_INSTRUCTIONS.md."

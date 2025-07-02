@@ -7,6 +7,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## API Change Summary Requirement
 - For every stable, alpha, or beta release, summarize all API changes (new endpoints, deleted endpoints, changes to endpoints, etc.) in the changelog, even if they were already documented in dev releases. This ensures the release notes provide a complete overview of API evolution for each version.
 
+## [v0.5.0-dev12] - 2025-07-02
+- Updated the reviewer policy for extra clarification on the end of version review policy.
+- Refactored `update_profile` endpoint in `backend/app.py` to reduce cyclomatic complexity by extracting field update logic into helper functions and using a loop for field processing. This improves maintainability and clarity.
+- Improved error handling and validation in `update_profile` for username, email, and password updates, with clear error messages and robust checks for uniqueness and format.
+- Updated documentation and code organization for user profile endpoints to ensure clarity and maintainability.
+- **New Testing Policy:** All features and functions must have automated tests created and passing before any version (including dev versions) is pushed. Exception: tests for current features will be implemented in v0.5.0-dev13. This policy is now required for all future development.
+- Began implementation of automated tests for all features and functions, as required by the new testing policy in COPILOT_INSTRUCTIONS.md. This is in preparation for the stable v0.5.0-alpha release.
+- Confirmed that all Task, Project, and User Profile CRUD API endpoints, authentication, CSRF protection, timezone handling, project/user ownership validation, and logging are implemented and documented per workflow and organization policies.
+- Performed end-of-version review and confirmed adherence to all workflow, documentation, reviewer, testing, and logging policies as defined in COPILOT_INSTRUCTIONS.md.
+- Updated and clarified documentation in docs/API.md, COPILOT_INSTRUCTIONS.md, and ROADMAP.md to reflect current code state and new testing/logging requirements.
+- All changes are versioned, auditable, and follow best practices, with a strong emphasis on code and documentation organization.
+- Added password reset (forgot password) as a planned feature for the backend and frontend in the roadmap (v0.10.1-alpha).
+- Made logging level configurable via LOG_LEVEL environment variable, defaulting to INFO, and log the configured level at startup.
+- Expanded docstrings for is_strong_password, get_current_user, serialize_task, and serialize_project for clarity and maintainability.
+
 ## [v0.5.0-dev11] - 2025-07-02
 - Implemented User Profile API endpoints:
   - Added `GET /api/profile` to retrieve the current user's profile (id, username, email). Requires authentication.
