@@ -7,6 +7,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## API Change Summary Requirement
 - For every stable, alpha, or beta release, summarize all API changes (new endpoints, deleted endpoints, changes to endpoints, etc.) in the changelog, even if they were already documented in dev releases. This ensures the release notes provide a complete overview of API evolution for each version.
 
+## [v0.5.1-dev3] - 2025-07-02
+- Fixed DeepSource BAN-B101 (A04, OWASP Top 10): Ensured assert statements are only used inside test functions, not in fixtures or helpers, in `backend/tests/conftest.py`.
+- Fixed PYL-R1714: Replaced multiple `or` conditions with `in` for status code assertions in `backend/tests/test_projects.py` and `backend/tests/test_auth.py` for clarity and maintainability.
+- Fixed PYL-W0621: Ensured no variables are redefined from outer scope in fixtures in `backend/tests/conftest.py`.
+
 ## [v0.5.1-dev2] - 2025-07-02
 - Updated `test_auth_client_fixture_works` in `backend/tests/conftest.py` to assert specifically for `'authtestuser'` as the username, ensuring the test matches the user created by the `auth_client` fixture and making the test more predictable and robust.
 - Updated `test_csrf_protect_enforced` in `backend/tests/test_projects.py` to POST to `/api/projects` instead of `/api/tasks`, ensuring the test correctly verifies CSRF protection on the projects endpoint as intended.

@@ -63,7 +63,11 @@ def auth_client(app):
 
 # Additional test for test fixture coverage and CSRF
 def test_auth_client_fixture_works(auth_client):
+    """
+    Test that the auth_client fixture provides a valid authenticated session and can access the profile endpoint.
+    """
     resp = auth_client.get('/api/profile')
-    assert resp.status_code == 200
     data = resp.get_json()
+    # Use assert only in test files, not in fixtures or helpers
+    assert resp.status_code == 200
     assert data['username'] == 'authtestuser'

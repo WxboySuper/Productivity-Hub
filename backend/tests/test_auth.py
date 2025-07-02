@@ -110,5 +110,5 @@ def test_csrf_protect_profile_update(client):
     })
     client.application.config['TESTING'] = False
     resp = client.put(PROFILE_URL, json={'username': 'newname'})
-    assert resp.status_code == 403 or resp.status_code == 400 or resp.status_code == 401
+    assert resp.status_code in (403, 400, 401)
     client.application.config['TESTING'] = True

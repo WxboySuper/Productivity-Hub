@@ -81,7 +81,7 @@ def test_csrf_protect_enforced(client):
     # POST without CSRF token (should fail in non-testing mode)
     client.application.config['TESTING'] = False
     resp = client.post('/api/projects', json={'name': 'CSRF Test Project'})
-    assert resp.status_code == 403 or resp.status_code == 400 or resp.status_code == 401
+    assert resp.status_code in (403, 400, 401)
     client.application.config['TESTING'] = True
 
 @pytest.mark.usefixtures('auth_client')
