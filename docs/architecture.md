@@ -58,4 +58,17 @@ This document provides a high-level overview of the Productivity Hub architectur
 
 ---
 
+## Security & Session Management (Updated)
+- **Production Warning:** The backend now issues a warning at startup if not running in debug or development mode, reminding you to check all security settings, including CSRF protection.
+- **Session Cookie Security:** The backend sets `SESSION_COOKIE_SECURE`, `SESSION_COOKIE_HTTPONLY`, and `SESSION_COOKIE_SAMESITE` in the Flask config for best security practices.
+- **CSRF Protection:**
+  - All state-changing API requests (POST, PUT, DELETE) require a valid CSRF token sent in the `X-CSRF-Token` header. The token is generated per session and must match the value stored in the session. Login and register endpoints are excluded for demonstration.
+  - If the CSRF token is missing or invalid, the API returns a 400 error.
+  - To obtain the CSRF token, call an authenticated endpoint and extract the token from the session (see API.md for usage).
+- **Granular Error Messages:** All endpoints return specific, actionable error messages for each validation failure (e.g., missing/empty title, invalid priority, invalid due_date format).
+- **Priority Validation:** The `priority` field is strictly validated to be an integer between 0 and 3 (inclusive) in both create and update endpoints.
+- **Timezone-Aware Datetime Handling:** All incoming `due_date` values are parsed as local time if no timezone is provided, and stored as timezone-aware datetimes using the system's local timezone. All returned datetime fields are ISO 8601 strings with timezone info if available.
+
+---
+
 *Expand this document as your project grows!*

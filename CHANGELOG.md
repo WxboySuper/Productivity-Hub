@@ -4,6 +4,37 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/), with personal tweaks for rewarding milestones and highly detailed dev versions.
 
+## [v0.5.0-dev8] - 2025-07-01
+- Added docs/API.md with detailed documentation for all Task CRUD API endpoints, including request/response formats and notes on datetime usage
+- Added documentation for User endpoints (register, login, logout) in docs/API.md, including request/response examples and session handling notes
+- Documented that all datetime fields (due_date, created_at, updated_at) are handled as ISO 8601 strings in the API, and recommend sending/receiving them in this format
+- Noted in docs/API.md and code comments that all endpoints require authentication and return JSON responses
+- Minor clarification in documentation policy: API usage examples and endpoint docs should be placed in docs/API.md rather than README.md for clarity and maintainability
+- Implemented Task CRUD API endpoints in backend/app.py:
+  - `GET /api/tasks` to list all tasks for the current user
+  - `GET /api/tasks/<task_id>` to retrieve a specific task by ID
+  - `POST /api/tasks` to create a new task (accepts ISO 8601 string for due_date)
+  - `PUT /api/tasks/<task_id>` to update an existing task (supports partial updates, accepts ISO 8601 string for due_date)
+  - `DELETE /api/tasks/<task_id>` to delete a task
+- All endpoints require authentication via session (using @login_required)
+- All endpoints return JSON responses and error messages
+- Added `serialize_task` helper to ensure all datetime fields (due_date, created_at, updated_at) are returned as ISO 8601 strings
+- Updated code comments and API documentation to clarify datetime handling and authentication requirements
+- Updated VERSIONING.md to require that all API changes must be summarized in every stable/beta/alpha release entry
+- Implemented ISO 8601 datetime string parsing for `due_date` in Task creation and update endpoints in backend/app.py. Incoming `due_date` values are now converted to Python datetime objects before storing in the database, and invalid formats return a 400 error with a clear message. This ensures robust API behavior and matches the documentation and changelog policy.
+- Explicitly set `SESSION_COOKIE_SECURE`, `SESSION_COOKIE_HTTPONLY`, and `SESSION_COOKIE_SAMESITE` in Flask app config for better security practices
+- Added a production warning using Python's warnings module: a warning is shown if the app is not running in debug or development mode, reminding the user to check security settings (including CSRF protection).
+- Implemented CSRF protection for all state-changing API requests (POST, PUT, DELETE) using a session-based CSRF token and requiring an `X-CSRF-Token` header. Excluded login and register endpoints for demonstration. Added helper to generate CSRF tokens.
+- Improved error messages throughout the Task endpoints to be granular and actionable (e.g., specific messages for missing/invalid title, priority, or due_date).
+- Added strict validation for the `priority` field: must be an integer between 0 and 3 (inclusive) in both create and update endpoints.
+- Implemented timezone-aware datetime handling: all incoming due_date values are parsed as local time if no timezone is provided, and stored as timezone-aware datetimes. Used Python's zoneinfo for local timezone detection.
+- Documented in API.md and architecture.md:
+  - Production warning for security settings
+  - CSRF protection for all state-changing API requests (POST, PUT, DELETE) using a session-based CSRF token and `X-CSRF-Token` header
+  - Granular error messages for all validation failures
+  - Strict priority validation (integer 0-3)
+  - Timezone-aware datetime handling (local time if no timezone provided)
+
 ## [v0.5.0-dev7] - 2025-07-01
 - Updated `.deepsource.toml` to try again at adding exclusion pattern for migrations
 

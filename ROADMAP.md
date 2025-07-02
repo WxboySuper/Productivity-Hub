@@ -32,7 +32,7 @@ This roadmap is a step-by-step checklist for building your productivity assistan
 - [x] Implement user logout
 
 ## v0.5.0-alpha: Core API Endpoints
-- [ ] Create REST API endpoints for Tasks (CRUD)
+- [x] Create REST API endpoints for Tasks (CRUD)
 - [ ] Create REST API endpoints for Projects (CRUD)
 - [ ] Create REST API endpoints for User profile
 

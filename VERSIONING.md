@@ -97,3 +97,6 @@ This project uses a custom versioning approach to make every step of development
 - When a version is “ready,” remove the dev tag and update the changelog with the release date, placing the final version above its dev versions.
 
 This process is designed for solo development and personal celebration—adjust as you see fit!
+
+## API Change Summary Requirement
+- For every stable, alpha, or beta release, summarize all API changes (new endpoints, deleted endpoints, changes to endpoints, etc.) in the changelog, even if they were already documented in dev releases. This ensures the release notes provide a complete overview of API evolution for each version.
