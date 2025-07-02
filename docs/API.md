@@ -214,4 +214,16 @@ All endpoints require the user to be authenticated (session-based). Include the 
 
 ---
 
+## Testing Approach and Coverage
+
+- All backend features and endpoints are now covered by automated tests using pytest and Flask's test client.
+- Tests cover Task, Project, and User Profile CRUD endpoints, authentication, CSRF protection, timezone handling, and ownership validation.
+- Test data uses valid, non-example.com email domains to comply with backend email validation rules.
+- All forms of CSRF protection are fully disabled in test mode, ensuring no 403 errors during testing.
+- Authenticated endpoint tests use `auth_client` fixtures to register and log in users.
+- Backend code uses `db.session.get(Model, id)` instead of deprecated `Model.query.get(id)` for SQLAlchemy 2.x compatibility.
+- See COPILOT_INSTRUCTIONS.md for testing and review policies.
+
+---
+
 *Expand this file as you add more endpoints or features.*

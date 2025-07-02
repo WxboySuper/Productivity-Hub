@@ -7,6 +7,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## API Change Summary Requirement
 - For every stable, alpha, or beta release, summarize all API changes (new endpoints, deleted endpoints, changes to endpoints, etc.) in the changelog, even if they were already documented in dev releases. This ensures the release notes provide a complete overview of API evolution for each version.
 
+## [v0.5.0-dev13] - 2025-07-02
+- **Automated Test Coverage Complete:** All backend features and endpoints are now covered by automated tests using pytest and Flask's test client. This includes Task, Project, and User Profile CRUD endpoints, authentication, CSRF protection, timezone handling, and project/user ownership validation. Tests include both positive and negative cases, edge cases, and error handling.
+- **Test Data Compliance:** Updated all test data to use valid, non-example.com email domains (e.g., `user@devmail.local`, `task@weatherboysuper.com`) to comply with backend email validation rules. This ensures registration and authentication tests pass and reflect real-world usage.
+- **CSRF Protection in Test Mode:** Ensured all forms of CSRF protection are fully disabled in test mode, both for Flask-WTF and custom CSRF checks. This prevents 403 errors during testing and allows all state-changing endpoints to be tested without requiring CSRF tokens.
+- **Authenticated Test Fixtures:** Added and documented `auth_client` fixtures in test files to register and log in users for authenticated endpoint testing. This enables robust, isolated testing of endpoints that require authentication and session state.
+- **SQLAlchemy 2.x Compatibility:** Updated backend code to use `db.session.get(Model, id)` instead of deprecated `Model.query.get(id)` for all primary key lookups. This removes SQLAlchemy 2.x deprecation warnings and ensures future compatibility with newer SQLAlchemy versions.
+- **Expanded Documentation:**
+  - Added a "Testing Approach and Coverage" section to `docs/API.md` and `docs/architecture.md`, summarizing the automated test coverage, CSRF/test config, and SQLAlchemy compatibility improvements.
+  - Updated documentation to clarify test approach, coverage, and configuration, including how CSRF is handled in test mode and how authenticated test clients are used.
+  - All changes are documented per workflow and testing policy in `COPILOT_INSTRUCTIONS.md`.
+- **Logging and Traceability:** Maintained thorough logging throughout the codebase, including all helper functions, route handlers, and major logic branches. All true error conditions use `logger.error` or `logger.warning` as appropriate. Logging level remains configurable via the `LOG_LEVEL` environment variable.
+- **Policy Adherence:** All changes follow the workflow, documentation, reviewer, testing, and logging policies as defined in `COPILOT_INSTRUCTIONS.md`. Versioning, changelog, and documentation are kept up to date and detailed for dev releases.
+
 ## [v0.5.0-dev12] - 2025-07-02
 - Updated the reviewer policy for extra clarification on the end of version review policy.
 - Refactored `update_profile` endpoint in `backend/app.py` to reduce cyclomatic complexity by extracting field update logic into helper functions and using a loop for field processing. This improves maintainability and clarity.

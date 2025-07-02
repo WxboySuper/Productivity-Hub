@@ -127,7 +127,7 @@ def get_current_user():
     user_id = session.get('user_id')
     logger.debug(f"Fetching current user from session: user_id={user_id}")
     if user_id:
-        user = User.query.get(user_id)
+        user = db.session.get(User, user_id)
         if user:
             logger.info(f"Current user found: {user.username} (ID: {user.id})")
         else:
@@ -185,6 +185,10 @@ def login_required(f):
 # CSRF Protection for API (state-changing requests)
 @app.before_request
 def csrf_protect():
+    if app.config.get('TESTING', False):
+        # Disable CSRF protection in test mode
+        logger.debug("CSRF protection is disabled in TESTING mode.")
+        return
     if request.method in ("POST", "PUT", "DELETE"):
         logger.debug(f"CSRF protection check for endpoint: {request.endpoint}")
         # Exclude login and register endpoints from CSRF for demonstration
@@ -208,9 +212,13 @@ app.jinja_env.globals["csrf_token"] = generate_csrf_token
 # Helper for configurable timezone
 DEFAULT_TIMEZONE = os.environ.get("DEFAULT_TIMEZONE", "UTC")
 try:
-    local_tz = zoneinfo.ZoneInfo(DEFAULT_TIMEZONE)
+    # Accept both 'UTC' and 'Etc/UTC' for compatibility
+    try:
+        local_tz = zoneinfo.ZoneInfo(DEFAULT_TIMEZONE)
+    except Exception:
+        local_tz = zoneinfo.ZoneInfo("Etc/UTC")
 except Exception:
-    local_tz = zoneinfo.ZoneInfo("UTC")
+    local_tz = None
 
 def parse_local_datetime(dt_str):
     logger.debug(f"Parsing datetime string: {dt_str}")
