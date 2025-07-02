@@ -12,14 +12,14 @@ This file defines persistent workflow and documentation instructions for GitHub 
 - Use VERSIONING.md for versioning guidelines, including major, minor, and patch releases.
 - Use of the "Unreleased" style is not encouraged; instead add it to a list of changes in the next version, All changes will be pushed as dev changes, then the stable changes will consist of only the CHANGELOG.md updates after all changes have been made and tested within dev versions.
 - Keep the changelog list running until it is expressely noted that the specific dev version has been pushed and you need to start a new dev version (ex. don't start dev9 until it is stated that dev8 has been pushed).
-- All API changes (new endpoints, deleted endpoints, changes to endpoints, etc.) must be described in the changelog for every stable, alpha, or beta release. Summarize all API changes clearly in the release notes, even if they were already documented in dev releases.
+- API change summary policy: (see VERSIONING.md §API Change Summary)
 
 ## Documentation Policy
 - Update all relevant documentation files (README.md, FEATURES.md, ROADMAP.md, DEPLOYMENT.md, docs/architecture.md, etc.) when features, APIs, or workflows change.
 - Add usage examples and security notes where appropriate.
 - Keep documentation thorough, clear, and up to date with the codebase.
 - Add additional documentation in the `docs/` directory as needed for any changes or new features.
-- API usage examples and endpoint documentation should be placed in docs/API.md rather than README.md for clarity and maintainability. Reference API.md from the README if needed.
+- API usage examples and endpoint documentation should be placed in docs/API.md rather than README.md for clarity and maintainability. Reference docs/API.md from the README.md if needed.
 
 ## Code Quality & Security
 - Follow best practices for security (e.g., never commit secrets, always validate input, use constant-time password checks).

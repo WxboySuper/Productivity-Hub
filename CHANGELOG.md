@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/), with personal tweaks for rewarding milestones and highly detailed dev versions.
 
+## API Change Summary Requirement
+- For every stable, alpha, or beta release, summarize all API changes (new endpoints, deleted endpoints, changes to endpoints, etc.) in the changelog, even if they were already documented in dev releases. This ensures the release notes provide a complete overview of API evolution for each version.
+
+## [v0.5.0-dev9] - 2025-07-02
+- Updated the Task update endpoint to validate that the provided project_id belongs to the current user before assignment. If the project does not exist or is not owned by the user, a 404 error is returned. This ensures proper access control and data integrity for task-project relationships.
+- Updated timezone handling to use a configurable DEFAULT_TIMEZONE environment variable (defaulting to "UTC"). If the specified timezone is invalid, the backend falls back to UTC. This ensures robust, configurable, and documented timezone handling for all datetime fields.
+- Added project ownership validation to the Task creation endpoint: if a project_id is provided, the backend now checks that the project exists and belongs to the current user before creating the Task. If not, a 404 error is returned. This ensures proper access control and data integrity for task-project relationships.
+- Removed all inline comments from the JSON example in the Create Task endpoint in docs/API.md to ensure valid JSON.
+- Added field explanations as plain text below the code block for clarity and maintainability, per documentation policy in COPILOT_INSTRUCTIONS.md.
+- Updated the Task DELETE endpoint documentation in docs/API.md to specify that a successful deletion returns 200 OK with a JSON message, matching the backend implementation. This avoids client confusion and ensures the documentation accurately reflects API behavior.
+- Consolidated and clarified the CSRF protection documentation in docs/architecture.md, removing contradictory statements and ensuring a single, authoritative description of the current CSRF implementation. This improves accuracy and avoids reader confusion, per documentation policy in COPILOT_INSTRUCTIONS.md.
+- Replaced the API change summary paragraph in COPILOT_INSTRUCTIONS.md changelog policy with a brief reference to VERSIONING.md, ensuring a single authoritative source and eliminating redundancy, per documentation policy.
+- Updated the documentation policy in COPILOT_INSTRUCTIONS.md to reference the correct path 'docs/API.md' (instead of 'API.md') in both locations, ensuring clarity and preventing broken links, per documentation policy.
+- Updated the production environment check in backend/app.py to trigger the security warning only if FLASK_ENV or ENVIRONMENT is explicitly set to 'production', ensuring the warning appears only in true production environments. This improves deployment clarity and aligns with best practices in COPILOT_INSTRUCTIONS.md.
+- Updated CSRF token generation in backend/app.py to use the secrets module (secrets.token_hex(16)) instead of os.urandom, following best practices for cryptographic token generation, per COPILOT_INSTRUCTIONS.md.
+
 ## [v0.5.0-dev8] - 2025-07-01
 - Added docs/API.md with detailed documentation for all Task CRUD API endpoints, including request/response formats and notes on datetime usage
 - Added documentation for User endpoints (register, login, logout) in docs/API.md, including request/response examples and session handling notes
@@ -34,6 +50,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   - Granular error messages for all validation failures
   - Strict priority validation (integer 0-3)
   - Timezone-aware datetime handling (local time if no timezone provided)
+
 
 ## [v0.5.0-dev7] - 2025-07-01
 - Updated `.deepsource.toml` to try again at adding exclusion pattern for migrations

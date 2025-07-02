@@ -26,14 +26,21 @@ All endpoints require the user to be authenticated (session-based). Include the 
 - Request JSON:
   ```json
   {
-    "title": "Task title", // required, non-empty string
+    "title": "Task title",
     "description": "Optional description",
-    "due_date": "2025-07-01T12:00:00", // ISO 8601 string (with or without timezone)
-    "priority": 1, // integer 0-3 (inclusive)
-    "completed": false, // boolean
-    "project_id": 2 // optional, integer
+    "due_date": "2025-07-01T12:00:00",
+    "priority": 1,
+    "completed": false,
+    "project_id": 2
   }
   ```
+- Field notes:
+  - `title`: required, non-empty string
+  - `description`: optional string
+  - `due_date`: ISO 8601 string (with or without timezone)
+  - `priority`: integer 0-3 (inclusive)
+  - `completed`: boolean
+  - `project_id`: optional, integer
 - Headers: Must include `X-CSRF-Token` with the session's CSRF token value.
 - Response: `201 Created`, JSON task object.
 - Errors:
@@ -49,7 +56,7 @@ All endpoints require the user to be authenticated (session-based). Include the 
 
 ### Delete Task
 **DELETE** `/api/tasks/<task_id>`
-- Response: `200 OK` on success. `404` if not found.
+- Response: `200 OK` on success (returns `{ "message": "Task deleted successfully" }`). `404` if not found.
 
 ---
 
@@ -72,7 +79,7 @@ All endpoints require the user to be authenticated (session-based). Include the 
 - Request JSON:
   ```json
   {
-    "username": "yourname", // or "email": "your@email.com"
+    "username": "yourname",
     "password": "StrongPassword123!"
   }
   ```

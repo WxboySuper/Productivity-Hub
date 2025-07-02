@@ -51,10 +51,9 @@ This document provides a high-level overview of the Productivity Hub architectur
     - Set `SESSION_COOKIE_HTTPONLY = True` to prevent JavaScript access to the session cookie.
     - Set `SESSION_COOKIE_SAMESITE = "Lax"` to help mitigate CSRF risks.
 - **CSRF Protection:**
-    - For state-changing requests (POST, PUT, DELETE), CSRF protection is recommended even with server-side sessions.
-    - If using forms, consider Flask-WTF for CSRF tokens.
-    - For API endpoints, require a custom header (e.g., `X-CSRF-Token`) or implement another CSRF mitigation strategy.
-    - As of now, CSRF protection is not implemented—add it before production deployment to prevent CSRF vulnerabilities.
+    - All state-changing API requests (POST, PUT, DELETE) require a valid CSRF token sent in the `X-CSRF-Token` header. The token is generated per session and must match the value stored in the session. Login and register endpoints are excluded for demonstration.
+    - If the CSRF token is missing or invalid, the API returns a 400 error.
+    - To obtain the CSRF token, call an authenticated endpoint and extract the token from the session (see API.md for usage).
 
 ---
 

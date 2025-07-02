@@ -10,6 +10,7 @@ This roadmap is a step-by-step checklist for building your productivity assistan
   - **Minor (Y):** Small, focused, and rewarding feature sets (increments by 1 for each new version, goes to double digits as needed)
   - **Patch (Z):** Bug fixes or tiny tweaks (can go to double digits as needed)
 - **Pre-1.0:** Use v0.Y.0 for alpha/beta releases. Each version is a personal milestone—make them as small and rewarding as you like!
+- **API Change Summary Requirement:** For every stable, alpha, or beta release, summarize all API changes (new endpoints, deleted endpoints, changes to endpoints, etc.) in the changelog, even if they were already documented in dev releases. This ensures the release notes provide a complete overview of API evolution for each version.
 
 ---
 

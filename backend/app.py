@@ -10,6 +10,7 @@ from functools import wraps
 from datetime import datetime
 import warnings
 import zoneinfo
+import secrets
 
 # Logging Configuration
 logging.basicConfig(
@@ -29,8 +30,8 @@ app.config['SESSION_COOKIE_SECURE'] = True  # Use secure cookies in production
 app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevent JavaScript access to session cookies
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Set SameSite policy for session cookies
 
-# Production warning if not in debug/development
-if not app.debug and os.environ.get("FLASK_ENV") != "development":
+# Production warning if running in production environment
+if os.environ.get("FLASK_ENV") == "production" or os.environ.get("ENVIRONMENT") == "production":
     warnings.warn("WARNING: This app is running in production mode! Ensure all security settings are properly configured, including CSRF protection.", RuntimeWarning)
 
 logger.info("Flask app configuration is set up.")
@@ -143,16 +144,17 @@ def csrf_protect():
 
 def generate_csrf_token():
     if "_csrf_token" not in session:
-        session["_csrf_token"] = os.urandom(16).hex()
+        session["_csrf_token"] = secrets.token_hex(16)
     return session["_csrf_token"]
 
 app.jinja_env.globals["csrf_token"] = generate_csrf_token
 
-# Helper for local timezone
+# Helper for configurable timezone
+DEFAULT_TIMEZONE = os.environ.get("DEFAULT_TIMEZONE", "UTC")
 try:
-    local_tz = zoneinfo.ZoneInfo("localtime")
+    local_tz = zoneinfo.ZoneInfo(DEFAULT_TIMEZONE)
 except Exception:
-    local_tz = None  # fallback if zoneinfo fails
+    local_tz = zoneinfo.ZoneInfo("UTC")
 
 def parse_local_datetime(dt_str):
     dt = datetime.fromisoformat(dt_str)
@@ -275,10 +277,24 @@ def logout():
 @app.route('/api/tasks', methods=['GET'])
 @login_required
 def get_tasks():
-    """Get all tasks for the current user."""
+    """Get all tasks for the current user, paginated."""
     user = get_current_user()
-    tasks = Task.query.filter_by(user_id=user.id).all()
-    return jsonify([serialize_task(task) for task in tasks]), 200
+    # Get pagination parameters from query string
+    try:
+        page = int(request.args.get('page', 1))
+        per_page = int(request.args.get('per_page', 20))
+    except ValueError:
+        return jsonify({"error": "Invalid pagination parameters."}), 400
+    per_page = max(1, min(per_page, 100))  # Limit per_page to 1-100
+    pagination = Task.query.filter_by(user_id=user.id).order_by(Task.id.desc()).paginate(page=page, per_page=per_page, error_out=False)
+    tasks = [serialize_task(task) for task in pagination.items]
+    return jsonify({
+        "tasks": tasks,
+        "total": pagination.total,
+        "pages": pagination.pages,
+        "current_page": pagination.page,
+        "per_page": pagination.per_page
+    }), 200
 
 @app.route('/api/tasks/<int:task_id>', methods=['GET'])
 @login_required
@@ -315,6 +331,13 @@ def create_task():
         except Exception:
             return jsonify({"error": "Invalid due_date format. Use ISO 8601 with or without timezone."}), 400
 
+    # Validate and check project ownership if project_id is provided
+    project_id = data.get('project_id')
+    if project_id is not None:
+        project = Project.query.filter_by(id=project_id, user_id=user.id).first()
+        if not project:
+            return jsonify({"error": "Project not found or does not belong to the current user."}), 404
+
     task = Task(
         title=title.strip(),
         description=data.get('description'),
@@ -322,7 +345,7 @@ def create_task():
         priority=priority,
         completed=data.get('completed', False),
         user_id=user.id,
-        project_id=data.get('project_id')
+        project_id=project_id
     )
 
     db.session.add(task)
@@ -365,7 +388,14 @@ def update_task(task_id):
     if 'completed' in data:
         task.completed = data['completed']
     if 'project_id' in data:
-        task.project_id = data['project_id']
+        project_id = data['project_id']
+        if project_id is not None:
+            project = Project.query.filter_by(id=project_id, user_id=user.id).first()
+            if not project:
+                return jsonify({"error": "Project not found or does not belong to the current user."}), 404
+            task.project_id = project_id
+        else:
+            task.project_id = None
 
     db.session.commit()
 
