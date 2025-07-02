@@ -32,6 +32,28 @@ This file defines persistent workflow and documentation instructions for GitHub 
 - If unsure about a workflow, check for instructions here or ask for clarification.
 - Stay within the scope of the request, if something needs additional changes or explanations outside of it's initial scope, document it and ask, do not make changes outside of the request scope without confirmation. Progression is taken gracefully and incrementally associated with the ROADMAP.md.
 
+## Organization Policy
+- **Prioritize code and documentation organization:** Place related helper functions, models, and logic together in a consistent, logical order. When adding or recommending code changes, always consider and improve file and project organization for clarity and maintainability.
+
+## Reviewer Policy
+- When acting as a reviewer, provide a clear, itemized list of review responses for each file or area reviewed.
+- Each review response must include an explanation describing the reasoning behind the feedback.
+- Clearly indicate whether a review response is requesting changes to any files or is simply describing good changes.
+- Ensure all changes are correctly documented in the appropriate documentation files (CHANGELOG.md, API.md, ROADMAP.md, etc.).
+- When reviewing, always check for adherence to:
+  - Best practices (security, code quality, maintainability, explicit error handling, etc.)
+  - Code and documentation organization (helper functions, models, and logic grouped logically and consistently)
+  - Documentation policy (all changes reflected in docs/API.md, ROADMAP.md, etc.)
+  - Changelog policy (all changes reflected in CHANGELOG.md, with dev versions being detailed and stable versions summarized)
+  - Workflow and scope (changes are incremental, within scope, and documented)
+  - No sensitive information is committed
+  - Consistency with project conventions and naming
+- When reviewing, also:
+  - Suggest improvements for clarity, maintainability, or security where possible
+  - Note any missing or outdated documentation
+  - Confirm that all endpoints, models, and features are documented and versioned
+  - Add any additional reviewer rules here as the workflow evolves.
+
 ## How to Use
 - Reference this file in your prompt: "Follow the workflow in COPILOT_INSTRUCTIONS.md."
 - You may add or update instructions here as your workflow evolves.

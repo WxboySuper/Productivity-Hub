@@ -34,7 +34,7 @@ This roadmap is a step-by-step checklist for building your productivity assistan
 
 ## v0.5.0-alpha: Core API Endpoints
 - [x] Create REST API endpoints for Tasks (CRUD)
-- [ ] Create REST API endpoints for Projects (CRUD)
+- [x] Create REST API endpoints for Projects (CRUD)
 - [ ] Create REST API endpoints for User profile
 
 ## v0.6.0-alpha: Task Scheduling Fields

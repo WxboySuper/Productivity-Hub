@@ -7,6 +7,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## API Change Summary Requirement
 - For every stable, alpha, or beta release, summarize all API changes (new endpoints, deleted endpoints, changes to endpoints, etc.) in the changelog, even if they were already documented in dev releases. This ensures the release notes provide a complete overview of API evolution for each version.
 
+## [v0.5.0-dev10] - 2025-07-02
+- Implemented Project CRUD API endpoints (`/api/projects`):
+  - Added `GET /api/projects` to list all projects for the current user, with pagination (`page`, `per_page`), returning only the user's projects.
+  - Added `GET /api/projects/<project_id>` to retrieve a specific project by ID, returning 404 if not found or not owned by the user.
+  - Added `POST /api/projects` to create a new project. Validates that `name` is present and non-empty. Returns the created project object.
+  - Added `PUT /api/projects/<project_id>` to update an existing project. Validates ownership and that `name` (if present) is non-empty. Returns the updated project object.
+  - Added `DELETE /api/projects/<project_id>` to delete a project, returning 404 if not found or not owned by the user.
+  - All endpoints require authentication and enforce project ownership. State-changing endpoints require a valid CSRF token in the `X-CSRF-Token` header.
+  - Added robust error handling and clear, actionable error messages for all endpoints.
+  - Added `serialize_project` helper function for consistent API responses, and moved all helper functions to a single section above the route definitions for improved organization and maintainability.
+  - Updated `docs/API.md` with detailed documentation for all Project endpoints, including usage, parameters, security notes, and error handling.
+  - Updated `docs/architecture.md` and `ROADMAP.md` to reflect the new endpoints and organizational improvements.
+  - Updated `COPILOT_INSTRUCTIONS.md` to add a rule prioritizing code and documentation organization for all future changes.
+  - All changes are thoroughly documented and organized per project workflow and documentation policy.
+
 ## [v0.5.0-dev9] - 2025-07-02
 - Updated the Task update endpoint to validate that the provided project_id belongs to the current user before assignment. If the project does not exist or is not owned by the user, a 404 error is returned. This ensures proper access control and data integrity for task-project relationships.
 - Updated timezone handling to use a configurable DEFAULT_TIMEZONE environment variable (defaulting to "UTC"). If the specified timezone is invalid, the backend falls back to UTC. This ensures robust, configurable, and documented timezone handling for all datetime fields.

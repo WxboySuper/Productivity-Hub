@@ -93,6 +93,58 @@ All endpoints require the user to be authenticated (session-based). Include the 
 
 ---
 
+## Project API Endpoints
+
+### Get all projects
+**GET** `/api/projects`
+- Returns a paginated list of all projects for the current user.
+- Response: `200 OK`, JSON array of projects.
+- Query parameters:
+  - `page`: optional, integer, the page number to retrieve (default: 1)
+  - `per_page`: optional, integer, number of projects per page (default: 10, max: 100)
+
+### Get a project by ID
+**GET** `/api/projects/<project_id>`
+- Returns the project with the given ID if it belongs to the user.
+- Response: `200 OK`, JSON project object. `404` if not found.
+
+### Create a project
+**POST** `/api/projects`
+- Request JSON:
+  ```json
+  {
+    "name": "Project name",
+    "description": "Optional description"
+  }
+  ```
+- Field notes:
+  - `name`: required, non-empty string
+  - `description`: optional string
+- Headers: Must include `X-CSRF-Token` with the session's CSRF token value.
+- Response: `201 Created`, JSON project object.
+- Errors:
+  - `400` if name is missing/empty.
+
+### Update a project
+**PUT** `/api/projects/<project_id>`
+- Request JSON: Any updatable fields (name, description).
+- Headers: Must include `X-CSRF-Token` with the session's CSRF token value.
+- Response: `200 OK`, JSON updated project object. `404` if not found.
+- Errors:
+  - `400` if name is present but empty.
+
+### Delete a project
+**DELETE** `/api/projects/<project_id>`
+- Response: `200 OK` on success (returns `{ "message": "Project deleted successfully" }`). `404` if not found.
+
+#### Notes
+- All endpoints require authentication.
+- All state-changing endpoints require CSRF token in `X-CSRF-Token` header.
+- Only the current user's projects are accessible.
+- See error handling and security notes above for details.
+
+---
+
 ## Security Notes
 - **Production Warning:** If the app is not running in debug or development mode, a warning is shown at startup reminding you to check all security settings, including CSRF protection.
 - **Session Cookie Security:** The backend sets `SESSION_COOKIE_SECURE`, `SESSION_COOKIE_HTTPONLY`, and `SESSION_COOKIE_SAMESITE` in the Flask config for best security practices.

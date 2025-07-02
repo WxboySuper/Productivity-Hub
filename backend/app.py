@@ -119,6 +119,16 @@ def serialize_task(task):
         "updated_at": task.updated_at.isoformat() if task.updated_at else None,
     }
 
+def serialize_project(project):
+    return {
+        "id": project.id,
+        "name": project.name,
+        "description": project.description,
+        "user_id": project.user_id,
+        "created_at": project.created_at.isoformat() if project.created_at else None,
+        "updated_at": project.updated_at.isoformat() if project.updated_at else None,
+    }
+
 # Decorator Functions
 def login_required(f):
     """Decorator to ensure the user is logged in."""
@@ -415,6 +425,86 @@ def delete_task(task_id):
     db.session.commit()
 
     return jsonify({"message": "Task deleted successfully"}), 200
+
+# Routes for Project Management
+@app.route('/api/projects', methods=['GET'])
+@login_required
+def get_projects():
+    """Get all projects for the current user, paginated."""
+    user = get_current_user()
+    try:
+        page = int(request.args.get('page', 1))
+        per_page = int(request.args.get('per_page', 20))
+    except ValueError:
+        return jsonify({"error": "Invalid pagination parameters."}), 400
+    per_page = max(1, min(per_page, 100))
+    pagination = Project.query.filter_by(user_id=user.id).order_by(Project.id.desc()).paginate(page=page, per_page=per_page, error_out=False)
+    projects = [serialize_project(project) for project in pagination.items]
+    return jsonify({
+        "projects": projects,
+        "total": pagination.total,
+        "pages": pagination.pages,
+        "current_page": pagination.page,
+        "per_page": pagination.per_page
+    }), 200
+
+@app.route('/api/projects/<int:project_id>', methods=['GET'])
+@login_required
+def get_project(project_id):
+    """Get a specific project by ID."""
+    user = get_current_user()
+    project = Project.query.filter_by(id=project_id, user_id=user.id).first()
+    if not project:
+        return jsonify({"error": "Project not found"}), 404
+    return jsonify(serialize_project(project)), 200
+
+@app.route('/api/projects', methods=['POST'])
+@login_required
+def create_project():
+    """Create a new project."""
+    user = get_current_user()
+    data = request.get_json()
+    name = data.get('name')
+    if not name or not name.strip():
+        return jsonify({"error": "Name is required and cannot be empty."}), 400
+    project = Project(
+        name=name.strip(),
+        description=data.get('description'),
+        user_id=user.id
+    )
+    db.session.add(project)
+    db.session.commit()
+    return jsonify(serialize_project(project)), 201
+
+@app.route('/api/projects/<int:project_id>', methods=['PUT'])
+@login_required
+def update_project(project_id):
+    """Update an existing project."""
+    user = get_current_user()
+    project = Project.query.filter_by(id=project_id, user_id=user.id).first()
+    if not project:
+        return jsonify({"error": "Project not found"}), 404
+    data = request.get_json()
+    if 'name' in data:
+        if not data['name'] or not data['name'].strip():
+            return jsonify({"error": "Name is required and cannot be empty."}), 400
+        project.name = data['name'].strip()
+    if 'description' in data:
+        project.description = data['description']
+    db.session.commit()
+    return jsonify(serialize_project(project)), 200
+
+@app.route('/api/projects/<int:project_id>', methods=['DELETE'])
+@login_required
+def delete_project(project_id):
+    """Delete a project."""
+    user = get_current_user()
+    project = Project.query.filter_by(id=project_id, user_id=user.id).first()
+    if not project:
+        return jsonify({"error": "Project not found"}), 404
+    db.session.delete(project)
+    db.session.commit()
+    return jsonify({"message": "Project deleted successfully"}), 200
 
 if __name__ == '__main__':
     init_db()
