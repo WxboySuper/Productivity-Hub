@@ -112,3 +112,14 @@ def test_csrf_protect_profile_update(client):
     resp = client.put(PROFILE_URL, json={'username': 'newname'})
     assert resp.status_code in (403, 400, 401)
     client.application.config['TESTING'] = True
+
+def test_auth_client_fixture_works(auth_client):
+    """
+    Test that the auth_client fixture provides a valid authenticated session and can access the profile endpoint.
+    """
+    resp = auth_client.get('/api/profile')
+    data = resp.get_json()
+    if resp.status_code != 200:
+        raise AssertionError(f"Expected status 200, got {resp.status_code}")
+    if data['username'] != 'authtestuser':
+        raise AssertionError(f"Expected username 'authtestuser', got {data['username']}")

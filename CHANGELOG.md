@@ -7,6 +7,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## API Change Summary Requirement
 - For every stable, alpha, or beta release, summarize all API changes (new endpoints, deleted endpoints, changes to endpoints, etc.) in the changelog, even if they were already documented in dev releases. This ensures the release notes provide a complete overview of API evolution for each version.
 
+## [v0.5.1-dev4] - 2025-07-02
+- Moved the test function `test_auth_client_fixture_works` from `conftest.py` to `test_auth.py` to follow best practices: all test logic now resides in dedicated test files, and `conftest.py` contains only fixtures and shared setup logic.
+
 ## [v0.5.1-dev3] - 2025-07-02
 - Fixed DeepSource BAN-B101 (A04, OWASP Top 10): Ensured assert statements are only used inside test functions, not in fixtures or helpers, in `backend/tests/conftest.py`.
 - Fixed PYL-R1714: Replaced multiple `or` conditions with `in` for status code assertions in `backend/tests/test_projects.py` and `backend/tests/test_auth.py` for clarity and maintainability.
