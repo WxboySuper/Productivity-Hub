@@ -7,6 +7,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## API Change Summary Requirement
 - For every stable, alpha, or beta release, summarize all API changes (new endpoints, deleted endpoints, changes to endpoints, etc.) in the changelog, even if they were already documented in dev releases. This ensures the release notes provide a complete overview of API evolution for each version.
 
+## [v0.5.0-dev11] - 2025-07-02
+- Implemented User Profile API endpoints:
+  - Added `GET /api/profile` to retrieve the current user's profile (id, username, email). Requires authentication.
+  - Added `PUT /api/profile` to update the current user's username, email, and/or password. Validates uniqueness, format, and password strength. Requires authentication and CSRF token.
+  - Robust error handling for all validation and uniqueness checks, with clear error messages for each failure case.
+  - Updated `docs/API.md` with detailed documentation for profile endpoints, including usage, validation, and error handling.
+  - All changes are documented and organized per project workflow and documentation policy.
+
 ## [v0.5.0-dev10] - 2025-07-02
 - Implemented Project CRUD API endpoints (`/api/projects`):
   - Added `GET /api/projects` to list all projects for the current user, with pagination (`page`, `per_page`), returning only the user's projects.

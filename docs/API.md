@@ -64,6 +64,7 @@ All endpoints require the user to be authenticated (session-based). Include the 
 
 ### Register
 **POST** `/api/register`
+- Registers a new user.
 - Request JSON:
   ```json
   {
@@ -72,10 +73,11 @@ All endpoints require the user to be authenticated (session-based). Include the 
     "password": "StrongPassword123!"
   }
   ```
-- Response: `201 Created` on success, JSON message. `400` or `500` on error.
+- Response: `201 Created` on success, JSON message. `400` on validation error.
 
 ### Login
 **POST** `/api/login`
+- Logs in a user.
 - Request JSON:
   ```json
   {
@@ -88,8 +90,34 @@ All endpoints require the user to be authenticated (session-based). Include the 
 
 ### Logout
 **POST** `/api/logout`
+- Logs out the current user.
 - Response: `200 OK` on success, JSON message.
 - Clears the session cookie.
+
+### Get current user profile
+**GET** `/api/profile`
+- Returns the current user's profile (id, username, email).
+- Requires authentication.
+- Response: `200 OK`, JSON user object.
+
+### Update current user profile
+**PUT** `/api/profile`
+- Updates the current user's username, email, and/or password.
+- Request JSON: any combination of `username`, `email`, `password` fields.
+- Headers: Must include `X-CSRF-Token` with the session's CSRF token value.
+- Validation:
+  - `username`: required if present, must be unique and non-empty
+  - `email`: required if present, must be valid, unique, and non-empty
+  - `password`: required if present, must be strong (min 8 chars, upper/lower/number/special)
+- Response: `200 OK` on success, JSON message. `400` on validation error. `401` if not authenticated.
+- Errors:
+  - `400` if username/email/password is missing, empty, not unique, or invalid
+  - `400` if no valid fields to update
+
+#### Notes
+- All endpoints require authentication where applicable.
+- All state-changing endpoints require CSRF token in `X-CSRF-Token` header.
+- See error handling and security notes above for details.
 
 ---
 

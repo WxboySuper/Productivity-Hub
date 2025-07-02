@@ -179,6 +179,7 @@ def home():
     logger.info("Home route accessed.")
     return "Welcome to the Productivity Hub Backend!"
 
+# User Endpoints (Registration, Login, Logout, Profile)
 # Route for User Registration
 @app.route('/api/register', methods=['POST'])
 def register():
@@ -282,6 +283,62 @@ def logout():
     session.pop('user_id', None)
     logger.info("User logged out successfully.")
     return jsonify({"message": "Logout successful"}), 200
+
+@app.route('/api/profile', methods=['GET'])
+@login_required
+def get_profile():
+    """Get the current user's profile."""
+    user = get_current_user()
+    return jsonify({
+        "id": user.id,
+        "username": user.username,
+        "email": user.email
+    }), 200
+
+@app.route('/api/profile', methods=['PUT'])
+@login_required
+def update_profile():
+    """Update the current user's profile (username, email, password)."""
+    user = get_current_user()
+    data = request.get_json()
+    updated = False
+    # Update username
+    if 'username' in data:
+        username = data['username']
+        if not username or not username.strip():
+            return jsonify({"error": "Username is required and cannot be empty."}), 400
+        if username != user.username:
+            if User.query.filter_by(username=username).first():
+                return jsonify({"error": "Username already exists."}), 400
+            user.username = username.strip()
+            updated = True
+    # Update email
+    if 'email' in data:
+        email = data['email']
+        if not email or not email.strip():
+            return jsonify({"error": "Email is required and cannot be empty."}), 400
+        try:
+            validate_email(email)
+        except EmailNotValidError as e:
+            return jsonify({"error": str(e)}), 400
+        if email != user.email:
+            if User.query.filter_by(email=email).first():
+                return jsonify({"error": "Email already exists."}), 400
+            user.email = email.strip()
+            updated = True
+    # Update password
+    if 'password' in data:
+        password = data['password']
+        if not password or not password.strip():
+            return jsonify({"error": "Password is required and cannot be empty."}), 400
+        if not is_strong_password(password):
+            return jsonify({"error": "Password must be at least 8 characters long and include uppercase, lowercase, numbers, and special characters."}), 400
+        user.set_password(password)
+        updated = True
+    if not updated:
+        return jsonify({"error": "No valid fields to update."}), 400
+    db.session.commit()
+    return jsonify({"message": "Profile updated successfully."}), 200
 
 # Routes for Task Management
 @app.route('/api/tasks', methods=['GET'])

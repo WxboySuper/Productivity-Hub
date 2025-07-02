@@ -36,8 +36,11 @@ This file defines persistent workflow and documentation instructions for GitHub 
 - **Prioritize code and documentation organization:** Place related helper functions, models, and logic together in a consistent, logical order. When adding or recommending code changes, always consider and improve file and project organization for clarity and maintainability.
 
 ## Reviewer Policy
+- **ONLY WHEN ASKED FOR A REVIEW DOES THIS POLICY APPLY:**
+- When asked to review code, ensure you understand the context and scope of the changes.
 - When acting as a reviewer, provide a clear, itemized list of review responses for each file or area reviewed.
-- Each review response must include an explanation describing the reasoning behind the feedback.
+- Any requested changes should also be accompanied by a clear explanation of why the change is needed or beneficial and explain what the change is doing.
+- If a review response is simply acknowledging good changes, indicate that clearly without requesting further changes.
 - Clearly indicate whether a review response is requesting changes to any files or is simply describing good changes.
 - Ensure all changes are correctly documented in the appropriate documentation files (CHANGELOG.md, API.md, ROADMAP.md, etc.).
 - When reviewing, always check for adherence to:
@@ -53,6 +56,7 @@ This file defines persistent workflow and documentation instructions for GitHub 
   - Note any missing or outdated documentation
   - Confirm that all endpoints, models, and features are documented and versioned
   - Add any additional reviewer rules here as the workflow evolves.
+- **If Specified as a end of a version review**: At the end of a version, before a stable release, perform an extra thorough review of the entire codebase to ensure stability with all features added and changes made. This review should check for regressions, incomplete features, missing documentation, and overall readiness for release.
 
 ## How to Use
 - Reference this file in your prompt: "Follow the workflow in COPILOT_INSTRUCTIONS.md."
