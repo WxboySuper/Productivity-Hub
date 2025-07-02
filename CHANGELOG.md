@@ -7,6 +7,50 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## API Change Summary Requirement
 - For every stable, alpha, or beta release, summarize all API changes (new endpoints, deleted endpoints, changes to endpoints, etc.) in the changelog, even if they were already documented in dev releases. This ensures the release notes provide a complete overview of API evolution for each version.
 
+## [v0.5.0-alpha] - 2025-07-02
+### Added
+- Task, Project, and User Profile CRUD API endpoints with robust validation, error handling, authentication, CSRF protection, timezone handling, and strict project/user ownership validation.
+- Automated test suite covering all endpoints and features, including positive, negative, and edge cases, with authenticated test fixtures and CSRF fully disabled in test mode.
+- Logging throughout all major logic branches, endpoints, and helper functions, with configurable log level via `LOG_LEVEL` environment variable.
+- Documentation for all endpoints, features, and security practices in `docs/API.md`, `docs/architecture.md`, and supporting files.
+- Policy-driven workflow, changelog, and documentation practices as defined in `COPILOT_INSTRUCTIONS.md` and `VERSIONING.md`.
+
+### Changed
+- Refactored user profile update logic for maintainability and reduced complexity.
+- Replaced all deprecated SQLAlchemy `Model.query.get(id)` calls with `db.session.get(Model, id)` for 2.x compatibility.
+- Improved error messages and validation for all endpoints, including granular feedback for invalid input and ownership errors.
+- Enhanced timezone handling and fallback logic for robust datetime support across platforms.
+- Reorganized code and documentation for clarity, maintainability, and policy compliance.
+
+### Fixed
+- Resolved all test failures and warnings, including email validation, CSRF in test mode, and SQLAlchemy deprecation warnings.
+- Fixed zoneinfo timezone error by falling back to 'Etc/UTC' if 'UTC' is not found.
+
+### Security
+- Enforced secure session cookie settings (`SESSION_COOKIE_SECURE`, `SESSION_COOKIE_HTTPONLY`, `SESSION_COOKIE_SAMESITE`).
+- Implemented session-based CSRF protection for all state-changing API requests, with clear documentation and test-mode bypass.
+- Passwords are hashed and validated using best practices; all sensitive operations are logged and validated.
+
+### API Change Summary
+- **Endpoints Added:**
+  - `POST /api/register` — Register a new user
+  - `POST /api/login` — User login
+  - `POST /api/logout` — User logout
+  - `GET /api/profile` — Get current user profile
+  - `PUT /api/profile` — Update user profile (username, email, password)
+  - `GET /api/tasks` — List all tasks for current user
+  - `GET /api/tasks/<task_id>` — Get a specific task
+  - `POST /api/tasks` — Create a new task
+  - `PUT /api/tasks/<task_id>` — Update a task
+  - `DELETE /api/tasks/<task_id>` — Delete a task
+  - `GET /api/projects` — List all projects for current user
+  - `GET /api/projects/<project_id>` — Get a specific project
+  - `POST /api/projects` — Create a new project
+  - `PUT /api/projects/<project_id>` — Update a project
+  - `DELETE /api/projects/<project_id>` — Delete a project
+- **All endpoints require authentication and enforce user/project ownership. State-changing endpoints require a valid CSRF token in production.**
+- **All API changes and features are fully documented in `docs/API.md`.**
+
 ## [v0.5.0-dev13] - 2025-07-02
 - **Automated Test Coverage Complete:** All backend features and endpoints are now covered by automated tests using pytest and Flask's test client. This includes Task, Project, and User Profile CRUD endpoints, authentication, CSRF protection, timezone handling, and project/user ownership validation. Tests include both positive and negative cases, edge cases, and error handling.
 - **Test Data Compliance:** Updated all test data to use valid, non-example.com email domains (e.g., `user@devmail.local`, `task@weatherboysuper.com`) to comply with backend email validation rules. This ensures registration and authentication tests pass and reflect real-world usage.
