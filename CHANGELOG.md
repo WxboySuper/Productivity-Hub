@@ -7,6 +7,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## API Change Summary Requirement
 - For every stable, alpha, or beta release, summarize all API changes (new endpoints, deleted endpoints, changes to endpoints, etc.) in the changelog, even if they were already documented in dev releases. This ensures the release notes provide a complete overview of API evolution for each version.
 
+## [v0.6.0-dev1] - 2025-07-02
+- Updated ROADMAP.md to reflect the addition of the start date feature to the plan
+- Updated ROADMAP.md to reflect that due_date and priority have already been added earlier in development.
+
 ## [v0.5.1-alpha] - 2025-07-02
 ### Added
 - Automated test for `auth_client` fixture moved from `conftest.py` to `test_auth.py` for proper test organization.

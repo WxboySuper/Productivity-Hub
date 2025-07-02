@@ -38,7 +38,8 @@ This roadmap is a step-by-step checklist for building your productivity assistan
 - [x] Create REST API endpoints for User profile
 
 ## v0.6.0-alpha: Task Scheduling Fields
-- [ ] Add due date, priority, and recurrence fields to Task model
+- [x] Add due date and priority fields to Task model
+- [ ] Add start date and recurrence fields to Task model
 
 ## v0.7.0-alpha: API Testing
 - [ ] Write basic tests for API endpoints
