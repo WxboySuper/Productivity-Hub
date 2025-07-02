@@ -80,7 +80,7 @@ def test_csrf_protect_enforced(client):
     })
     # POST without CSRF token (should fail in non-testing mode)
     client.application.config['TESTING'] = False
-    resp = client.post('/api/tasks', json={'title': 'CSRF Test'})
+    resp = client.post('/api/projects', json={'name': 'CSRF Test Project'})
     assert resp.status_code == 403 or resp.status_code == 400 or resp.status_code == 401
     client.application.config['TESTING'] = True
 
@@ -103,7 +103,7 @@ def test_paginate_query_edge_cases(auth_client):
     resp = auth_client.get('/api/projects?page=100&per_page=1')
     assert resp.status_code == 200
     data = resp.get_json()
-    assert data['projects'] == [] or data['projects'] == []
+    assert data['projects'] == []
     # Request per_page over max
     resp = auth_client.get('/api/projects?per_page=999')
     assert resp.status_code == 200

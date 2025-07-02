@@ -66,4 +66,4 @@ def test_auth_client_fixture_works(auth_client):
     resp = auth_client.get('/api/profile')
     assert resp.status_code == 200
     data = resp.get_json()
-    assert data['username'] == 'taskuser' or data['username'] == 'projuser' or data['username'] == 'authtestuser'
+    assert data['username'] == 'authtestuser'

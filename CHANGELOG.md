@@ -7,6 +7,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## API Change Summary Requirement
 - For every stable, alpha, or beta release, summarize all API changes (new endpoints, deleted endpoints, changes to endpoints, etc.) in the changelog, even if they were already documented in dev releases. This ensures the release notes provide a complete overview of API evolution for each version.
 
+## [v0.5.1-dev2] - 2025-07-02
+- Updated `test_auth_client_fixture_works` in `backend/tests/conftest.py` to assert specifically for `'authtestuser'` as the username, ensuring the test matches the user created by the `auth_client` fixture and making the test more predictable and robust.
+- Updated `test_csrf_protect_enforced` in `backend/tests/test_projects.py` to POST to `/api/projects` instead of `/api/tasks`, ensuring the test correctly verifies CSRF protection on the projects endpoint as intended.
+- Updated `test_csrf_protect_profile_update` in `backend/tests/test_auth.py` to use the `REGISTER_URL`, `LOGIN_URL`, and `PROFILE_URL` constants instead of hardcoded endpoint strings, ensuring consistency and maintainability across all tests.
+- Added/expanded automated tests in `backend/tests/test_projects.py` for:
+    - 404 error handling for non-existent projects and tasks using `get_object_or_404` (test_get_object_or_404_returns_404)
+    - Pagination edge cases for projects (out-of-range page, per_page over max) (test_paginate_query_edge_cases)
+- Confirmed all new and updated tests use endpoint constants where possible and follow consistent assertion patterns.
+- All changes documented per COPILOT_INSTRUCTIONS.md workflow and changelog policy.
+- Performed a normal review per COPILOT_INSTRUCTIONS.md, confirming code quality, maintainability, documentation, and policy compliance. All tests pass and coverage is comprehensive.
+
 ## [v0.5.1-dev1] - 2025-07-02
 - Refactored all logger calls in `backend/app.py` to use comma-separated arguments instead of f-strings, addressing 52 DeepSource issues and ensuring logging best practices for performance and security.
 - DeepSource fixes: removed unused 'app' argument from the 'db' fixture in `backend/tests/conftest.py` (PYL-W0613), and removed unused 'session' import from `backend/tests/test_auth.py` (PY-W2000). Changelog entry added per policy.

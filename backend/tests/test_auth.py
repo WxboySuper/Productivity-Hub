@@ -99,16 +99,16 @@ def test_profile_success(client):
 # Additional test for CSRF protection on profile update
 @pytest.mark.usefixtures('client', 'db')
 def test_csrf_protect_profile_update(client):
-    client.post('/api/register', json={
+    client.post(REGISTER_URL, json={
         'username': 'csrfprofile',
         'email': 'csrfprofile@weatherboysuper.com',
         'password': 'StrongPass1!'
     })
-    client.post('/api/login', json={
+    client.post(LOGIN_URL, json={
         'username': 'csrfprofile',
         'password': 'StrongPass1!'
     })
     client.application.config['TESTING'] = False
-    resp = client.put('/api/profile', json={'username': 'newname'})
+    resp = client.put(PROFILE_URL, json={'username': 'newname'})
     assert resp.status_code == 403 or resp.status_code == 400 or resp.status_code == 401
     client.application.config['TESTING'] = True
