@@ -66,3 +66,24 @@ def test_delete_task(auth_client):
     # Confirm deletion
     resp = auth_client.get(f'{TASKS_URL}/{task_id}')
     assert resp.status_code == 404
+
+@pytest.mark.usefixtures('auth_client')
+def test_get_object_or_404_task_404(auth_client):
+    resp = auth_client.get('/api/tasks/99999')
+    assert resp.status_code == 404
+    assert 'error' in resp.get_json()
+
+@pytest.mark.usefixtures('auth_client')
+def test_paginate_query_tasks_edge_cases(auth_client):
+    # Create 1 task
+    auth_client.post('/api/tasks', json={'title': 'Paginate Task', 'priority': 1})
+    # Request page out of range
+    resp = auth_client.get('/api/tasks?page=100&per_page=1')
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data['tasks'] == [] or data['tasks'] == []
+    # Request per_page over max
+    resp = auth_client.get('/api/tasks?per_page=999')
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data['per_page'] <= 100

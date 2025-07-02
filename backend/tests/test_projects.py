@@ -65,3 +65,47 @@ def test_delete_project(auth_client):
     # Confirm deletion
     resp = auth_client.get(f'{PROJECTS_URL}/{project_id}')
     assert resp.status_code == 404
+
+@pytest.mark.usefixtures('client', 'db')
+def test_csrf_protect_enforced(client):
+    # Register and login
+    client.post('/api/register', json={
+        'username': 'csrfuser',
+        'email': 'csrf@weatherboysuper.com',
+        'password': 'StrongPass1!'
+    })
+    client.post('/api/login', json={
+        'username': 'csrfuser',
+        'password': 'StrongPass1!'
+    })
+    # POST without CSRF token (should fail in non-testing mode)
+    client.application.config['TESTING'] = False
+    resp = client.post('/api/tasks', json={'title': 'CSRF Test'})
+    assert resp.status_code == 403 or resp.status_code == 400 or resp.status_code == 401
+    client.application.config['TESTING'] = True
+
+@pytest.mark.usefixtures('auth_client')
+def test_get_object_or_404_returns_404(auth_client):
+    # Try to get a non-existent project
+    resp = auth_client.get('/api/projects/99999')
+    assert resp.status_code == 404
+    assert 'error' in resp.get_json()
+    # Try to get a non-existent task
+    resp = auth_client.get('/api/tasks/99999')
+    assert resp.status_code == 404
+    assert 'error' in resp.get_json()
+
+@pytest.mark.usefixtures('auth_client')
+def test_paginate_query_edge_cases(auth_client):
+    # Create 1 project
+    auth_client.post('/api/projects', json={'name': 'Paginate Project'})
+    # Request page out of range
+    resp = auth_client.get('/api/projects?page=100&per_page=1')
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data['projects'] == [] or data['projects'] == []
+    # Request per_page over max
+    resp = auth_client.get('/api/projects?per_page=999')
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data['per_page'] <= 100

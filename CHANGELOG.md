@@ -1,4 +1,4 @@
-# Changelog
+## Changelog
 
 All notable changes to this project will be documented in this file.
 
@@ -6,6 +6,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## API Change Summary Requirement
 - For every stable, alpha, or beta release, summarize all API changes (new endpoints, deleted endpoints, changes to endpoints, etc.) in the changelog, even if they were already documented in dev releases. This ensures the release notes provide a complete overview of API evolution for each version.
+
+## [v0.5.1-dev1] - 2025-07-02
+- Refactored all logger calls in `backend/app.py` to use comma-separated arguments instead of f-strings, addressing 52 DeepSource issues and ensuring logging best practices for performance and security.
+- DeepSource fixes: removed unused 'app' argument from the 'db' fixture in `backend/tests/conftest.py` (PYL-W0613), and removed unused 'session' import from `backend/tests/test_auth.py` (PY-W2000). Changelog entry added per policy.
+- Refactored `update_profile` and `update_task` endpoints in `backend/app.py` to reduce cyclomatic complexity (from 18 and 16, respectively) by extracting field update logic into helper functions and using a loop-based approach. This improves maintainability, clarity, and policy compliance while preserving all validation, logging, and security checks.
+- Further refactored `backend/app.py` to extract repeated validation and update logic for user and task fields into new global helper functions: `validate_and_update_username`, `validate_and_update_email`, `validate_and_update_password`, `validate_and_update_task_title`, `validate_and_update_task_priority`, `validate_and_update_task_due_date`, `validate_and_update_task_project`, and `error_response`. These helpers centralize validation, error handling, and update logic for user profile and task endpoints. All nested helpers were removed from `update_profile` and `update_task`, which now call these global helpers directly. This reduces cyclomatic complexity, ensures consistent validation and error responses, and improves maintainability and testability across the codebase.
+- Re-added `csrf_protect` Flask before_request handler with a descriptive docstring and centralized error handling using `error_response`.
+- Added `get_object_or_404` helper for DRY object lookup and error handling for 404s, with a descriptive docstring.
+- Added `paginate_query` helper for DRY pagination and serialization of query results, with a descriptive docstring.
+- Refactored all endpoints to use `error_response` for error handling instead of manual `jsonify` error responses.
+- Refactored all object lookup (task/project by id) to use `get_object_or_404` for consistency and maintainability.
+- Refactored all paginated endpoints to use `paginate_query` for DRY pagination logic.
+- Ensured all helper functions, including new and existing ones, have clear, descriptive docstrings.
+- Improved maintainability and reduced code duplication across the backend by centralizing repeated logic into helpers.
+- Ensured CSRF protection is enforced and errors are handled consistently via the helper.
+- Fixed inconsistent error handling and object lookup throughout the backend.
+- Updated and expanded docstrings for all helpers and new utility functions.
+- Documented all changes in this changelog entry as per COPILOT_INSTRUCTIONS.md.
+- **Added new automated tests:**
+    - CSRF protection enforcement for tasks and profile update endpoints.
+    - 404 error handling for non-existent tasks and projects via `get_object_or_404`.
+    - Pagination edge cases for tasks and projects (out-of-range page, per_page over max).
+    - Test to ensure the `auth_client` fixture provides a valid authenticated session.
 
 ## [v0.5.0-alpha] - 2025-07-02
 ### Added
@@ -109,7 +132,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Removed all inline comments from the JSON example in the Create Task endpoint in docs/API.md to ensure valid JSON.
 - Added field explanations as plain text below the code block for clarity and maintainability, per documentation policy in COPILOT_INSTRUCTIONS.md.
 - Updated the Task DELETE endpoint documentation in docs/API.md to specify that a successful deletion returns 200 OK with a JSON message, matching the backend implementation. This avoids client confusion and ensures the documentation accurately reflects API behavior.
-- Consolidated and clarified the CSRF protection documentation in docs/architecture.md, removing contradictory statements and ensuring a single, authoritative description of the current CSRF implementation. This improves accuracy and avoids reader confusion, per documentation policy in COPILOT_INSTRUCTIONS.md.
+- Consolidated and clarified the CSRF protection documentation in docs/architecture.md, removing contradictory statements and ensuring a single, authoritative description of the current CSRF implementation. This improves accuracy and avoids reader confusion, per documentation policy.
 - Replaced the API change summary paragraph in COPILOT_INSTRUCTIONS.md changelog policy with a brief reference to VERSIONING.md, ensuring a single authoritative source and eliminating redundancy, per documentation policy.
 - Updated the documentation policy in COPILOT_INSTRUCTIONS.md to reference the correct path 'docs/API.md' (instead of 'API.md') in both locations, ensuring clarity and preventing broken links, per documentation policy.
 - Updated the production environment check in backend/app.py to trigger the security warning only if FLASK_ENV or ENVIRONMENT is explicitly set to 'production', ensuring the warning appears only in true production environments. This improves deployment clarity and aligns with best practices in COPILOT_INSTRUCTIONS.md.

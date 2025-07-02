@@ -19,7 +19,7 @@ logging.basicConfig(
     format='%(asctime)s %(levelname)s %(threadName)s : %(message)s'
 )
 logger = logging.getLogger(__name__)
-logger.info(f"Logging configured at level: {LOG_LEVEL}")
+logger.info("Logging configured at level: %s", LOG_LEVEL)
 
 logger.info("Starting Productivity Hub Backend...")
 logger.info("Logging is configured.")
@@ -83,11 +83,15 @@ class Project(db.Model):
 
 # Helper Functions
 def init_db():
-    """Initialize the database."""
+    """
+    Initialize the database tables for the Flask app.
+    Should be called within an app context.
+    """
     logger.info("Initializing the database.")
     with app.app_context():
         db.create_all()
     logger.info("Database tables created.")
+
 
 def is_strong_password(password):
     """
@@ -119,29 +123,31 @@ def is_strong_password(password):
     logger.debug("Password is strong.")
     return True
 
+
 def get_current_user():
     """
     Retrieve the current user from the session.
     Returns the User object if logged in, else None. Logs user lookup events.
     """
     user_id = session.get('user_id')
-    logger.debug(f"Fetching current user from session: user_id={user_id}")
+    logger.debug("Fetching current user from session: user_id=%s", user_id)
     if user_id:
         user = db.session.get(User, user_id)
         if user:
-            logger.info(f"Current user found: {user.username} (ID: {user.id})")
+            logger.info("Current user found: %s (ID: %s)", user.username, user.id)
         else:
-            logger.warning(f"User ID {user_id} not found in database.")
+            logger.warning("User ID %s not found in database.", user_id)
         return user
     logger.info("No user_id in session.")
     return None
+
 
 def serialize_task(task):
     """
     Serialize a Task SQLAlchemy object to a dictionary for API responses.
     Converts datetime fields to ISO 8601 strings. Logs serialization event.
     """
-    logger.debug(f"Serializing task: {task.id}")
+    logger.debug("Serializing task: %s", task.id)
     return {
         "id": task.id,
         "title": task.title,
@@ -154,12 +160,13 @@ def serialize_task(task):
         "updated_at": task.updated_at.isoformat() if task.updated_at else None,
     }
 
+
 def serialize_project(project):
     """
     Serialize a Project SQLAlchemy object to a dictionary for API responses.
     Converts datetime fields to ISO 8601 strings. Logs serialization event.
     """
-    logger.debug(f"Serializing project: {project.id}")
+    logger.debug("Serializing project: %s", project.id)
     return {
         "id": project.id,
         "name": project.name,
@@ -169,9 +176,12 @@ def serialize_project(project):
         "updated_at": project.updated_at.isoformat() if project.updated_at else None,
     }
 
-# Decorator Functions
+
 def login_required(f):
-    """Decorator to ensure the user is logged in."""
+    """
+    Decorator to ensure the user is logged in before accessing the endpoint.
+    Returns 401 if not authenticated. Logs access attempts.
+    """
     @wraps(f)
     def decorated_function(*args, **kwargs):
         logger.debug("Checking if user is logged in.")
@@ -182,16 +192,30 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# CSRF Protection for API (state-changing requests)
-@app.before_request
+
+def generate_csrf_token():
+    """
+    Generate a CSRF token and store it in the session if not present.
+    Returns the CSRF token string.
+    """
+    if "_csrf_token" not in session:
+        logger.info("Generating new CSRF token.")
+        session["_csrf_token"] = secrets.token_hex(16)
+    return session["_csrf_token"]
+
+
 def csrf_protect():
+    """
+    Flask before_request handler to enforce CSRF protection on state-changing requests.
+    - Skips protection in testing mode and for login/register endpoints.
+    - Checks for a valid CSRF token in session and headers.
+    Returns a JSON error response if the token is missing or invalid.
+    """
     if app.config.get('TESTING', False):
-        # Disable CSRF protection in test mode
         logger.debug("CSRF protection is disabled in TESTING mode.")
         return
     if request.method in ("POST", "PUT", "DELETE"):
-        logger.debug(f"CSRF protection check for endpoint: {request.endpoint}")
-        # Exclude login and register endpoints from CSRF for demonstration
+        logger.debug("CSRF protection check for endpoint: %s", request.endpoint)
         if request.endpoint in ("login", "register"):
             logger.debug("CSRF check skipped for login/register endpoint.")
             return
@@ -199,15 +223,9 @@ def csrf_protect():
         header_token = request.headers.get("X-CSRF-Token")
         if not token or token != header_token:
             logger.warning("CSRF token missing or invalid.")
-            return jsonify({"error": "Invalid or missing CSRF token"}), 403
+            return error_response("Invalid or missing CSRF token", 403)
 
-def generate_csrf_token():
-    if "_csrf_token" not in session:
-        logger.info("Generating new CSRF token.")
-        session["_csrf_token"] = secrets.token_hex(16)
-    return session["_csrf_token"]
-
-app.jinja_env.globals["csrf_token"] = generate_csrf_token
+app.before_request(csrf_protect)
 
 # Helper for configurable timezone
 DEFAULT_TIMEZONE = os.environ.get("DEFAULT_TIMEZONE", "UTC")
@@ -220,13 +238,184 @@ try:
 except Exception:
     local_tz = None
 
+
 def parse_local_datetime(dt_str):
-    logger.debug(f"Parsing datetime string: {dt_str}")
+    """
+    Parse an ISO 8601 datetime string, applying the configured timezone if missing.
+    Returns a timezone-aware datetime object. Logs parsing events.
+    """
+    logger.debug("Parsing datetime string: %s", dt_str)
     dt = datetime.fromisoformat(dt_str)
     if dt.tzinfo is None and local_tz:
         dt = dt.replace(tzinfo=local_tz)
-    logger.debug(f"Parsed datetime: {dt}")
+    logger.debug("Parsed datetime: %s", dt)
     return dt
+
+# --- Global Helper Functions for Validation and Updates ---
+def validate_and_update_username(user, username):
+    """
+    Validate and update a user's username.
+    - Ensures the username is not empty and is unique.
+    - Updates the user object if valid and changed.
+    Returns True if updated, False if unchanged, or (jsonify, code) tuple on error.
+    """
+    logger.debug("Validating and updating username.")
+    if not username or not username.strip():
+        return error_response("Username is required and cannot be empty.", 400)
+    if username != user.username:
+        if User.query.filter_by(username=username).first():
+            return error_response("Username already exists.", 400)
+        logger.info("Username updated from %s to %s.", user.username, username.strip())
+        user.username = username.strip()
+        return True
+    logger.debug("Username unchanged.")
+    return False
+
+
+def validate_and_update_email(user, email):
+    """
+    Validate and update a user's email address.
+    - Ensures the email is not empty, valid, and unique.
+    - Updates the user object if valid and changed.
+    Returns True if updated, False if unchanged, or (jsonify, code) tuple on error.
+    """
+    logger.debug("Validating and updating email.")
+    if not email or not email.strip():
+        return error_response("Email is required and cannot be empty.", 400)
+    try:
+        validate_email(email)
+    except EmailNotValidError as e:
+        return error_response(str(e), 400)
+    if email != user.email:
+        if User.query.filter_by(email=email).first():
+            return error_response("Email already exists.", 400)
+        logger.info("Email updated from %s to %s.", user.email, email.strip())
+        user.email = email.strip()
+        return True
+    logger.debug("Email unchanged.")
+    return False
+
+
+def validate_and_update_password(user, password):
+    """
+    Validate and update a user's password.
+    - Ensures the password is not empty and meets strength requirements.
+    - Updates the user object if valid.
+    Returns True if updated, or (jsonify, code) tuple on error.
+    """
+    logger.debug("Validating and updating password.")
+    if not password or not password.strip():
+        return error_response("Password is required and cannot be empty.", 400)
+    if not is_strong_password(password):
+        return error_response("Password must be at least 8 characters long and include uppercase, lowercase, numbers, and special characters.", 400)
+    logger.info("Password updated for user: %s (ID: %s)", user.username, user.id)
+    user.set_password(password)
+    return True
+
+
+def validate_and_update_task_title(task, title):
+    """
+    Validate and update a task's title.
+    - Ensures the title is not empty.
+    - Updates the task object if valid.
+    Returns True if updated, or (jsonify, code) tuple on error.
+    """
+    if not title or not title.strip():
+        return error_response("Title is required and cannot be empty.", 400)
+    logger.info("Updating title for task_id=%s", task.id)
+    task.title = title.strip()
+    return True
+
+
+def validate_and_update_task_priority(task, priority):
+    """
+    Validate and update a task's priority.
+    - Ensures the priority is an integer between 0 and 3.
+    - Updates the task object if valid.
+    Returns True if updated, or (jsonify, code) tuple on error.
+    """
+    if not isinstance(priority, int) or not (0 <= priority <= 3):
+        return error_response("Priority must be an integer between 0 and 3.", 400)
+    logger.info("Updating priority for task_id=%s", task.id)
+    task.priority = priority
+    return True
+
+
+def validate_and_update_task_due_date(task, due_date_str):
+    """
+    Validate and update a task's due date.
+    - Parses the due date string as ISO 8601, applies timezone if missing.
+    - Updates the task object if valid, or clears if empty.
+    Returns True if updated, or (jsonify, code) tuple on error.
+    """
+    if due_date_str:
+        try:
+            task.due_date = parse_local_datetime(due_date_str)
+        except Exception:
+            return error_response("Invalid due_date format. Use ISO 8601 with or without timezone.", 400)
+    else:
+        logger.info("Clearing due_date for task_id=%s", task.id)
+        task.due_date = None
+    return True
+
+
+def validate_and_update_task_project(task, user, project_id):
+    """
+    Validate and update a task's project assignment.
+    - Ensures the project exists and is owned by the user, or clears if None.
+    - Updates the task object if valid.
+    Returns True if updated, or (jsonify, code) tuple on error.
+    """
+    if project_id is not None:
+        project = Project.query.filter_by(id=project_id, user_id=user.id).first()
+        if not project:
+            return error_response("Project not found or does not belong to the current user.", 404)
+        logger.info("Updating project_id for task_id=%s", task.id)
+        task.project_id = project_id
+    else:
+        logger.info("Clearing project_id for task_id=%s", task.id)
+        task.project_id = None
+    return True
+
+
+def error_response(message, code):
+    """
+    Return a JSON error response with logging.
+    - Logs the error message.
+    - Returns a tuple (jsonify, code) for Flask endpoints.
+    """
+    logger.error(message)
+    return jsonify({"error": message}), code
+
+
+def get_object_or_404(model, object_id, user_id=None):
+    """
+    Retrieve a SQLAlchemy model instance by id (and user_id if provided).
+    Returns the object if found, or a JSON error response with 404 if not found.
+    """
+    query = model.query.filter_by(id=object_id)
+    if user_id is not None and hasattr(model, 'user_id'):
+        query = query.filter_by(user_id=user_id)
+    obj = query.first()
+    if not obj:
+        return error_response(f"{model.__name__} not found", 404)
+    return obj
+
+
+def paginate_query(query, page, per_page, serializer):
+    """
+    Paginate a SQLAlchemy query and serialize the results.
+    Returns a dict with items, total, pages, current_page, and per_page.
+    """
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+    items = [serializer(item) for item in pagination.items]
+    return {
+        "items": items,
+        "total": pagination.total,
+        "pages": pagination.pages,
+        "current_page": pagination.page,
+        "per_page": pagination.per_page
+    }
 
 # Route Definitions
 @app.route('/')
@@ -346,7 +535,7 @@ def get_profile():
     """Get the current user's profile."""
     logger.info("Profile GET endpoint accessed.")
     user = get_current_user()
-    logger.info(f"Returning profile for user: {user.username} (ID: {user.id})")
+    logger.info("Returning profile for user: %s (ID: %s)", user.username, user.id)
     return jsonify({
         "id": user.id,
         "username": user.username,
@@ -362,74 +551,29 @@ def update_profile():
     data = request.get_json()
     updated = False
 
-    # Helper functions for field updates
-    def update_username(username):
-        logger.debug("Attempting to update username.")
-        if not username or not username.strip():
-            logger.error("Username update failed: empty value.")
-            return {"error": "Username is required and cannot be empty."}, 400
-        if username != user.username:
-            if User.query.filter_by(username=username).first():
-                logger.error("Username update failed: username already exists.")
-                return {"error": "Username already exists."}, 400
-            logger.info(f"Username updated from {user.username} to {username.strip()}.")
-            user.username = username.strip()
-            return True
-        logger.debug("Username unchanged.")
-        return False
-
-    def update_email(email):
-        logger.debug("Attempting to update email.")
-        if not email or not email.strip():
-            logger.error("Email update failed: empty value.")
-            return {"error": "Email is required and cannot be empty."}, 400
-        try:
-            validate_email(email)
-        except EmailNotValidError as e:
-            logger.error(f"Email update failed: {e}")
-            return {"error": str(e)}, 400
-        if email != user.email:
-            if User.query.filter_by(email=email).first():
-                logger.error("Email update failed: email already exists.")
-                return {"error": "Email already exists."}, 400
-            logger.info(f"Email updated from {user.email} to {email.strip()}.")
-            user.email = email.strip()
-            return True
-        logger.debug("Email unchanged.")
-        return False
-
-    def update_password(password):
-        logger.debug("Attempting to update password.")
-        if not password or not password.strip():
-            logger.error("Password update failed: empty value.")
-            return {"error": "Password is required and cannot be empty."}, 400
-        if not is_strong_password(password):
-            logger.error("Password update failed: weak password.")
-            return {"error": "Password must be at least 8 characters long and include uppercase, lowercase, numbers, and special characters."}, 400
-        logger.info(f"Password updated for user: {user.username} (ID: {user.id})")
-        user.set_password(password)
-        return True
-
-    # Process updates
-    for field, updater in [
-        ("username", update_username),
-        ("email", update_email),
-        ("password", update_password)
-    ]:
-        if field in data:
-            logger.debug(f"Processing profile field update: {field}")
-            result = updater(data[field])
-            if isinstance(result, tuple):
-                logger.error(f"Profile update failed for field '{field}': {result[0]['error']}")
-                return jsonify(result[0]), result[1]
-            if result:
-                updated = True
+    if "username" in data:
+        result = validate_and_update_username(user, data["username"])
+        if isinstance(result, tuple):
+            return result
+        if result:
+            updated = True
+    if "email" in data:
+        result = validate_and_update_email(user, data["email"])
+        if isinstance(result, tuple):
+            return result
+        if result:
+            updated = True
+    if "password" in data:
+        result = validate_and_update_password(user, data["password"])
+        if isinstance(result, tuple):
+            return result
+        if result:
+            updated = True
 
     if not updated:
-        logger.error("Profile update failed: No valid fields to update.")
-        return jsonify({"error": "No valid fields to update."}), 400
+        return error_response("No valid fields to update.", 400)
     db.session.commit()
-    logger.info(f"Profile updated successfully for user: {user.username} (ID: {user.id})")
+    logger.info("Profile updated successfully for user: %s (ID: %s)", user.username, user.id)
     return jsonify({"message": "Profile updated successfully."}), 200
 
 # Routes for Task Management
@@ -444,31 +588,29 @@ def get_tasks():
         per_page = int(request.args.get('per_page', 20))
     except ValueError:
         logger.warning("Invalid pagination parameters for tasks GET.")
-        return jsonify({"error": "Invalid pagination parameters."}), 400
-    per_page = max(1, min(per_page, 100))  # Limit per_page to 1-100
-    logger.debug(f"Paginating tasks: page={page}, per_page={per_page}")
-    pagination = Task.query.filter_by(user_id=user.id).order_by(Task.id.desc()).paginate(page=page, per_page=per_page, error_out=False)
-    tasks = [serialize_task(task) for task in pagination.items]
-    logger.info(f"Returning {len(tasks)} tasks for user: {user.username} (ID: {user.id})")
+        return error_response("Invalid pagination parameters.", 400)
+    per_page = max(1, min(per_page, 100))
+    logger.debug("Paginating tasks: page=%s, per_page=%s", page, per_page)
+    result = paginate_query(Task.query.filter_by(user_id=user.id).order_by(Task.id.desc()), page, per_page, serialize_task)
+    logger.info("Returning %s tasks for user: %s (ID: %s)", len(result['items']), user.username, user.id)
     return jsonify({
-        "tasks": tasks,
-        "total": pagination.total,
-        "pages": pagination.pages,
-        "current_page": pagination.page,
-        "per_page": pagination.per_page
+        "tasks": result['items'],
+        "total": result['total'],
+        "pages": result['pages'],
+        "current_page": result['current_page'],
+        "per_page": result['per_page']
     }), 200
 
 @app.route('/api/tasks/<int:task_id>', methods=['GET'])
 @login_required
 def get_task(task_id):
     """Get a specific task by ID."""
-    logger.info(f"Task GET endpoint accessed for task_id={task_id}")
+    logger.info("Task GET endpoint accessed for task_id=%s", task_id)
     user = get_current_user()
-    task = Task.query.filter_by(id=task_id, user_id=user.id).first()
-    if not task:
-        logger.error(f"Task not found: task_id={task_id} for user: {user.username} (ID: {user.id})")
-        return jsonify({"error": "Task not found"}), 404
-    logger.info(f"Returning task: {task.id} for user: {user.username} (ID: {user.id})")
+    task = get_object_or_404(Task, task_id, user.id)
+    if isinstance(task, tuple):
+        return task
+    logger.info("Returning task: %s for user: %s (ID: %s)", task.id, user.username, user.id)
     return jsonify(serialize_task(task)), 200
 
 @app.route('/api/tasks', methods=['POST'])
@@ -482,13 +624,13 @@ def create_task():
 
     if not title or not title.strip():
         logger.error("Task creation failed: Title is required and cannot be empty.")
-        return jsonify({"error": "Title is required and cannot be empty."}), 400
+        return error_response("Title is required and cannot be empty.", 400)
 
     # Validate and parse priority
     priority = data.get('priority', 1)
     if not isinstance(priority, int) or not (0 <= priority <= 3):
         logger.error("Task creation failed: Invalid priority value.")
-        return jsonify({"error": "Priority must be an integer between 0 and 3."}), 400
+        return error_response("Priority must be an integer between 0 and 3.", 400)
 
     # Parse due_date if provided
     due_date = None
@@ -498,15 +640,15 @@ def create_task():
             due_date = parse_local_datetime(due_date_str)
         except Exception:
             logger.error("Task creation failed: Invalid due_date format.")
-            return jsonify({"error": "Invalid due_date format. Use ISO 8601 with or without timezone."}), 400
+            return error_response("Invalid due_date format. Use ISO 8601 with or without timezone.", 400)
 
     # Validate and check project ownership if project_id is provided
     project_id = data.get('project_id')
     if project_id is not None:
         project = Project.query.filter_by(id=project_id, user_id=user.id).first()
         if not project:
-            logger.error(f"Task creation failed: Project not found or not owned by user. project_id={project_id}")
-            return jsonify({"error": "Project not found or does not belong to the current user."}), 404
+            logger.error("Task creation failed: Project not found or not owned by user. project_id=%s", project_id)
+            return error_response("Project not found or does not belong to the current user.", 404)
 
     task = Task(
         title=title.strip(),
@@ -520,85 +662,64 @@ def create_task():
 
     db.session.add(task)
     db.session.commit()
-    logger.info(f"Task created successfully: task_id={task.id} for user: {user.username} (ID: {user.id})")
+    logger.info("Task created successfully: task_id=%s for user: %s (ID: %s)", task.id, user.username, user.id)
     return jsonify(serialize_task(task)), 201
 
 @app.route('/api/tasks/<int:task_id>', methods=['PUT'])
 @login_required
 def update_task(task_id):
     """Update an existing task."""
-    logger.info(f"Task PUT endpoint accessed for task_id={task_id}")
+    logger.info("Task PUT endpoint accessed for task_id=%s", task_id)
     user = get_current_user()
     task = Task.query.filter_by(id=task_id, user_id=user.id).first()
 
     if not task:
-        logger.error(f"Task update failed: Task not found. task_id={task_id}")
-        return jsonify({"error": "Task not found"}), 404
+        return error_response("Task not found", 404)
 
     data = request.get_json()
 
-    if 'title' in data:
-        if not data['title'] or not data['title'].strip():
-            logger.error("Task update failed: Title is required and cannot be empty.")
-            return jsonify({"error": "Title is required and cannot be empty."}), 400
-        logger.info(f"Updating title for task_id={task_id}")
-        task.title = data['title'].strip()
-    if 'description' in data:
-        logger.info(f"Updating description for task_id={task_id}")
-        task.description = data['description']
-    if 'due_date' in data:
-        due_date_str = data['due_date']
-        if due_date_str:
-            try:
-                task.due_date = parse_local_datetime(due_date_str)
-            except Exception:
-                logger.error("Task update failed: Invalid due_date format.")
-                return jsonify({"error": "Invalid due_date format. Use ISO 8601 with or without timezone."}), 400
-        else:
-            logger.info(f"Clearing due_date for task_id={task_id}")
-            task.due_date = None
-    if 'priority' in data:
-        priority = data['priority']
-        if not isinstance(priority, int) or not (0 <= priority <= 3):
-            logger.error("Task update failed: Invalid priority value.")
-            return jsonify({"error": "Priority must be an integer between 0 and 3."}), 400
-        logger.info(f"Updating priority for task_id={task_id}")
-        task.priority = priority
-    if 'completed' in data:
-        logger.info(f"Updating completed status for task_id={task_id}")
-        task.completed = data['completed']
-    if 'project_id' in data:
-        project_id = data['project_id']
-        if project_id is not None:
-            project = Project.query.filter_by(id=project_id, user_id=user.id).first()
-            if not project:
-                logger.error(f"Task update failed: Project not found or not owned by user. project_id={project_id}")
-                return jsonify({"error": "Project not found or does not belong to the current user."}), 404
-            logger.info(f"Updating project_id for task_id={task_id}")
-            task.project_id = project_id
-        else:
-            logger.info(f"Clearing project_id for task_id={task_id}")
-            task.project_id = None
+    if "title" in data:
+        result = validate_and_update_task_title(task, data["title"])
+        if isinstance(result, tuple):
+            return result
+    if "description" in data:
+        logger.info("Updating description for task_id=%s", task.id)
+        task.description = data["description"]
+    if "due_date" in data:
+        result = validate_and_update_task_due_date(task, data["due_date"])
+        if isinstance(result, tuple):
+            return result
+    if "priority" in data:
+        result = validate_and_update_task_priority(task, data["priority"])
+        if isinstance(result, tuple):
+            return result
+    if "completed" in data:
+        logger.info("Updating completed status for task_id=%s", task.id)
+        task.completed = data["completed"]
+    if "project_id" in data:
+        result = validate_and_update_task_project(task, user, data["project_id"])
+        if isinstance(result, tuple):
+            return result
 
     db.session.commit()
-    logger.info(f"Task updated successfully: task_id={task_id}")
+    logger.info("Task updated successfully: task_id=%s", task_id)
     return jsonify(serialize_task(task)), 200
 
 @app.route('/api/tasks/<int:task_id>', methods=['DELETE'])
 @login_required
 def delete_task(task_id):
     """Delete a task."""
-    logger.info(f"Task DELETE endpoint accessed for task_id={task_id}")
+    logger.info("Task DELETE endpoint accessed for task_id=%s", task_id)
     user = get_current_user()
     task = Task.query.filter_by(id=task_id, user_id=user.id).first()
 
     if not task:
-        logger.error(f"Task deletion failed: Task not found. task_id={task_id}")
+        logger.error("Task deletion failed: Task not found. task_id=%s", task_id)
         return jsonify({"error": "Task not found"}), 404
 
     db.session.delete(task)
     db.session.commit()
-    logger.info(f"Task deleted successfully: task_id={task_id}")
+    logger.info("Task deleted successfully: task_id=%s", task_id)
     return jsonify({"message": "Task deleted successfully"}), 200
 
 # Routes for Project Management
@@ -613,31 +734,29 @@ def get_projects():
         per_page = int(request.args.get('per_page', 20))
     except ValueError:
         logger.warning("Invalid pagination parameters for projects GET.")
-        return jsonify({"error": "Invalid pagination parameters."}), 400
+        return error_response("Invalid pagination parameters.", 400)
     per_page = max(1, min(per_page, 100))
-    logger.debug(f"Paginating projects: page={page}, per_page={per_page}")
-    pagination = Project.query.filter_by(user_id=user.id).order_by(Project.id.desc()).paginate(page=page, per_page=per_page, error_out=False)
-    projects = [serialize_project(project) for project in pagination.items]
-    logger.info(f"Returning {len(projects)} projects for user: {user.username} (ID: {user.id})")
+    logger.debug("Paginating projects: page=%s, per_page=%s", page, per_page)
+    result = paginate_query(Project.query.filter_by(user_id=user.id).order_by(Project.id.desc()), page, per_page, serialize_project)
+    logger.info("Returning %s projects for user: %s (ID: %s)", len(result['items']), user.username, user.id)
     return jsonify({
-        "projects": projects,
-        "total": pagination.total,
-        "pages": pagination.pages,
-        "current_page": pagination.page,
-        "per_page": pagination.per_page
+        "projects": result['items'],
+        "total": result['total'],
+        "pages": result['pages'],
+        "current_page": result['current_page'],
+        "per_page": result['per_page']
     }), 200
 
 @app.route('/api/projects/<int:project_id>', methods=['GET'])
 @login_required
 def get_project(project_id):
     """Get a specific project by ID."""
-    logger.info(f"Project GET endpoint accessed for project_id={project_id}")
+    logger.info("Project GET endpoint accessed for project_id=%s", project_id)
     user = get_current_user()
-    project = Project.query.filter_by(id=project_id, user_id=user.id).first()
-    if not project:
-        logger.error(f"Project not found: project_id={project_id} for user: {user.username} (ID: {user.id})")
-        return jsonify({"error": "Project not found"}), 404
-    logger.info(f"Returning project: {project.id} for user: {user.username} (ID: {user.id})")
+    project = get_object_or_404(Project, project_id, user.id)
+    if isinstance(project, tuple):
+        return project
+    logger.info("Returning project: %s for user: %s (ID: %s)", project.id, user.username, user.id)
     return jsonify(serialize_project(project)), 200
 
 @app.route('/api/projects', methods=['POST'])
@@ -650,7 +769,7 @@ def create_project():
     name = data.get('name')
     if not name or not name.strip():
         logger.error("Project creation failed: Name is required and cannot be empty.")
-        return jsonify({"error": "Name is required and cannot be empty."}), 400
+        return error_response("Name is required and cannot be empty.", 400)
     project = Project(
         name=name.strip(),
         description=data.get('description'),
@@ -658,46 +777,44 @@ def create_project():
     )
     db.session.add(project)
     db.session.commit()
-    logger.info(f"Project created successfully: project_id={project.id} for user: {user.username} (ID: {user.id})")
+    logger.info("Project created successfully: project_id=%s for user: %s (ID: %s)", project.id, user.username, user.id)
     return jsonify(serialize_project(project)), 201
 
 @app.route('/api/projects/<int:project_id>', methods=['PUT'])
 @login_required
 def update_project(project_id):
     """Update an existing project."""
-    logger.info(f"Project PUT endpoint accessed for project_id={project_id}")
+    logger.info("Project PUT endpoint accessed for project_id=%s", project_id)
     user = get_current_user()
-    project = Project.query.filter_by(id=project_id, user_id=user.id).first()
-    if not project:
-        logger.error(f"Project update failed: Project not found. project_id={project_id}")
-        return jsonify({"error": "Project not found"}), 404
+    project = get_object_or_404(Project, project_id, user.id)
+    if isinstance(project, tuple):
+        return project
     data = request.get_json()
     if 'name' in data:
         if not data['name'] or not data['name'].strip():
             logger.error("Project update failed: Name is required and cannot be empty.")
-            return jsonify({"error": "Name is required and cannot be empty."}), 400
-        logger.info(f"Updating name for project_id={project_id}")
+            return error_response("Name is required and cannot be empty.", 400)
+        logger.info("Updating name for project_id=%s", project_id)
         project.name = data['name'].strip()
     if 'description' in data:
-        logger.info(f"Updating description for project_id={project_id}")
+        logger.info("Updating description for project_id=%s", project_id)
         project.description = data['description']
     db.session.commit()
-    logger.info(f"Project updated successfully: project_id={project_id}")
+    logger.info("Project updated successfully: project_id=%s", project_id)
     return jsonify(serialize_project(project)), 200
 
 @app.route('/api/projects/<int:project_id>', methods=['DELETE'])
 @login_required
 def delete_project(project_id):
     """Delete a project."""
-    logger.info(f"Project DELETE endpoint accessed for project_id={project_id}")
+    logger.info("Project DELETE endpoint accessed for project_id=%s", project_id)
     user = get_current_user()
-    project = Project.query.filter_by(id=project_id, user_id=user.id).first()
-    if not project:
-        logger.error(f"Project deletion failed: Project not found. project_id={project_id}")
-        return jsonify({"error": "Project not found"}), 404
+    project = get_object_or_404(Project, project_id, user.id)
+    if isinstance(project, tuple):
+        return project
     db.session.delete(project)
     db.session.commit()
-    logger.info(f"Project deleted successfully: project_id={project_id}")
+    logger.info("Project deleted successfully: project_id=%s", project_id)
     return jsonify({"message": "Project deleted successfully"}), 200
 
 if __name__ == '__main__':

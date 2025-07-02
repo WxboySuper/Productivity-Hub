@@ -3,7 +3,6 @@ test_auth.py: Automated tests for user registration, login, logout, and profile 
 Covers both success and failure cases.
 """
 import pytest
-from flask import session
 
 REGISTER_URL = '/api/register'
 LOGIN_URL = '/api/login'
@@ -96,3 +95,20 @@ def test_profile_success(client):
     data = resp.get_json()
     assert data['username'] == 'profileuser'
     assert data['email'] == 'profile@weatherboysuper.com'
+
+# Additional test for CSRF protection on profile update
+@pytest.mark.usefixtures('client', 'db')
+def test_csrf_protect_profile_update(client):
+    client.post('/api/register', json={
+        'username': 'csrfprofile',
+        'email': 'csrfprofile@weatherboysuper.com',
+        'password': 'StrongPass1!'
+    })
+    client.post('/api/login', json={
+        'username': 'csrfprofile',
+        'password': 'StrongPass1!'
+    })
+    client.application.config['TESTING'] = False
+    resp = client.put('/api/profile', json={'username': 'newname'})
+    assert resp.status_code == 403 or resp.status_code == 400 or resp.status_code == 401
+    client.application.config['TESTING'] = True
