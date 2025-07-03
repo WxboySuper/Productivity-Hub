@@ -42,7 +42,7 @@ This roadmap is a step-by-step checklist for building your productivity assistan
 - [x] Add start date and recurrence fields to Task model
 
 ## v0.7.0-alpha: API Testing
-- [ ] Write basic tests for API endpoints
+- [x] Write basic tests for API endpoints
 
 ## v0.8.0-alpha: Frontend Environment
 - [ ] Initialize React app with TypeScript
