@@ -7,6 +7,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## API Change Summary Requirement
 - For every stable, alpha, or beta release, summarize all API changes (new endpoints, deleted endpoints, changes to endpoints, etc.) in the changelog, even if they were already documented in dev releases. This ensures the release notes provide a complete overview of API evolution for each version.
 
+## [v0.6.0-dev2] - 2025-07-02
+- Added `start_date` (optional, ISO 8601 datetime) and `recurrence` (optional, string) fields to the Task model in backend/app.py.
+- Updated Task serialization to include `start_date` and `recurrence` in API responses.
+- Added helper functions for validating and updating `start_date` and `recurrence` fields.
+- Updated Task creation and update endpoints to accept, validate, and store `start_date` and `recurrence` fields, using new helpers for consistency and error handling.
+- Added validation to ensure `start_date` is not after `due_date` if both are set.
+- Updated API documentation in docs/API.md to describe new fields, validation, and error cases for Task endpoints.
+- Added and expanded automated tests in backend/tests/test_tasks.py for:
+    - Creating and updating tasks with `start_date` and `recurrence`
+    - Validation for `start_date` after `due_date` (should fail)
+    - Ensured all new fields are covered in CRUD and edge cases
+- Updated test_auth.py:
+    - Replaced manual error raising with assert statements in `test_auth_client_fixture_works` for clarity and best practice in test files.
+    - Added a local `auth_client` fixture to ensure the test is authenticated and passes reliably.
+- Updated `auth_client` fixture in `backend/tests/test_tasks.py` to generate a unique username and email for each test run, preventing UNIQUE constraint errors during user registration in tests.
+- Fixed a bug in the Task update endpoint: start_date vs due_date validation now always runs if both are set on the task, regardless of which fields are present in the update payload. This ensures invalid updates (e.g., setting start_date after an existing due_date) are correctly rejected with a 400 error.
+
 ## [v0.6.0-dev1] - 2025-07-02
 - Updated ROADMAP.md to reflect the addition of the start date feature to the plan
 - Updated ROADMAP.md to reflect that due_date and priority have already been added earlier in development.

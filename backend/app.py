@@ -64,7 +64,9 @@ class Task(db.Model):
     title = db.Column(db.String(120), nullable=False)
     description = db.Column(db.Text)
     due_date = db.Column(db.DateTime)
+    start_date = db.Column(db.DateTime)  # New: optional start date
     priority = db.Column(db.Integer, default=1, nullable=False)
+    recurrence = db.Column(db.String)  # New: optional recurrence rule (string or JSON)
     completed = db.Column(db.Boolean, default=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     project_id = db.Column(db.Integer, db.ForeignKey('project.id', ondelete='SET NULL'), nullable=True)
@@ -153,7 +155,9 @@ def serialize_task(task):
         "title": task.title,
         "description": task.description,
         "due_date": task.due_date.isoformat() if task.due_date else None,
+        "start_date": task.start_date.isoformat() if task.start_date else None,  # New
         "priority": task.priority,
+        "recurrence": task.recurrence,  # New
         "completed": task.completed,
         "project_id": task.project_id,
         "created_at": task.created_at.isoformat() if task.created_at else None,
@@ -356,6 +360,42 @@ def validate_and_update_task_due_date(task, due_date_str):
     else:
         logger.info("Clearing due_date for task_id=%s", task.id)
         task.due_date = None
+    return True
+
+
+def validate_and_update_task_start_date(task, start_date_str):
+    """
+    Validate and update a task's start date.
+    - Parses the start date string as ISO 8601, applies timezone if missing.
+    - Updates the task object if valid, or clears if empty.
+    Returns True if updated, or (jsonify, code) tuple on error.
+    """
+    if start_date_str:
+        try:
+            task.start_date = parse_local_datetime(start_date_str)
+        except Exception:
+            return error_response("Invalid start_date format. Use ISO 8601 with or without timezone.", 400)
+    else:
+        logger.info("Clearing start_date for task_id=%s", task.id)
+        task.start_date = None
+    return True
+
+
+def validate_and_update_task_recurrence(task, recurrence):
+    """
+    Validate and update a task's recurrence rule.
+    - Accepts a string (e.g., 'daily', 'weekly', 'custom') or JSON string.
+    - Updates the task object if valid, or clears if empty.
+    Returns True if updated, or (jsonify, code) tuple on error.
+    """
+    if recurrence:
+        if not isinstance(recurrence, str):
+            return error_response("Recurrence must be a string.", 400)
+        logger.info("Updating recurrence for task_id=%s", task.id)
+        task.recurrence = recurrence.strip()
+    else:
+        logger.info("Clearing recurrence for task_id=%s", task.id)
+        task.recurrence = None
     return True
 
 
@@ -642,6 +682,28 @@ def create_task():
             logger.error("Task creation failed: Invalid due_date format.")
             return error_response("Invalid due_date format. Use ISO 8601 with or without timezone.", 400)
 
+    # Validate start_date and recurrence using helpers
+    # Parse start_date if provided
+    start_date = None
+    start_date_str = data.get('start_date')
+    if start_date_str:
+        result = validate_and_update_task_start_date(task := Task(), start_date_str)
+        if isinstance(result, tuple):
+            return result
+        start_date = task.start_date
+    # Validate recurrence using helper
+    recurrence = data.get('recurrence')
+    if recurrence is not None:
+        result = validate_and_update_task_recurrence(task := Task(), recurrence)
+        if isinstance(result, tuple):
+            return result
+        recurrence = task.recurrence
+
+    # Validation: if both start_date and due_date are set, start_date must be <= due_date
+    if start_date and due_date and start_date > due_date:
+        logger.error("Task creation failed: start_date cannot be after due_date.")
+        return error_response("start_date cannot be after due_date.", 400)
+
     # Validate and check project ownership if project_id is provided
     project_id = data.get('project_id')
     if project_id is not None:
@@ -654,7 +716,9 @@ def create_task():
         title=title.strip(),
         description=data.get('description'),
         due_date=due_date,
+        start_date=start_date,  # Include new field
         priority=priority,
+        recurrence=recurrence,  # Include new field
         completed=data.get('completed', False),
         user_id=user.id,
         project_id=project_id
@@ -700,6 +764,19 @@ def update_task(task_id):
         result = validate_and_update_task_project(task, user, data["project_id"])
         if isinstance(result, tuple):
             return result
+    if "start_date" in data:
+        result = validate_and_update_task_start_date(task, data["start_date"])
+        if isinstance(result, tuple):
+            return result
+    if "recurrence" in data:
+        result = validate_and_update_task_recurrence(task, data["recurrence"])
+        if isinstance(result, tuple):
+            return result
+
+    # Validation: if both start_date and due_date are set, start_date must be <= due_date
+    if task.start_date and task.due_date and task.start_date > task.due_date:
+        logger.error("Task update failed: start_date cannot be after due_date.")
+        return error_response("start_date cannot be after due_date.", 400)
 
     db.session.commit()
     logger.info("Task updated successfully: task_id=%s", task_id)

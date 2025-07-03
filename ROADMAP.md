@@ -39,7 +39,7 @@ This roadmap is a step-by-step checklist for building your productivity assistan
 
 ## v0.6.0-alpha: Task Scheduling Fields
 - [x] Add due date and priority fields to Task model
-- [ ] Add start date and recurrence fields to Task model
+- [x] Add start date and recurrence fields to Task model
 
 ## v0.7.0-alpha: API Testing
 - [ ] Write basic tests for API endpoints

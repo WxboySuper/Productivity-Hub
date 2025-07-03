@@ -15,11 +15,31 @@ All endpoints require the user to be authenticated (session-based). Include the 
 **GET** `/api/tasks`
 - Returns a list of all tasks for the current user.
 - Response: `200 OK`, JSON array of tasks.
+- Response fields:
+  - `id`: integer, task ID
+  - `title`: string, task title
+  - `description`: string, optional, task description
+  - `due_date`: string, ISO 8601 format, due date
+  - `start_date`: string, ISO 8601 format, optional, start date
+  - `priority`: integer, 0-3, priority level
+  - `recurrence`: string, optional, recurrence rule (e.g., 'daily', 'weekly', 'custom')
+  - `completed`: boolean, completion status
+  - `project_id`: integer, optional, associated project ID
 
 ### Get Task by ID
 **GET** `/api/tasks/<task_id>`
 - Returns a single task by its ID (if it belongs to the user).
 - Response: `200 OK`, JSON task object. `404` if not found.
+- Response fields:
+  - `id`: integer, task ID
+  - `title`: string, task title
+  - `description`: string, optional, task description
+  - `due_date`: string, ISO 8601 format, due date
+  - `start_date`: string, ISO 8601 format, optional, start date
+  - `priority`: integer, 0-3, priority level
+  - `recurrence`: string, optional, recurrence rule (e.g., 'daily', 'weekly', 'custom')
+  - `completed`: boolean, completion status
+  - `project_id`: integer, optional, associated project ID
 
 ### Create Task
 **POST** `/api/tasks`
@@ -29,7 +49,9 @@ All endpoints require the user to be authenticated (session-based). Include the 
     "title": "Task title",
     "description": "Optional description",
     "due_date": "2025-07-01T12:00:00",
+    "start_date": "2025-06-30T09:00:00",  // Optional, ISO 8601
     "priority": 1,
+    "recurrence": "weekly",  // Optional, string (e.g., 'daily', 'weekly', 'custom')
     "completed": false,
     "project_id": 2
   }
@@ -38,21 +60,27 @@ All endpoints require the user to be authenticated (session-based). Include the 
   - `title`: required, non-empty string
   - `description`: optional string
   - `due_date`: ISO 8601 string (with or without timezone)
+  - `start_date`: ISO 8601 string (with or without timezone, optional)
   - `priority`: integer 0-3 (inclusive)
+  - `recurrence`: optional string (e.g., 'daily', 'weekly', 'custom')
   - `completed`: boolean
   - `project_id`: optional, integer
+- Validation:
+  - If both `start_date` and `due_date` are set, `start_date` must not be after `due_date`.
 - Headers: Must include `X-CSRF-Token` with the session's CSRF token value.
 - Response: `201 Created`, JSON task object.
 - Errors:
-  - `400` if title is missing/empty, priority is not an integer 0-3, or due_date is invalid (see error message for details).
+  - `400` if title is missing/empty, priority is not an integer 0-3, due_date/start_date is invalid, or start_date is after due_date (see error message for details).
 
 ### Update Task
 **PUT** `/api/tasks/<task_id>`
 - Request JSON: Any updatable fields (see above).
 - Headers: Must include `X-CSRF-Token` with the session's CSRF token value.
+- Validation:
+  - If both `start_date` and `due_date` are set, `start_date` must not be after `due_date`.
 - Response: `200 OK`, JSON updated task object. `404` if not found.
 - Errors:
-  - `400` if title is missing/empty, priority is not an integer 0-3, or due_date is invalid (see error message for details).
+  - `400` if title is missing/empty, priority is not an integer 0-3, due_date/start_date is invalid, or start_date is after due_date (see error message for details).
 
 ### Delete Task
 **DELETE** `/api/tasks/<task_id>`
