@@ -7,12 +7,13 @@ from email_validator import validate_email, EmailNotValidError
 from werkzeug.security import generate_password_hash, check_password_hash
 import re
 from functools import wraps
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import warnings
 import zoneinfo
 import secrets
 import smtplib
 from email.message import EmailMessage
+from string import Template
 
 # Logging Configuration
 LOG_LEVEL = os.environ.get('LOG_LEVEL', 'INFO').upper()
@@ -94,8 +95,8 @@ class PasswordResetToken(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     token = db.Column(db.String(128), unique=True, nullable=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    expires_at = db.Column(db.DateTime, nullable=False)  # New: expiration timestamp
     used = db.Column(db.Boolean, default=False, nullable=False)
-    # Optionally: expires_at = db.Column(db.DateTime)
 
     user = db.relationship('User', backref=db.backref('password_reset_tokens', lazy=True))
 
@@ -945,29 +946,78 @@ def password_reset_request():
         # Always return generic message for security
         return jsonify({"message": "If the email exists, a password reset link will be sent."}), 200
 
-    # Generate secure token
+    # Generate secure token and expiration
     token = secrets.token_urlsafe(48)
-    prt = PasswordResetToken(user_id=user.id, token=token)
+    expiration_minutes = int(os.environ.get('PASSWORD_RESET_TOKEN_EXPIRATION_MINUTES', 60))
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=expiration_minutes)
+    prt = PasswordResetToken(user_id=user.id, token=token, expires_at=expires_at)
     db.session.add(prt)
     db.session.commit()
-    logger.info("Password reset token generated for user_id=%s", user.id)
+    logger.info("Password reset token generated for user_id=%s (expires at %s)", user.id, expires_at.isoformat())
 
-    # Send password reset email
+    # Send password reset email using template
     reset_link = f"https://yourdomain.com/reset-password?token={token}"
-    email_body = f"Hello,\n\nA password reset was requested for your account. If this was you, click the link below to reset your password:\n\n{reset_link}\n\nIf you did not request this, you can ignore this email.\n\nThanks,\nProductivity Hub Team"
+    email_body = render_password_reset_email(reset_link, expiration_minutes)
     email_sent = send_email(user.email, "Password Reset Request", email_body)
     if not email_sent:
         logger.error("Password reset email failed to send to %s", user.email)
-        # Still return generic message for security
 
-    # In development or test mode, return the token for testing
     if app.config.get('DEBUG', False) or app.config.get('TESTING', False):
         return jsonify({
             "message": "If the email exists, a password reset link will be sent.",
-            "token": token
+            "token": token,
+            "expires_at": expires_at.isoformat()
         }), 200
-    # In production, do not return the token
     return jsonify({"message": "If the email exists, a password reset link will be sent."}), 200
+
+@app.route('/api/password-reset/confirm', methods=['POST'])
+def password_reset_confirm():
+    """
+    Confirm a password reset: accepts token and new_password, validates and updates password.
+    """
+    logger.info("Password reset confirmation endpoint accessed.")
+    if not request.is_json:
+        logger.error("Password reset confirm failed: Request must be JSON.")
+        return jsonify({"error": "Content-Type must be application/json"}), 400
+
+    data = request.get_json()
+    token = data.get('token')
+    new_password = data.get('new_password')
+    if not token or not new_password:
+        logger.error("Password reset confirm failed: Token and new_password are required.")
+        return jsonify({"error": "Token and new_password are required."}), 400
+
+    prt = PasswordResetToken.query.filter_by(token=token).first()
+    if not prt:
+        logger.warning("Password reset confirm failed: Invalid token.")
+        return jsonify({"error": "Invalid or expired token."}), 400
+    if prt.used:
+        logger.warning("Password reset confirm failed: Token already used.")
+        return jsonify({"error": "This token has already been used."}), 400
+
+    # Ensure expires_at is always timezone-aware (UTC)
+    if prt.expires_at.tzinfo is None:
+        expires_at_aware = prt.expires_at.replace(tzinfo=timezone.utc)
+    else:
+        expires_at_aware = prt.expires_at
+    if expires_at_aware < datetime.now(timezone.utc):
+        logger.warning("Password reset confirm failed: Token expired.")
+        return jsonify({"error": "Invalid or expired token."}), 400
+
+    user = db.session.get(User, prt.user_id)
+    if not user:
+        logger.error("Password reset confirm failed: User not found for token.")
+        return jsonify({"error": "Invalid token."}), 400
+
+    if not is_strong_password(new_password):
+        logger.warning("Password reset confirm failed: Weak password.")
+        return jsonify({"error": "Password does not meet strength requirements."}), 400
+
+    user.set_password(new_password)
+    prt.used = True
+    db.session.commit()
+    logger.info("Password reset successful for user_id=%s", user.id)
+    return jsonify({"message": "Password has been reset successfully."}), 200
 
 # Email configuration (set these as environment variables)
 EMAIL_HOST = os.environ.get('EMAIL_HOST', 'localhost')
@@ -1002,6 +1052,16 @@ def send_email(to_address, subject, body):
     except Exception as e:
         logger.error("Failed to send email to %s: %s", to_address, e)
         return False
+
+# Helper for password reset email template
+def render_password_reset_email(reset_link, expiration_minutes=60):
+    """
+    Render the password reset email body using a template.
+    """
+    template = Template(
+        """Hello,\n\nA password reset was requested for your account. If this was you, click the link below to reset your password.\n\n$reset_link\n\nThis link will expire in $expiration_minutes minutes.\n\nIf you did not request this, you can ignore this email.\n\nThanks,\nProductivity Hub Team"""
+    )
+    return template.substitute(reset_link=reset_link, expiration_minutes=expiration_minutes)
 
 if __name__ == '__main__':
     init_db()

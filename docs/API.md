@@ -165,7 +165,8 @@ All endpoints require the user to be authenticated (session-based). Include the 
     ```json
     {
       "message": "If the email exists, a password reset link will be sent.",
-      "token": "<reset_token>"
+      "token": "<reset_token>",
+      "expires_at": "2025-07-03T12:34:56.000000+00:00"
     }
     ```
   - **In production:**
@@ -176,10 +177,11 @@ All endpoints require the user to be authenticated (session-based). Include the 
     ```
 - Security: Always returns a generic message to prevent email enumeration. The token is only returned in development/testing; in production, it is sent via email only.
 - The email contains a password reset link with the token as a query parameter (e.g., `https://yourdomain.com/reset-password?token=<reset_token>`).
+- The email body is generated using a template and includes the expiration time (default: 60 minutes, configurable via `PASSWORD_RESET_TOKEN_EXPIRATION_MINUTES`).
 - Notes:
   - The endpoint does not reveal whether the email exists in the system.
+  - Tokens expire after the configured period and are single-use.
   - Email delivery uses SMTP settings configured via environment variables (see below).
-  - Future versions will implement token expiration, single-use enforcement, and password reset confirmation.
 
 #### Model: PasswordResetToken
 - Stores password reset tokens and metadata for secure password reset flow.
@@ -188,9 +190,10 @@ All endpoints require the user to be authenticated (session-based). Include the 
   - `user_id`: integer, foreign key to User
   - `token`: string, secure random token
   - `created_at`: string, ISO 8601 UTC timestamp
-  - `used`: boolean, whether the token has been used (future use)
+  - `expires_at`: string, ISO 8601 UTC timestamp (token expiration)
+  - `used`: boolean, whether the token has been used
 - Usage:
-  - Tokens are single-use and expire after a set period (to be enforced in a future release).
+  - Tokens are single-use and expire after a set period (default: 60 minutes, configurable).
   - Used to validate password reset requests and securely update user passwords.
 
 ##### Email Delivery Configuration
@@ -201,7 +204,46 @@ All endpoints require the user to be authenticated (session-based). Include the 
   - `EMAIL_HOST_PASSWORD` (SMTP password, if required)
   - `EMAIL_USE_TLS` (`true` or `false`)
   - `EMAIL_FROM` (sender address, e.g., `noreply@yourdomain.com`)
+  - `PASSWORD_RESET_TOKEN_EXPIRATION_MINUTES` (expiration in minutes, default: 60)
+- The password reset email is generated using a template and includes the reset link and expiration time.
 - See the project `.env` file for an example configuration.
+
+### Confirm Password Reset
+**POST** `/api/password-reset/confirm`
+- Confirms a password reset using a token and sets a new password.
+- Request JSON:
+  ```json
+  {
+    "token": "<reset_token>",
+    "new_password": "NewStrongPassw0rd!"
+  }
+  ```
+- Response:
+  - `200 OK` on success:
+    ```json
+    { "message": "Password has been reset successfully." }
+    ```
+  - `400 Bad Request` on error:
+    - Invalid or expired token:
+      ```json
+      { "error": "Invalid or expired token." }
+      ```
+    - Token already used:
+      ```json
+      { "error": "This token has already been used." }
+      ```
+    - Weak password:
+      ```json
+      { "error": "Password does not meet strength requirements." }
+      ```
+    - Missing fields:
+      ```json
+      { "error": "Token and new_password are required." }
+      ```
+- Notes:
+  - The token must be valid and unused (expiration enforcement coming soon).
+  - The new password must meet strength requirements (min 8 chars, upper/lower/number/special).
+  - On success, the token is marked as used and cannot be reused.
 
 ---
 

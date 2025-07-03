@@ -7,6 +7,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## API Change Summary Requirement
 - For every stable, alpha, or beta release, summarize all API changes (new endpoints, deleted endpoints, changes to endpoints, etc.) in the changelog, even if they were already documented in dev releases. This ensures the release notes provide a complete overview of API evolution for each version.
 
+## [v0.8.0-dev4] - 2025-07-03
+- Added `/api/password-reset/confirm` endpoint:
+  - Accepts a reset token and new password, validates the token (unused, valid), and updates the user's password.
+  - Returns clear error messages for invalid, used, or missing tokens and for weak passwords.
+  - Marks tokens as used after a successful reset.
+  - Includes comprehensive automated tests for all major cases (valid, invalid, used token, weak password).
+  - Updated API documentation to describe the new endpoint, request/response, and error cases.
+
 ## [v0.8.0-dev3] - 2025-07-03
 - Implemented email delivery for password reset tokens:
   - The `/api/password-reset/request` endpoint now sends the reset token to the user's email address using SMTP (configurable via environment variables).
