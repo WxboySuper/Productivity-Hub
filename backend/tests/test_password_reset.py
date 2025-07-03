@@ -1,12 +1,11 @@
 import pytest
 import sys
 import os
-from flask import url_for
-import secrets
+from unittest.mock import patch
 
 # Ensure the parent directory is in sys.path for relative imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from app import app, db, User, PasswordResetToken
+from app import User, PasswordResetToken
 
 @pytest.fixture
 def user(db):
@@ -40,5 +39,19 @@ def test_password_reset_request_missing_email(client, db):
     data = resp.get_json()
     assert "message" in data
     assert "token" not in data or data["token"] is None
+
+def test_password_reset_email_sent(client, db, user):
+    with patch('app.send_email') as mock_send:
+        mock_send.return_value = True
+        resp = client.post("/api/password-reset/request", json={"email": user.email})
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert "message" in data
+        assert "token" in data  # Only in dev/test mode
+        mock_send.assert_called_once()
+        called_args = mock_send.call_args[0]
+        assert user.email in called_args[0]  # to_address
+        assert "Password Reset Request" in called_args[1]  # subject
+        assert data["token"] in called_args[2]  # token in email body
 
 # Add more tests for edge cases as needed

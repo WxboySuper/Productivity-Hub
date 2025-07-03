@@ -7,6 +7,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## API Change Summary Requirement
 - For every stable, alpha, or beta release, summarize all API changes (new endpoints, deleted endpoints, changes to endpoints, etc.) in the changelog, even if they were already documented in dev releases. This ensures the release notes provide a complete overview of API evolution for each version.
 
+## [v0.8.0-dev3] - 2025-07-03
+- Implemented email delivery for password reset tokens:
+  - The `/api/password-reset/request` endpoint now sends the reset token to the user's email address using SMTP (configurable via environment variables).
+  - In development and test modes, the token may still be returned in the response for testing; in production, it is only sent via email.
+  - Added configuration options for SMTP server, port, sender address, and credentials.
+  - Updated backend/app.py with email sending logic and error handling.
+  - Updated automated tests to mock email delivery and verify correct behavior.
+- See docs/API.md for updated endpoint behavior and security notes.
+
 ## [v0.8.0-dev2] - 2025-07-03
 - Implemented the `PasswordResetToken` model in the backend to support password reset functionality.
 - Added the `/api/password-reset/request` endpoint:

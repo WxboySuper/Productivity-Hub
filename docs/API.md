@@ -160,17 +160,26 @@ All endpoints require the user to be authenticated (session-based). Include the 
     "email": "user@domain.com"
   }
   ```
-- Response: `200 OK`, JSON message. For now, the response includes the generated token for testing purposes:
-  ```json
-  {
-    "message": "If the email exists, a password reset link will be sent.",
-    "token": "<reset_token>" // For development/testing only; will be removed in production
-  }
-  ```
-- Security: Always returns a generic message to prevent email enumeration. The token is only returned in development/testing; in production, it will be sent via email.
+- Response: `200 OK`, JSON message.
+  - **In development/testing:**
+    ```json
+    {
+      "message": "If the email exists, a password reset link will be sent.",
+      "token": "<reset_token>"
+    }
+    ```
+  - **In production:**
+    ```json
+    {
+      "message": "If the email exists, a password reset link will be sent."
+    }
+    ```
+- Security: Always returns a generic message to prevent email enumeration. The token is only returned in development/testing; in production, it is sent via email only.
+- The email contains a password reset link with the token as a query parameter (e.g., `https://yourdomain.com/reset-password?token=<reset_token>`).
 - Notes:
   - The endpoint does not reveal whether the email exists in the system.
-  - Future versions will implement email delivery and token expiration enforcement.
+  - Email delivery uses SMTP settings configured via environment variables (see below).
+  - Future versions will implement token expiration, single-use enforcement, and password reset confirmation.
 
 #### Model: PasswordResetToken
 - Stores password reset tokens and metadata for secure password reset flow.
@@ -183,6 +192,16 @@ All endpoints require the user to be authenticated (session-based). Include the 
 - Usage:
   - Tokens are single-use and expire after a set period (to be enforced in a future release).
   - Used to validate password reset requests and securely update user passwords.
+
+##### Email Delivery Configuration
+- The backend uses SMTP to send password reset emails. Configure these environment variables (e.g., in a `.env` file):
+  - `EMAIL_HOST` (SMTP server hostname, e.g., `smtp.gmail.com` or `localhost` for testing)
+  - `EMAIL_PORT` (SMTP port, e.g., `587` for TLS, `1025` for local debug)
+  - `EMAIL_HOST_USER` (SMTP username, if required)
+  - `EMAIL_HOST_PASSWORD` (SMTP password, if required)
+  - `EMAIL_USE_TLS` (`true` or `false`)
+  - `EMAIL_FROM` (sender address, e.g., `noreply@yourdomain.com`)
+- See the project `.env` file for an example configuration.
 
 ---
 

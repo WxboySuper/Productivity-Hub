@@ -11,6 +11,8 @@ from datetime import datetime, timezone
 import warnings
 import zoneinfo
 import secrets
+import smtplib
+from email.message import EmailMessage
 
 # Logging Configuration
 LOG_LEVEL = os.environ.get('LOG_LEVEL', 'INFO').upper()
@@ -920,9 +922,11 @@ def delete_project(project_id):
     logger.info("Project deleted successfully: project_id=%s", project_id)
     return jsonify({"message": "Project deleted successfully"}), 200
 
+# Password Reset Routes
+# Route for requesting a password reset
 @app.route('/api/password-reset/request', methods=['POST'])
 def password_reset_request():
-    """Request a password reset: accepts email, generates token, stores it, returns token (for now)."""
+    """Request a password reset: accepts email, generates token, stores it, sends email."""
     logger.info("Password reset request endpoint accessed.")
     if not request.is_json:
         logger.error("Password reset request failed: Request must be JSON.")
@@ -948,12 +952,56 @@ def password_reset_request():
     db.session.commit()
     logger.info("Password reset token generated for user_id=%s", user.id)
 
-    # TODO: Send email with token (Flask-Mail or similar)
-    # For now, return the token in the response (for development/testing only)
-    return jsonify({
-        "message": "If the email exists, a password reset link will be sent.",
-        "token": token  # REMOVE in production!
-    }), 200
+    # Send password reset email
+    reset_link = f"https://yourdomain.com/reset-password?token={token}"
+    email_body = f"Hello,\n\nA password reset was requested for your account. If this was you, click the link below to reset your password:\n\n{reset_link}\n\nIf you did not request this, you can ignore this email.\n\nThanks,\nProductivity Hub Team"
+    email_sent = send_email(user.email, "Password Reset Request", email_body)
+    if not email_sent:
+        logger.error("Password reset email failed to send to %s", user.email)
+        # Still return generic message for security
+
+    # In development or test mode, return the token for testing
+    if app.config.get('DEBUG', False) or app.config.get('TESTING', False):
+        return jsonify({
+            "message": "If the email exists, a password reset link will be sent.",
+            "token": token
+        }), 200
+    # In production, do not return the token
+    return jsonify({"message": "If the email exists, a password reset link will be sent."}), 200
+
+# Email configuration (set these as environment variables)
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'localhost')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 1025))  # Default to local debug SMTP
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'false').lower() == 'true'
+EMAIL_FROM = os.environ.get('EMAIL_FROM', 'noreply@localhost')
+
+
+def send_email(to_address, subject, body):
+    """
+    Send an email using SMTP. Logs success or failure.
+    """
+    msg = EmailMessage()
+    msg['Subject'] = subject
+    msg['From'] = EMAIL_FROM
+    msg['To'] = to_address
+    msg.set_content(body)
+    try:
+        if EMAIL_USE_TLS:
+            server = smtplib.SMTP(EMAIL_HOST, EMAIL_PORT)
+            server.starttls()
+        else:
+            server = smtplib.SMTP(EMAIL_HOST, EMAIL_PORT)
+        if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD:
+            server.login(EMAIL_HOST_USER, EMAIL_HOST_PASSWORD)
+        server.send_message(msg)
+        server.quit()
+        logger.info("Password reset email sent to %s", to_address)
+        return True
+    except Exception as e:
+        logger.error("Failed to send email to %s: %s", to_address, e)
+        return False
 
 if __name__ == '__main__':
     init_db()
