@@ -7,6 +7,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## API Change Summary Requirement
 - For every stable, alpha, or beta release, summarize all API changes (new endpoints, deleted endpoints, changes to endpoints, etc.) in the changelog, even if they were already documented in dev releases. This ensures the release notes provide a complete overview of API evolution for each version.
 
+## [v0.6.0-dev4] - 2025-07-02
+- Refactored the `update_task` endpoint in backend/app.py to reduce cyclomatic complexity (PY-R1000):
+    - Replaced sequential field update logic with a loop-based approach using a field-to-helper mapping, similar to the `update_profile` refactor.
+    - Grouped direct assignments for simple fields (description, completed) for clarity and maintainability.
+    - This reduces branching, improves maintainability, and ensures consistent validation and error handling for all updatable fields.
+- No API changes, but the code is now more maintainable, testable, and compliant with code quality standards.
+- See also: previous dev4 entries for validation helper refactor and organization.
+
 ## [v0.6.0-dev3] - 2025-07-02
 - Updated all test credentials in backend/tests/test_auth.py, backend/tests/test_projects.py, and backend/tests/test_tasks.py to use unique usernames and emails generated with UUIDs. This prevents collisions and improves test reliability for all tests and fixtures.
 - Refactored pure validation helpers for `start_date` and `recurrence` in backend/app.py:

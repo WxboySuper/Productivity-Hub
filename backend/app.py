@@ -762,36 +762,28 @@ def update_task(task_id):
 
     data = request.get_json()
 
-    if "title" in data:
-        result = validate_and_update_task_title(task, data["title"])
-        if isinstance(result, tuple):
-            return result
+    # Map of field name to (validator function, value)
+    field_validators = [
+        ("title", validate_and_update_task_title),
+        ("due_date", validate_and_update_task_due_date),
+        ("priority", validate_and_update_task_priority),
+        ("project_id", lambda t, v: validate_and_update_task_project(t, user, v)),
+        ("start_date", validate_and_update_task_start_date),
+        ("recurrence", validate_and_update_task_recurrence),
+    ]
+    for field, validator in field_validators:
+        if field in data:
+            result = validator(task, data[field])
+            if isinstance(result, tuple):
+                return result
+
+    # Direct assignments for simple fields
     if "description" in data:
         logger.info("Updating description for task_id=%s", task.id)
         task.description = data["description"]
-    if "due_date" in data:
-        result = validate_and_update_task_due_date(task, data["due_date"])
-        if isinstance(result, tuple):
-            return result
-    if "priority" in data:
-        result = validate_and_update_task_priority(task, data["priority"])
-        if isinstance(result, tuple):
-            return result
     if "completed" in data:
         logger.info("Updating completed status for task_id=%s", task.id)
         task.completed = data["completed"]
-    if "project_id" in data:
-        result = validate_and_update_task_project(task, user, data["project_id"])
-        if isinstance(result, tuple):
-            return result
-    if "start_date" in data:
-        result = validate_and_update_task_start_date(task, data["start_date"])
-        if isinstance(result, tuple):
-            return result
-    if "recurrence" in data:
-        result = validate_and_update_task_recurrence(task, data["recurrence"])
-        if isinstance(result, tuple):
-            return result
 
     # Validation: if both start_date and due_date are set, start_date must be <= due_date
     if task.start_date and task.due_date and task.start_date > task.due_date:
