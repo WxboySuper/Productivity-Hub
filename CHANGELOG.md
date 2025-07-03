@@ -7,6 +7,41 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## API Change Summary Requirement
 - For every stable, alpha, or beta release, summarize all API changes (new endpoints, deleted endpoints, changes to endpoints, etc.) in the changelog, even if they were already documented in dev releases. This ensures the release notes provide a complete overview of API evolution for each version.
 
+## [v0.8.0-alpha] - 2025-07-03
+### Added
+- Complete backend password reset flow:
+  - `POST /api/password-reset/request`: Accepts email, generates a secure, single-use, expiring token, stores it, and sends a password reset email (SMTP configurable via environment variables). Always returns a generic message for security. In development/testing, returns the token and expiration in the response.
+  - `POST /api/password-reset/confirm`: Accepts token and new password, validates the token (unused, unexpired), enforces password strength, updates the user's password, and marks the token as used. Returns clear error messages for invalid, expired, or used tokens and for weak passwords.
+  - Password reset email uses a template helper and includes the reset link and expiration time.
+  - All password reset features are thoroughly tested, including edge cases (invalid/expired/used token, weak password, email delivery).
+  - Added `expires_at` field to `PasswordResetToken` model and enforced UTC-aware expiration logic.
+- All changes are fully documented in `docs/API.md` (endpoint usage, model, configuration, security notes).
+- Logging is thorough and consistent across all new features.
+
+### Changed
+- Refactored all usages of deprecated `Query.get()` to `db.session.get()` for SQLAlchemy 2.x compatibility.
+- Improved code and documentation organization for maintainability and clarity.
+
+### API Change Summary
+**New Endpoints:**
+- `POST /api/password-reset/request` — Request a password reset token by email (secure, generic response, email delivery, token/expiration in dev/test).
+- `POST /api/password-reset/confirm` — Confirm a password reset using a token and new password (validates, updates password, marks token as used, enforces expiration and strength).
+
+**New Models:**
+- `PasswordResetToken` — Stores password reset tokens, user association, expiration, and usage metadata for secure password reset flow.
+
+**Changed:**
+- All endpoints requiring primary key lookups now use `db.session.get()` for SQLAlchemy 2.x compatibility.
+
+**Security:**
+- Password reset flow is secure, generic, and robust against enumeration and replay attacks. All sensitive operations are logged. Expired/used tokens are rejected. Passwords are validated for strength and hashed securely.
+
+**Testing:**
+- All new features and edge cases are covered by automated tests. All tests pass.
+
+**Documentation:**
+- All new endpoints, models, and configuration options are documented in `docs/API.md`.
+
 ## [v0.8.0-dev4] - 2025-07-03
 - Added `/api/password-reset/confirm` endpoint:
   - Accepts a reset token and new password, validates the token (unused, valid), and updates the user's password.
