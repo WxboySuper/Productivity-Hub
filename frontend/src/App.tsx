@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
+import RegisterPage from './pages/RegisterPage';
 
 // Simple placeholder components
 function Home() {
@@ -8,9 +9,6 @@ function Home() {
 }
 function Login() {
   return <div className="text-2xl font-bold text-center mt-10">Login Page</div>;
-}
-function Register() {
-  return <div className="text-2xl font-bold text-center mt-10">Register Page</div>;
 }
 function NotFound() {
   return <div className="text-2xl font-bold text-center mt-10 text-red-600">404 - Page Not Found</div>;
@@ -45,7 +43,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+          <Route path="/register" element={<RegisterPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>
