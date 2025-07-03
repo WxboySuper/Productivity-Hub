@@ -7,6 +7,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## API Change Summary Requirement
 - For every stable, alpha, or beta release, summarize all API changes (new endpoints, deleted endpoints, changes to endpoints, etc.) in the changelog, even if they were already documented in dev releases. This ensures the release notes provide a complete overview of API evolution for each version.
 
+## [v0.9.0-dev1] - 2025-07-03
+### Added
+- Initialized frontend React app with TypeScript in `frontend/`.
+- Installed and configured Tailwind CSS (v3) for the frontend:
+  - Added Tailwind directives to `frontend/src/index.css`.
+  - Configured `frontend/tailwind.config.js` with correct content paths.
+  - Documented and resolved Tailwind v4 CLI installation issues by using v3.
+- Installed and set up `react-router-dom` for frontend routing:
+  - Added basic routing in `frontend/src/App.tsx` with placeholder Home, Login, and Register pages.
+- Enabled .env support in backend:
+  - Installed `python-dotenv` and added `load_dotenv()` to `backend/app.py`.
+  - Backend now loads configuration (e.g., SMTP, Flask secrets) from `.env`.
+
+### Changed
+- Updated documentation and configuration to reflect new frontend environment and backend .env support.
+
 ## [v0.8.0-alpha] - 2025-07-03
 ### Added
 - Complete backend password reset flow:
@@ -41,6 +57,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 **Documentation:**
 - All new endpoints, models, and configuration options are documented in `docs/API.md`.
+- Updated `ROADMAP.md` and `CHANGELOG.md` to reflect password reset backend milestone and dev versions.
+
+### Frontend
+- React + TypeScript app initialized in `frontend/`.
+- Tailwind CSS v3 configured and working.
+- React Router set up with placeholder pages.
 
 ## [v0.8.0-dev4] - 2025-07-03
 - Added `/api/password-reset/confirm` endpoint:

@@ -45,14 +45,14 @@ This roadmap is a step-by-step checklist for building your productivity assistan
 - [x] Write basic tests for API endpoints
 
 ## v0.8.0-alpha: Password Reset (Backend)
-- [ ] Implement password reset endpoint (backend)
-- [ ] Add email sending for password reset (backend)
-- [ ] Add tests for password reset
+- [x] Implement password reset endpoint (backend)
+- [x] Add email sending for password reset (backend)
+- [x] Add tests for password reset
 
 ## v0.9.0-alpha: Frontend Environment
-- [ ] Initialize React app with TypeScript
-- [ ] Set up Tailwind CSS
-- [ ] Set up routing (React Router)
+- [x] Initialize React app with TypeScript
+- [x] Set up Tailwind CSS
+- [x] Set up routing (React Router)
 
 ## v0.10.0-alpha: Auth UI
 - [ ] Create login page
