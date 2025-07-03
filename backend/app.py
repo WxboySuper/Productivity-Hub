@@ -1,6 +1,5 @@
+import sys
 from dotenv import load_dotenv
-load_dotenv()
-
 from flask import Flask, request, jsonify, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -17,6 +16,15 @@ import secrets
 import smtplib
 from email.message import EmailMessage
 from string import Template
+
+# Explicitly check for .env file and load success
+DOTENV_PATH = os.path.join(os.path.dirname(__file__), '.env')
+if not os.path.exists(DOTENV_PATH):
+    print(f"ERROR: .env file not found at {DOTENV_PATH}. Application will exit.")
+    sys.exit(1)
+if not load_dotenv(DOTENV_PATH):
+    print(f"ERROR: Failed to load .env file at {DOTENV_PATH}. Application will exit.")
+    sys.exit(1)
 
 # Logging Configuration
 LOG_LEVEL = os.environ.get('LOG_LEVEL', 'INFO').upper()

@@ -7,6 +7,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## API Change Summary Requirement
 - For every stable, alpha, or beta release, summarize all API changes (new endpoints, deleted endpoints, changes to endpoints, etc.) in the changelog, even if they were already documented in dev releases. This ensures the release notes provide a complete overview of API evolution for each version.
 
+## [v0.9.0-dev2] - 2025-07-03
+### Fixed
+- Fixed DeepSource JS-0328 (unhandled promise) in `frontend/src/reportWebVitals.ts` by adding a `.catch` handler to the dynamic import of `web-vitals`.
+- Backend now fails fast if `.env` is missing or cannot be loaded: `backend/app.py` checks for the existence and successful loading of the `.env` file at startup, logs an error, and exits immediately if not found or invalid. This prevents silent configuration errors and ensures environment issues are detected early.
+- Added `.env` to `.gitignore` explicitly
+- Upgraded TypeScript from 4.9.5 to 5.4.5 in `frontend/package.json`. Ran type checks and tests to verify compatibility; no issues found.
+
+### Added
+- Added ErrorBoundary wrapper to `frontend/src/App.tsx` to catch runtime errors and display a user-friendly error message.
+- Added a catch-all 404 Not Found route to `frontend/src/App.tsx` for unmatched paths, improving user experience and routing robustness.
+
 ## [v0.9.0-dev1] - 2025-07-03
 ### Added
 - Initialized frontend React app with TypeScript in `frontend/`.
