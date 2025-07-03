@@ -7,6 +7,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## API Change Summary Requirement
 - For every stable, alpha, or beta release, summarize all API changes (new endpoints, deleted endpoints, changes to endpoints, etc.) in the changelog, even if they were already documented in dev releases. This ensures the release notes provide a complete overview of API evolution for each version.
 
+## [v0.8.0-dev2] - 2025-07-03
+- Implemented the `PasswordResetToken` model in the backend to support password reset functionality.
+- Added the `/api/password-reset/request` endpoint:
+  - Accepts an email address, generates a secure token, stores it in the database, and (for now) returns the token in the response.
+  - Lays the groundwork for full password reset flow, including email delivery and token validation in future dev releases.
+- Updated backend/app.py with all model, endpoint, and helper logic for password reset requests.
+- Changed DB pathing to be relative to the app directory for easier deployment and testing.
+- Fixed deprecation warning for `datetime.datetime.utcnow()` by switching to `datetime.now(timezone.utc)` for UTC-aware timestamps in the `PasswordResetToken` model. This ensures future compatibility and removes warnings during tests and runtime.
+- Added documentation for the new password reset functionality.
+- Added automated tests for the password reset endpoint:
+  - Tests for valid email requests, invalid email handling, and token generation.
+  - Ensures the endpoint behaves correctly and securely.
+
+### API Change Summary
+**New Endpoints:**
+- `POST /api/password-reset/request` — Request a password reset token by email (returns token for now; will send email in a future release).
+
+**New Models:**
+- `PasswordResetToken` — Stores password reset tokens, user association, and metadata for secure password reset flow.
+
+
 ## [v0.8.0-dev1] - 2025-07-02
 - Roadmap reorganization: Password reset (backend) is now its own milestone at v0.8.0-alpha, immediately after API Testing.
 - All subsequent milestones have been renumbered to keep versioning clean and intuitive.

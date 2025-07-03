@@ -2,6 +2,8 @@
 # Python
 .venv/
 __pycache__/
+*/.pytest_cache/
+.pytest_cache/
 *.pyc
 instance/
 .env
@@ -21,3 +23,6 @@ Thumbs.db
 
 # Misc
 *.sqlite3
+
+# db
+*/productivity_hub.db

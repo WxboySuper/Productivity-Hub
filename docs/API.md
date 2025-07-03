@@ -149,6 +149,43 @@ All endpoints require the user to be authenticated (session-based). Include the 
 
 ---
 
+## Password Reset Endpoints
+
+### Request Password Reset Token
+**POST** `/api/password-reset/request`
+- Initiates a password reset for a user by email.
+- Request JSON:
+  ```json
+  {
+    "email": "user@domain.com"
+  }
+  ```
+- Response: `200 OK`, JSON message. For now, the response includes the generated token for testing purposes:
+  ```json
+  {
+    "message": "If the email exists, a password reset link will be sent.",
+    "token": "<reset_token>" // For development/testing only; will be removed in production
+  }
+  ```
+- Security: Always returns a generic message to prevent email enumeration. The token is only returned in development/testing; in production, it will be sent via email.
+- Notes:
+  - The endpoint does not reveal whether the email exists in the system.
+  - Future versions will implement email delivery and token expiration enforcement.
+
+#### Model: PasswordResetToken
+- Stores password reset tokens and metadata for secure password reset flow.
+- Fields:
+  - `id`: integer, primary key
+  - `user_id`: integer, foreign key to User
+  - `token`: string, secure random token
+  - `created_at`: string, ISO 8601 UTC timestamp
+  - `used`: boolean, whether the token has been used (future use)
+- Usage:
+  - Tokens are single-use and expire after a set period (to be enforced in a future release).
+  - Used to validate password reset requests and securely update user passwords.
+
+---
+
 ## Project API Endpoints
 
 ### Get all projects

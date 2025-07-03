@@ -23,6 +23,9 @@ def app():
     with flask_app.app_context():
         _db.create_all()
     yield flask_app
+    with flask_app.app_context():
+        _db.session.remove()
+        _db.drop_all()
     os.close(db_fd)
     os.unlink(db_path)
 

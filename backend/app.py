@@ -7,7 +7,7 @@ from email_validator import validate_email, EmailNotValidError
 from werkzeug.security import generate_password_hash, check_password_hash
 import re
 from functools import wraps
-from datetime import datetime
+from datetime import datetime, timezone
 import warnings
 import zoneinfo
 import secrets
@@ -27,7 +27,10 @@ logger.info("Logging is configured.")
 # Flask Application Setup
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///productivity_hub.db')
+# Set database path to be in the same directory as this file
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+db_path = os.path.join(BASE_DIR, 'productivity_hub.db')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', f'sqlite:///{db_path}')
 app.config['SESSION_COOKIE_SECURE'] = True  # Use secure cookies in production
 app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevent JavaScript access to session cookies
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Set SameSite policy for session cookies
@@ -82,6 +85,17 @@ class Project(db.Model):
     updated_at = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now())
 
     tasks = db.relationship('Task', backref='project', lazy=True, cascade='all, delete-orphan')
+
+class PasswordResetToken(db.Model):
+    __tablename__ = 'password_reset_tokens'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    token = db.Column(db.String(128), unique=True, nullable=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    used = db.Column(db.Boolean, default=False, nullable=False)
+    # Optionally: expires_at = db.Column(db.DateTime)
+
+    user = db.relationship('User', backref=db.backref('password_reset_tokens', lazy=True))
 
 # Helper Functions
 def init_db():
@@ -905,6 +919,41 @@ def delete_project(project_id):
     db.session.commit()
     logger.info("Project deleted successfully: project_id=%s", project_id)
     return jsonify({"message": "Project deleted successfully"}), 200
+
+@app.route('/api/password-reset/request', methods=['POST'])
+def password_reset_request():
+    """Request a password reset: accepts email, generates token, stores it, returns token (for now)."""
+    logger.info("Password reset request endpoint accessed.")
+    if not request.is_json:
+        logger.error("Password reset request failed: Request must be JSON.")
+        return jsonify({"error": "Content-Type must be application/json"}), 400
+
+    data = request.get_json()
+    email = data.get('email')
+    if not email or not email.strip():
+        logger.error("Password reset request failed: Email is required.")
+        # Always return generic message for security
+        return jsonify({"message": "If the email exists, a password reset link will be sent."}), 200
+
+    user = User.query.filter_by(email=email.strip()).first()
+    if not user:
+        logger.info("Password reset requested for non-existent email: %s", email)
+        # Always return generic message for security
+        return jsonify({"message": "If the email exists, a password reset link will be sent."}), 200
+
+    # Generate secure token
+    token = secrets.token_urlsafe(48)
+    prt = PasswordResetToken(user_id=user.id, token=token)
+    db.session.add(prt)
+    db.session.commit()
+    logger.info("Password reset token generated for user_id=%s", user.id)
+
+    # TODO: Send email with token (Flask-Mail or similar)
+    # For now, return the token in the response (for development/testing only)
+    return jsonify({
+        "message": "If the email exists, a password reset link will be sent.",
+        "token": token  # REMOVE in production!
+    }), 200
 
 if __name__ == '__main__':
     init_db()
