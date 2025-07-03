@@ -121,6 +121,13 @@ This roadmap is a step-by-step checklist for building your productivity assistan
 - [ ] Add settings to enable/disable gamification features
 - [ ] Write tests for gamification logic
 
+## v0.25.0-beta: Frontend Build System Migration
+- [ ] Migrate frontend build system from `react-scripts` to a modern, actively maintained tool (e.g., Vite or Next.js) to resolve persistent npm audit vulnerabilities and improve dependency hygiene
+- [ ] Update all build, test, and deployment scripts to use the new build system
+- [ ] Refactor configuration and documentation as needed
+- [ ] Verify that all existing frontend features and tests work after migration
+- [ ] Remove legacy `react-scripts` dependencies
+
 ## v1.0.0: Stable Release
 - [ ] Prepare backend for production (env vars, security, etc.)
 - [ ] Prepare frontend for production build

@@ -7,6 +7,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## API Change Summary Requirement
 - For every stable, alpha, or beta release, summarize all API changes (new endpoints, deleted endpoints, changes to endpoints, etc.) in the changelog, even if they were already documented in dev releases. This ensures the release notes provide a complete overview of API evolution for each version.
 
+## [v0.9.1-alpha] - 2025-07-03
+- Update `ROADMAP.md` to reflect changes in the release process and future plans of migrating to Vite or Next.js.
+
 ## [v0.9.0-alpha] - 2025-07-03
 ### Added
 - ErrorBoundary wrapper in `frontend/src/App.tsx` to catch runtime errors and display a user-friendly error message.
