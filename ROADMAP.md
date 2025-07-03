@@ -44,78 +44,78 @@ This roadmap is a step-by-step checklist for building your productivity assistan
 ## v0.7.0-alpha: API Testing
 - [x] Write basic tests for API endpoints
 
-## v0.8.0-alpha: Frontend Environment
+## v0.8.0-alpha: Password Reset (Backend)
+- [ ] Implement password reset endpoint (backend)
+- [ ] Add email sending for password reset (backend)
+- [ ] Add tests for password reset
+
+## v0.9.0-alpha: Frontend Environment
 - [ ] Initialize React app with TypeScript
 - [ ] Set up Tailwind CSS
 - [ ] Set up routing (React Router)
 
-## v0.9.0-alpha: Auth UI
+## v0.10.0-alpha: Auth UI
 - [ ] Create login page
 - [ ] Create registration page
+- [ ] Add password reset UI (frontend)
 
-## v0.10.0-beta: Dashboard Layout
+## v0.11.0-beta: Dashboard Layout
 - [ ] Create dashboard layout
 
-## v0.10.1-alpha: Password Reset (Backend & Frontend)
-- [ ] Implement password reset endpoint (backend)
-- [ ] Add password reset UI (frontend)
-- [ ] Add email sending for password reset (backend)
-- [ ] Add tests for password reset
-
-## v0.11.0-beta: Task Views
+## v0.12.0-beta: Task Views
 - [ ] Implement List view
 - [ ] Implement Kanban view
 - [ ] Implement Calendar view
 - [ ] Implement Timeline view
 
-## v0.12.0-beta: Project Management UI
+## v0.13.0-beta: Project Management UI
 - [ ] Implement project management UI
 - [ ] Add forms for creating/editing tasks and projects
 
-## v0.13.0-beta: Scheduling UI
+## v0.14.0-beta: Scheduling UI
 - [ ] Add scheduling UI (calendar, drag-and-drop)
 
-## v0.14.0-beta: Analytics & Charts
+## v0.15.0-beta: Analytics & Charts
 - [ ] Add analytics/charts (using a chart library)
 
-## v0.15.0-beta: Settings & Customization
+## v0.16.0-beta: Settings & Customization
 - [ ] Add settings page (theme, integrations, notifications)
 - [ ] Add theming (light/dark mode)
 - [ ] Add custom fields for tasks/projects
 - [ ] Add widget-based dashboard customization
 
-## v0.16.0-beta: Notifications & Data
+## v0.17.0-beta: Notifications & Data
 - [ ] Add notifications/reminders (browser, email, or Discord)
 - [ ] Add data export/import (CSV, JSON)
 
-## v0.17.0-beta: Google Drive/Docs Integration
+## v0.18.0-beta: Google Drive/Docs Integration
 - [ ] Add Google Drive/Docs integration endpoints (backend)
 - [ ] Add Google Drive/Docs UI integration (frontend)
 
-## v0.18.0-beta: Alexa Integration
+## v0.19.0-beta: Alexa Integration
 - [ ] Add Alexa integration endpoints (backend)
 - [ ] Add Alexa UI integration (frontend)
 
-## v0.19.0-beta: Discord Integration
+## v0.20.0-beta: Discord Integration
 - [ ] Add Discord integration endpoints (backend)
 - [ ] Add Discord UI integration (frontend)
 
-## v0.20.0-beta: Smart Scheduling & Prioritization
+## v0.21.0-beta: Smart Scheduling & Prioritization
 - [ ] Design algorithm for auto-scheduling/prioritizing tasks
 - [ ] Implement backend logic for smart scheduling
 - [ ] Add frontend UI for smart scheduling suggestions
 
-## v0.21.0-beta: Gamification Part 1 - Foundation
+## v0.22.0-beta: Gamification Part 1 - Foundation
 - [ ] Design gamification system (define goals, rewards, and progression)
 - [ ] Implement badge system (e.g., for task streaks, project completions)
 - [ ] Implement streak tracking (daily/weekly task completion)
 
-## v0.22.0-beta: Gamification Part 2 - Achievements & XP
+## v0.23.0-beta: Gamification Part 2 - Achievements & XP
 - [ ] Add achievement system (e.g., milestones, productivity challenges)
 - [ ] Add points/XP system for completing tasks and projects
 - [ ] Add progress bar or level system (visualize user progress)
 
-## v0.23.0-beta: Gamification Part 3 - UI & Polish
+## v0.24.0-beta: Gamification Part 3 - UI & Polish
 - [ ] Add gamification UI components (badges, achievements, streaks, XP, levels)
 - [ ] Add notifications for earning rewards/achievements
 - [ ] Add settings to enable/disable gamification features

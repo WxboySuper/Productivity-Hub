@@ -7,6 +7,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## API Change Summary Requirement
 - For every stable, alpha, or beta release, summarize all API changes (new endpoints, deleted endpoints, changes to endpoints, etc.) in the changelog, even if they were already documented in dev releases. This ensures the release notes provide a complete overview of API evolution for each version.
 
+## [v0.8.0-dev1] - 2025-07-02
+- Roadmap reorganization: Password reset (backend) is now its own milestone at v0.8.0-alpha, immediately after API Testing.
+- All subsequent milestones have been renumbered to keep versioning clean and intuitive.
+- Password reset UI (frontend) is grouped with Auth UI in v0.10.0-alpha.
+- Removed the redundant password reset milestone that previously appeared after Dashboard Layout.
+- See ROADMAP.md for the updated milestone sequence and details.
+
 ## [0.7.0-alpha] - 2025-07-02
 ### Changed
 - Marked all tasks as done, tests were previously implemented already
