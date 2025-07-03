@@ -22,10 +22,10 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
     super(props);
     this.state = { hasError: false };
   }
-  static getDerivedStateFromError() {
+  static getDerivedStateFromError(/*error: unknown*/) {
     return { hasError: true };
   }
-  componentDidCatch(error: any, info: any) {
+  componentDidCatch(error: unknown, info: React.ErrorInfo) {
     // You can log error info here
     // eslint-disable-next-line no-console
     console.error('ErrorBoundary caught an error:', error, info);

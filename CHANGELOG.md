@@ -7,6 +7,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## API Change Summary Requirement
 - For every stable, alpha, or beta release, summarize all API changes (new endpoints, deleted endpoints, changes to endpoints, etc.) in the changelog, even if they were already documented in dev releases. This ensures the release notes provide a complete overview of API evolution for each version.
 
+## [v0.9.0-dev3] - 2025-07-03
+### Fixed
+- Fixed DeepSource JS-0323 (usage of `any` type) and JS-0105 (class methods should utilize `this`) in `frontend/src/App.tsx` by replacing `any` with `unknown` and ensuring correct method signatures and usage.
+
 ## [v0.9.0-dev2] - 2025-07-03
 ### Fixed
 - Fixed DeepSource JS-0328 (unhandled promise) in `frontend/src/reportWebVitals.ts` by adding a `.catch` handler to the dynamic import of `web-vitals`.
@@ -91,6 +95,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   - Updated backend/app.py with email sending logic and error handling.
   - Updated automated tests to mock email delivery and verify correct behavior.
 - See docs/API.md for updated endpoint behavior and security notes.
+
+### Fixed
+- Fixed DeepSource JS-0323 (usage of `any` type) and JS-0105 (class methods should utilize `this`) in `frontend/src/App.tsx` by replacing `any` with `unknown` and ensuring correct method signatures and usage.
 
 ## [v0.8.0-dev2] - 2025-07-03
 - Implemented the `PasswordResetToken` model in the backend to support password reset functionality.
