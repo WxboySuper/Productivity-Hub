@@ -417,6 +417,32 @@ def validate_and_update_task_project(task, user, project_id):
         task.project_id = None
     return True
 
+# --- Pure validation helpers for task creation ---
+def validate_task_start_date(start_date_str):
+    """
+    Validate and parse a start date string (ISO 8601, applies timezone if missing).
+    Returns (parsed_datetime, None) if valid, or (None, (jsonify, code)) on error.
+    """
+    if start_date_str:
+        try:
+            dt = parse_local_datetime(start_date_str)
+            return dt, None
+        except Exception:
+            return None, error_response("Invalid start_date format. Use ISO 8601 with or without timezone.", 400)
+    return None, None
+
+
+def validate_task_recurrence(recurrence):
+    """
+    Validate and clean a recurrence value (string or None).
+    Returns (cleaned_value, None) if valid, or (None, (jsonify, code)) on error.
+    """
+    if recurrence:
+        if not isinstance(recurrence, str):
+            return None, error_response("Recurrence must be a string.", 400)
+        return recurrence.strip(), None
+    return None, None
+
 
 def error_response(message, code):
     """
@@ -683,21 +709,15 @@ def create_task():
             return error_response("Invalid due_date format. Use ISO 8601 with or without timezone.", 400)
 
     # Validate start_date and recurrence using helpers
-    # Parse start_date if provided
     start_date = None
     start_date_str = data.get('start_date')
-    if start_date_str:
-        result = validate_and_update_task_start_date(task := Task(), start_date_str)
-        if isinstance(result, tuple):
-            return result
-        start_date = task.start_date
-    # Validate recurrence using helper
+    start_date, err = validate_task_start_date(start_date_str)
+    if err:
+        return err
     recurrence = data.get('recurrence')
-    if recurrence is not None:
-        result = validate_and_update_task_recurrence(task := Task(), recurrence)
-        if isinstance(result, tuple):
-            return result
-        recurrence = task.recurrence
+    recurrence, err = validate_task_recurrence(recurrence)
+    if err:
+        return err
 
     # Validation: if both start_date and due_date are set, start_date must be <= due_date
     if start_date and due_date and start_date > due_date:

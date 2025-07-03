@@ -2,6 +2,7 @@
 test_projects.py: Automated tests for Project CRUD endpoints, including validation, error handling, and ownership checks.
 """
 import pytest
+import uuid
 
 REGISTER_URL = '/api/register'
 LOGIN_URL = '/api/login'
@@ -9,15 +10,19 @@ PROJECTS_URL = '/api/projects'
 
 @pytest.fixture
 def auth_client(client):
+    unique = uuid.uuid4().hex[:8]
+    username = f"projuser_{unique}"
+    email = f"proj_{unique}@weatherboysuper.com"
     client.post(REGISTER_URL, json={
-        'username': 'projuser',
-        'email': 'proj@weatherboysuper.com',
+        'username': username,
+        'email': email,
         'password': 'StrongPass1!'
     })
     client.post(LOGIN_URL, json={
-        'username': 'projuser',
+        'username': username,
         'password': 'StrongPass1!'
     })
+    client._projuser = username
     return client
 
 def test_create_project_success(auth_client):

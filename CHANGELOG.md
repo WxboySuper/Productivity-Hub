@@ -7,6 +7,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## API Change Summary Requirement
 - For every stable, alpha, or beta release, summarize all API changes (new endpoints, deleted endpoints, changes to endpoints, etc.) in the changelog, even if they were already documented in dev releases. This ensures the release notes provide a complete overview of API evolution for each version.
 
+## [v0.6.0-dev3] - 2025-07-02
+- Updated all test credentials in backend/tests/test_auth.py, backend/tests/test_projects.py, and backend/tests/test_tasks.py to use unique usernames and emails generated with UUIDs. This prevents collisions and improves test reliability for all tests and fixtures.
+- Refactored pure validation helpers for `start_date` and `recurrence` in backend/app.py:
+    - Added `validate_task_start_date` and `validate_task_recurrence` as pure functions that validate and parse input values directly, without requiring Task object instantiation.
+    - Updated the Task creation endpoint to use these helpers, improving efficiency and clarity.
+    - Moved these helpers to the global helper section for better code organization and maintainability.
+- Removed duplicate/stray definitions of these helpers at the end of backend/app.py.
+- No API changes, but code is now more maintainable and efficient for future development.
+
 ## [v0.6.0-dev2] - 2025-07-02
 - Added `start_date` (optional, ISO 8601 datetime) and `recurrence` (optional, string) fields to the Task model in backend/app.py.
 - Updated Task serialization to include `start_date` and `recurrence` in API responses.

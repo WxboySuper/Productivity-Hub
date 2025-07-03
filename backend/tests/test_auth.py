@@ -3,6 +3,7 @@ test_auth.py: Automated tests for user registration, login, logout, and profile 
 Covers both success and failure cases.
 """
 import pytest
+import uuid
 
 REGISTER_URL = '/api/register'
 LOGIN_URL = '/api/login'
@@ -11,9 +12,12 @@ PROFILE_URL = '/api/profile'
 
 @pytest.mark.usefixtures('client', 'db')
 def test_register_success(client):
+    unique = uuid.uuid4().hex[:8]
+    username = f"testuser_{unique}"
+    email = f"test_{unique}@weatherboysuper.com"
     resp = client.post(REGISTER_URL, json={
-        'username': 'testuser',
-        'email': 'test@weatherboysuper.com',
+        'username': username,
+        'email': email,
         'password': 'StrongPass1!'
     })
     assert resp.status_code == 201
@@ -37,13 +41,16 @@ def test_register_weak_password(client):
 
 @pytest.mark.usefixtures('client', 'db')
 def test_login_success(client):
+    unique = uuid.uuid4().hex[:8]
+    username = f"loginuser_{unique}"
+    email = f"login_{unique}@weatherboysuper.com"
     client.post(REGISTER_URL, json={
-        'username': 'loginuser',
-        'email': 'login@weatherboysuper.com',
+        'username': username,
+        'email': email,
         'password': 'StrongPass1!'
     })
     resp = client.post(LOGIN_URL, json={
-        'username': 'loginuser',
+        'username': username,
         'password': 'StrongPass1!'
     })
     assert resp.status_code == 200
@@ -60,13 +67,16 @@ def test_login_invalid(client):
 
 @pytest.mark.usefixtures('client', 'db')
 def test_logout(client):
+    unique = uuid.uuid4().hex[:8]
+    username = f"logoutuser_{unique}"
+    email = f"logout_{unique}@weatherboysuper.com"
     client.post(REGISTER_URL, json={
-        'username': 'logoutuser',
-        'email': 'logout@weatherboysuper.com',
+        'username': username,
+        'email': email,
         'password': 'StrongPass1!'
     })
     client.post(LOGIN_URL, json={
-        'username': 'logoutuser',
+        'username': username,
         'password': 'StrongPass1!'
     })
     resp = client.post(LOGOUT_URL)
@@ -81,31 +91,37 @@ def test_profile_requires_auth(client):
 
 @pytest.mark.usefixtures('client', 'db')
 def test_profile_success(client):
+    unique = uuid.uuid4().hex[:8]
+    username = f"profileuser_{unique}"
+    email = f"profile_{unique}@weatherboysuper.com"
     client.post(REGISTER_URL, json={
-        'username': 'profileuser',
-        'email': 'profile@weatherboysuper.com',
+        'username': username,
+        'email': email,
         'password': 'StrongPass1!'
     })
     client.post(LOGIN_URL, json={
-        'username': 'profileuser',
+        'username': username,
         'password': 'StrongPass1!'
     })
     resp = client.get(PROFILE_URL)
     assert resp.status_code == 200
     data = resp.get_json()
-    assert data['username'] == 'profileuser'
-    assert data['email'] == 'profile@weatherboysuper.com'
+    assert data['username'] == username
+    assert data['email'] == email
 
 # Additional test for CSRF protection on profile update
 @pytest.mark.usefixtures('client', 'db')
 def test_csrf_protect_profile_update(client):
+    unique = uuid.uuid4().hex[:8]
+    username = f"csrfprofile_{unique}"
+    email = f"csrfprofile_{unique}@weatherboysuper.com"
     client.post(REGISTER_URL, json={
-        'username': 'csrfprofile',
-        'email': 'csrfprofile@weatherboysuper.com',
+        'username': username,
+        'email': email,
         'password': 'StrongPass1!'
     })
     client.post(LOGIN_URL, json={
-        'username': 'csrfprofile',
+        'username': username,
         'password': 'StrongPass1!'
     })
     client.application.config['TESTING'] = False
@@ -115,15 +131,19 @@ def test_csrf_protect_profile_update(client):
 
 @pytest.fixture
 def auth_client(client):
+    unique = uuid.uuid4().hex[:8]
+    username = f"authtestuser_{unique}"
+    email = f"authtestuser_{unique}@weatherboysuper.com"
     client.post(REGISTER_URL, json={
-        'username': 'authtestuser',
-        'email': 'authtestuser@weatherboysuper.com',
+        'username': username,
+        'email': email,
         'password': 'StrongPass1!'
     })
     client.post(LOGIN_URL, json={
-        'username': 'authtestuser',
+        'username': username,
         'password': 'StrongPass1!'
     })
+    client._authtestuser = username
     return client
 
 def test_auth_client_fixture_works(auth_client):
@@ -133,4 +153,4 @@ def test_auth_client_fixture_works(auth_client):
     resp = auth_client.get('/api/profile')
     data = resp.get_json()
     assert resp.status_code == 200
-    assert data['username'] == 'authtestuser'
+    assert data['username'] == auth_client._authtestuser

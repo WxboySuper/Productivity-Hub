@@ -22,6 +22,7 @@ def auth_client(client):
         'username': username,
         'password': 'StrongPass1!'
     })
+    client._taskuser = username
     return client
 
 def test_create_task_success(auth_client):
