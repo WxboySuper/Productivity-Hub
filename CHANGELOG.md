@@ -7,6 +7,55 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## API Change Summary Requirement
 - For every stable, alpha, or beta release, summarize all API changes (new endpoints, deleted endpoints, changes to endpoints, etc.) in the changelog, even if they were already documented in dev releases. This ensures the release notes provide a complete overview of API evolution for each version.
 
+## [v0.6.0-alpha] - 2025-07-02
+### Added
+- `start_date` (optional, ISO 8601 datetime) and `recurrence` (optional, string) fields to the Task model and API.
+- Full CRUD support for new Task fields, including validation, serialization, and error handling.
+- Centralized, DRY validation and update helpers for all user and task fields.
+- Automated tests for all Task, Project, and User endpoints, including new fields, edge cases, and error handling.
+- Unique test credentials for all tests to ensure reliability and prevent collisions.
+- Logging throughout all endpoints, helpers, and major logic branches for traceability and maintainability.
+- Policy-driven workflow, changelog, and documentation practices as defined in COPILOT_INSTRUCTIONS.md and VERSIONING.md.
+
+### Changed
+- Refactored all endpoint logic to use centralized helpers for validation, error handling, and DRY principles.
+- Refactored `update_task` and `update_profile` endpoints to reduce cyclomatic complexity using loop-based field processing.
+- Improved code and documentation organization: all helpers are grouped, and all changes are reflected in docs/API.md and ROADMAP.md.
+- Improved error messages and validation for all endpoints, including granular feedback for invalid input and ownership errors.
+- Enhanced timezone handling and fallback logic for robust datetime support across platforms.
+- Updated all test files to use endpoint constants and improved assertion patterns.
+
+### Fixed
+- Fixed bug in Task update: start_date vs due_date validation now always runs if both are set, regardless of which fields are present in the update payload.
+- Fixed DeepSource issues: BAN-B101, PYL-R1714, PYL-W0621, and PY-R1000 (cyclomatic complexity).
+- Fixed test reliability by ensuring all test credentials are unique per run.
+- Fixed inconsistent error handling and object lookup throughout the backend.
+
+### API Change Summary
+
+**New Endpoints:**
+- _None in this release._
+
+**Changed Endpoints:**
+- **PUT /api/profile**
+  - Now uses centralized validation and error handling for all fields.
+  - Improved error messages and feedback for invalid input and ownership errors.
+  - Refactored to reduce cyclomatic complexity using loop-based field processing.
+
+- **POST /api/tasks**
+  - Now supports `start_date` (optional, ISO 8601 datetime) and `recurrence` (optional, string) fields.
+  - Full validation, serialization, and error handling for new fields.
+
+- **PUT /api/tasks/<task_id>**
+  - Now supports updating `start_date` and `recurrence` fields.
+  - Improved validation, including start_date vs due_date logic.
+  - Refactored to use DRY, loop-based update logic for maintainability.
+
+**Note:**
+- All endpoints require authentication and enforce user/project ownership.
+- State-changing endpoints require a valid CSRF token in production.
+- All API changes and features are fully documented in `docs/API.md`.
+
 ## [v0.6.0-dev4] - 2025-07-02
 - Refactored the `update_task` endpoint in backend/app.py to reduce cyclomatic complexity (PY-R1000):
     - Replaced sequential field update logic with a loop-based approach using a field-to-helper mapping, similar to the `update_profile` refactor.
