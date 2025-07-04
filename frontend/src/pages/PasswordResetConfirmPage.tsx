@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 
 // Helper to read a cookie value by name
 function getCookie(name: string): string | null {
-  const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+  const match = document.cookie.match(new RegExp(`(^| )${name}=([^;]+)`));
   return match ? decodeURIComponent(match[2]) : null;
 }
 

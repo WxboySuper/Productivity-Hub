@@ -7,6 +7,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## API Change Summary Requirement
 - For every stable, alpha, or beta release, summarize all API changes (new endpoints, deleted endpoints, changes to endpoints, etc.) in the changelog, even if they were already documented in dev releases. This ensures the release notes provide a complete overview of API evolution for each version.
 
+## [v0.10.0-dev4] - 2025-07-03
+### Fixed
+- Fixed DeepSource JS-0086: Removed assignment operator in return statement for the forgot password button in `LoginPage.tsx` by extracting the handler to a separate function.
+- Fixed DeepSource JS-0246: Replaced string concatenation with template literals in RegExp construction in `getCookie` helpers in `PasswordResetRequestPage.tsx` and `PasswordResetConfirmPage.tsx`.
+
 ## [v0.10.0-dev3] - 2025-07-03
 ### Added
 - Added public `/api/csrf-token` endpoint: always generates and sets a CSRF token for the current session (even if unauthenticated) and returns it in JSON. This allows the frontend to fetch a CSRF token before submitting password reset or other unauthenticated forms, ensuring CSRF protection works for all users and fixing 403 errors on password reset.

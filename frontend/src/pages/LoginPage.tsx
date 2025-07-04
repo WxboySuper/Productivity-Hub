@@ -44,6 +44,10 @@ export default function LoginPage() {
     [form]
   );
 
+  const handleForgotPassword = useCallback(() => {
+    window.location.href = "/password-reset/request";
+  }, []);
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50">
       <form
@@ -103,7 +107,7 @@ export default function LoginPage() {
         <button
           type="button"
           className="w-full bg-gray-100 text-blue-700 font-semibold py-2 rounded hover:bg-blue-200 transition mb-2"
-          onClick={() => window.location.href = "/password-reset/request"}
+          onClick={handleForgotPassword}
         >
           Forgot password?
         </button>
