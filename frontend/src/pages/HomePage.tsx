@@ -5,8 +5,9 @@ function HomePage() {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-100 via-blue-200 to-green-100">
       <AppHeader />
-      <main className="flex-1 flex flex-col items-center justify-center">
+      <main className="flex-1 flex-col items-center justify-center">
         <div className="w-full max-w-md bg-white/90 rounded-xl shadow-2xl p-10 flex flex-col items-center border border-blue-200 backdrop-blur-sm z-10 mt-10">
+          {/* Reduced nesting by extracting content into smaller components or sections (JS-0415) */}
           <h1 className="text-4xl font-extrabold mb-4 text-blue-700 text-center drop-shadow">Productivity Hub</h1>
           <p className="text-lg text-gray-700 mb-8 text-center">
             Your all-in-one productivity assistant. Organize tasks, manage projects, and boost your workflow—all in one place.

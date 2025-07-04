@@ -17,41 +17,6 @@ export default function LoginPage() {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   }, []);
 
-  const handleSubmit = useCallback(
-    async (e: React.FormEvent<HTMLFormElement>) => {
-      e.preventDefault();
-      setError(null);
-      setLoading(true);
-      try {
-        const res = await fetch("/api/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            username: form.usernameOrEmail,
-            password: form.password,
-          }),
-        });
-        const data: { error?: string; token?: string } = await res.json();
-        if (!res.ok) {
-          setError(data.error || "Login failed.");
-        } else if (!data.token) {
-          setError("No authentication token received from server.");
-        } else {
-          setForm({ usernameOrEmail: "", password: "" });
-          login(data.token); // Pass the actual token
-          setTimeout(() => {
-            navigate("/", { replace: true });
-          }, 800);
-        }
-      } catch (err) {
-        setError("Network error. Please try again.");
-      } finally {
-        setLoading(false);
-      }
-    },
-    [form, navigate, login]
-  );
-
   const handleForgotPassword = useCallback(() => {
     window.location.href = "/password-reset/request";
   }, []);
@@ -68,50 +33,84 @@ export default function LoginPage() {
               <span className="font-semibold">{error}</span>
             </div>
           )}
-          <div className="mb-4">
-            <label className="block mb-1 font-medium" htmlFor="usernameOrEmail">
-              Username or Email
-            </label>
-            <input
-              className="w-full border rounded px-3 py-2"
-              type="text"
-              id="usernameOrEmail"
-              name="usernameOrEmail"
-              value={form.usernameOrEmail}
-              onChange={handleChange}
-              required
-              autoComplete="username"
-            />
-          </div>
-          <div className="mb-6">
-            <label className="block mb-1 font-medium" htmlFor="password">
-              Password
-            </label>
-            <input
-              className="w-full border rounded px-3 py-2"
-              type="password"
-              id="password"
-              name="password"
-              value={form.password}
-              onChange={handleChange}
-              required
-              autoComplete="current-password"
-            />
-          </div>
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white font-semibold py-2 rounded hover:bg-blue-700 transition mb-2"
-            disabled={loading}
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              setError(null);
+              setLoading(true);
+              try {
+                const res = await fetch("/api/login", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    username: form.usernameOrEmail,
+                    password: form.password,
+                  }),
+                });
+                const data: { error?: string; token?: string } = await res.json();
+                if (!res.ok) {
+                  setError(data.error || "Login failed.");
+                } else if (!data.token) {
+                  setError("No authentication token received from server.");
+                } else {
+                  setForm({ usernameOrEmail: "", password: "" });
+                  login(data.token); // Pass the actual token
+                  setTimeout(() => {
+                    navigate("/", { replace: true });
+                  }, 800);
+                }
+              } catch (err) {
+                setError("Network error. Please try again.");
+              } finally {
+                setLoading(false);
+              }
+            }}
           >
-            {loading ? "Logging in..." : "Login"}
-          </button>
-          <button
-            type="button"
-            className="w-full bg-gray-100 text-blue-700 font-semibold py-2 rounded hover:bg-blue-200 transition mb-2"
-            onClick={handleForgotPassword}
-          >
-            Forgot password?
-          </button>
+            <div className="mb-4">
+              <label className="block mb-1 font-medium" htmlFor="usernameOrEmail">
+                Username or Email
+              </label>
+              <input
+                className="w-full border rounded px-3 py-2"
+                type="text"
+                id="usernameOrEmail"
+                name="usernameOrEmail"
+                value={form.usernameOrEmail}
+                onChange={handleChange}
+                required
+                autoComplete="username"
+              />
+            </div>
+            <div className="mb-6">
+              <label className="block mb-1 font-medium" htmlFor="password">
+                Password
+              </label>
+              <input
+                className="w-full border rounded px-3 py-2"
+                type="password"
+                id="password"
+                name="password"
+                value={form.password}
+                onChange={handleChange}
+                required
+                autoComplete="current-password"
+              />
+            </div>
+            <button
+              type="submit"
+              className="w-full bg-blue-600 text-white font-semibold py-2 rounded hover:bg-blue-700 transition mb-2"
+              disabled={loading}
+            >
+              {loading ? "Logging in..." : "Login"}
+            </button>
+            <button
+              type="button"
+              className="w-full bg-gray-100 text-blue-700 font-semibold py-2 rounded hover:bg-blue-200 transition mb-2"
+              onClick={handleForgotPassword}
+            >
+              Forgot password?
+            </button>
+          </form>
         </div>
       </main>
     </div>

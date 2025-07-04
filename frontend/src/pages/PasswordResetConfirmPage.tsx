@@ -28,47 +28,6 @@ export default function PasswordResetConfirmPage() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = useCallback(
-    async (e: React.FormEvent<HTMLFormElement>) => {
-      e.preventDefault();
-      setError(null);
-      if (password !== confirmPassword) {
-        setError("Passwords do not match.");
-        return;
-      }
-      setLoading(true);
-      try {
-        let csrfToken = getCookie('_csrf_token');
-        if (!csrfToken) {
-          csrfToken = await ensureCsrfToken();
-        }
-        const res = await fetch("/api/password-reset/confirm", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
-          },
-          credentials: 'include',
-          body: JSON.stringify({ token: resetToken, new_password: password }),
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          setError(data.error || "Password reset failed.");
-        } else {
-          setError("Password reset successful! Redirecting to login page in 3 seconds...");
-          setTimeout(() => {
-            navigate("/login");
-          }, 3000);
-        }
-      } catch (err) {
-        setError("Network error. Please try again.");
-      } finally {
-        setLoading(false);
-      }
-    },
-    [password, confirmPassword, resetToken, navigate]
-  );
-
   const handlePasswordChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setPassword(e.target.value);
   }, []);
@@ -88,43 +47,83 @@ export default function PasswordResetConfirmPage() {
               <span className="font-semibold">{error}</span>
             </div>
           )}
-          <div className="mb-4 w-full">
-            <label className="block mb-1 font-medium" htmlFor="password">
-              New Password
-            </label>
-            <input
-              className="w-full border rounded px-3 py-2"
-              type="password"
-              id="password"
-              name="password"
-              value={password}
-              onChange={handlePasswordChange}
-              required
-              autoComplete="new-password"
-            />
-          </div>
-          <div className="mb-6 w-full">
-            <label className="block mb-1 font-medium" htmlFor="confirmPassword">
-              Confirm New Password
-            </label>
-            <input
-              className="w-full border rounded px-3 py-2"
-              type="password"
-              id="confirmPassword"
-              name="confirmPassword"
-              value={confirmPassword}
-              onChange={handleConfirmPasswordChange}
-              required
-              autoComplete="new-password"
-            />
-          </div>
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white font-semibold py-2 rounded hover:bg-blue-700 transition"
-            disabled={loading}
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              setError(null);
+              if (password !== confirmPassword) {
+                setError("Passwords do not match.");
+                return;
+              }
+              setLoading(true);
+              try {
+                let csrfToken = getCookie('_csrf_token');
+                if (!csrfToken) {
+                  csrfToken = await ensureCsrfToken();
+                }
+                const res = await fetch("/api/password-reset/confirm", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
+                  },
+                  credentials: 'include',
+                  body: JSON.stringify({ token: resetToken, new_password: password }),
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                  setError(data.error || "Password reset failed.");
+                } else {
+                  setError("Password reset successful! Redirecting to login page in 3 seconds...");
+                  setTimeout(() => {
+                    navigate("/login");
+                  }, 3000);
+                }
+              } catch (err) {
+                setError("Network error. Please try again.");
+              } finally {
+                setLoading(false);
+              }
+            }}
           >
-            {loading ? "Resetting..." : "Set New Password"}
-          </button>
+            <div className="mb-4 w-full">
+              <label className="block mb-1 font-medium" htmlFor="password">
+                New Password
+              </label>
+              <input
+                className="w-full border rounded px-3 py-2"
+                type="password"
+                id="password"
+                name="password"
+                value={password}
+                onChange={handlePasswordChange}
+                required
+                autoComplete="new-password"
+              />
+            </div>
+            <div className="mb-6 w-full">
+              <label className="block mb-1 font-medium" htmlFor="confirmPassword">
+                Confirm New Password
+              </label>
+              <input
+                className="w-full border rounded px-3 py-2"
+                type="password"
+                id="confirmPassword"
+                name="confirmPassword"
+                value={confirmPassword}
+                onChange={handleConfirmPasswordChange}
+                required
+                autoComplete="new-password"
+              />
+            </div>
+            <button
+              type="submit"
+              className="w-full bg-blue-600 text-white font-semibold py-2 rounded hover:bg-blue-700 transition"
+              disabled={loading}
+            >
+              {loading ? "Resetting..." : "Set New Password"}
+            </button>
+          </form>
         </div>
       </main>
     </div>

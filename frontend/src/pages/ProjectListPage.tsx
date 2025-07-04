@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../auth';
 import AppHeader from '../components/AppHeader';
 import ProjectForm from '../components/ProjectForm';
+import ConfirmDialog from '../components/ConfirmDialog';
 
 interface Project {
   id: number;
@@ -17,6 +18,10 @@ const ProjectListPage: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [editProject, setEditProject] = useState<Project | null>(null);
+  const [deleteProject, setDeleteProject] = useState<Project | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -33,8 +38,8 @@ const ProjectListPage: React.FC = () => {
         }
         const data = await response.json();
         setProjects(data.projects || []);
-      } catch (err: any) {
-        setError(err.message || 'Unknown error');
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Unknown error');
       } finally {
         setLoading(false);
       }
@@ -42,12 +47,13 @@ const ProjectListPage: React.FC = () => {
     fetchProjects();
   }, [token]);
 
+  const getCsrfToken = () => document.cookie.match(/_csrf_token=([^;]+)/)?.[1];
+
   const handleCreateProject = async (project: { name: string; description?: string }) => {
     setFormLoading(true);
     setFormError(null);
     try {
-      // Get CSRF token from cookie
-      const csrfToken = document.cookie.match(/_csrf_token=([^;]+)/)?.[1];
+      const csrfToken = getCsrfToken();
       const response = await fetch('/api/projects', {
         method: 'POST',
         headers: {
@@ -64,10 +70,72 @@ const ProjectListPage: React.FC = () => {
       const newProject = await response.json();
       setProjects((prev) => [...prev, newProject]);
       setShowForm(false);
-    } catch (err: any) {
-      setFormError(err.message || 'Unknown error');
+    } catch (err: unknown) {
+      setFormError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setFormLoading(false);
+    }
+  };
+
+  const handleEditProject = (project: Project) => setEditProject(project);
+
+  const handleUpdateProject = async (updated: { name: string; description?: string }) => {
+    if (!editProject) return;
+    setFormLoading(true);
+    setFormError(null);
+    try {
+      const csrfToken = getCsrfToken();
+      const response = await fetch(`/api/projects/${editProject.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
+        },
+        body: JSON.stringify(updated),
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to update project');
+      }
+      const updatedProject = await response.json();
+      setProjects((prev) => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
+      setEditProject(null);
+    } catch (err: unknown) {
+      setFormError(err instanceof Error ? err.message : 'Unknown error');
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
+  const handleDeleteProject = (project: Project) => {
+    setDeleteProject(project);
+    setDeleteError(null);
+  };
+
+  const confirmDeleteProject = async () => {
+    if (!deleteProject) return;
+    setDeleteLoading(true);
+    setDeleteError(null);
+    try {
+      const csrfToken = getCsrfToken();
+      const response = await fetch(`/api/projects/${deleteProject.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
+        },
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to delete project');
+      }
+      setProjects((prev) => prev.filter(p => p.id !== deleteProject.id));
+      setDeleteProject(null);
+    } catch (err: unknown) {
+      setDeleteError(err instanceof Error ? err.message : 'Unknown error');
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -103,11 +171,27 @@ const ProjectListPage: React.FC = () => {
           {projects.length > 0 && (
             <ul className="space-y-4">
               {projects.map((project) => (
-                <li key={project.id} className="p-4 bg-white/90 rounded shadow hover:shadow-md transition cursor-pointer border border-blue-100">
-                  <div className="font-semibold text-lg text-blue-700 flex items-center gap-2">
-                    <span className="inline-block text-2xl">📂</span> {project.name}
+                <li key={project.id} className="p-4 bg-white/90 rounded shadow hover:shadow-md transition border border-blue-100 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                  <div>
+                    <div className="font-semibold text-lg text-blue-700 flex items-center gap-2">
+                      <span className="inline-block text-2xl">📂</span> {project.name}
+                    </div>
+                    {project.description && <div className="text-gray-600 mt-1">{project.description}</div>}
                   </div>
-                  {project.description && <div className="text-gray-600 mt-1">{project.description}</div>}
+                  <div className="flex gap-2 mt-2 md:mt-0">
+                    <button
+                      className="px-3 py-1 bg-yellow-400 text-yellow-900 rounded hover:bg-yellow-300 transition font-semibold"
+                      onClick={() => handleEditProject(project)}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition font-semibold"
+                      onClick={() => handleDeleteProject(project)}
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -121,6 +205,28 @@ const ProjectListPage: React.FC = () => {
             error={formError}
           />
         )}
+        {editProject && (
+          <ProjectForm
+            onCreate={handleUpdateProject}
+            onClose={() => setEditProject(null)}
+            loading={formLoading}
+            error={formError}
+            initialName={editProject.name}
+            initialDescription={editProject.description}
+            editMode
+          />
+        )}
+        <ConfirmDialog
+          open={!!deleteProject}
+          title="Delete Project?"
+          message={deleteProject ? `Are you sure you want to delete "${deleteProject.name}"? This cannot be undone.` : ''}
+          confirmLabel="Delete"
+          cancelLabel="Cancel"
+          onConfirm={confirmDeleteProject}
+          onCancel={() => setDeleteProject(null)}
+          loading={deleteLoading}
+        />
+        {deleteError && <div className="text-red-600 mt-2">{deleteError}</div>}
       </main>
     </div>
   );
