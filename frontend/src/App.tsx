@@ -3,11 +3,11 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
 import RegisterPage from './pages/RegisterPage';
 import LoginPage from './pages/LoginPage';
+import PasswordResetRequestPage from './pages/PasswordResetRequestPage';
+import PasswordResetConfirmPage from './pages/PasswordResetConfirmPage';
+import HomePage from './pages/HomePage';
 
 // Simple placeholder components
-function Home() {
-  return <div className="text-2xl font-bold text-center mt-10">Home Page</div>;
-}
 function NotFound() {
   return <div className="text-2xl font-bold text-center mt-10 text-red-600">404 - Page Not Found</div>;
 }
@@ -39,9 +39,11 @@ function App() {
     <ErrorBoundary>
       <Router>
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/password-reset/request" element={<PasswordResetRequestPage />} />
+          <Route path="/password-reset/confirm" element={<PasswordResetConfirmPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>

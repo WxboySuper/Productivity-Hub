@@ -16,6 +16,7 @@ import secrets
 import smtplib
 from email.message import EmailMessage
 from string import Template
+import time
 
 # Explicitly check for .env file and load success
 DOTENV_PATH = os.path.join(os.path.dirname(__file__), '.env')
@@ -938,7 +939,7 @@ def delete_project(project_id):
 # Route for requesting a password reset
 @app.route('/api/password-reset/request', methods=['POST'])
 def password_reset_request():
-    """Request a password reset: accepts email, generates token, stores it, sends email."""
+    """Request a password reset: accepts email, generates token, stores it, sends email (timing-equalized)."""
     logger.info("Password reset request endpoint accessed.")
     if not request.is_json:
         logger.error("Password reset request failed: Request must be JSON.")
@@ -948,31 +949,32 @@ def password_reset_request():
     email = data.get('email')
     if not email or not email.strip():
         logger.error("Password reset request failed: Email is required.")
-        # Always return generic message for security
+        # Always perform dummy email send for timing equalization
+        send_email("dummy@localhost", "Password Reset Request", "If this were real, you'd get a reset link.")
+        time.sleep(0.5)  # Simulate token generation delay
         return jsonify({"message": "If the email exists, a password reset link will be sent."}), 200
 
     user = User.query.filter_by(email=email.strip()).first()
-    if not user:
-        logger.info("Password reset requested for non-existent email: %s", email)
-        # Always return generic message for security
-        return jsonify({"message": "If the email exists, a password reset link will be sent."}), 200
-
-    # Generate secure token and expiration
+    # Always perform token generation and email send, even if user does not exist
     token = secrets.token_urlsafe(48)
     expiration_minutes = int(os.environ.get('PASSWORD_RESET_TOKEN_EXPIRATION_MINUTES', 60))
     expires_at = datetime.now(timezone.utc) + timedelta(minutes=expiration_minutes)
-    prt = PasswordResetToken(user_id=user.id, token=token, expires_at=expires_at)
-    db.session.add(prt)
-    db.session.commit()
-    logger.info("Password reset token generated for user_id=%s (expires at %s)", user.id, expires_at.isoformat())
-
-    # Send password reset email using template
-    reset_link = f"https://yourdomain.com/reset-password?token={token}"
-    email_body = render_password_reset_email(reset_link, expiration_minutes)
-    email_sent = send_email(user.email, "Password Reset Request", email_body)
-    if not email_sent:
-        logger.error("Password reset email failed to send to %s", user.email)
-
+    if user:
+        prt = PasswordResetToken(user_id=user.id, token=token, expires_at=expires_at)
+        db.session.add(prt)
+        db.session.commit()
+        logger.info("Password reset token generated for user_id=%s (expires at %s)", user.id, expires_at.isoformat())
+        frontend_base_url = os.environ.get('FRONTEND_BASE_URL', 'http://localhost:3000')
+        reset_link = f"{frontend_base_url.rstrip('/')}/password-reset/confirm?token={token}"
+        email_body = render_password_reset_email(reset_link, expiration_minutes)
+        email_sent = send_email(user.email, "Password Reset Request", email_body)
+        if not email_sent:
+            logger.error("Password reset email failed to send to %s", user.email)
+    else:
+        # Simulate token generation and email send for non-existent user
+        send_email("dummy@localhost", "Password Reset Request", "If this were real, you'd get a reset link.")
+        time.sleep(0.5)  # Simulate token generation delay
+    # Always return generic message
     if app.config.get('DEBUG', False) or app.config.get('TESTING', False):
         return jsonify({
             "message": "If the email exists, a password reset link will be sent.",
@@ -1073,6 +1075,20 @@ def render_password_reset_email(reset_link, expiration_minutes=60):
         """Hello,\n\nA password reset was requested for your account. If this was you, click the link below to reset your password.\n\n$reset_link\n\nThis link will expire in $expiration_minutes minutes.\n\nIf you did not request this, you can ignore this email.\n\nThanks,\nProductivity Hub Team"""
     )
     return template.substitute(reset_link=reset_link, expiration_minutes=expiration_minutes)
+
+@app.route('/api/csrf-token', methods=['GET'])
+def get_csrf_token():
+    """
+    Public endpoint to generate and set a CSRF token for the current session.
+    Returns the CSRF token in JSON and sets it in the session/cookie.
+    This allows unauthenticated users to obtain a CSRF token for password reset and other flows.
+    """
+    logger.info("CSRF token endpoint accessed.")
+    token = generate_csrf_token()
+    response = jsonify({"csrf_token": token})
+    # Set cookie explicitly for frontend JS if needed (optional, Flask session cookie is usually enough)
+    response.set_cookie('_csrf_token', token, httponly=False, samesite='Lax')
+    return response, 200
 
 if __name__ == '__main__':
     init_db()

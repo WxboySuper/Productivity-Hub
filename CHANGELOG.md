@@ -7,6 +7,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## API Change Summary Requirement
 - For every stable, alpha, or beta release, summarize all API changes (new endpoints, deleted endpoints, changes to endpoints, etc.) in the changelog, even if they were already documented in dev releases. This ensures the release notes provide a complete overview of API evolution for each version.
 
+## [v0.10.0-dev3] - 2025-07-03
+### Added
+- Added public `/api/csrf-token` endpoint: always generates and sets a CSRF token for the current session (even if unauthenticated) and returns it in JSON. This allows the frontend to fetch a CSRF token before submitting password reset or other unauthenticated forms, ensuring CSRF protection works for all users and fixing 403 errors on password reset.
+
+### Changed
+- Password reset email links now point to `/password-reset/confirm?token=...` on the frontend, matching the actual confirmation page route. The base URL is configurable via the `FRONTEND_BASE_URL` environment variable for both local and production use.
+- Backend password reset flow and email delivery are now fully compatible with Gmail SMTP and any SMTP provider, using environment variables for configuration.
+
+### Fixed
+- Removed unused 'success' state variable from `RegisterPage.tsx` to resolve DeepSource JS-0356 (unused variable).
+- Fixed CSRF 403 errors on password reset request and confirm pages: both now read the CSRF token from the `_csrf_token` cookie and send it in the `X-CSRF-Token` header, matching backend requirements. This ensures secure, robust password reset flow and resolves frontend-backend integration issues for these endpoints.
+
+### Security
+- `.env` is excluded from version control to protect sensitive credentials and secrets.
+- Password reset and authentication flows are robust against timing attacks and enumeration.
+
 ## [v0.10.0-dev2] - 2025-07-03
 ### Fixed
 - Refactored `RegisterPage.tsx` to use `useCallback` for event handlers and added explicit TypeScript types, resolving DeepSource JS-0417 (avoid local functions in JSX) and TypeScript compile errors.

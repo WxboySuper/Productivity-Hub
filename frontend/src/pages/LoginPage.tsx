@@ -95,10 +95,17 @@ export default function LoginPage() {
         </div>
         <button
           type="submit"
-          className="w-full bg-blue-600 text-white font-semibold py-2 rounded hover:bg-blue-700 transition"
+          className="w-full bg-blue-600 text-white font-semibold py-2 rounded hover:bg-blue-700 transition mb-2"
           disabled={loading}
         >
           {loading ? "Logging in..." : "Login"}
+        </button>
+        <button
+          type="button"
+          className="w-full bg-gray-100 text-blue-700 font-semibold py-2 rounded hover:bg-blue-200 transition mb-2"
+          onClick={() => window.location.href = "/password-reset/request"}
+        >
+          Forgot password?
         </button>
       </form>
     </div>
