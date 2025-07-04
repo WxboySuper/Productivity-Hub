@@ -4,31 +4,38 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (token: string) => void;
   logout: () => void;
+  token?: string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [token, setToken] = useState<string | undefined>(() => localStorage.getItem("auth_token") || undefined);
 
   useEffect(() => {
-    // Check localStorage for auth state on mount
-    const token = localStorage.getItem("auth_token");
-    setIsAuthenticated(Boolean(token));
+    // Listen for changes to localStorage (e.g., in other tabs)
+    const handleStorage = () => {
+      const storedToken = localStorage.getItem("auth_token");
+      setToken(storedToken || undefined);
+    };
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
   }, []);
 
   const login = (token: string) => {
-    setIsAuthenticated(true);
-    localStorage.setItem("auth_token", token); // Use actual token
+    setToken(token);
+    localStorage.setItem("auth_token", token);
   };
 
   const logout = () => {
-    setIsAuthenticated(false);
+    setToken(undefined);
     localStorage.removeItem("auth_token");
   };
 
+  const isAuthenticated = Boolean(token);
+
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, login, logout, token }}>
       {children}
     </AuthContext.Provider>
   );

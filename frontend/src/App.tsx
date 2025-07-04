@@ -7,7 +7,8 @@ import PasswordResetRequestPage from './pages/PasswordResetRequestPage';
 import PasswordResetConfirmPage from './pages/PasswordResetConfirmPage';
 import HomePage from './pages/HomePage';
 import DashboardPlaceholderPage from './pages/DashboardPlaceholderPage';
-import { AuthProvider, useAuth } from './auth';
+import ProjectListPage from './pages/ProjectListPage';
+import { useAuth } from './auth';
 
 // Simple placeholder components
 function NotFound() {
@@ -42,10 +43,16 @@ function PublicRoute({ children }: { children: React.ReactElement }) {
 }
 
 function AppRoutes() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, token } = useAuth();
+  // Debug output for troubleshooting
+  if (process.env.NODE_ENV !== 'production') {
+    // eslint-disable-next-line no-console
+    console.log('AppRoutes: isAuthenticated:', isAuthenticated, 'token:', token);
+  }
   return (
     <Routes>
       <Route path="/" element={isAuthenticated ? <DashboardPlaceholderPage /> : <HomePage />} />
+      <Route path="/projects" element={isAuthenticated ? <ProjectListPage /> : <Navigate to="/login" replace />} />
       <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
       <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
       <Route path="/password-reset/request" element={<PublicRoute><PasswordResetRequestPage /></PublicRoute>} />
@@ -58,11 +65,9 @@ function AppRoutes() {
 function App() {
   return (
     <ErrorBoundary>
-      <AuthProvider>
-        <Router>
-          <AppRoutes />
-        </Router>
-      </AuthProvider>
+      <Router>
+        <AppRoutes />
+      </Router>
     </ErrorBoundary>
   );
 }
