@@ -7,6 +7,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## API Change Summary Requirement
 - For every stable, alpha, or beta release, summarize all API changes (new endpoints, deleted endpoints, changes to endpoints, etc.) in the changelog, even if they were already documented in dev releases. This ensures the release notes provide a complete overview of API evolution for each version.
 
+## [v0.11.0-dev1] - 2025-07-03
+### Changed
+- Updated the ROADMAP.md to correctly reflect feature dependencies and the order of upcoming features, ensuring clarity on the development path and feature rollout sequence.
+
 ## [v0.10.0-alpha] - 2025-07-03
 ### Summary
 This alpha release introduces a complete, secure password reset flow (frontend and backend), robust CSRF protection for unauthenticated users, modern authentication UI, and improved code quality. All changes from dev1–dev5 are included below.
