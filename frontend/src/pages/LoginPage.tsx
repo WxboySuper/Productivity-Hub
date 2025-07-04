@@ -32,13 +32,15 @@ export default function LoginPage() {
             password: form.password,
           }),
         });
-        const data: { error?: string } = await res.json();
+        const data: { error?: string; token?: string } = await res.json();
         if (!res.ok) {
           setError(data.error || "Login failed.");
+        } else if (!data.token) {
+          setError("No authentication token received from server.");
         } else {
           setSuccess(true);
           setForm({ usernameOrEmail: "", password: "" });
-          login();
+          login(data.token); // Pass the actual token
           setTimeout(() => {
             navigate("/", { replace: true });
           }, 800);

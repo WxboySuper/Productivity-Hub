@@ -36,11 +36,6 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
   }
 }
 
-function PrivateRoute({ children }: { children: React.ReactElement }) {
-  const { isAuthenticated } = useAuth();
-  return isAuthenticated ? children : <Navigate to="/login" replace />;
-}
-
 function PublicRoute({ children }: { children: React.ReactElement }) {
   const { isAuthenticated } = useAuth();
   return !isAuthenticated ? children : <Navigate to="/" replace />;

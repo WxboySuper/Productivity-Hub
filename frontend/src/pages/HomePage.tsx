@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 function HomePage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden bg-gradient-to-br from-blue-200 via-blue-400 to-green-200 px-4">
-      {/* Enhanced SVG background with more visible, balanced shapes and deeper colors */}
+      {/* SVG background */}
       <svg className="absolute top-0 left-0 w-full h-full pointer-events-none z-0" viewBox="0 0 1440 900" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
         <circle cx="220" cy="180" r="180" fill="#6366f1" fillOpacity="0.18" />
         <circle cx="1300" cy="120" r="140" fill="#22d3ee" fillOpacity="0.15" />
@@ -33,43 +33,50 @@ function HomePage() {
           </Link>
         </div>
       </div>
-      {/* Descriptive section about the app */}
-      <section className="max-w-3xl w-full bg-white/80 rounded-xl shadow-xl mt-12 p-8 flex flex-col items-center border border-blue-100 z-10 backdrop-blur-sm">
+      {/* Descriptive section about the app, reduced nesting for JS-0415 */}
+      <section className="max-w-3xl w-full bg-white/80 rounded-xl shadow-xl mt-12 p-8 border border-blue-100 z-10 backdrop-blur-sm">
         <h2 className="text-2xl font-bold text-blue-800 mb-4 text-center">Why Productivity Hub?</h2>
-        <p className="text-gray-700 text-center mb-6 max-w-2xl">
+        <p className="text-gray-700 text-center mb-6 max-w-2xl mx-auto">
           Productivity Hub is designed to help you take control of your work and life. Whether you’re a solo professional, a student, or part of a team, our mission is to empower you to achieve more with less stress.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
-          <div className="flex flex-col items-center">
-            <span className="text-blue-600 text-3xl mb-2">📁</span>
-            <h3 className="font-semibold text-lg mb-1">Project Management</h3>
-            <p className="text-gray-600 text-center text-sm">Create, organize, and track projects with ease. Stay on top of deadlines and deliverables.</p>
-          </div>
-          <div className="flex flex-col items-center">
-            <span className="text-green-600 text-3xl mb-2">✅</span>
-            <h3 className="font-semibold text-lg mb-1">Task Views</h3>
-            <p className="text-gray-600 text-center text-sm">Visualize your tasks in lists, boards, or calendars. Prioritize and focus on what matters most.</p>
-          </div>
-          <div className="flex flex-col items-center">
-            <span className="text-yellow-500 text-3xl mb-2">📊</span>
-            <h3 className="font-semibold text-lg mb-1">Analytics & Insights</h3>
-            <p className="text-gray-600 text-center text-sm">Gain insights into your productivity patterns and progress with built-in analytics.</p>
-          </div>
-          <div className="flex flex-col items-center">
-            <span className="text-purple-600 text-3xl mb-2">🗓️</span>
-            <h3 className="font-semibold text-lg mb-1">Scheduling & Dashboard</h3>
-            <p className="text-gray-600 text-center text-sm">Plan your days, set reminders, and get a unified dashboard for all your work.</p>
-          </div>
-          <div className="flex flex-col items-center">
-            <span className="text-pink-500 text-3xl mb-2">⚙️</span>
-            <h3 className="font-semibold text-lg mb-1">Customization</h3>
-            <p className="text-gray-600 text-center text-sm">Personalize your workspace to fit your workflow and preferences.</p>
-          </div>
-          <div className="flex flex-col items-center">
-            <span className="text-indigo-500 text-3xl mb-2">🤝</span>
-            <h3 className="font-semibold text-lg mb-1">Collaboration</h3>
-            <p className="text-gray-600 text-center text-sm">Work solo or invite teammates. Share projects, assign tasks, and collaborate in real time.</p>
-          </div>
+          {[{
+            icon: "📁",
+            color: "text-blue-600",
+            title: "Project Management",
+            desc: "Create, organize, and track projects with ease. Stay on top of deadlines and deliverables."
+          }, {
+            icon: "✅",
+            color: "text-green-600",
+            title: "Task Views",
+            desc: "Visualize your tasks in lists, boards, or calendars. Prioritize and focus on what matters most."
+          }, {
+            icon: "📊",
+            color: "text-yellow-500",
+            title: "Analytics & Insights",
+            desc: "Gain insights into your productivity patterns and progress with built-in analytics."
+          }, {
+            icon: "🗓️",
+            color: "text-purple-600",
+            title: "Scheduling & Dashboard",
+            desc: "Plan your days, set reminders, and get a unified dashboard for all your work."
+          }, {
+            icon: "⚙️",
+            color: "text-pink-500",
+            title: "Customization",
+            desc: "Personalize your workspace to fit your workflow and preferences."
+          }, {
+            icon: "🤝",
+            color: "text-indigo-500",
+            title: "Collaboration",
+            desc: "Work solo or invite teammates. Share projects, assign tasks, and collaborate in real time."
+          }].map(({ icon, color, title, desc }) => (
+            <div key={title} className="flex flex-col items-center">
+              <span className={`${color} text-3xl mb-2`}>{icon}</span>
+              <h3 className="font-semibold text-lg mb-1">{title}</h3>
+              <p className="text-gray-600 text-center text-sm">{desc}</p>
+            </div>
+          ))}
         </div>
       </section>
       <footer className="mt-10 text-gray-400 text-sm text-center z-10">

@@ -7,6 +7,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## API Change Summary Requirement
 - For every stable, alpha, or beta release, summarize all API changes (new endpoints, deleted endpoints, changes to endpoints, etc.) in the changelog, even if they were already documented in dev releases. This ensures the release notes provide a complete overview of API evolution for each version.
 
+## [v0.11.0-dev3] - 2025-07-04
+### Added
+- Implemented a full-page, modern unauthenticated landing page (`HomePage.tsx`) with creative SVG background and feature highlights.
+- Created a placeholder dashboard page (`DashboardPlaceholderPage.tsx`) for authenticated users, including a "Sign Out" button.
+- Added a robust authentication context (`AuthProvider` and `useAuth` in `auth.tsx`) with persistent login state using localStorage.
+- Updated login flow in `LoginPage.tsx` to use the actual authentication token from the backend and store it in localStorage.
+- Refactored routing in `App.tsx` to use authentication state for route protection, showing the dashboard for authenticated users and the landing page for unauthenticated users.
+
+### Fixed
+- Removed unused `PrivateRoute` component from `App.tsx` to resolve DeepSource JS-0356 (unused variable).
+- Reduced JSX nesting in `HomePage.tsx` by mapping over an array for feature cards, resolving DeepSource JS-0415 (JSX maximum depth).
+- Replaced `!!token` with `Boolean(token)` in `auth.tsx` to resolve DeepSource JS-0066 (shorthand type coercion).
+
+### Changed
+- Refactored code for maintainability and code quality, addressing DeepSource issues and improving overall structure.
+- Updated the changelog and roadmap to accurately reflect all new features, fixes, and improvements for this version.
+
 ## [v0.11.0-dev2] - 2025-07-03
 ### Added
 - Implemented a robust frontend authentication context (`AuthProvider` and `useAuth`) to manage login state and protect routes.
