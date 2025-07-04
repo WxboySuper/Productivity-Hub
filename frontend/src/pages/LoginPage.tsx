@@ -16,10 +16,40 @@ export default function LoginPage() {
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   }, []);
-
   const handleForgotPassword = useCallback(() => {
     window.location.href = "/password-reset/request";
   }, []);
+  const handleSubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: form.usernameOrEmail,
+          password: form.password,
+        }),
+      });
+      const data: { error?: string; token?: string } = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Login failed.");
+      } else if (!data.token) {
+        setError("No authentication token received from server.");
+      } else {
+        setForm({ usernameOrEmail: "", password: "" });
+        login(data.token);
+        setTimeout(() => {
+          navigate("/", { replace: true });
+        }, 800);
+      }
+    } catch (err) {
+      setError("Network error. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }, [form, login, navigate]);
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-100 via-blue-200 to-green-100">
@@ -33,39 +63,7 @@ export default function LoginPage() {
               <span className="font-semibold">{error}</span>
             </div>
           )}
-          <form
-            onSubmit={async (e) => {
-              e.preventDefault();
-              setError(null);
-              setLoading(true);
-              try {
-                const res = await fetch("/api/login", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    username: form.usernameOrEmail,
-                    password: form.password,
-                  }),
-                });
-                const data: { error?: string; token?: string } = await res.json();
-                if (!res.ok) {
-                  setError(data.error || "Login failed.");
-                } else if (!data.token) {
-                  setError("No authentication token received from server.");
-                } else {
-                  setForm({ usernameOrEmail: "", password: "" });
-                  login(data.token); // Pass the actual token
-                  setTimeout(() => {
-                    navigate("/", { replace: true });
-                  }, 800);
-                }
-              } catch (err) {
-                setError("Network error. Please try again.");
-              } finally {
-                setLoading(false);
-              }
-            }}
-          >
+          <form onSubmit={handleSubmit}>
             <div className="mb-4">
               <label className="block mb-1 font-medium" htmlFor="usernameOrEmail">
                 Username or Email

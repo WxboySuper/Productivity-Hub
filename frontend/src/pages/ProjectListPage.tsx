@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../auth';
 import AppHeader from '../components/AppHeader';
 import ProjectForm from '../components/ProjectForm';
@@ -139,6 +139,11 @@ const ProjectListPage: React.FC = () => {
     }
   };
 
+  const handleShowForm = useCallback(() => setShowForm(true), []);
+  const handleCloseForm = useCallback(() => setShowForm(false), []);
+  const handleCloseEdit = useCallback(() => setEditProject(null), []);
+  const handleCancelDelete = useCallback(() => setDeleteProject(null), []);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-100 via-blue-200 to-green-100 flex flex-col">
       <AppHeader betaLabel="Project Management Beta" />
@@ -148,7 +153,7 @@ const ProjectListPage: React.FC = () => {
           {projects.length > 0 && (
             <button
               className="mb-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-              onClick={() => setShowForm(true)}
+              onClick={handleShowForm}
             >
               + New Project
             </button>
@@ -162,7 +167,7 @@ const ProjectListPage: React.FC = () => {
               <div className="text-gray-400 mb-4">Start by creating a new project to organize your work.</div>
               <button
                 className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-                onClick={() => setShowForm(true)}
+                onClick={handleShowForm}
               >
                 + New Project
               </button>
@@ -200,7 +205,7 @@ const ProjectListPage: React.FC = () => {
         {showForm && (
           <ProjectForm
             onCreate={handleCreateProject}
-            onClose={() => setShowForm(false)}
+            onClose={handleCloseForm}
             loading={formLoading}
             error={formError}
           />
@@ -208,7 +213,7 @@ const ProjectListPage: React.FC = () => {
         {editProject && (
           <ProjectForm
             onCreate={handleUpdateProject}
-            onClose={() => setEditProject(null)}
+            onClose={handleCloseEdit}
             loading={formLoading}
             error={formError}
             initialName={editProject.name}
@@ -217,13 +222,13 @@ const ProjectListPage: React.FC = () => {
           />
         )}
         <ConfirmDialog
-          open={!!deleteProject}
+          open={Boolean(deleteProject)}
           title="Delete Project?"
-          message={deleteProject ? `Are you sure you want to delete "${deleteProject.name}"? This cannot be undone.` : ''}
+          message={deleteProject ? `Are you sure you want to delete \"${deleteProject.name}\"? This cannot be undone.` : ''}
           confirmLabel="Delete"
           cancelLabel="Cancel"
           onConfirm={confirmDeleteProject}
-          onCancel={() => setDeleteProject(null)}
+          onCancel={handleCancelDelete}
           loading={deleteLoading}
         />
         {deleteError && <div className="text-red-600 mt-2">{deleteError}</div>}

@@ -7,6 +7,46 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## API Change Summary Requirement
 - For every stable, alpha, or beta release, summarize all API changes (new endpoints, deleted endpoints, changes to endpoints, etc.) in the changelog, even if they were already documented in dev releases. This ensures the release notes provide a complete overview of API evolution for each version.
 
+## [v0.12.0-dev4] - 2025-07-04
+### Added
+- Main Management Window (`MainManagementWindow.tsx`):  
+  - Modern, scalable UI for project and task management with a collapsible sidebar (Add New, All Tasks, Quick Tasks, Projects).
+  - Sidebar navigation with prominent "Add New" button and improved accessibility.
+  - Integrated project management UI under the "Projects" tab, including project info bar and CRUD operations.
+  - Task management views: All Tasks, Quick Tasks, and Project Tasks, each with clear distinction and empty state UI.
+  - Task Details modal (`TaskDetailsModal.tsx`) for viewing all task info, including before-start indicator and recurrence display.
+  - TaskFormModal (`TaskFormModal.tsx`) for adding and editing tasks, supporting all fields, recurrence, and date/time split.
+  - Visual indicator for tasks before their start date/time in TaskDetailsModal.
+  - Edit button in TaskDetailsModal opens TaskFormModal in edit mode, pre-filled with task data.
+
+### Changed
+- Refactored task and project CRUD logic to use real backend API for all operations, with robust error and loading state handling.
+- TaskFormModal now supports both add and edit modes, with proper state reset and hybrid recurrence UI (dropdown + custom input).
+- Date/time fields for due/start date are now split, with time optional and backend-compatible.
+- Improved modal width, alignment, and input state management for better usability.
+- All modals and forms now handle loading and error states gracefully.
+- Refactored code to remove unused variables and resolve all ESLint warnings.
+- TaskFormModal now guards against null `initialValues` to prevent runtime errors.
+
+### Fixed
+- Fixed bug where TaskFormModal would crash if `initialValues` was null.
+- Fixed input state reset bug in TaskFormModal (inputs no longer clear while typing).
+- Fixed modal state, error overlays, and modal not appearing in certain flows.
+- Fixed all ESLint warnings (unused variables, unnecessary escape characters, etc.).
+- Fixed edit task flow: editing a task now updates the backend and refreshes the UI.
+
+### Removed
+- All unused state variables and handlers in MainManagementWindow and TaskDetailsModal for code quality.
+
+### API Change Summary
+_No new API changes in this release. See previous entries for the latest API additions._
+
+## [v0.12.0-dev3] - 2025-07-04
+### Fixed
+- JS-0417: Refactored all inline functions and arrow functions in JSX properties to stable, memoized handlers using `useCallback` in `RegisterPage.tsx`, `ProjectListPage.tsx`, `PasswordResetConfirmPage.tsx`, and `LoginPage.tsx`.
+- JS-0415: Reduced JSX nesting in `RegisterPage.tsx`, `PasswordResetConfirmPage.tsx`, and `LoginPage.tsx` by extracting content into smaller sections or components.
+- JS-0066: Replaced shorthand type coercion with `Boolean(deleteProject)` in `ProjectListPage.tsx` for clarity and code quality.
+
 ## [v0.12.0-dev2] - 2025-07-04
 ### Added
 - Modern, consistent app-wide header (`AppHeader.tsx`) applied to all main pages (dashboard, home, login, register, password reset, project management).

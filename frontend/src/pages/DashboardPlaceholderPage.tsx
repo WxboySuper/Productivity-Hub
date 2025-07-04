@@ -31,6 +31,12 @@ function DashboardPlaceholderPage() {
           >
             🧪 Project Management (Beta)
           </a>
+          <a
+            href="/manage"
+            className="inline-block mb-4 px-6 py-2 bg-indigo-600 text-white font-semibold rounded shadow hover:bg-indigo-700 transition border border-indigo-500"
+          >
+            🚀 Open Productivity Hub
+          </a>
           <button
             className="bg-red-500 hover:bg-red-600 text-white font-semibold px-6 py-2 rounded shadow transition"
             onClick={logout}

@@ -20,6 +20,43 @@ export default function RegisterPage() {
     []
   );
 
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      setError(null);
+      if (form.password !== form.confirmPassword) {
+        setError("Passwords do not match.");
+        return;
+      }
+      setLoading(true);
+      try {
+        const response = await fetch("/api/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: form.username,
+            email: form.email,
+            password: form.password,
+          }),
+        });
+        const data: { error?: string } = await response.json();
+        if (!response.ok) {
+          setError(data.error || "Registration failed.");
+        } else {
+          setTimeout(() => {
+            navigate("/login");
+          }, 3000);
+          setForm({ username: "", email: "", password: "", confirmPassword: "" });
+        }
+      } catch (err) {
+        setError("Network error. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [form, navigate]
+  );
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-100 via-blue-200 to-green-100">
       <AppHeader />
@@ -32,41 +69,7 @@ export default function RegisterPage() {
               <span className="font-semibold">{error}</span>
             </div>
           )}
-          <form
-            onSubmit={async (e) => {
-              e.preventDefault();
-              setError(null);
-              if (form.password !== form.confirmPassword) {
-                setError("Passwords do not match.");
-                return;
-              }
-              setLoading(true);
-              try {
-                const response = await fetch("/api/register", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    username: form.username,
-                    email: form.email,
-                    password: form.password,
-                  }),
-                });
-                const data: { error?: string } = await response.json();
-                if (!response.ok) {
-                  setError(data.error || "Registration failed.");
-                } else {
-                  setTimeout(() => {
-                    navigate("/login");
-                  }, 3000);
-                  setForm({ username: "", email: "", password: "", confirmPassword: "" });
-                }
-              } catch (err) {
-                setError("Network error. Please try again.");
-              } finally {
-                setLoading(false);
-              }
-            }}
-          >
+          <form onSubmit={handleSubmit}>
             <div className="mb-4">
               <label className="block mb-1 font-medium" htmlFor="username">
                 Username

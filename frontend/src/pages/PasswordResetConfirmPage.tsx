@@ -34,6 +34,43 @@ export default function PasswordResetConfirmPage() {
   const handleConfirmPasswordChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setConfirmPassword(e.target.value);
   }, []);
+  const handleSubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError(null);
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+    setLoading(true);
+    try {
+      let csrfToken = getCookie('_csrf_token');
+      if (!csrfToken) {
+        csrfToken = await ensureCsrfToken();
+      }
+      const res = await fetch("/api/password-reset/confirm", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
+        },
+        credentials: 'include',
+        body: JSON.stringify({ token: resetToken, new_password: password }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Password reset failed.");
+      } else {
+        setError("Password reset successful! Redirecting to login page in 3 seconds...");
+        setTimeout(() => {
+          navigate("/login");
+        }, 3000);
+      }
+    } catch (err) {
+      setError("Network error. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }, [password, confirmPassword, navigate, resetToken]);
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-100 via-blue-200 to-green-100">
@@ -47,45 +84,7 @@ export default function PasswordResetConfirmPage() {
               <span className="font-semibold">{error}</span>
             </div>
           )}
-          <form
-            onSubmit={async (e) => {
-              e.preventDefault();
-              setError(null);
-              if (password !== confirmPassword) {
-                setError("Passwords do not match.");
-                return;
-              }
-              setLoading(true);
-              try {
-                let csrfToken = getCookie('_csrf_token');
-                if (!csrfToken) {
-                  csrfToken = await ensureCsrfToken();
-                }
-                const res = await fetch("/api/password-reset/confirm", {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                    ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
-                  },
-                  credentials: 'include',
-                  body: JSON.stringify({ token: resetToken, new_password: password }),
-                });
-                const data = await res.json();
-                if (!res.ok) {
-                  setError(data.error || "Password reset failed.");
-                } else {
-                  setError("Password reset successful! Redirecting to login page in 3 seconds...");
-                  setTimeout(() => {
-                    navigate("/login");
-                  }, 3000);
-                }
-              } catch (err) {
-                setError("Network error. Please try again.");
-              } finally {
-                setLoading(false);
-              }
-            }}
-          >
+          <form onSubmit={handleSubmit}>
             <div className="mb-4 w-full">
               <label className="block mb-1 font-medium" htmlFor="password">
                 New Password

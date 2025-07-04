@@ -8,6 +8,7 @@ import PasswordResetConfirmPage from './pages/PasswordResetConfirmPage';
 import HomePage from './pages/HomePage';
 import DashboardPlaceholderPage from './pages/DashboardPlaceholderPage';
 import ProjectListPage from './pages/ProjectListPage';
+import MainManagementWindow from './pages/MainManagementWindow';
 import { useAuth } from './auth';
 
 // Simple placeholder components
@@ -57,6 +58,7 @@ function AppRoutes() {
       <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
       <Route path="/password-reset/request" element={<PublicRoute><PasswordResetRequestPage /></PublicRoute>} />
       <Route path="/password-reset/confirm" element={<PublicRoute><PasswordResetConfirmPage /></PublicRoute>} />
+      <Route path="/manage" element={isAuthenticated ? <MainManagementWindow /> : <Navigate to="/login" replace />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
