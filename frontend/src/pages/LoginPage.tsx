@@ -1,4 +1,6 @@
 import React, { useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../auth";
 
 export default function LoginPage() {
   const [form, setForm] = useState({
@@ -8,6 +10,8 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -34,6 +38,10 @@ export default function LoginPage() {
         } else {
           setSuccess(true);
           setForm({ usernameOrEmail: "", password: "" });
+          login();
+          setTimeout(() => {
+            navigate("/", { replace: true });
+          }, 800);
         }
       } catch (err) {
         setError("Network error. Please try again.");
@@ -41,7 +49,7 @@ export default function LoginPage() {
         setLoading(false);
       }
     },
-    [form]
+    [form, navigate, login]
   );
 
   const handleForgotPassword = useCallback(() => {

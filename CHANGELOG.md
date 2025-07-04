@@ -7,6 +7,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## API Change Summary Requirement
 - For every stable, alpha, or beta release, summarize all API changes (new endpoints, deleted endpoints, changes to endpoints, etc.) in the changelog, even if they were already documented in dev releases. This ensures the release notes provide a complete overview of API evolution for each version.
 
+## [v0.11.0-dev2] - 2025-07-03
+### Added
+- Implemented a robust frontend authentication context (`AuthProvider` and `useAuth`) to manage login state and protect routes.
+- Added persistent authentication using localStorage, so users remain logged in after page refresh.
+- Added a "Sign Out" button to the dashboard placeholder page, allowing users to securely log out and clear their session.
+- Integrated route protection: authenticated users see the dashboard placeholder, unauthenticated users see the landing page, and public routes redirect appropriately.
+- Updated login flow to call `login()` on successful authentication, ensuring the dashboard is shown immediately after login.
+
+### Changed
+- Refactored route logic in `App.tsx` to use `PrivateRoute` and `PublicRoute` wrappers for clean, maintainable access control.
+- Improved user experience by providing instant feedback and redirect after login/logout.
+
 ## [v0.11.0-dev1] - 2025-07-03
 ### Changed
 - Updated the ROADMAP.md to correctly reflect feature dependencies and the order of upcoming features, ensuring clarity on the development path and feature rollout sequence.

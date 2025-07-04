@@ -1,11 +1,13 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
 import RegisterPage from './pages/RegisterPage';
 import LoginPage from './pages/LoginPage';
 import PasswordResetRequestPage from './pages/PasswordResetRequestPage';
 import PasswordResetConfirmPage from './pages/PasswordResetConfirmPage';
 import HomePage from './pages/HomePage';
+import DashboardPlaceholderPage from './pages/DashboardPlaceholderPage';
+import { AuthProvider, useAuth } from './auth';
 
 // Simple placeholder components
 function NotFound() {
@@ -34,19 +36,38 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
   }
 }
 
+function PrivateRoute({ children }: { children: React.ReactElement }) {
+  const { isAuthenticated } = useAuth();
+  return isAuthenticated ? children : <Navigate to="/login" replace />;
+}
+
+function PublicRoute({ children }: { children: React.ReactElement }) {
+  const { isAuthenticated } = useAuth();
+  return !isAuthenticated ? children : <Navigate to="/" replace />;
+}
+
+function AppRoutes() {
+  const { isAuthenticated } = useAuth();
+  return (
+    <Routes>
+      <Route path="/" element={isAuthenticated ? <DashboardPlaceholderPage /> : <HomePage />} />
+      <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
+      <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
+      <Route path="/password-reset/request" element={<PublicRoute><PasswordResetRequestPage /></PublicRoute>} />
+      <Route path="/password-reset/confirm" element={<PublicRoute><PasswordResetConfirmPage /></PublicRoute>} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+}
+
 function App() {
   return (
     <ErrorBoundary>
-      <Router>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/password-reset/request" element={<PasswordResetRequestPage />} />
-          <Route path="/password-reset/confirm" element={<PasswordResetConfirmPage />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </Router>
+      <AuthProvider>
+        <Router>
+          <AppRoutes />
+        </Router>
+      </AuthProvider>
     </ErrorBoundary>
   );
 }
