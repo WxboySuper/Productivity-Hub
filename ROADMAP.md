@@ -60,9 +60,9 @@ This roadmap is a step-by-step checklist for building your productivity assistan
 - [x] Add password reset UI (frontend)
 
 ## v0.11.0-beta: Main Page
-- [ ] Create a main landing page that serves as the entry point for all users
-    - [ ] If not authenticated, show options to register or log in
-    - [ ] If authenticated, show a placeholder dashboard or welcome message
+- [x] Create a main landing page that serves as the entry point for all users
+    - [x] If not authenticated, show options to register or log in
+    - [x] If authenticated, show a placeholder dashboard or welcome message
 
 ## v0.12.0-beta: Project Management UI
 - [ ] Implement project management UI

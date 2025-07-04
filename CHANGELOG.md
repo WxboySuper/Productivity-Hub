@@ -7,6 +7,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## API Change Summary Requirement
 - For every stable, alpha, or beta release, summarize all API changes (new endpoints, deleted endpoints, changes to endpoints, etc.) in the changelog, even if they were already documented in dev releases. This ensures the release notes provide a complete overview of API evolution for each version.
 
+## [v0.11.0-beta] - 2025-07-04
+### Summary
+This beta release introduces a modern, full-page unauthenticated landing page, a protected dashboard placeholder for authenticated users, and a robust, persistent authentication flow. All authentication and routing logic has been refactored for security, maintainability, and user experience. DeepSource issues have been addressed for code quality. The changelog and roadmap are fully up to date for this release.
+
+### Added
+- Modern, creative unauthenticated landing page (`HomePage.tsx`) with SVG background and feature highlights.
+- Placeholder dashboard page (`DashboardPlaceholderPage.tsx`) for authenticated users, including a "Sign Out" button.
+- Robust authentication context (`AuthProvider` and `useAuth` in `auth.tsx`) with persistent login state using localStorage.
+- Login flow in `LoginPage.tsx` now uses the backend authentication token and stores it securely in localStorage.
+- Route protection in `App.tsx`: authenticated users see the dashboard, unauthenticated users see the landing page.
+
+### Changed
+- Refactored routing and authentication logic for clarity, maintainability, and security.
+- Updated changelog and roadmap to reflect all new features and improvements.
+
+### Fixed
+- Removed unused `PrivateRoute` from `App.tsx` (DeepSource JS-0356).
+- Reduced JSX nesting in `HomePage.tsx` by mapping feature cards (DeepSource JS-0415).
+- Used `Boolean(token)` instead of `!!token` in `auth.tsx` (DeepSource JS-0066).
+
+### API Change Summary
+_No new API changes in this release. See v0.10.0-alpha for the latest API additions._
+
 ## [v0.11.0-dev3] - 2025-07-04
 ### Added
 - Implemented a full-page, modern unauthenticated landing page (`HomePage.tsx`) with creative SVG background and feature highlights.
@@ -434,7 +457,7 @@ _No new API changes in this release. See v0.8.0-alpha for the latest API additio
 - Automated test suite covering all endpoints and features, including positive, negative, and edge cases, with authenticated test fixtures and CSRF fully disabled in test mode.
 - Logging throughout all major logic branches, endpoints, and helper functions, with configurable log level via `LOG_LEVEL` environment variable.
 - Documentation for all endpoints, features, and security practices in `docs/API.md`, `docs/architecture.md`, and supporting files.
-- Policy-driven workflow, changelog, and documentation practices as defined in `COPILOT_INSTRUCTIONS.md` and `VERSIONING.md`.
+- Policy-driven workflow, changelog, and documentation practices as defined in COPILOT_INSTRUCTIONS.md and VERSIONING.md.
 
 ### Changed
 - Refactored user profile update logic for maintainability and reduced complexity.
