@@ -7,6 +7,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## API Change Summary Requirement
 - For every stable, alpha, or beta release, summarize all API changes (new endpoints, deleted endpoints, changes to endpoints, etc.) in the changelog, even if they were already documented in dev releases. This ensures the release notes provide a complete overview of API evolution for each version.
 
+## [v0.10.0-alpha] - 2025-07-03
+### Summary
+This alpha release introduces a complete, secure password reset flow (frontend and backend), robust CSRF protection for unauthenticated users, modern authentication UI, and improved code quality. All changes from dev1–dev5 are included below.
+
+### API Change Summary
+**New Endpoints:**
+- `GET /api/csrf-token` — Obtain a CSRF token for the current session (public, unauthenticated).
+- `POST /api/password-reset/request` — Request a password reset token by email (secure, generic response, email delivery, token/expiration in dev/test).
+- `POST /api/password-reset/confirm` — Confirm a password reset using a token and new password (validates, updates password, marks token as used, enforces expiration and strength).
+
+**Changed Endpoints:**
+- Password reset endpoints now use timing-equalized logic and always attempt token generation/email send, even for non-existent users.
+- All endpoints requiring primary key lookups now use `db.session.get()` for SQLAlchemy 2.x compatibility.
+
+**New Models:**
+- `PasswordResetToken` — Stores password reset tokens, user association, expiration, and usage metadata for secure password reset flow.
+
+**Security:**
+- Password reset and authentication flows are robust against timing attacks and enumeration. All sensitive operations are logged. Expired/used tokens are rejected. Passwords are validated for strength and hashed securely.
+
+### Major Features
+- Password reset request and confirm pages (frontend) with CSRF token handling and modern UX.
+- Configurable password reset email links using `FRONTEND_BASE_URL` for local/production use.
+- Login and registration pages with modern UI, error/success banners, and API integration.
+- Tailwind CSS styling and improved status messages for all auth pages.
+- Development proxy for frontend to backend API requests.
+- Thorough logging and error handling throughout all new features.
+- `.env` is excluded from version control to protect sensitive credentials and secrets.
+- Backend password reset flow and email delivery are now fully compatible with Gmail SMTP and any SMTP provider, using environment variables for configuration.
+- Fixed DeepSource issues: JS-0086, JS-0246, JS-0417, JS-0356, and others for code quality and maintainability.
+
 ## [v0.10.0-dev5] - 2025-07-03
 ### Fixed
 - Fixed DeepSource JS-0417: Refactored all inline functions in JSX properties to stable, memoized handlers using `useCallback` in `PasswordResetRequestPage.tsx` and `PasswordResetConfirmPage.tsx`.
