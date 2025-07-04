@@ -7,6 +7,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## API Change Summary Requirement
 - For every stable, alpha, or beta release, summarize all API changes (new endpoints, deleted endpoints, changes to endpoints, etc.) in the changelog, even if they were already documented in dev releases. This ensures the release notes provide a complete overview of API evolution for each version.
 
+## [v0.10.0-dev2] - 2025-07-03
+### Fixed
+- Refactored `RegisterPage.tsx` to use `useCallback` for event handlers and added explicit TypeScript types, resolving DeepSource JS-0417 (avoid local functions in JSX) and TypeScript compile errors.
+
+### Added
+- Scaffolded `LoginPage.tsx` in `frontend/src/pages/` with a login form (username/email and password), error/success handling, and API integration.
+- Wired up `/login` route in `App.tsx` to use the new login page, replacing the placeholder.
+
+### Changed
+- Improved status messages on both login and registration pages: now use bold, visually distinct banners with icons, color, and animation for error and success states, enhancing user feedback and readability.
+
 ## [v0.10.0-dev1] - 2025-07-03
 ### Added
 - Created `RegisterPage.tsx` in `frontend/src/pages/` with a registration form (username, email, password, confirm password), client-side validation, error/success messages, and API integration.

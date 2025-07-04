@@ -59,8 +59,16 @@ This roadmap is a step-by-step checklist for building your productivity assistan
 - [ ] Create registration page
 - [ ] Add password reset UI (frontend)
 
-## v0.11.0-beta: Dashboard Layout
-- [ ] Create dashboard layout
+## v0.11.0-beta: Main Page & Custom Dashboard
+- [ ] Create a main landing page that serves as the entry point for all users
+    - [ ] If not authenticated, show options to register or log in
+    - [ ] If authenticated, show a customizable dashboard with:
+        - [ ] Overview of tasks, projects, and productivity status
+        - [ ] Charts/analytics (e.g., tasks due soon, completed, project progress)
+        - [ ] Quick links to key features (tasks, projects, settings, etc.)
+        - [ ] Preset widgets (charts, lists, links) that users can add/remove and rearrange to personalize their dashboard layout
+- [ ] Ensure the dashboard is extensible for future widgets, charts, and integrations
+- [ ] Implement UI for users to customize their dashboard layout (add/remove/reorder preset widgets)
 
 ## v0.12.0-beta: Task Views
 - [ ] Implement List view
