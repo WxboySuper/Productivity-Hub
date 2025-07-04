@@ -61,6 +61,10 @@ export default function PasswordResetRequestPage() {
     [email]
   );
 
+  const handleEmailChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(e.target.value);
+  }, []);
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50">
       <form
@@ -90,7 +94,7 @@ export default function PasswordResetRequestPage() {
             id="email"
             name="email"
             value={email}
-            onChange={e => setEmail(e.target.value)}
+            onChange={handleEmailChange}
             required
             autoComplete="email"
           />

@@ -70,6 +70,13 @@ export default function PasswordResetConfirmPage() {
     [password, confirmPassword, resetToken, navigate]
   );
 
+  const handlePasswordChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setPassword(e.target.value);
+  }, []);
+  const handleConfirmPasswordChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setConfirmPassword(e.target.value);
+  }, []);
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50">
       <form
@@ -99,7 +106,7 @@ export default function PasswordResetConfirmPage() {
             id="password"
             name="password"
             value={password}
-            onChange={e => setPassword(e.target.value)}
+            onChange={handlePasswordChange}
             required
             autoComplete="new-password"
           />
@@ -114,7 +121,7 @@ export default function PasswordResetConfirmPage() {
             id="confirmPassword"
             name="confirmPassword"
             value={confirmPassword}
-            onChange={e => setConfirmPassword(e.target.value)}
+            onChange={handleConfirmPasswordChange}
             required
             autoComplete="new-password"
           />

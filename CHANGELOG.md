@@ -7,6 +7,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## API Change Summary Requirement
 - For every stable, alpha, or beta release, summarize all API changes (new endpoints, deleted endpoints, changes to endpoints, etc.) in the changelog, even if they were already documented in dev releases. This ensures the release notes provide a complete overview of API evolution for each version.
 
+## [v0.10.0-dev5] - 2025-07-03
+### Fixed
+- Fixed DeepSource JS-0417: Refactored all inline functions in JSX properties to stable, memoized handlers using `useCallback` in `PasswordResetRequestPage.tsx` and `PasswordResetConfirmPage.tsx`.
+
 ## [v0.10.0-dev4] - 2025-07-03
 ### Fixed
 - Fixed DeepSource JS-0086: Removed assignment operator in return statement for the forgot password button in `LoginPage.tsx` by extracting the handler to a separate function.
