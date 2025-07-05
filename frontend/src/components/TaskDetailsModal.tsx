@@ -15,6 +15,7 @@ interface TaskDetailsModalProps {
     completed: boolean;
     project_id?: number;
     projectName?: string;
+    next_occurrence?: string; // Added for recurrence support
   } | null;
   onEdit?: () => void; // Add onEdit prop
 }
@@ -105,6 +106,11 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({ open, onClose, task
             {task.recurrence && (
               <div className="mb-2">
                 <span className="font-semibold">Recurrence:</span> {task.recurrence}
+              </div>
+            )}
+            {task.recurrence && task.next_occurrence && (
+              <div className="mb-2">
+                <span className="font-semibold">Next Occurrence:</span> {new Date(task.next_occurrence).toLocaleString()}
               </div>
             )}
             {task.projectName && (

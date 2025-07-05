@@ -103,7 +103,7 @@ const TaskFormModal: React.FC<TaskFormModalProps> = (props) => {
       start_date: startDate ? new Date(startDate).toISOString() : undefined,
       priority: Number(priority),
       recurrence: recurrenceValue,
-      project_id: projectId || undefined,
+      project_id: projectId === '' ? undefined : Number(projectId), // Allow clearing project (quick task)
     });
   };
 

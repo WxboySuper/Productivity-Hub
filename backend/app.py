@@ -17,6 +17,8 @@ import smtplib
 from email.message import EmailMessage
 from string import Template
 import time
+from dateutil.rrule import rrule, rrulestr, DAILY, WEEKLY, MONTHLY
+import calendar
 
 # Explicitly check for .env file and load success
 DOTENV_PATH = os.path.join(os.path.dirname(__file__), '.env')
@@ -177,8 +179,19 @@ def serialize_task(task):
     """
     Serialize a Task SQLAlchemy object to a dictionary for API responses.
     Converts datetime fields to ISO 8601 strings. Logs serialization event.
+    Adds next_occurrence for recurring tasks.
     """
     logger.debug("Serializing task: %s", task.id)
+    # Compute next_occurrence if applicable
+    next_occurrence = None
+    if task.recurrence and task.start_date:
+        try:
+            next_occ_dt = get_next_occurrence(task.start_date, task.recurrence)
+            if next_occ_dt:
+                next_occurrence = next_occ_dt.isoformat()
+        except Exception as e:
+            logger.warning(f"Failed to compute next_occurrence for task {task.id}: {e}")
+            next_occurrence = None
     return {
         "id": task.id,
         "title": task.title,
@@ -191,6 +204,7 @@ def serialize_task(task):
         "project_id": task.project_id,
         "created_at": task.created_at.isoformat() if task.created_at else None,
         "updated_at": task.updated_at.isoformat() if task.updated_at else None,
+        "next_occurrence": next_occurrence,  # Exposed for frontend
     }
 
 
@@ -276,12 +290,14 @@ def parse_local_datetime(dt_str):
     """
     Parse an ISO 8601 datetime string, applying the configured timezone if missing.
     Returns a timezone-aware datetime object. Logs parsing events.
+    Handles both naive and aware datetimes, and avoids double-applying tzinfo.
     """
     logger.debug("Parsing datetime string: %s", dt_str)
     dt = datetime.fromisoformat(dt_str)
+    # If already aware, do not re-apply tzinfo
     if dt.tzinfo is None and local_tz:
         dt = dt.replace(tzinfo=local_tz)
-    logger.debug("Parsed datetime: %s", dt)
+    logger.debug("Parsed datetime: %s (tzinfo: %s)", dt, dt.tzinfo)
     return dt
 
 # --- Global Helper Functions for Validation and Updates ---
@@ -511,6 +527,54 @@ def paginate_query(query, page, per_page, serializer):
         "current_page": pagination.page,
         "per_page": pagination.per_page
     }
+
+def get_next_occurrence(start_date, recurrence_rule, after_date=None):
+    """
+    Given a start_date (datetime) and a recurrence_rule (string), return the next occurrence after after_date (or now).
+    Supports: 'daily', 'weekly', 'monthly', and simple custom rules like 'every Monday', 'every 2 weeks', etc.
+    Returns None if no valid next occurrence can be determined.
+    """
+    if not start_date or not recurrence_rule:
+        return None
+    if after_date is None:
+        after_date = datetime.now(timezone.utc)
+    rule = recurrence_rule.strip().lower()
+    # Standard rules
+    if rule == 'daily':
+        freq = DAILY
+        interval = 1
+        byweekday = None
+    elif rule == 'weekly':
+        freq = WEEKLY
+        interval = 1
+        byweekday = None
+    elif rule == 'monthly':
+        freq = MONTHLY
+        interval = 1
+        byweekday = None
+    elif rule.startswith('every '):
+        # e.g. 'every monday', 'every 2 weeks'
+        parts = rule.split()
+        if len(parts) == 2 and parts[1] in calendar.day_name:
+            freq = WEEKLY
+            interval = 1
+            byweekday = list(calendar.day_name).index(parts[1].capitalize())
+        elif len(parts) == 3 and parts[2].startswith('week') and parts[1].isdigit():
+            freq = WEEKLY
+            interval = int(parts[1])
+            byweekday = None
+        else:
+            return None
+    else:
+        # Not supported
+        return None
+    # Build rrule
+    kwargs = {'dtstart': start_date, 'interval': interval}
+    if byweekday is not None:
+        kwargs['byweekday'] = byweekday
+    rule_iter = rrule(freq, **kwargs)
+    next_occ = rule_iter.after(after_date, inc=False)
+    return next_occ
 
 # Route Definitions
 @app.route('/')
@@ -791,12 +855,18 @@ def update_task(task_id):
 
     data = request.get_json()
 
+    # Always handle project_id, even if not present in data (treat as None)
+    project_id = data.get('project_id') if 'project_id' in data else None
+    result = validate_and_update_task_project(task, user, project_id)
+    if isinstance(result, tuple):
+        return result
+
     # Map of field name to (validator function, value)
     field_validators = [
         ("title", validate_and_update_task_title),
         ("due_date", validate_and_update_task_due_date),
         ("priority", validate_and_update_task_priority),
-        ("project_id", lambda t, v: validate_and_update_task_project(t, user, v)),
+        # ("project_id", lambda t, v: validate_and_update_task_project(t, user, v)),  # handled above
         ("start_date", validate_and_update_task_start_date),
         ("recurrence", validate_and_update_task_recurrence),
     ]

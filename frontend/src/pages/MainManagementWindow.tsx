@@ -17,6 +17,7 @@ interface Task {
   title: string;
   completed: boolean;
   projectId?: number;
+  project_id?: number; // Accept backend field for compatibility
 }
 
 // Sidebar component
@@ -95,6 +96,16 @@ const MainManagementWindow: React.FC = () => {
     }
   }, [token, activeView]);
 
+  // Fetch projects on mount (before tasks)
+  useEffect(() => {
+    fetch('/api/projects', {
+      headers: { 'Authorization': `Bearer ${token}` },
+    })
+      .then((res) => res.ok ? res.json() : Promise.reject('Failed to fetch projects'))
+      .then((data) => setProjects(data.projects || []))
+      .catch(() => setProjects([]));
+  }, [token]);
+
   // Fetch tasks from API
   const fetchTasks = useCallback(() => {
     setTasksLoading(true);
@@ -103,7 +114,14 @@ const MainManagementWindow: React.FC = () => {
       headers: { 'Authorization': `Bearer ${token}` },
     })
       .then((res) => res.ok ? res.json() : Promise.reject('Failed to fetch tasks'))
-      .then((data) => setTasks(Array.isArray(data) ? data : (data.tasks || [])))
+      .then((data) => {
+        // Normalize project_id to projectId for all tasks
+        const tasks = Array.isArray(data) ? data : (data.tasks || []);
+        setTasks(tasks.map((task: any) => ({
+          ...task,
+          projectId: typeof task.projectId !== 'undefined' ? task.projectId : task.project_id,
+        })));
+      })
       .catch((err) => setTasksError(typeof err === 'string' ? err : 'Unknown error'))
       .finally(() => setTasksLoading(false));
   }, [token]);
@@ -320,13 +338,35 @@ const MainManagementWindow: React.FC = () => {
   };
 
   // Helper to get full task info with project name
-  const getTaskWithProject = (task: Task) => {
-    const project = projects.find(p => p.id === task.projectId);
+  const getTaskWithProject = (task: any) => {
+    // Accept both projectId and project_id for compatibility
+    const projectId = typeof task.projectId !== 'undefined' ? task.projectId : task.project_id;
+    const project = projects.find(p => p.id === projectId);
     return {
       ...task,
       projectName: project ? project.name : undefined,
-      project_id: task.projectId,
+      projectId,
+      project_id: projectId,
     };
+  };
+
+  // Ensure projects are loaded before opening the task form
+  const openTaskForm = (task: any = null) => {
+    if (activeView !== 'projects') {
+      // If not in projects view, fetch projects first
+      fetch('/api/projects', {
+        headers: { 'Authorization': `Bearer ${token}` },
+      })
+        .then((res) => res.ok ? res.json() : Promise.reject('Failed to fetch projects'))
+        .then((data) => setProjects(data.projects || []))
+        .finally(() => {
+          setEditTask(task ? getTaskWithProject(task) : null);
+          setShowTaskForm(true);
+        });
+    } else {
+      setEditTask(task ? getTaskWithProject(task) : null);
+      setShowTaskForm(true);
+    }
   };
 
   // Sidebar items
@@ -378,11 +418,11 @@ const MainManagementWindow: React.FC = () => {
           <ul className="space-y-2">
             {tasks.map(task => (
               <li key={task.id} className="flex items-center justify-between bg-white/90 rounded px-4 py-2 border border-blue-100">
-                <div className="cursor-pointer" onClick={() => {
+                <input type="checkbox" checked={task.completed} onChange={e => { handleToggleTask(task.id); }} className="mr-2" />
+                <div className="flex-1 cursor-pointer" onClick={() => {
                   setSelectedTask(getTaskWithProject(task));
                   setTaskDetailsOpen(true);
                 }}>
-                  <input type="checkbox" checked={task.completed} onChange={e => { e.stopPropagation(); handleToggleTask(task.id); }} className="mr-2" />
                   <span className={task.completed ? 'line-through text-gray-400' : ''}>{task.title}</span>
                   <span className="ml-2 text-xs px-2 py-1 rounded bg-gray-100 text-gray-600">
                     {task.projectId ? `Project: ${projects.find(p => p.id === task.projectId)?.name || 'Unknown'}` : 'Quick Task'}
@@ -436,6 +476,22 @@ const MainManagementWindow: React.FC = () => {
                 <div className="text-6xl mb-4">📁</div>
                 <div className="text-gray-500 mb-2">No projects found.</div>
                 <div className="text-gray-400 mb-4">Start by creating a new project to organize your work.</div>
+                <button
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition font-semibold mt-2"
+                  onClick={() => openTaskForm()}
+                >
+                  + Add Project
+                </button>
+              </div>
+            )}
+            {projects.length > 0 && (
+              <div className="flex justify-end mb-4">
+                <button
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition font-semibold"
+                  onClick={() => openTaskForm()}
+                >
+                  + Add Project
+                </button>
               </div>
             )}
             {projects.length > 0 && (
@@ -576,9 +632,8 @@ const MainManagementWindow: React.FC = () => {
             onClose={() => setTaskDetailsOpen(false)}
             task={selectedTask}
             onEdit={() => {
-              setEditTask(selectedTask);
-              setShowTaskForm(true);
-              setTaskDetailsOpen(false);
+              setTaskDetailsOpen(false); // Close details modal before opening edit form
+              openTaskForm(selectedTask);
             }}
           />
         </main>

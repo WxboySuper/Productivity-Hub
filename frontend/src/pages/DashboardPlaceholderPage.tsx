@@ -25,12 +25,12 @@ function DashboardPlaceholderPage() {
             <li>And much more!</li>
           </ul>
           <div className="text-sm text-gray-400 mt-4 mb-6">Stay tuned for updates as we build out your productivity experience.</div>
-          <a
+          {/* <a
             href="/projects"
             className="inline-block mb-4 px-6 py-2 bg-yellow-400 text-yellow-900 font-semibold rounded shadow hover:bg-yellow-300 transition border border-yellow-500"
           >
             🧪 Project Management (Beta)
-          </a>
+          </a> */}
           <a
             href="/manage"
             className="inline-block mb-4 px-6 py-2 bg-indigo-600 text-white font-semibold rounded shadow hover:bg-indigo-700 transition border border-indigo-500"

@@ -26,3 +26,7 @@ Thumbs.db
 
 # db
 */productivity_hub.db
+
+# Temp Docs
+docs/temp/*
+docs/temp

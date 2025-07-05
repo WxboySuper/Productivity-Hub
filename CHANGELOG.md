@@ -7,6 +7,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## API Change Summary Requirement
 - For every stable, alpha, or beta release, summarize all API changes (new endpoints, deleted endpoints, changes to endpoints, etc.) in the changelog, even if they were already documented in dev releases. This ensures the release notes provide a complete overview of API evolution for each version.
 
+## [v0.12.0-dev5] - 2025-07-05
+### Changed
+- Updated `.gitignore` to add rules for `docs/temp/*` and `docs/temp` (temp docs exclusion).
+- Upgraded `requirements.txt` (Python dependencies) for backend: added/updated `python-dateutil` and other packages for recurrence and datetime support.
+- Backend (`backend/app.py`):
+  - Added robust recurrence support for tasks, including `next_occurrence` calculation in API responses.
+  - Improved `parse_local_datetime` to avoid double-applying timezone info.
+  - Added `get_next_occurrence` helper for recurring tasks.
+  - Fixed bug: updating a task with `project_id` as `None` or missing now clears the project assignment in the database (allows moving tasks to quick tasks).
+  - Refactored `update_task` endpoint to always process `project_id` and ensure correct clearing/assignment.
+- Frontend (`frontend/src/components/TaskFormModal.tsx`, `TaskDetailsModal.tsx`, `MainManagementWindow.tsx`):
+  - TaskFormModal: Now sends `undefined` for `project_id` when "None (Quick Task)" is selected, allowing backend to clear project assignment.
+  - TaskDetailsModal: Displays `next_occurrence` for recurring tasks.
+  - MainManagementWindow: Normalizes `project_id`/`projectId` mapping, ensures projects are loaded before tasks/forms, and fixes all project/task assignment flows.
+  - Fixed: Editing a task to remove its project now updates both backend and UI correctly.
+  - Fixed: Task Details modal closes before edit form opens, preventing modal stacking issues.
+  - Fixed: Project dropdown in TaskFormModal always loads projects before opening the form.
+  - Fixed: "+ Add Project" button and project creation modal in projects tab.
+  - Removed deprecated project management button from dashboard placeholder.
+
+### Fixed
+- All bugs related to project assignment, quick task conversion, and modal stacking in task/project management flows.
+- Ensured all CRUD flows for tasks and projects work as expected, including clearing project assignment.
+
+### API Change Summary
+- `PUT /api/tasks/<task_id>`: Now allows clearing a task's project assignment by omitting or setting `project_id` to `null`/`None` in the request body. This moves a task from a project to a quick task.
+- Task API responses now include a `next_occurrence` field for recurring tasks.
+
 ## [v0.12.0-dev4] - 2025-07-04
 ### Added
 - Main Management Window (`MainManagementWindow.tsx`):  
