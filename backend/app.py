@@ -63,6 +63,13 @@ migrate = Migrate(app, db)
 
 logger.info("SQLAlchemy is set up.")
 
+# Association table for task dependencies (blocked by/blocking)
+task_dependencies = db.Table(
+    'task_dependencies',
+    db.Column('blocker_id', db.Integer, db.ForeignKey('task.id', ondelete='CASCADE'), primary_key=True),
+    db.Column('blocked_id', db.Integer, db.ForeignKey('task.id', ondelete='CASCADE'), primary_key=True)
+)
+
 # Model Definitions
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -96,6 +103,15 @@ class Task(db.Model):
 
     # Subtasks relationship
     subtasks = db.relationship('Task', backref=db.backref('parent', remote_side=[id]), lazy=True, cascade='all, delete-orphan')
+
+    # Task dependencies (blocked by/blocking)
+    blocked_by = db.relationship(
+        'Task', secondary=task_dependencies,
+        primaryjoin=id==task_dependencies.c.blocked_id,
+        secondaryjoin=id==task_dependencies.c.blocker_id,
+        backref=db.backref('blocking', lazy='dynamic'),
+        lazy='dynamic'
+    )
 
 class Project(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -211,6 +227,9 @@ def serialize_task(task, include_subtasks=True):
         "created_at": task.created_at.isoformat() if task.created_at else None,
         "updated_at": task.updated_at.isoformat() if task.updated_at else None,
         "next_occurrence": next_occurrence,
+        # Add dependencies info
+        "blocked_by": [b.id for b in task.blocked_by],
+        "blocking": [b.id for b in task.blocking],
     }
     if include_subtasks:
         data["subtasks"] = [serialize_task(st, include_subtasks=False) for st in task.subtasks]
@@ -878,6 +897,14 @@ def create_task():
         )
         db.session.add(subtask)
 
+    # Dependencies: set blocked_by and blocking if provided
+    blocked_by_ids = data.get('blocked_by', [])
+    blocking_ids = data.get('blocking', [])
+    if blocked_by_ids:
+        task.blocked_by = Task.query.filter(Task.id.in_(blocked_by_ids), Task.user_id==user.id).all()
+    if blocking_ids:
+        task.blocking = Task.query.filter(Task.id.in_(blocking_ids), Task.user_id==user.id).all()
+
     db.session.commit()
     logger.info("Task created successfully: task_id=%s for user: %s (ID: %s)", task.id, user.username, user.id)
     return jsonify(serialize_task(task)), 201
@@ -968,6 +995,14 @@ def update_task(task_id):
             )
             db.session.add(subtask)
 
+    # Dependencies: set blocked_by and blocking if provided
+    blocked_by_ids = data.get('blocked_by', [])
+    blocking_ids = data.get('blocking', [])
+    if blocked_by_ids is not None:
+        task.blocked_by = Task.query.filter(Task.id.in_(blocked_by_ids), Task.user_id==user.id).all() if blocked_by_ids else []
+    if blocking_ids is not None:
+        task.blocking = Task.query.filter(Task.id.in_(blocking_ids), Task.user_id==user.id).all() if blocking_ids else []
+
     db.session.commit()
     logger.info("Task updated successfully: task_id=%s", task_id)
     return jsonify(serialize_task(task)), 200
@@ -1000,6 +1035,77 @@ def get_subtasks(task_id):
         return error_response("Parent task not found", 404)
     subtasks = [serialize_task(st, include_subtasks=False) for st in parent.subtasks]
     return jsonify({"subtasks": subtasks}), 200
+
+@app.route('/api/tasks/<int:task_id>/dependencies', methods=['GET'])
+@login_required
+def get_task_dependencies(task_id):
+    """Get all dependencies (blocked_by and blocking) for a task."""
+    logger.info("Task dependencies GET endpoint accessed for task_id=%s", task_id)
+    user = get_current_user()
+    task = Task.query.filter_by(id=task_id, user_id=user.id).first()
+    if not task:
+        return error_response("Task not found", 404)
+    blocked_by = [serialize_task(dep, include_subtasks=False) for dep in task.blocked_by]
+    blocking = [serialize_task(dep, include_subtasks=False) for dep in task.blocking]
+    return jsonify({"blocked_by": blocked_by, "blocking": blocking}), 200
+
+@app.route('/api/tasks/<int:task_id>/dependencies', methods=['POST'])
+@login_required
+def set_task_dependencies(task_id):
+    """Set dependencies for a task (replace all blocked_by and blocking)."""
+    logger.info("Task dependencies POST endpoint accessed for task_id=%s", task_id)
+    user = get_current_user()
+    task = Task.query.filter_by(id=task_id, user_id=user.id).first()
+    if not task:
+        return error_response("Task not found", 404)
+    data = request.get_json()
+    blocked_by_ids = data.get('blocked_by', [])
+    blocking_ids = data.get('blocking', [])
+    # Set blocked_by
+    task.blocked_by = Task.query.filter(Task.id.in_(blocked_by_ids), Task.user_id==user.id).all() if blocked_by_ids else []
+    # Set blocking
+    task.blocking = Task.query.filter(Task.id.in_(blocking_ids), Task.user_id==user.id).all() if blocking_ids else []
+    db.session.commit()
+    logger.info("Task dependencies updated for task_id=%s", task_id)
+    return jsonify(serialize_task(task)), 200
+
+@app.route('/api/tasks/<int:task_id>/dependencies', methods=['PATCH'])
+@login_required
+def patch_task_dependencies(task_id):
+    """Add or remove specific dependencies for a task."""
+    logger.info("Task dependencies PATCH endpoint accessed for task_id=%s", task_id)
+    user = get_current_user()
+    task = Task.query.filter_by(id=task_id, user_id=user.id).first()
+    if not task:
+        return error_response("Task not found", 404)
+    data = request.get_json()
+    add_blocked_by = data.get('add_blocked_by', [])
+    remove_blocked_by = data.get('remove_blocked_by', [])
+    add_blocking = data.get('add_blocking', [])
+    remove_blocking = data.get('remove_blocking', [])
+    # Add blocked_by
+    for dep_id in add_blocked_by:
+        dep = Task.query.filter_by(id=dep_id, user_id=user.id).first()
+        if dep and dep not in task.blocked_by:
+            task.blocked_by.append(dep)
+    # Remove blocked_by
+    for dep_id in remove_blocked_by:
+        dep = Task.query.filter_by(id=dep_id, user_id=user.id).first()
+        if dep and dep in task.blocked_by:
+            task.blocked_by.remove(dep)
+    # Add blocking
+    for dep_id in add_blocking:
+        dep = Task.query.filter_by(id=dep_id, user_id=user.id).first()
+        if dep and dep not in task.blocking:
+            task.blocking.append(dep)
+    # Remove blocking
+    for dep_id in remove_blocking:
+        dep = Task.query.filter_by(id=dep_id, user_id=user.id).first()
+        if dep and dep in task.blocking:
+            task.blocking.remove(dep)
+    db.session.commit()
+    logger.info("Task dependencies patched for task_id=%s", task_id)
+    return jsonify(serialize_task(task)), 200
 
 # Routes for Project Management
 @app.route('/api/projects', methods=['GET'])

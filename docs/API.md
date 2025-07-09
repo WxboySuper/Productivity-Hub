@@ -353,3 +353,57 @@ All endpoints require the user to be authenticated (session-based). Include the 
 ---
 
 *Expand this file as you add more endpoints or features.*
+
+---
+
+## Task Dependencies Endpoints
+
+#### Get Task Dependencies
+**GET** `/api/tasks/<task_id>/dependencies`
+- Returns all dependencies for a task (tasks this task is blocked by, and tasks it is blocking).
+- Response: `200 OK`, JSON object:
+  ```json
+  {
+    "blocked_by": [ { ...task }, ... ],
+    "blocking": [ { ...task }, ... ]
+  }
+  ```
+- Each dependency is a full task object (see Get Task by ID).
+- Errors: `404` if task not found.
+
+#### Set Task Dependencies (Replace All)
+**POST** `/api/tasks/<task_id>/dependencies`
+- Sets the dependencies for a task, replacing all existing dependencies.
+- Request JSON:
+  ```json
+  {
+    "blocked_by": [2, 3],   // IDs of tasks this task is blocked by
+    "blocking": [4, 5]      // IDs of tasks this task is blocking
+  }
+  ```
+- Response: `200 OK`, JSON updated task object.
+- Errors: `404` if task not found.
+
+#### Patch Task Dependencies (Add/Remove)
+**PATCH** `/api/tasks/<task_id>/dependencies`
+- Add or remove specific dependencies for a task.
+- Request JSON:
+  ```json
+  {
+    "add_blocked_by": [2],
+    "remove_blocked_by": [3],
+    "add_blocking": [4],
+    "remove_blocking": [5]
+  }
+  ```
+- All fields are optional arrays of task IDs.
+- Response: `200 OK`, JSON updated task object.
+- Errors: `404` if task not found.
+
+#### Notes
+- All dependency endpoints require authentication and CSRF token for state-changing requests.
+- Only tasks owned by the current user can be set as dependencies.
+- The main task create/update endpoints also accept `blocked_by` and `blocking` arrays in the payload to set dependencies at creation/update time.
+- The `blocked_by` and `blocking` fields in the task object are arrays of task IDs.
+
+---

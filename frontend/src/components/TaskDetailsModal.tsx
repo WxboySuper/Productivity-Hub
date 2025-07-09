@@ -74,21 +74,24 @@ interface TaskDetailsModalProps {
     completed: boolean;
     project_id?: number;
     projectName?: string;
-    next_occurrence?: string; // Added for recurrence support
+    next_occurrence?: string;
     subtasks?: Array<{
       id: number;
       title: string;
       completed: boolean;
     }>;
-    parent_id?: number | null; // <-- Add this line
+    parent_id?: number | null;
+    blocked_by?: number[];
+    blocking?: number[];
   } | null;
-  onEdit?: () => void; // Add onEdit prop
-  parentTask?: { id: number; title: string } | null; // Add parent lookup prop
+  onEdit?: () => void;
+  parentTask?: { id: number; title: string } | null;
+  tasks: any[]; // <-- Add tasks prop for dependency lookup
 }
 
 const priorityLabels = ['Low', 'Medium', 'High', 'Critical'];
 
-const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({ open, onClose, task, onEdit, parentTask }) => {
+const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({ open, onClose, task, onEdit, parentTask, tasks = [] }) => {
   // All hooks must be called before any early return and initialized with static values
   const [showForm, setShowForm] = React.useState(false);
   const [newSubtaskTitle, setNewSubtaskTitle] = React.useState('');
@@ -306,6 +309,21 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({ open, onClose, task
     return dt.toLocaleString();
   }
 
+  // Dependency display (use tasks prop)
+  const blockedByTasks = (task?.blocked_by || []).map((id: number) => tasks.find((t: any) => t.id === id)).filter(Boolean);
+  const blockingTasks = (task?.blocking || []).map((id: number) => tasks.find((t: any) => t.id === id)).filter(Boolean);
+
+  // --- Practical blocking logic ---
+  // Block completion if any subtasks are incomplete or any blocking tasks are incomplete
+  const incompleteBlockingTasks = blockedByTasks.filter((t: any) => !t.completed);
+  const completionDisabled = parentCompletionDisabled || incompleteBlockingTasks.length > 0;
+  let completionDisabledMsg = '';
+  if (parentCompletionDisabled) {
+    completionDisabledMsg = 'Complete all subtasks first';
+  } else if (incompleteBlockingTasks.length > 0) {
+    completionDisabledMsg = `Blocked by: ${incompleteBlockingTasks.map((t: any) => t.title).join(', ')}`;
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-gray-300/60 via-gray-200/70 to-blue-100/60">
       <div className="bg-gray-100 rounded-2xl shadow-2xl max-w-lg w-full p-8 relative border-2 border-blue-100 animate-fade-in">
@@ -433,11 +451,11 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({ open, onClose, task
                   type="checkbox"
                   checked={localTask.completed}
                   onChange={handleParentToggle}
-                  disabled={parentCompletionDisabled}
-                  title={parentCompletionDisabled ? 'Complete all subtasks first' : ''}
+                  disabled={completionDisabled}
+                  title={completionDisabledMsg}
                   className="ml-2 accent-blue-600 w-5 h-5"
                 />
-                {parentCompletionDisabled && <span className="text-xs text-blue-500 ml-2">Complete all subtasks first</span>}
+                {completionDisabledMsg && <span className="text-xs text-blue-500 ml-2">{completionDisabledMsg}</span>}
               </div>
             )}
             {/* Subtask progress indicator */}
@@ -491,6 +509,30 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({ open, onClose, task
                 </div>
               </DndProvider>
             )}
+            {/* Dependencies display */}
+            <div className="mb-3">
+              <label className="block font-semibold mb-1">Dependencies</label>
+              <div className="flex flex-col gap-2">
+                <div>
+                  <span className="font-medium">Blocked By:</span>
+                  <ul className="ml-2 list-disc">
+                    {blockedByTasks.length === 0 && <li className="text-gray-400">None</li>}
+                    {blockedByTasks.map((t: any) => (
+                      <li key={t.id} className="text-blue-700 hover:underline cursor-pointer" onClick={() => window.dispatchEvent(new CustomEvent('openTaskDetails', { detail: t.id }))}>{t.title}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <span className="font-medium">Blocking:</span>
+                  <ul className="ml-2 list-disc">
+                    {blockingTasks.length === 0 && <li className="text-gray-400">None</li>}
+                    {blockingTasks.map((t: any) => (
+                      <li key={t.id} className="text-blue-700 hover:underline cursor-pointer" onClick={() => window.dispatchEvent(new CustomEvent('openTaskDetails', { detail: t.id }))}>{t.title}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
           </>
         )}
       </div>

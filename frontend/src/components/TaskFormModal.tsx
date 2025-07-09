@@ -59,6 +59,29 @@ const TaskFormModal: React.FC<TaskFormModalProps> = (props) => {
   const [subtasks, setSubtasks] = useState(initialValues.subtasks || []);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
 
+  // Dependency state
+  const [blockedBy, setBlockedBy] = useState(initialValues.blocked_by || []);
+  const [blocking, setBlocking] = useState(initialValues.blocking || []);
+  const [allTasks, setAllTasks] = useState<any[]>([]);
+
+  // Fetch all tasks for dependency selection (excluding self and subtasks)
+  useEffect(() => {
+    if (open) {
+      fetch('/api/tasks', { credentials: 'include' })
+        .then(res => res.ok ? res.json() : Promise.reject('Failed to fetch tasks'))
+        .then(data => {
+          let tasks = Array.isArray(data) ? data : (data.tasks || []);
+          // Exclude self and subtasks if editing
+          if (editMode && initialValues.id) {
+            const excludeIds = [initialValues.id, ...(initialValues.subtasks?.map((st: any) => st.id) || [])];
+            tasks = tasks.filter((t: any) => !excludeIds.includes(t.id));
+          }
+          setAllTasks(tasks);
+        })
+        .catch(() => setAllTasks([]));
+    }
+  }, [open, editMode, initialValues]);
+
   // Track previous open state to only reset when opening
   const prevOpenRef = React.useRef(false);
   useEffect(() => {
@@ -82,6 +105,8 @@ const TaskFormModal: React.FC<TaskFormModalProps> = (props) => {
       setProjectId(initialValues.project_id || initialValues.projectId || '');
       setSubtasks(initialValues.subtasks || []);
       setNewSubtaskTitle('');
+      setBlockedBy(initialValues.blocked_by || []);
+      setBlocking(initialValues.blocking || []);
     }
     prevOpenRef.current = open;
   }, [open, initialValues]);
@@ -124,6 +149,8 @@ const TaskFormModal: React.FC<TaskFormModalProps> = (props) => {
       recurrence: recurrenceValue,
       project_id: projectId === '' ? undefined : Number(projectId),
       subtasks: subtasks.map((st: any) => ({ title: st.title, completed: st.completed, id: st.isNew ? undefined : st.id })),
+      blocked_by: blockedBy,
+      blocking: blocking,
     });
   };
 
@@ -242,6 +269,40 @@ const TaskFormModal: React.FC<TaskFormModalProps> = (props) => {
               disabled={loading}
             />
             <button type="button" className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600" onClick={handleAddSubtask} disabled={loading || !newSubtaskTitle.trim()}>Add</button>
+          </div>
+        </div>
+        <div className="mb-3">
+          <label className="block font-semibold mb-1">Dependencies</label>
+          <div className="flex flex-col gap-2">
+            {/* Blocked By is not directly editable; shown for info only */}
+            <div>
+              <span className="font-medium">Blocked By:</span>
+              <div className="w-full border rounded px-3 py-2 mt-1 bg-gray-50 text-gray-700 text-sm min-h-[2.5rem]">
+                {blockedBy.length === 0
+                  ? <span className="text-gray-400">None</span>
+                  : allTasks.filter(t => blockedBy.includes(t.id)).map(t => t.title).join(', ')}
+              </div>
+              <div className="text-xs text-gray-500 mt-1">
+                This list is automatically derived from other tasks' "Blocking" fields. To make this task blocked by another, edit that other task's "Blocking" field to include this task.
+              </div>
+            </div>
+            <div>
+              <span className="font-medium">Blocking:</span>
+              <select
+                multiple
+                className="w-full border rounded px-3 py-2 mt-1"
+                value={blocking}
+                onChange={e => setBlocking(Array.from(e.target.selectedOptions, opt => Number(opt.value)))}
+                disabled={loading}
+              >
+                {allTasks.map(t => (
+                  <option key={t.id} value={t.id}>{t.title}</option>
+                ))}
+              </select>
+              <div className="text-xs text-gray-500 mt-1">
+                To block another task, add it to this list. The other task will then show this one in its "Blocked By" list.
+              </div>
+            </div>
           </div>
         </div>
         <div className="mt-4 flex justify-end gap-2">

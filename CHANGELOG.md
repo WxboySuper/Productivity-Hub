@@ -7,6 +7,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## API Change Summary Requirement
 - For every stable, alpha, or beta release, summarize all API changes (new endpoints, deleted endpoints, changes to endpoints, etc.) in the changelog, even if they were already documented in dev releases. This ensures the release notes provide a complete overview of API evolution for each version.
 
+## [v0.12.0-dev7] - 2025-07-09
+### Changed
+- Implemented task dependencies (Blocked By/Blocking) in backend, API, and frontend UI.
+  - Backend: Added self-referential many-to-many relationship (`task_dependencies` table) to Task model for dependencies.
+  - API: Added endpoints for managing dependencies (`GET/POST/PATCH /api/tasks/<id>/dependencies`), updated main task endpoints to accept `blocked_by` and `blocking` arrays, and improved serialization to include dependency info.
+  - Frontend: Added multi-select dropdown for "Blocking" tasks in TaskFormModal ("Blocked By" is now read-only and derived from other tasks' "Blocking" fields). Dependencies are displayed in TaskDetailsModal with clickable links.
+  - UI: Practical blocking logic—tasks cannot be marked complete if blocked by incomplete tasks or have incomplete subtasks. Clear message shown explaining why completion is disabled.
+  - Fixed linting error in TaskDetailsModal.tsx (undefined `tasks` variable) by passing all tasks as a prop.
+  - Clarified dependency editing: only "Blocking" is user-editable; "Blocked By" is derived and read-only.
+  - Improved task fetching in TaskFormModal: tasks are only fetched once when the modal opens, not on every render.
+
+### Fixed
+- Logging and error handling added for all new backend logic.
+
+### API Change Summary
+- Added `task_dependencies` table and self-referential many-to-many relationship to Task model.
+- New endpoints:
+  - `GET /api/tasks/<id>/dependencies`
+  - `POST /api/tasks/<id>/dependencies`
+  - `PATCH /api/tasks/<id>/dependencies`
+- Updated main task create/update endpoints to accept `blocked_by` and `blocking` arrays.
+- Task serialization now includes `blocked_by` and `blocking` arrays in API responses.
+
 ## [v0.12.0-dev6] - 2025-07-08
 ### Changed
 - Migrated frontend from Create React App to Vite (Vite config, scripts, and entry points updated; CRA config removed).

@@ -296,7 +296,7 @@ const MainManagementWindow: React.FC = () => {
     }
   }, [token, tasks, fetchTasks]);
 
-  // Handle create task
+  // Pass dependencies to TaskFormModal
   const handleCreateTask = async (task: any) => {
     setTaskFormLoading(true);
     setTaskFormError(null);
@@ -306,15 +306,43 @@ const MainManagementWindow: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
           ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
         },
-        body: JSON.stringify({ ...task, completed: false }),
+        body: JSON.stringify(task),
+        credentials: 'include',
       });
       if (!response.ok) {
         const data = await response.json();
         throw new Error(data.error || 'Failed to create task');
       }
+      setShowTaskForm(false);
+      fetchTasks();
+    } catch (err: unknown) {
+      setTaskFormError(err instanceof Error ? err.message : 'Unknown error');
+    } finally {
+      setTaskFormLoading(false);
+    }
+  };
+
+  const handleEditTask = async (task: any) => {
+    setTaskFormLoading(true);
+    setTaskFormError(null);
+    try {
+      const csrfToken = await ensureCsrfToken();
+      const response = await fetch(`/api/tasks/${editTask.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
+        },
+        body: JSON.stringify(task),
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to update task');
+      }
+      setEditTask(null);
       setShowTaskForm(false);
       fetchTasks();
     } catch (err: unknown) {
@@ -700,6 +728,7 @@ const MainManagementWindow: React.FC = () => {
               setTaskDetailsOpen(false); // Close details modal before opening edit form
               openTaskForm(selectedTask);
             }}
+            tasks={allTasks} // Pass allTasks for dependency lookup
           />
         </main>
       </div>
