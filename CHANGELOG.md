@@ -7,6 +7,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## API Change Summary Requirement
 - For every stable, alpha, or beta release, summarize all API changes (new endpoints, deleted endpoints, changes to endpoints, etc.) in the changelog, even if they were already documented in dev releases. This ensures the release notes provide a complete overview of API evolution for each version.
 
+## [v0.12.0-dev6] - 2025-07-08
+### Changed
+- Migrated frontend from Create React App to Vite (Vite config, scripts, and entry points updated; CRA config removed).
+- Refactored `frontend/src/pages/MainManagementWindow.tsx` to use a robust `ensureCsrfToken` helper for all project and task CRUD flows.
+- Updated all project and task CRUD handlers to use the new CSRF logic for security and reliability.
+- Improved error handling and consistency for all API calls in `MainManagementWindow.tsx`.
+- Updated checklist and docs to reflect completed features and bug fixes for v0.12.0-beta.
+
+### Fixed
+- Fixed missing CSRF token in the add project button and all project/task CRUD flows in `MainManagementWindow.tsx`.
+- Fixed React hook order errors and modal logic in `TaskDetailsModal` and related components.
+- Fixed project creation modal logic and ensured correct modal opens from Projects tab.
+- Fixed project assignment and clearing in all CRUD flows.
+- Fixed date/time offset issues in backend for recurring tasks.
+
+### API Change Summary
+- No new endpoints in this dev release, but all state-changing project and task API requests now robustly require and send a CSRF token using the new helper.
+- All frontend API calls for project/task CRUD now use the new CSRF logic for security and reliability.
+
 ## [v0.12.0-dev5] - 2025-07-05
 ### Changed
 - Updated `.gitignore` to add rules for `docs/temp/*` and `docs/temp` (temp docs exclusion).

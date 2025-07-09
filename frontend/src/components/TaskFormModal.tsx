@@ -55,6 +55,10 @@ const TaskFormModal: React.FC<TaskFormModalProps> = (props) => {
   );
   const [projectId, setProjectId] = useState(initialValues.project_id || initialValues.projectId || '');
 
+  // Subtasks state for inline editing
+  const [subtasks, setSubtasks] = useState(initialValues.subtasks || []);
+  const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
+
   // Track previous open state to only reset when opening
   const prevOpenRef = React.useRef(false);
   useEffect(() => {
@@ -76,6 +80,8 @@ const TaskFormModal: React.FC<TaskFormModalProps> = (props) => {
         setCustomRecurrence('');
       }
       setProjectId(initialValues.project_id || initialValues.projectId || '');
+      setSubtasks(initialValues.subtasks || []);
+      setNewSubtaskTitle('');
     }
     prevOpenRef.current = open;
   }, [open, initialValues]);
@@ -86,6 +92,19 @@ const TaskFormModal: React.FC<TaskFormModalProps> = (props) => {
     if (value !== 'custom') {
       setCustomRecurrence('');
     }
+  };
+
+  const handleAddSubtask = () => {
+    if (newSubtaskTitle.trim()) {
+      setSubtasks([...subtasks, { id: Date.now(), title: newSubtaskTitle.trim(), completed: false, isNew: true }]);
+      setNewSubtaskTitle('');
+    }
+  };
+  const handleRemoveSubtask = (id: number) => {
+    setSubtasks(subtasks.filter((st: any) => st.id !== id));
+  };
+  const handleToggleSubtask = (id: number) => {
+    setSubtasks(subtasks.map((st: any) => st.id === id ? { ...st, completed: !st.completed } : st));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -99,11 +118,12 @@ const TaskFormModal: React.FC<TaskFormModalProps> = (props) => {
     onSubmit({
       title,
       description,
-      due_date: dueDate ? new Date(dueDate).toISOString() : undefined,
-      start_date: startDate ? new Date(startDate).toISOString() : undefined,
+      due_date: dueDate ? new Date(dueDate).toISOString() : null, // Send null if cleared
+      start_date: startDate ? new Date(startDate).toISOString() : null, // Send null if cleared
       priority: Number(priority),
       recurrence: recurrenceValue,
-      project_id: projectId === '' ? undefined : Number(projectId), // Allow clearing project (quick task)
+      project_id: projectId === '' ? undefined : Number(projectId),
+      subtasks: subtasks.map((st: any) => ({ title: st.title, completed: st.completed, id: st.isNew ? undefined : st.id })),
     });
   };
 
@@ -200,6 +220,29 @@ const TaskFormModal: React.FC<TaskFormModalProps> = (props) => {
             <option value="">None (Quick Task)</option>
             {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
+        </div>
+        <div className="mb-3">
+          <label className="block font-semibold mb-1">Subtasks</label>
+          <ul className="mb-2">
+            {subtasks.map((st: any) => (
+              <li key={st.id} className="flex items-center gap-2 mb-1">
+                <input type="checkbox" checked={st.completed} onChange={() => handleToggleSubtask(st.id)} />
+                <span className={st.completed ? 'line-through text-gray-400' : ''}>{st.title}</span>
+                <button type="button" className="text-red-500 hover:text-red-700 ml-2" onClick={() => handleRemoveSubtask(st.id)}>Remove</button>
+              </li>
+            ))}
+          </ul>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              className="border rounded px-2 py-1 flex-1"
+              value={newSubtaskTitle}
+              onChange={e => setNewSubtaskTitle(e.target.value)}
+              placeholder="Add a subtask..."
+              disabled={loading}
+            />
+            <button type="button" className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600" onClick={handleAddSubtask} disabled={loading || !newSubtaskTitle.trim()}>Add</button>
+          </div>
         </div>
         <div className="mt-4 flex justify-end gap-2">
           <button type="button" className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition" onClick={onClose} disabled={loading}>Cancel</button>

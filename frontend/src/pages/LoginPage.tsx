@@ -31,15 +31,14 @@ export default function LoginPage() {
           username: form.usernameOrEmail,
           password: form.password,
         }),
+        credentials: "include", // <-- ensure cookies are sent/received
       });
-      const data: { error?: string; token?: string } = await res.json();
+      const data = await res.json();
       if (!res.ok) {
         setError(data.error || "Login failed.");
-      } else if (!data.token) {
-        setError("No authentication token received from server.");
       } else {
         setForm({ usernameOrEmail: "", password: "" });
-        login(data.token);
+        login("session"); // Use a dummy value to mark as logged in
         setTimeout(() => {
           navigate("/", { replace: true });
         }, 800);

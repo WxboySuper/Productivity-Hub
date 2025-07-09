@@ -18,6 +18,8 @@ interface Task {
   completed: boolean;
   projectId?: number;
   project_id?: number; // Accept backend field for compatibility
+  parent_id?: number | null; // Add parent_id for subtask filtering
+  subtasks?: Array<any>; // Add subtasks for subtask count
 }
 
 // Sidebar component
@@ -134,13 +136,28 @@ const MainManagementWindow: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, activeView, selectedProject]);
 
-  const getCsrfToken = () => document.cookie.match(/_csrf_token=([^;]+)/)?.[1];
+  // Helper to read a cookie value by name
+  function getCookie(name: string): string | null {
+    const match = document.cookie.match(new RegExp(`(^| )${name}=([^;]+)`));
+    return match ? decodeURIComponent(match[2]) : null;
+  }
+
+  // Helper to fetch CSRF token if missing
+  async function ensureCsrfToken(): Promise<string> {
+    let token = getCookie('_csrf_token');
+    if (!token) {
+      const res = await fetch('/api/csrf-token', { credentials: 'include' });
+      const data = await res.json();
+      token = data.csrf_token;
+    }
+    return token || '';
+  }
 
   const handleCreateProject = async (project: { name: string; description?: string }) => {
     setFormLoading(true);
     setFormError(null);
     try {
-      const csrfToken = getCsrfToken();
+      const csrfToken = await ensureCsrfToken();
       const response = await fetch('/api/projects', {
         method: 'POST',
         headers: {
@@ -170,7 +187,7 @@ const MainManagementWindow: React.FC = () => {
     setFormLoading(true);
     setFormError(null);
     try {
-      const csrfToken = getCsrfToken();
+      const csrfToken = await ensureCsrfToken();
       const response = await fetch(`/api/projects/${editProject.id}`, {
         method: 'PUT',
         headers: {
@@ -202,7 +219,7 @@ const MainManagementWindow: React.FC = () => {
     setDeleteLoading(true);
     setDeleteError(null);
     try {
-      const csrfToken = getCsrfToken();
+      const csrfToken = await ensureCsrfToken();
       const response = await fetch(`/api/projects/${deleteProject.id}`, {
         method: 'DELETE',
         headers: {
@@ -232,7 +249,7 @@ const MainManagementWindow: React.FC = () => {
     setTaskFormLoading(true);
     setTaskFormError(null);
     try {
-      const csrfToken = getCsrfToken();
+      const csrfToken = await ensureCsrfToken();
       const response = await fetch(`/api/tasks/${id}`, {
         method: 'DELETE',
         headers: {
@@ -257,7 +274,7 @@ const MainManagementWindow: React.FC = () => {
     try {
       const task = tasks.find(t => t.id === id);
       if (!task) throw new Error('Task not found');
-      const csrfToken = getCsrfToken();
+      const csrfToken = await ensureCsrfToken();
       const response = await fetch(`/api/tasks/${id}`, {
         method: 'PUT',
         headers: {
@@ -284,7 +301,7 @@ const MainManagementWindow: React.FC = () => {
     setTaskFormLoading(true);
     setTaskFormError(null);
     try {
-      const csrfToken = getCsrfToken();
+      const csrfToken = await ensureCsrfToken();
       const response = await fetch('/api/tasks', {
         method: 'POST',
         headers: {
@@ -307,13 +324,13 @@ const MainManagementWindow: React.FC = () => {
     }
   };
 
-  // Handle update task
+  // After editing a task, re-open the details modal for the updated task
   const handleUpdateTask = async (task: any) => {
     if (!editTask) return;
     setTaskFormLoading(true);
     setTaskFormError(null);
     try {
-      const csrfToken = getCsrfToken();
+      const csrfToken = await ensureCsrfToken();
       const response = await fetch(`/api/tasks/${editTask.id}`, {
         method: 'PUT',
         headers: {
@@ -330,6 +347,13 @@ const MainManagementWindow: React.FC = () => {
       setShowTaskForm(false);
       setEditTask(null);
       fetchTasks();
+      // Reopen details modal for updated task
+      const updatedTaskRes = await fetch(`/api/tasks/${editTask.id}`);
+      if (updatedTaskRes.ok) {
+        const updatedTask = await updatedTaskRes.json();
+        setSelectedTask(getTaskWithProject(updatedTask));
+        setTaskDetailsOpen(true);
+      }
     } catch (err: unknown) {
       setTaskFormError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
@@ -403,12 +427,14 @@ const MainManagementWindow: React.FC = () => {
   // Main content logic
   let content: React.ReactNode = null;
   if (activeView === 'all') {
+    // Only show top-level tasks (parent_id == null)
+    const topLevelTasks = tasks.filter(task => task.parent_id == null);
     content = (
       <div className="p-8 max-w-2xl mx-auto">
         <h2 className="text-2xl font-bold mb-4 text-blue-800">All Tasks</h2>
         {tasksLoading && <div>Loading tasks...</div>}
         {tasksError && <div className="text-red-600">{tasksError}</div>}
-        {(!tasksLoading && !tasksError && tasks.length === 0) ? (
+        {(!tasksLoading && !tasksError && topLevelTasks.length === 0) ? (
           <div className="flex flex-col items-center justify-center py-12">
             <div className="text-6xl mb-4">📋</div>
             <div className="text-gray-500 mb-2">No tasks found.</div>
@@ -416,9 +442,9 @@ const MainManagementWindow: React.FC = () => {
           </div>
         ) : (
           <ul className="space-y-2">
-            {tasks.map(task => (
+            {topLevelTasks.map(task => (
               <li key={task.id} className="flex items-center justify-between bg-white/90 rounded px-4 py-2 border border-blue-100">
-                <input type="checkbox" checked={task.completed} onChange={e => { handleToggleTask(task.id); }} className="mr-2" />
+                <input type="checkbox" checked={task.completed} onChange={e => { handleToggleTask(task.id); }} className="mr-2" disabled={task.subtasks && task.subtasks.length > 0 && task.subtasks.some((st: any) => !st.completed)} title={task.subtasks && task.subtasks.length > 0 && task.subtasks.some((st: any) => !st.completed) ? 'Complete all subtasks first' : ''} />
                 <div className="flex-1 cursor-pointer" onClick={() => {
                   setSelectedTask(getTaskWithProject(task));
                   setTaskDetailsOpen(true);
@@ -427,6 +453,9 @@ const MainManagementWindow: React.FC = () => {
                   <span className="ml-2 text-xs px-2 py-1 rounded bg-gray-100 text-gray-600">
                     {task.projectId ? `Project: ${projects.find(p => p.id === task.projectId)?.name || 'Unknown'}` : 'Quick Task'}
                   </span>
+                  {task.subtasks && task.subtasks.length > 0 && (
+                    <span className="ml-2 text-xs px-2 py-1 rounded bg-blue-100 text-blue-700">{task.subtasks.length} subtask{task.subtasks.length > 1 ? 's' : ''}</span>
+                  )}
                 </div>
                 <button className="text-red-500 hover:text-red-700" onClick={e => { e.stopPropagation(); handleDeleteTask(task.id); }}>Delete</button>
               </li>
@@ -436,7 +465,8 @@ const MainManagementWindow: React.FC = () => {
       </div>
     );
   } else if (activeView === 'quick') {
-    const quickTasks = tasks.filter(t => !t.projectId);
+    // Only show top-level quick tasks (parent_id == null)
+    const quickTasks = tasks.filter(t => !t.projectId && t.parent_id == null);
     content = (
       <div className="p-8 max-w-2xl mx-auto">
         <h2 className="text-2xl font-bold mb-4 text-blue-800">Quick Tasks</h2>
@@ -453,8 +483,11 @@ const MainManagementWindow: React.FC = () => {
             {quickTasks.map(task => (
               <li key={task.id} className="flex items-center justify-between bg-white/90 rounded px-4 py-2 border border-blue-100">
                 <div className="cursor-pointer" onClick={() => { setSelectedTask(getTaskWithProject(task)); setTaskDetailsOpen(true); }}>
-                  <input type="checkbox" checked={task.completed} onChange={e => { e.stopPropagation(); handleToggleTask(task.id); }} className="mr-2" />
+                  <input type="checkbox" checked={task.completed} onChange={e => { e.stopPropagation(); handleToggleTask(task.id); }} className="mr-2" disabled={task.subtasks && task.subtasks.length > 0 && task.subtasks.some((st: any) => !st.completed)} title={task.subtasks && task.subtasks.length > 0 && task.subtasks.some((st: any) => !st.completed) ? 'Complete all subtasks first' : ''} />
                   <span className={task.completed ? 'line-through text-gray-400' : ''}>{task.title}</span>
+                  {task.subtasks && task.subtasks.length > 0 && (
+                    <span className="ml-2 text-xs px-2 py-1 rounded bg-blue-100 text-blue-700">{task.subtasks.length} subtask{task.subtasks.length > 1 ? 's' : ''}</span>
+                  )}
                 </div>
                 <button className="text-red-500 hover:text-red-700" onClick={e => { e.stopPropagation(); handleDeleteTask(task.id); }}>Delete</button>
               </li>
@@ -464,6 +497,8 @@ const MainManagementWindow: React.FC = () => {
       </div>
     );
   } else if (activeView === 'projects') {
+    // Only show top-level project tasks (parent_id == null)
+    const projectTasks = selectedProject ? tasks.filter(t => t.projectId === selectedProject.id && t.parent_id == null) : [];
     content = (
       <div className="w-full max-w-3xl mx-auto py-10 px-4">
         {!selectedProject ? (
@@ -478,7 +513,7 @@ const MainManagementWindow: React.FC = () => {
                 <div className="text-gray-400 mb-4">Start by creating a new project to organize your work.</div>
                 <button
                   className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition font-semibold mt-2"
-                  onClick={() => openTaskForm()}
+                  onClick={() => setShowForm(true)}
                 >
                   + Add Project
                 </button>
@@ -488,7 +523,7 @@ const MainManagementWindow: React.FC = () => {
               <div className="flex justify-end mb-4">
                 <button
                   className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition font-semibold"
-                  onClick={() => openTaskForm()}
+                  onClick={() => setShowForm(true)}
                 >
                   + Add Project
                 </button>
@@ -545,7 +580,8 @@ const MainManagementWindow: React.FC = () => {
               <h3 className="text-xl font-bold mb-4 text-blue-700">Tasks for this Project</h3>
               <ul className="space-y-2">
                 {(() => {
-                  const projectTasks = tasks.filter(t => t.projectId === selectedProject.id);
+                  // Only show top-level project tasks (parent_id == null)
+                  const projectTasks = tasks.filter(t => t.projectId === selectedProject.id && t.parent_id == null);
                   if (!tasksLoading && !tasksError && projectTasks.length === 0) {
                     return (
                       <div className="flex flex-col items-center justify-center py-12">
@@ -558,8 +594,11 @@ const MainManagementWindow: React.FC = () => {
                   return projectTasks.map(task => (
                     <li key={task.id} className="flex items-center justify-between bg-white/90 rounded px-4 py-2 border border-blue-100">
                       <div className="cursor-pointer" onClick={() => { setSelectedTask(getTaskWithProject(task)); setTaskDetailsOpen(true); }}>
-                        <input type="checkbox" checked={task.completed} onChange={e => { e.stopPropagation(); handleToggleTask(task.id); }} className="mr-2" />
+                        <input type="checkbox" checked={task.completed} onChange={e => { e.stopPropagation(); handleToggleTask(task.id); }} className="mr-2" disabled={task.subtasks && task.subtasks.length > 0 && task.subtasks.some((st: any) => !st.completed)} title={task.subtasks && task.subtasks.length > 0 && task.subtasks.some((st: any) => !st.completed) ? 'Complete all subtasks first' : ''} />
                         <span className={task.completed ? 'line-through text-gray-400' : ''}>{task.title}</span>
+                        {task.subtasks && task.subtasks.length > 0 && (
+                          <span className="ml-2 text-xs px-2 py-1 rounded bg-blue-100 text-blue-700">{task.subtasks.length} subtask{task.subtasks.length > 1 ? 's' : ''}</span>
+                        )}
                       </div>
                       <button className="text-red-500 hover:text-red-700" onClick={e => { e.stopPropagation(); handleDeleteTask(task.id); }}>Delete</button>
                     </li>
@@ -603,6 +642,31 @@ const MainManagementWindow: React.FC = () => {
     );
   }
 
+  // Flatten all tasks and subtasks into a single array for lookup
+  const allTasks = React.useMemo(() => {
+    const flat: any[] = [];
+    tasks.forEach((task: any) => {
+      flat.push(task);
+      if (Array.isArray(task.subtasks)) {
+        task.subtasks.forEach((sub: any) => flat.push({ ...sub, parent_id: task.id }));
+      }
+    });
+    return flat;
+  }, [tasks]);
+
+  useEffect(() => {
+    const handler = (e: any) => {
+      const subtaskId = e.detail;
+      const subtask = allTasks.find(t => t.id === subtaskId);
+      if (subtask) {
+        setSelectedTask(getTaskWithProject(subtask));
+        setTaskDetailsOpen(true);
+      }
+    };
+    window.addEventListener('openTaskDetails', handler);
+    return () => window.removeEventListener('openTaskDetails', handler);
+  }, [allTasks, projects]);
+
   // Move TaskFormModal outside of content block so it is always mounted
   // Move debug log before return
   console.log('Rendering TaskFormModal:', { showTaskForm });
@@ -631,6 +695,7 @@ const MainManagementWindow: React.FC = () => {
             open={taskDetailsOpen}
             onClose={() => setTaskDetailsOpen(false)}
             task={selectedTask}
+            parentTask={selectedTask && selectedTask.parent_id ? allTasks.find(t => t.id === selectedTask.parent_id) : null}
             onEdit={() => {
               setTaskDetailsOpen(false); // Close details modal before opening edit form
               openTaskForm(selectedTask);

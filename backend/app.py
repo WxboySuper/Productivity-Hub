@@ -90,8 +90,12 @@ class Task(db.Model):
     completed = db.Column(db.Boolean, default=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     project_id = db.Column(db.Integer, db.ForeignKey('project.id', ondelete='SET NULL'), nullable=True)
+    parent_id = db.Column(db.Integer, db.ForeignKey('task.id', ondelete='CASCADE'), nullable=True)  # Subtask support
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     updated_at = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now())
+
+    # Subtasks relationship
+    subtasks = db.relationship('Task', backref=db.backref('parent', remote_side=[id]), lazy=True, cascade='all, delete-orphan')
 
 class Project(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -175,11 +179,12 @@ def get_current_user():
     return None
 
 
-def serialize_task(task):
+def serialize_task(task, include_subtasks=True):
     """
     Serialize a Task SQLAlchemy object to a dictionary for API responses.
     Converts datetime fields to ISO 8601 strings. Logs serialization event.
     Adds next_occurrence for recurring tasks.
+    Optionally includes subtasks (recursive, but only one level deep by default).
     """
     logger.debug("Serializing task: %s", task.id)
     # Compute next_occurrence if applicable
@@ -192,20 +197,24 @@ def serialize_task(task):
         except Exception as e:
             logger.warning(f"Failed to compute next_occurrence for task {task.id}: {e}")
             next_occurrence = None
-    return {
+    data = {
         "id": task.id,
         "title": task.title,
         "description": task.description,
         "due_date": task.due_date.isoformat() if task.due_date else None,
-        "start_date": task.start_date.isoformat() if task.start_date else None,  # New
+        "start_date": task.start_date.isoformat() if task.start_date else None,
         "priority": task.priority,
-        "recurrence": task.recurrence,  # New
+        "recurrence": task.recurrence,
         "completed": task.completed,
         "project_id": task.project_id,
+        "parent_id": task.parent_id,
         "created_at": task.created_at.isoformat() if task.created_at else None,
         "updated_at": task.updated_at.isoformat() if task.updated_at else None,
-        "next_occurrence": next_occurrence,  # Exposed for frontend
+        "next_occurrence": next_occurrence,
     }
+    if include_subtasks:
+        data["subtasks"] = [serialize_task(st, include_subtasks=False) for st in task.subtasks]
+    return data
 
 
 def serialize_project(project):
@@ -289,10 +298,16 @@ except Exception:
 def parse_local_datetime(dt_str):
     """
     Parse an ISO 8601 datetime string, applying the configured timezone if missing.
-    Returns a timezone-aware datetime object. Logs parsing events.
-    Handles both naive and aware datetimes, and avoids double-applying tzinfo.
+    If the string is date-only (YYYY-MM-DD), treat as midnight in the user's local timezone.
+    Returns a timezone-aware datetime object.
     """
     logger.debug("Parsing datetime string: %s", dt_str)
+    # If date only (no T), treat as midnight local time
+    if 'T' not in dt_str:
+        dt = datetime.strptime(dt_str, "%Y-%m-%d")
+        if local_tz:
+            dt = dt.replace(tzinfo=local_tz)
+        return dt
     dt = datetime.fromisoformat(dt_str)
     # If already aware, do not re-apply tzinfo
     if dt.tzinfo is None and local_tz:
@@ -394,10 +409,10 @@ def validate_and_update_task_due_date(task, due_date_str):
     """
     Validate and update a task's due date.
     - Parses the due date string as ISO 8601, applies timezone if missing.
-    - Updates the task object if valid, or clears if empty.
+    - Updates the task object if valid, or clears if empty/null.
     Returns True if updated, or (jsonify, code) tuple on error.
     """
-    if due_date_str:
+    if due_date_str is not None and due_date_str != '':
         try:
             task.due_date = parse_local_datetime(due_date_str)
         except Exception:
@@ -412,10 +427,10 @@ def validate_and_update_task_start_date(task, start_date_str):
     """
     Validate and update a task's start date.
     - Parses the start date string as ISO 8601, applies timezone if missing.
-    - Updates the task object if valid, or clears if empty.
+    - Updates the task object if valid, or clears if empty/null.
     Returns True if updated, or (jsonify, code) tuple on error.
     """
-    if start_date_str:
+    if start_date_str is not None and start_date_str != '':
         try:
             task.start_date = parse_local_datetime(start_date_str)
         except Exception:
@@ -775,7 +790,7 @@ def get_task(task_id):
 @app.route('/api/tasks', methods=['POST'])
 @login_required
 def create_task():
-    """Create a new task."""
+    """Create a new task or subtask, with optional subtasks."""
     logger.info("Task POST endpoint accessed.")
     user = get_current_user()
     data = request.get_json()
@@ -825,6 +840,15 @@ def create_task():
             logger.error("Task creation failed: Project not found or not owned by user. project_id=%s", project_id)
             return error_response("Project not found or does not belong to the current user.", 404)
 
+    # Subtask support: parent_id
+    parent_id = data.get('parent_id')
+    parent_task = None
+    if parent_id is not None:
+        parent_task = Task.query.filter_by(id=parent_id, user_id=user.id).first()
+        if not parent_task:
+            logger.error("Task creation failed: Parent task not found or not owned by user. parent_id=%s", parent_id)
+            return error_response("Parent task not found or does not belong to the current user.", 404)
+
     task = Task(
         title=title.strip(),
         description=data.get('description'),
@@ -834,10 +858,26 @@ def create_task():
         recurrence=recurrence,  # Include new field
         completed=data.get('completed', False),
         user_id=user.id,
-        project_id=project_id
+        project_id=project_id,
+        parent_id=parent_id
     )
-
     db.session.add(task)
+    db.session.flush()  # Get task.id for subtasks
+
+    # Subtasks creation
+    subtasks_data = data.get('subtasks', [])
+    for sub in subtasks_data:
+        if not sub.get('title') or not sub['title'].strip():
+            continue
+        subtask = Task(
+            title=sub['title'].strip(),
+            completed=bool(sub.get('completed', False)),
+            user_id=user.id,
+            parent_id=task.id,
+            project_id=project_id
+        )
+        db.session.add(subtask)
+
     db.session.commit()
     logger.info("Task created successfully: task_id=%s for user: %s (ID: %s)", task.id, user.username, user.id)
     return jsonify(serialize_task(task)), 201
@@ -845,7 +885,7 @@ def create_task():
 @app.route('/api/tasks/<int:task_id>', methods=['PUT'])
 @login_required
 def update_task(task_id):
-    """Update an existing task."""
+    """Update an existing task or subtask, including subtasks."""
     logger.info("Task PUT endpoint accessed for task_id=%s", task_id)
     user = get_current_user()
     task = Task.query.filter_by(id=task_id, user_id=user.id).first()
@@ -860,6 +900,19 @@ def update_task(task_id):
     result = validate_and_update_task_project(task, user, project_id)
     if isinstance(result, tuple):
         return result
+
+    # Subtask support: allow updating parent_id
+    if 'parent_id' in data:
+        parent_id = data['parent_id']
+        if parent_id is not None:
+            if parent_id == task.id:
+                return error_response("A task cannot be its own parent.", 400)
+            parent_task = Task.query.filter_by(id=parent_id, user_id=user.id).first()
+            if not parent_task:
+                return error_response("Parent task not found or does not belong to the current user.", 404)
+            task.parent_id = parent_id
+        else:
+            task.parent_id = None
 
     # Map of field name to (validator function, value)
     field_validators = [
@@ -885,9 +938,35 @@ def update_task(task_id):
         task.completed = data["completed"]
 
     # Validation: if both start_date and due_date are set, start_date must be <= due_date
-    if task.start_date and task.due_date and task.start_date > task.due_date:
-        logger.error("Task update failed: start_date cannot be after due_date.")
-        return error_response("start_date cannot be after due_date.", 400)
+    if task.start_date and task.due_date:
+        # Normalize both datetimes to be offset-aware (UTC) for comparison
+        s = task.start_date
+        d = task.due_date
+        if s.tzinfo is None:
+            s = s.replace(tzinfo=timezone.utc)
+        if d.tzinfo is None:
+            d = d.replace(tzinfo=timezone.utc)
+        if s > d:
+            logger.error("Task update failed: start_date cannot be after due_date.")
+            return error_response("start_date cannot be after due_date.", 400)
+
+    # Subtasks update: replace all subtasks with new list
+    if 'subtasks' in data:
+        # Delete existing subtasks
+        for st in list(task.subtasks):
+            db.session.delete(st)
+        # Add new subtasks
+        for sub in data['subtasks']:
+            if not sub.get('title') or not sub['title'].strip():
+                continue
+            subtask = Task(
+                title=sub['title'].strip(),
+                completed=bool(sub.get('completed', False)),
+                user_id=user.id,
+                parent_id=task.id,
+                project_id=task.project_id
+            )
+            db.session.add(subtask)
 
     db.session.commit()
     logger.info("Task updated successfully: task_id=%s", task_id)
@@ -909,6 +988,18 @@ def delete_task(task_id):
     db.session.commit()
     logger.info("Task deleted successfully: task_id=%s", task_id)
     return jsonify({"message": "Task deleted successfully"}), 200
+
+@app.route('/api/tasks/<int:task_id>/subtasks', methods=['GET'])
+@login_required
+def get_subtasks(task_id):
+    """Get all subtasks for a given parent task."""
+    logger.info("Subtasks GET endpoint accessed for parent task_id=%s", task_id)
+    user = get_current_user()
+    parent = Task.query.filter_by(id=task_id, user_id=user.id).first()
+    if not parent:
+        return error_response("Parent task not found", 404)
+    subtasks = [serialize_task(st, include_subtasks=False) for st in parent.subtasks]
+    return jsonify({"subtasks": subtasks}), 200
 
 # Routes for Project Management
 @app.route('/api/projects', methods=['GET'])
@@ -1073,7 +1164,7 @@ def password_reset_confirm():
     prt = PasswordResetToken.query.filter_by(token=token).first()
     if not prt:
         logger.warning("Password reset confirm failed: Invalid token.")
-        return jsonify({"error": "Invalid or expired token."}), 400
+        return jsonify({"error": "Invalid or expired token."}, 400)
     if prt.used:
         logger.warning("Password reset confirm failed: Token already used.")
         return jsonify({"error": "This token has already been used."}), 400

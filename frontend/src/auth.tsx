@@ -10,7 +10,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [token, setToken] = useState<string | undefined>(() => localStorage.getItem("auth_token") || undefined);
+  const [token, setToken] = useState<string | undefined>(() => localStorage.getItem("auth_token") || "session");
 
   useEffect(() => {
     // Listen for changes to localStorage (e.g., in other tabs)
