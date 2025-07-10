@@ -10,6 +10,7 @@ import DashboardPlaceholderPage from './pages/DashboardPlaceholderPage';
 import ProjectListPage from './pages/ProjectListPage';
 import MainManagementWindow from './pages/MainManagementWindow';
 import { useAuth } from './auth';
+import NotificationCenter from './components/NotificationCenter';
 
 // Simple placeholder components
 function NotFound() {
@@ -68,6 +69,7 @@ function App() {
   return (
     <ErrorBoundary>
       <Router>
+        <NotificationCenter />
         <AppRoutes />
       </Router>
     </ErrorBoundary>

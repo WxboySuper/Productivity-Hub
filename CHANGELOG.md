@@ -7,6 +7,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## API Change Summary Requirement
 - For every stable, alpha, or beta release, summarize all API changes (new endpoints, deleted endpoints, changes to endpoints, etc.) in the changelog, even if they were already documented in dev releases. This ensures the release notes provide a complete overview of API evolution for each version.
 
+## [v0.12.0-dev8] - 2025-07-09
+### Added
+- **Robust Notification Timing:** Implemented production-ready, resilient notification/reminder timing for all users. Notifications (in-app and browser/OS) now appear only once, at the correct time, and are resilient to server/client restarts.
+- **Persistent Notification Scheduling:** Added a persistent `show_at` (appear at) field to the Notification model and database (Alembic migration). All notification logic now uses this field for precise, reliable scheduling.
+- **Frontend Notification Logic:** Updated `NotificationCenter.tsx` to use `show_at` for notification timing, ensuring notifications are shown only once and at the intended time. Fixed all double-conversion and timezone bugs in notification display and reminder handling.
+- **Backend Notification Logic:** Updated backend endpoints and reminder job to use and return `show_at` for all notifications. All notification and reminder logic now uses UTC consistently.
+- **Date Precision Fix:** Trimmed `show_at` to seconds precision in frontend to avoid JS Date precision issues.
+- **API Documentation:** Updated `docs/API.md` to document new/changed notification and reminder fields and endpoints.
+- **UI Dependencies:** Added `@mui/material`, `@emotion/react`, and `@emotion/styled` to frontend dependencies for improved notification UI.
+
+### Changed
+- **Timezone Handling:** All time handling is now robust: backend stores/returns `show_at` in UTC, frontend converts local input to UTC exactly once, and all logic uses UTC. Eliminated all timezone/double-conversion bugs in both backend and frontend.
+- **Notification/Reminder Logic:** All notification and reminder logic now uses the persistent `show_at` field for scheduling and display. Removed all previous ad-hoc or test/dev logic for notification timing.
+- **Frontend Reminder Input:** Fixed all double-conversion bugs in `TaskFormModal.tsx` (reminder time input and submission).
+- **Code Cleanup:** Removed all debug logging, test notification injectors, and test listeners from `NotificationCenter.tsx`. Removed `TestReminderPopup` and all test notification code from `App.tsx`. Cleaned up `TaskFormModal.tsx` to ensure only production logic remains.
+- **Backend Cleanup:** Removed `/api/notifications/test-create` endpoint and all test/dev-only reminder code from `app.py`.
+- **Database Migration:** Added Alembic migration for `show_at` field in Notification table.
+
+### Removed
+- All test/dev-only code and endpoints related to notifications and reminders from both backend and frontend. Restored production-like behavior throughout the codebase.
+
+### API Change Summary
+- **Notification model:** Added persistent `show_at` (UTC, ISO 8601) field for all notifications.
+- **Notification endpoints:** All endpoints now use and return `show_at` for notification scheduling and display.
+- **Removed:** All test/dev-only notification endpoints and fields.
+- **Task API:** Reminder fields (`reminder_time`, `reminder_recurring`, `reminder_snoozed_until`, `reminder_enabled`) remain as in previous dev version, but all reminder logic now uses robust UTC handling and persistent scheduling.
+- See `docs/API.md` for full details and updated field descriptions.
+
 ## [v0.12.0-dev7] - 2025-07-09
 ### Changed
 - Implemented task dependencies (Blocked By/Blocking) in backend, API, and frontend UI.

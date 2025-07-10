@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import Autocomplete from '@mui/material/Autocomplete';
+import TextField from '@mui/material/TextField';
 
 interface TaskFormModalProps {
   open: boolean;
@@ -62,27 +64,27 @@ const TaskFormModal: React.FC<TaskFormModalProps> = (props) => {
   // Dependency state
   const [blockedBy, setBlockedBy] = useState(initialValues.blocked_by || []);
   const [blocking, setBlocking] = useState(initialValues.blocking || []);
-  const [allTasks, setAllTasks] = useState<any[]>([]);
+  const [blockingOptions, setBlockingOptions] = useState<any[]>([]);
+  const [blockingOptionsLoading, setBlockingOptionsLoading] = useState(false);
 
-  // Fetch all tasks for dependency selection (excluding self and subtasks)
-  useEffect(() => {
-    if (open) {
-      fetch('/api/tasks', { credentials: 'include' })
-        .then(res => res.ok ? res.json() : Promise.reject('Failed to fetch tasks'))
-        .then(data => {
-          let tasks = Array.isArray(data) ? data : (data.tasks || []);
-          // Exclude self and subtasks if editing
-          if (editMode && initialValues.id) {
-            const excludeIds = [initialValues.id, ...(initialValues.subtasks?.map((st: any) => st.id) || [])];
-            tasks = tasks.filter((t: any) => !excludeIds.includes(t.id));
-          }
-          setAllTasks(tasks);
-        })
-        .catch(() => setAllTasks([]));
-    }
-  }, [open, editMode, initialValues]);
+  // Reminder fields state
+  const [reminderEnabled, setReminderEnabled] = useState(
+    typeof initialValues.reminder_enabled === 'boolean' ? initialValues.reminder_enabled : true
+  );
+  // Always convert backend UTC ISO string to local datetime-local string for input
+  const [reminderTime, setReminderTime] = useState(
+    initialValues.reminder_time
+      ? (() => {
+          // Only convert backend UTC to local for input field
+          const d = new Date(initialValues.reminder_time);
+          // No manual offsetting, just use toISOString and slice for input
+          return d.toISOString().slice(0, 16);
+        })()
+      : ''
+  );
+  const [reminderRecurring, setReminderRecurring] = useState(initialValues.reminder_recurring || '');
 
-  // Track previous open state to only reset when opening
+  // Track previous open state for form reset
   const prevOpenRef = React.useRef(false);
   useEffect(() => {
     if (open && !prevOpenRef.current) {
@@ -107,9 +109,32 @@ const TaskFormModal: React.FC<TaskFormModalProps> = (props) => {
       setNewSubtaskTitle('');
       setBlockedBy(initialValues.blocked_by || []);
       setBlocking(initialValues.blocking || []);
+      setReminderEnabled(typeof initialValues.reminder_enabled === 'boolean' ? initialValues.reminder_enabled : true);
+      setReminderTime(initialValues.reminder_time ? new Date(initialValues.reminder_time).toISOString().slice(0, 16) : '');
+      setReminderRecurring(initialValues.reminder_recurring || '');
     }
     prevOpenRef.current = open;
   }, [open, initialValues]);
+
+  // Track previous open state for blocking options fetch
+  const prevOpenRefBlockingOptions = React.useRef(false);
+  useEffect(() => {
+    if (open && !prevOpenRefBlockingOptions.current) {
+      setBlockingOptionsLoading(true);
+      let url = '/api/tasks/blocking-options';
+      if (editMode && initialValues.id) {
+        url += `?exclude_task_id=${initialValues.id}`;
+      }
+      fetch(url, { credentials: 'include' })
+        .then(res => res.ok ? res.json() : Promise.reject('Failed to fetch blocking options'))
+        .then(data => {
+          setBlockingOptions(Array.isArray(data) ? data : (data.tasks || []));
+        })
+        .catch(() => setBlockingOptions([]))
+        .finally(() => setBlockingOptionsLoading(false));
+    }
+    prevOpenRefBlockingOptions.current = open;
+  }, [open, editMode, initialValues.id]);
 
   const handleRecurrenceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
@@ -132,6 +157,12 @@ const TaskFormModal: React.FC<TaskFormModalProps> = (props) => {
     setSubtasks(subtasks.map((st: any) => st.id === id ? { ...st, completed: !st.completed } : st));
   };
 
+  // Utility: Convert local datetime string (YYYY-MM-DDTHH:mm) to UTC ISO string
+  function localDateTimeToUTC(localDateTime: string): string {
+    // Always treat as local time and convert to UTC
+    return new Date(localDateTime).toISOString();
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     let recurrenceValue = undefined;
@@ -143,14 +174,18 @@ const TaskFormModal: React.FC<TaskFormModalProps> = (props) => {
     onSubmit({
       title,
       description,
-      due_date: dueDate ? new Date(dueDate).toISOString() : null, // Send null if cleared
-      start_date: startDate ? new Date(startDate).toISOString() : null, // Send null if cleared
+      due_date: dueDate ? localDateTimeToUTC(dueDate) : null,
+      start_date: startDate ? localDateTimeToUTC(startDate) : null,
       priority: Number(priority),
       recurrence: recurrenceValue,
       project_id: projectId === '' ? undefined : Number(projectId),
       subtasks: subtasks.map((st: any) => ({ title: st.title, completed: st.completed, id: st.isNew ? undefined : st.id })),
       blocked_by: blockedBy,
       blocking: blocking,
+      // Reminder fields
+      reminder_enabled: reminderEnabled,
+      reminder_time: reminderTime ? localDateTimeToUTC(reminderTime) : null,
+      reminder_recurring: reminderRecurring || null,
     });
   };
 
@@ -280,7 +315,7 @@ const TaskFormModal: React.FC<TaskFormModalProps> = (props) => {
               <div className="w-full border rounded px-3 py-2 mt-1 bg-gray-50 text-gray-700 text-sm min-h-[2.5rem]">
                 {blockedBy.length === 0
                   ? <span className="text-gray-400">None</span>
-                  : allTasks.filter(t => blockedBy.includes(t.id)).map(t => t.title).join(', ')}
+                  : blockingOptions.filter(t => blockedBy.includes(t.id)).map(t => t.title).join(', ')}
               </div>
               <div className="text-xs text-gray-500 mt-1">
                 This list is automatically derived from other tasks' "Blocking" fields. To make this task blocked by another, edit that other task's "Blocking" field to include this task.
@@ -288,21 +323,51 @@ const TaskFormModal: React.FC<TaskFormModalProps> = (props) => {
             </div>
             <div>
               <span className="font-medium">Blocking:</span>
-              <select
+              <Autocomplete
                 multiple
-                className="w-full border rounded px-3 py-2 mt-1"
-                value={blocking}
-                onChange={e => setBlocking(Array.from(e.target.selectedOptions, opt => Number(opt.value)))}
+                options={blockingOptions}
+                getOptionLabel={option => option.title}
+                value={blockingOptions.filter(opt => blocking.includes(opt.id))}
+                onChange={(_, newValue) => setBlocking(newValue.map(opt => opt.id))}
+                loading={blockingOptionsLoading}
+                filterSelectedOptions
+                isOptionEqualToValue={(option, value) => option.id === value.id}
+                renderInput={params => (
+                  <TextField {...params} label="Select tasks to block" placeholder="Type to filter..." variant="outlined" size="small" />
+                )}
                 disabled={loading}
-              >
-                {allTasks.map(t => (
-                  <option key={t.id} value={t.id}>{t.title}</option>
-                ))}
-              </select>
+              />
               <div className="text-xs text-gray-500 mt-1">
                 To block another task, add it to this list. The other task will then show this one in its "Blocked By" list.
               </div>
             </div>
+          </div>
+        </div>
+        <div className="mb-3 flex flex-col sm:flex-row gap-2">
+          <div className="flex-1">
+            <label className="block font-semibold mb-1">Reminders</label>
+            <div className="flex items-center gap-2 mb-2">
+              <input type="checkbox" checked={reminderEnabled} onChange={e => setReminderEnabled(e.target.checked)} disabled={loading} id="reminder-enabled" />
+              <label htmlFor="reminder-enabled" className="text-sm">Enable Reminder</label>
+            </div>
+            <label className="block text-sm mb-1">Reminder Time</label>
+            <input
+              type="datetime-local"
+              className="w-full border rounded px-3 py-2 mb-2"
+              value={reminderTime}
+              onChange={e => setReminderTime(e.target.value)}
+              disabled={loading || !reminderEnabled}
+            />
+            <label className="block text-sm mb-1">Reminder Recurrence</label>
+            <input
+              type="text"
+              className="w-full border rounded px-3 py-2"
+              value={reminderRecurring}
+              onChange={e => setReminderRecurring(e.target.value)}
+              disabled={loading || !reminderEnabled}
+              placeholder="e.g. DAILY, WEEKLY, or rrule string (optional)"
+            />
+            <div className="text-xs text-gray-500 mt-1">Leave recurrence blank for one-time reminders. Use iCal RRULE format for advanced recurrence.</div>
           </div>
         </div>
         <div className="mt-4 flex justify-end gap-2">

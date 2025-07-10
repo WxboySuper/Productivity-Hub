@@ -25,6 +25,10 @@ All endpoints require the user to be authenticated (session-based). Include the 
   - `recurrence`: string, optional, recurrence rule (e.g., 'daily', 'weekly', 'custom')
   - `completed`: boolean, completion status
   - `project_id`: integer, optional, associated project ID
+  - `reminder_time`: string, ISO 8601 datetime, when to show the reminder (optional)
+  - `reminder_recurring`: string, optional recurrence rule (e.g., 'DAILY', 'WEEKLY', or rrule string)
+  - `reminder_snoozed_until`: string, ISO 8601 datetime, if snoozed (optional, managed by backend/UI)
+  - `reminder_enabled`: boolean, whether reminders are enabled for this task (default: true)
 
 ### Get Task by ID
 **GET** `/api/tasks/<task_id>`
@@ -40,6 +44,10 @@ All endpoints require the user to be authenticated (session-based). Include the 
   - `recurrence`: string, optional, recurrence rule (e.g., 'daily', 'weekly', 'custom')
   - `completed`: boolean, completion status
   - `project_id`: integer, optional, associated project ID
+  - `reminder_time`: string, ISO 8601 datetime, when to show the reminder (optional)
+  - `reminder_recurring`: string, optional recurrence rule (e.g., 'DAILY', 'WEEKLY', or rrule string)
+  - `reminder_snoozed_until`: string, ISO 8601 datetime, if snoozed (optional, managed by backend/UI)
+  - `reminder_enabled`: boolean, whether reminders are enabled for this task (default: true)
 
 ### Create Task
 **POST** `/api/tasks`
@@ -296,6 +304,73 @@ All endpoints require the user to be authenticated (session-based). Include the 
 - All state-changing endpoints require CSRF token in `X-CSRF-Token` header.
 - Only the current user's projects are accessible.
 - See error handling and security notes above for details.
+
+---
+
+## Task Reminder & Notification Endpoints
+
+### Task Reminder Fields
+All task endpoints now support the following additional fields:
+- `reminder_time`: string, ISO 8601 datetime, when to show the reminder (optional)
+- `reminder_recurring`: string, optional recurrence rule (e.g., 'DAILY', 'WEEKLY', or rrule string)
+- `reminder_snoozed_until`: string, ISO 8601 datetime, if snoozed (optional, managed by backend/UI)
+- `reminder_enabled`: boolean, whether reminders are enabled for this task (default: true)
+
+These fields are included in all task API responses and can be set/updated via the create/update endpoints.
+
+---
+
+## Notification Endpoints
+
+### List Notifications
+**GET** `/api/notifications`
+- Returns a list of notifications for the current user (unread first, then by created_at desc).
+- Response: `200 OK`, JSON array of notifications.
+- Response fields:
+  - `id`: integer, notification ID
+  - `task_id`: integer, optional, related task ID
+  - `message`: string, notification message
+  - `created_at`: string, ISO 8601 datetime
+  - `read`: boolean, whether the notification has been read/dismissed
+  - `snoozed_until`: string, ISO 8601 datetime, if snoozed (optional)
+  - `type`: string, notification type (e.g., 'reminder')
+
+### Snooze Notification
+**POST** `/api/notifications/<notification_id>/snooze`
+- Snoozes a notification for a given number of minutes (default: 10).
+- Request JSON:
+  ```json
+  { "minutes": 10 }
+  ```
+- Response: `200 OK`, JSON message and new `snoozed_until` time.
+- Errors: `404` if notification not found.
+
+### Dismiss Notification
+**POST** `/api/notifications/<notification_id>/dismiss`
+- Marks a notification as read/dismissed.
+- Response: `200 OK`, JSON message.
+- Errors: `404` if notification not found.
+
+---
+
+## Reminder/Notification Model
+
+### Notification
+- `id`: integer, primary key
+- `user_id`: integer, foreign key to User
+- `task_id`: integer, foreign key to Task (nullable)
+- `message`: string, notification message
+- `created_at`: string, ISO 8601 datetime
+- `read`: boolean, whether the notification has been read
+- `snoozed_until`: string, ISO 8601 datetime, if snoozed (optional)
+- `type`: string, notification type (e.g., 'reminder')
+
+---
+
+## Reminder Generation
+- The backend automatically generates notifications for tasks with reminders enabled when the reminder time (and recurrence, if set) is due.
+- Notifications are only generated if not already present and unread for the same task/user.
+- Snoozed notifications will not reappear until after the snooze period.
 
 ---
 

@@ -19,6 +19,7 @@ from string import Template
 import time
 from dateutil.rrule import rrule, rrulestr, DAILY, WEEKLY, MONTHLY
 import calendar
+import threading
 
 # Explicitly check for .env file and load success
 DOTENV_PATH = os.path.join(os.path.dirname(__file__), '.env')
@@ -113,6 +114,12 @@ class Task(db.Model):
         lazy='dynamic'
     )
 
+    # Reminder fields
+    reminder_time = db.Column(db.DateTime, nullable=True)
+    reminder_recurring = db.Column(db.String, nullable=True)  # e.g., 'DAILY', 'WEEKLY', rrule string, etc.
+    reminder_snoozed_until = db.Column(db.DateTime, nullable=True)
+    reminder_enabled = db.Column(db.Boolean, default=True, nullable=False)
+
 class Project(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), nullable=False)
@@ -133,6 +140,20 @@ class PasswordResetToken(db.Model):
     used = db.Column(db.Boolean, default=False, nullable=False)
 
     user = db.relationship('User', backref=db.backref('password_reset_tokens', lazy=True))
+
+class Notification(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    task_id = db.Column(db.Integer, db.ForeignKey('task.id'), nullable=True)
+    message = db.Column(db.String(255), nullable=False)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+    read = db.Column(db.Boolean, default=False, nullable=False)
+    snoozed_until = db.Column(db.DateTime, nullable=True)
+    type = db.Column(db.String(32), default='reminder', nullable=False)
+    show_at = db.Column(db.DateTime, nullable=True)  # When the notification should appear
+
+    user = db.relationship('User', backref=db.backref('notifications', lazy=True))
+    task = db.relationship('Task', backref=db.backref('notifications', lazy=True))
 
 # Helper Functions
 def init_db():
@@ -230,6 +251,11 @@ def serialize_task(task, include_subtasks=True):
         # Add dependencies info
         "blocked_by": [b.id for b in task.blocked_by],
         "blocking": [b.id for b in task.blocking],
+        # Add reminder fields
+        "reminder_time": task.reminder_time.isoformat() if task.reminder_time else None,
+        "reminder_recurring": task.reminder_recurring,
+        "reminder_snoozed_until": task.reminder_snoozed_until.isoformat() if task.reminder_snoozed_until else None,
+        "reminder_enabled": task.reminder_enabled,
     }
     if include_subtasks:
         data["subtasks"] = [serialize_task(st, include_subtasks=False) for st in task.subtasks]
@@ -1357,7 +1383,128 @@ def get_csrf_token():
     response.set_cookie('_csrf_token', token, httponly=False, samesite='Lax')
     return response, 200
 
+# --- Notification API Endpoints ---
+from sqlalchemy import or_
+
+@app.route('/api/notifications', methods=['GET'])
+@login_required
+def get_notifications():
+    """List notifications for the current user (unread first, then by show_at asc, then created_at desc)."""
+    user = get_current_user()
+    notifications = Notification.query.filter_by(user_id=user.id).order_by(Notification.read.asc(), Notification.show_at.asc().nullslast(), Notification.created_at.desc()).all()
+    result = []
+    for n in notifications:
+        notif_dict = {
+            "id": n.id,
+            "task_id": n.task_id,
+            "message": n.message,
+            "created_at": n.created_at.isoformat() if n.created_at else None,
+            "read": n.read,
+            "snoozed_until": n.snoozed_until.isoformat() if n.snoozed_until else None,
+            "type": n.type,
+            "show_at": n.show_at.isoformat() if n.show_at else None
+        }
+        result.append(notif_dict)
+    return jsonify(result), 200
+
+@app.route('/api/notifications/<int:notification_id>/snooze', methods=['POST'])
+@login_required
+def snooze_notification(notification_id):
+    """Snooze a notification (set snoozed_until and mark unread)."""
+    user = get_current_user()
+    n = Notification.query.filter_by(id=notification_id, user_id=user.id).first()
+    if not n:
+        return error_response("Notification not found", 404)
+    data = request.get_json() or {}
+    snooze_minutes = int(data.get('minutes', 10))
+    n.snoozed_until = datetime.now(timezone.utc) + timedelta(minutes=snooze_minutes)
+    n.read = False
+    db.session.commit()
+    return jsonify({"message": "Notification snoozed", "snoozed_until": n.snoozed_until.isoformat()}), 200
+
+@app.route('/api/notifications/<int:notification_id>/dismiss', methods=['POST'])
+@login_required
+def dismiss_notification(notification_id):
+    """Dismiss a notification (mark as read)."""
+    user = get_current_user()
+    n = Notification.query.filter_by(id=notification_id, user_id=user.id).first()
+    if not n:
+        return error_response("Notification not found", 404)
+    n.read = True
+    db.session.commit()
+    return jsonify({"message": "Notification dismissed"}), 200
+
+def reminder_job():
+    with app.app_context():
+        now = datetime.now(timezone.utc)
+        tasks = Task.query.filter(
+            Task.reminder_enabled == True,
+            Task.reminder_time != None,
+            Task.completed == False
+        ).all()
+        for task in tasks:
+            # Skip if snoozed
+            if task.reminder_snoozed_until and task.reminder_snoozed_until > now:
+                continue
+            # Check if notification already exists and is unread or snoozed
+            existing = Notification.query.filter_by(task_id=task.id, user_id=task.user_id, read=False).filter(
+                or_(Notification.snoozed_until == None, Notification.snoozed_until <= now)
+            ).first()
+            if existing:
+                continue
+            # Check if reminder is due
+            due = False
+            if task.reminder_time:
+                # Handle recurring reminders
+                if task.reminder_recurring:
+                    try:
+                        rule = rrulestr(task.reminder_recurring, dtstart=task.reminder_time)
+                        next_occ = rule.before(now, inc=True)
+                        if next_occ and (now - next_occ).total_seconds() < 60*5:  # 5 min window
+                            due = True
+                    except Exception:
+                        pass
+                else:
+                    if abs((now - task.reminder_time).total_seconds()) < 60*5:  # 5 min window
+                        due = True
+            if due:
+                # Set show_at to now or a calculated time (here: now for reminders)
+                notif = Notification(
+                    user_id=task.user_id,
+                    task_id=task.id,
+                    message=f"Reminder: {task.title}",
+                    type="reminder",
+                    show_at=datetime.now(timezone.utc)
+                )
+                db.session.add(notif)
+        db.session.commit()
+    # Schedule next run
+    threading.Timer(60, reminder_job).start()  # Run every 60 seconds
+
+@app.route('/api/tasks/blocking-options', methods=['GET'])
+@login_required
+def get_blocking_options():
+    """
+    Return all possible tasks that can be selected as blockers (for dependencies) for the current user.
+    Excludes completed tasks and (optionally) the current task being edited/created.
+    Returns only id and title for efficiency.
+    Accepts optional ?exclude_task_id=<id> to avoid self-blocking.
+    """
+    user = get_current_user()
+    exclude_task_id = request.args.get('exclude_task_id', type=int)
+    q = Task.query.filter_by(user_id=user.id, completed=False)
+    if exclude_task_id:
+        q = q.filter(Task.id != exclude_task_id)
+    # Optionally, filter out subtasks if you only want top-level tasks
+    # q = q.filter(Task.parent_id == None)
+    tasks = q.order_by(Task.title.asc()).all()
+    return jsonify([
+        {"id": t.id, "title": t.title} for t in tasks
+    ]), 200
+
 if __name__ == '__main__':
+    # Start the reminder job only when running the app directly
+    reminder_job()
     init_db()
     logger.info("Database initialized.")
     logger.info("Starting Flask app...")
