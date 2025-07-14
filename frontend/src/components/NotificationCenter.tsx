@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { useAuth } from '../auth';
 
 interface Notification {
   id: number;
@@ -15,6 +16,7 @@ interface NotificationCenterProps {
 }
 
 const NotificationCenter: React.FC<NotificationCenterProps> = ({ pollingInterval = 10000 }) => {
+  const { isAuthenticated } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [show, setShow] = useState(false);
   const [modalNotification, setModalNotification] = useState<Notification | null>(null);
@@ -30,6 +32,13 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ pollingInterval
 
   // Poll for notifications
   useEffect(() => {
+    // Don't fetch notifications if user is not authenticated
+    if (!isAuthenticated) {
+      // Clear notifications when user logs out
+      setNotifications([]);
+      return;
+    }
+
     // Always clear shownNotificationIds on mount to avoid stale state
     shownNotificationIds.current = new Set();
     let timer: NodeJS.Timeout;
@@ -65,10 +74,16 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ pollingInterval
     };
     fetchNotifications();
     return () => clearTimeout(timer);
-  }, [pollingInterval]);
+  }, [pollingInterval, isAuthenticated]);
 
   // When modalNotification is dismissed or snoozed, clear it
   const handleDismiss = async (id: number) => {
+    // Don't make API calls if not authenticated
+    if (!isAuthenticated) {
+      setModalNotification(null);
+      return;
+    }
+    
     // Get CSRF token from cookie
     const csrfToken = document.cookie.match(/_csrf_token=([^;]+)/)?.[1];
     await fetch(`/api/notifications/${id}/dismiss`, {
@@ -83,6 +98,12 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ pollingInterval
   };
 
   const handleSnooze = async (id: number, minutes: number = 10) => {
+    // Don't make API calls if not authenticated
+    if (!isAuthenticated) {
+      setModalNotification(null);
+      return;
+    }
+    
     // Get CSRF token from cookie
     const csrfToken = document.cookie.match(/_csrf_token=([^;]+)/)?.[1];
     await fetch(`/api/notifications/${id}/snooze`, {
@@ -127,6 +148,11 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ pollingInterval
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
+  // Don't render notification center for unauthenticated users
+  if (!isAuthenticated) {
+    return null;
+  }
+
   return (
     <>
       {/* Centered modal for latest unread reminder */}
@@ -145,21 +171,25 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ pollingInterval
             <p className="mb-4 text-gray-800 text-lg text-center">{modalNotification.message}</p>
             <div className="flex gap-4 mt-2">
               <button
-                className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 font-semibold"
+                className="phub-action-btn-secondary px-4 py-2"
                 onClick={() => handleDismiss(modalNotification.id)}
-              >Dismiss</button>
+              >
+                Dismiss
+              </button>
               <button
-                className="px-4 py-2 bg-yellow-400 text-yellow-900 rounded hover:bg-yellow-500 font-semibold"
+                className="px-4 py-2 bg-yellow-400 text-yellow-900 rounded hover:bg-yellow-500 font-semibold transition-colors"
                 onClick={() => handleSnooze(modalNotification.id, 10)}
-              >Snooze 10m</button>
+              >
+                Snooze 10m
+              </button>
             </div>
           </div>
         </div>
       )}
       {/* Notification bell and panel */}
-      <div className="fixed top-4 right-4 z-50">
+      <div className="fixed top-20 right-4 z-50">
         <button
-          className="relative bg-white border border-blue-200 rounded-full p-3 shadow hover:bg-blue-50"
+          className="relative bg-white border border-blue-200 rounded-full p-3 shadow-lg hover:bg-blue-50 transition-all duration-200 hover:scale-105"
           onClick={() => setShow(s => !s)}
           aria-label="Show notifications"
         >
@@ -169,25 +199,46 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ pollingInterval
           )}
         </button>
         {show && (
-          <div className="mt-2 w-80 bg-white border border-blue-200 rounded-xl shadow-xl p-4 max-h-96 overflow-y-auto">
-            <h3 className="font-bold text-blue-700 mb-2">Notifications</h3>
-            {notifications.length === 0 && <div className="text-gray-500">No notifications.</div>}
-            <ul className="divide-y divide-blue-100">
+          <div className="mt-2 w-80 bg-white border border-blue-200 rounded-xl shadow-xl p-4 max-h-96 overflow-y-auto backdrop-blur-sm">
+            <h3 className="font-bold text-blue-700 mb-3 text-lg">🔔 Notifications</h3>
+            {notifications.length === 0 && <div className="text-gray-500 text-center py-4">No notifications.</div>}
+            <div className="space-y-3">
               {notifications.map(n => (
-                <li key={n.id} className={`py-2 ${n.read ? 'text-gray-400' : 'text-blue-900 font-semibold'}`}>
-                  <div className="flex justify-between items-center">
-                    <span>{n.message}</span>
+                <div 
+                  key={n.id} 
+                  className={`p-4 border rounded-lg transition-all duration-200 ${
+                    n.read 
+                      ? 'border-gray-200 bg-gray-50 text-gray-600' 
+                      : 'border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-900 shadow-sm hover:shadow-md'
+                  }`}
+                >
+                  <div className="flex justify-between items-start">
+                    <span className={`${n.read ? 'text-gray-600' : 'text-blue-900 font-medium'} flex-1 mr-3`}>
+                      {n.message}
+                    </span>
                     {!n.read && (
-                      <div className="flex gap-2">
-                        <button className="text-xs text-green-600 hover:underline" onClick={() => handleDismiss(n.id)}>Dismiss</button>
-                        <button className="text-xs text-yellow-600 hover:underline" onClick={() => handleSnooze(n.id, 10)}>Snooze 10m</button>
+                      <div className="flex gap-2 flex-shrink-0">
+                        <button 
+                          className="phub-action-btn-secondary text-xs px-2 py-1" 
+                          onClick={() => handleDismiss(n.id)}
+                        >
+                          Dismiss
+                        </button>
+                        <button 
+                          className="text-xs px-2 py-1 bg-yellow-400 text-yellow-900 rounded hover:bg-yellow-500 font-medium transition-colors" 
+                          onClick={() => handleSnooze(n.id, 10)}
+                        >
+                          Snooze 10m
+                        </button>
                       </div>
                     )}
                   </div>
-                  <div className="text-xs text-gray-400 mt-1">{new Date(n.created_at).toLocaleString()}</div>
-                </li>
+                  <div className="text-xs text-gray-500 mt-2">
+                    {new Date(n.created_at).toLocaleString()}
+                  </div>
+                </div>
               ))}
-            </ul>
+            </div>
           </div>
         )}
       </div>

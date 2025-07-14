@@ -23,6 +23,10 @@ Thumbs.db
 
 # Misc
 *.sqlite3
+.vscode/*
+.vscode
+.qodo
+.qodo/*
 
 # db
 */productivity_hub.db

@@ -17,8 +17,8 @@ export default function LoginPage() {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   }, []);
   const handleForgotPassword = useCallback(() => {
-    window.location.href = "/password-reset/request";
-  }, []);
+    navigate("/password-reset/request");
+  }, [navigate]);
   const handleSubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
@@ -51,11 +51,11 @@ export default function LoginPage() {
   }, [form, login, navigate]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-100 via-blue-200 to-green-100">
+    <div className="min-h-screen flex flex-col">
       <AppHeader />
-      <main className="flex-1 flex flex-col items-center justify-center">
-        <div className="w-full max-w-md bg-white/90 rounded-xl shadow-2xl p-10 flex flex-col items-center border border-blue-200 backdrop-blur-sm z-10 mt-10">
-          <h2 className="text-2xl font-bold mb-6 text-center">Login</h2>
+      <main className="flex-1 flex flex-col items-center justify-center relative z-10 px-4">
+        <div className="w-full max-w-lg bg-white/95 rounded-xl shadow-2xl p-10 flex flex-col items-center border border-blue-200 backdrop-blur-sm z-10 mt-10 phub-glass">
+          <h2 className="text-2xl font-bold mb-6 text-center phub-text-gradient">Login</h2>
           {error && (
             <div className="mb-4 flex items-center gap-2 rounded border border-red-300 bg-red-50 px-4 py-3 text-red-800 shadow-sm animate-fade-in">
               <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12A9 9 0 1 1 3 12a9 9 0 0 1 18 0Z" /></svg>
@@ -68,7 +68,7 @@ export default function LoginPage() {
                 Username or Email
               </label>
               <input
-                className="w-full border rounded px-3 py-2"
+                className="w-full border rounded px-4 py-3 text-base"
                 type="text"
                 id="usernameOrEmail"
                 name="usernameOrEmail"
@@ -76,6 +76,7 @@ export default function LoginPage() {
                 onChange={handleChange}
                 required
                 autoComplete="username"
+                placeholder="Enter your username or email"
               />
             </div>
             <div className="mb-6">
@@ -83,7 +84,7 @@ export default function LoginPage() {
                 Password
               </label>
               <input
-                className="w-full border rounded px-3 py-2"
+                className="w-full border rounded px-4 py-3 text-base"
                 type="password"
                 id="password"
                 name="password"
@@ -91,21 +92,22 @@ export default function LoginPage() {
                 onChange={handleChange}
                 required
                 autoComplete="current-password"
+                placeholder="Enter your password"
               />
             </div>
             <button
               type="submit"
-              className="w-full bg-blue-600 text-white font-semibold py-2 rounded hover:bg-blue-700 transition mb-2"
+              className="phub-action-btn w-full mb-4 justify-center"
               disabled={loading}
             >
-              {loading ? "Logging in..." : "Login"}
+              {loading ? "Signing In..." : "Sign In"}
             </button>
             <button
               type="button"
-              className="w-full bg-gray-100 text-blue-700 font-semibold py-2 rounded hover:bg-blue-200 transition mb-2"
+              className="w-full bg-gray-100 text-blue-700 font-semibold py-3 rounded-lg hover:bg-blue-50 transition-colors border border-blue-200"
               onClick={handleForgotPassword}
             >
-              Forgot password?
+              Forgot Password?
             </button>
           </form>
         </div>

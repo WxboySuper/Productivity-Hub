@@ -1,0 +1,679 @@
+/* ====================================================================
+   🎯 PRODUCTIVITY-FOCUSED CREATIVE FORM SYSTEM
+   ================================================================== */
+
+/* === BALANCED COLOR PALETTE === */
+:root {
+  /* Primary Colors - Calmer but still distinctive */
+  --phub-primary: #2563eb;
+  --phub-primary-light: #3b82f6;
+  --phub-primary-dark: #1d4ed8;
+  
+  /* Secondary Colors - More muted */
+  --phub-secondary: #8b5cf6;
+  --phub-secondary-light: #a78bfa;
+  --phub-secondary-dark: #7c3aed;
+  
+  /* Neutral Colors - Better contrast */
+  --phub-gray-50: #f8fafc;
+  --phub-gray-100: #f1f5f9;
+  --phub-gray-200: #e2e8f0;
+  --phub-gray-300: #cbd5e1;
+  --phub-gray-400: #94a3b8;
+  --phub-gray-500: #64748b;
+  --phub-gray-600: #475569;
+  --phub-gray-700: #334155;
+  --phub-gray-800: #1e293b;
+  --phub-gray-900: #0f172a;
+  
+  /* Semantic Colors */
+  --phub-success: #059669;
+  --phub-warning: #d97706;
+  --phub-error: #dc2626;
+  --phub-info: var(--phub-primary);
+  
+  /* TEXT COLORS - All dark for white backgrounds */
+  --phub-text-primary: #0f172a;    /* Very dark for main text */
+  --phub-text-secondary: #1e293b;  /* Dark for secondary text */
+  --phub-text-body: #334155;       /* Dark for body text */
+  --phub-text-muted: #475569;      /* Medium for muted text */
+  --phub-text-placeholder: #64748b; /* Darker placeholders */
+  
+  /* Spacing */
+  --phub-space-xs: 0.25rem;
+  --phub-space-sm: 0.5rem;
+  --phub-space-md: 1rem;
+  --phub-space-lg: 1.5rem;
+  --phub-space-xl: 2rem;
+  --phub-space-2xl: 3rem;
+  
+  /* Radius */
+  --phub-radius-sm: 0.375rem;
+  --phub-radius-md: 0.5rem;
+  --phub-radius-lg: 0.75rem;
+  --phub-radius-xl: 1rem;
+  
+  /* Transitions */
+  --phub-transition-fast: 150ms ease-out;
+  --phub-transition-normal: 250ms ease-out;
+  --phub-transition-slow: 350ms ease-out;
+  
+  /* Shadows */
+  --phub-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --phub-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --phub-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --phub-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* === PRODUCTIVITY-FOCUSED MODAL === */
+.phub-productive-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: 
+    radial-gradient(circle at 25% 25%, rgba(37, 99, 235, 0.1) 0%, transparent 25%),
+    radial-gradient(circle at 75% 75%, rgba(139, 92, 246, 0.1) 0%, transparent 25%),
+    rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center; /* Center vertically in viewport */
+  justify-content: center; /* Center horizontally in viewport */
+  z-index: 1000;
+  animation: phub-backdrop-appear var(--phub-transition-normal);
+  /* Ensure viewport centering */
+  min-height: 100vh;
+  max-height: 100vh;
+  overflow: auto;
+}
+
+@keyframes phub-backdrop-appear {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.phub-productive-form-container {
+  background: 
+    linear-gradient(135deg, #ffffff 0%, #fefefe 50%, #fdfdfd 100%);
+  border-radius: var(--phub-radius-xl);
+  box-shadow: var(--phub-shadow-xl);
+  width: 90vw;
+  max-width: 800px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  animation: phub-form-appear var(--phub-transition-normal);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--phub-gray-100);
+}
+
+@keyframes phub-form-appear {
+  from { 
+    opacity: 0; 
+    transform: scale(0.95) translateY(10px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: scale(1) translateY(0); 
+  }
+}
+
+/* === CLEAN HEADER === */
+.phub-productive-form-header {
+  padding: var(--phub-space-xl) var(--phub-space-xl) var(--phub-space-lg);
+  background: linear-gradient(135deg, var(--phub-primary) 0%, var(--phub-secondary) 100%);
+  color: white;
+  position: relative;
+}
+
+.phub-productive-form-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+  margin-bottom: var(--phub-space-xs);
+}
+
+.phub-productive-form-subtitle {
+  font-size: 0.875rem;
+  opacity: 0.9;
+  margin: 0;
+  font-weight: 400;
+}
+
+.phub-productive-close-btn {
+  position: absolute;
+  top: var(--phub-space-lg);
+  right: var(--phub-space-lg);
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 400;
+  line-height: 1;
+  transition: var(--phub-transition-fast);
+  z-index: 10;
+}
+
+.phub-productive-close-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: scale(1.1);
+}
+
+.phub-productive-close-btn:active {
+  transform: scale(0.95);
+}
+
+/* === PRODUCTIVE FORM BODY === */
+.phub-productive-form-body {
+  padding: var(--phub-space-xl);
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--phub-space-lg);
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  color: var(--phub-text-primary); /* Ensure dark text */
+}
+
+.phub-productive-form-body * {
+  color: inherit; /* Inherit dark color from parent */
+}
+
+/* Force dark text for all form elements */
+.phub-productive-form-body input,
+.phub-productive-form-body select,
+.phub-productive-form-body textarea,
+.phub-productive-form-body label,
+.phub-productive-form-body div,
+.phub-productive-form-body span,
+.phub-productive-form-body p {
+  color: var(--phub-text-primary) !important;
+}
+
+/* ClickUp/Todoist Style Layout */
+.phub-main-fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--phub-space-md);
+  background: white;
+  padding: var(--phub-space-lg);
+  border-radius: var(--phub-radius-lg);
+  box-shadow: var(--phub-shadow-sm);
+  border: 1px solid var(--phub-gray-100);
+}
+
+.phub-quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--phub-space-md);
+  padding: var(--phub-space-lg);
+  background: linear-gradient(135deg, var(--phub-gray-700) 0%, var(--phub-gray-800) 100%);
+  border-radius: var(--phub-radius-lg);
+  border: 1px solid var(--phub-gray-600);
+}
+
+.phub-advanced-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--phub-space-sm);
+  padding: var(--phub-space-md) 0;
+  cursor: pointer;
+  color: var(--phub-primary);
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: var(--phub-transition-fast);
+}
+
+.phub-advanced-toggle:hover {
+  color: var(--phub-primary-dark);
+}
+
+.phub-advanced-section {
+  background: var(--phub-gray-50);
+  border-radius: var(--phub-radius-lg);
+  padding: var(--phub-space-lg);
+  border: 1px solid var(--phub-gray-200);
+  display: flex;
+  flex-direction: column;
+  gap: var(--phub-space-md);
+}
+
+/* === CLEAN FORM FIELDS === */
+.phub-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--phub-space-xs);
+}
+
+.phub-field-label {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--phub-text-primary) !important; /* Force dark text */
+}
+
+.phub-field-required {
+  color: var(--phub-error) !important; /* Force red text */
+}
+
+.phub-input-wrapper {
+  position: relative;
+}
+
+.phub-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--phub-gray-200);
+  border-radius: var(--phub-radius-md);
+  font-size: 0.875rem;
+  transition: var(--phub-transition-fast);
+  background: white;
+  color: var(--phub-text-primary) !important; /* Force dark text */
+  font-weight: 500;
+}
+
+.phub-input:focus {
+  outline: none;
+  border-color: var(--phub-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.phub-input::placeholder {
+  color: var(--phub-text-placeholder);
+  font-weight: 400;
+}
+
+/* Remove the weird highlighting issue */
+.phub-input:not(:placeholder-shown) {
+  background: white;
+}
+
+.phub-input-with-icon {
+  padding-left: 3.5rem;
+}
+
+.phub-input-icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1rem;
+  color: var(--phub-text-placeholder);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.phub-input:focus + .phub-input-icon {
+  color: var(--phub-primary);
+}
+
+/* === HERO TITLE FIELD === */
+.phub-hero-field .phub-input {
+  font-size: 1.125rem;
+  font-weight: 600;
+  padding: 1rem 1.25rem;
+}
+
+/* === QUICK ACTION BUTTONS === */
+.phub-quick-action {
+  display: flex;
+  align-items: center;
+  gap: var(--phub-space-xs);
+  padding: var(--phub-space-sm) var(--phub-space-md);
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--phub-radius-md);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: white;
+  cursor: pointer;
+  transition: var(--phub-transition-fast);
+  min-width: fit-content;
+}
+
+.phub-quick-action:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: var(--phub-primary);
+  color: var(--phub-primary-light);
+  transform: translateY(-1px);
+  box-shadow: var(--phub-shadow-sm);
+}
+
+.phub-quick-action.active {
+  background: var(--phub-primary);
+  border-color: var(--phub-primary);
+  color: white;
+}
+
+/* === PRIORITY SELECTOR (ClickUp Style) === */
+.phub-priority-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--phub-space-sm);
+}
+
+.phub-priority-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--phub-space-xs);
+  padding: var(--phub-space-md);
+  background: white;
+  border: 2px solid var(--phub-gray-200);
+  border-radius: var(--phub-radius-md);
+  cursor: pointer;
+  transition: var(--phub-transition-fast);
+  text-align: center;
+}
+
+.phub-priority-option:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--phub-shadow-md);
+}
+
+.phub-priority-option.selected {
+  transform: translateY(-2px);
+  box-shadow: var(--phub-shadow-md);
+}
+
+.phub-priority-option.low {
+  border-color: #10b981;
+}
+
+.phub-priority-option.low.selected {
+  background: #10b981;
+  color: white;
+}
+
+.phub-priority-option.medium {
+  border-color: #f59e0b;
+}
+
+.phub-priority-option.medium.selected {
+  background: #f59e0b;
+  color: white;
+}
+
+.phub-priority-option.high {
+  border-color: #ef4444;
+}
+
+.phub-priority-option.high.selected {
+  background: #ef4444;
+  color: white;
+}
+
+.phub-priority-option.critical {
+  border-color: #dc2626;
+}
+
+.phub-priority-option.critical.selected {
+  background: #dc2626;
+  color: white;
+}
+
+/* === TEXTAREA === */
+.phub-textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--phub-gray-200);
+  border-radius: var(--phub-radius-md);
+  font-size: 0.875rem;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 80px;
+  transition: var(--phub-transition-fast);
+  background: white;
+  color: var(--phub-text-primary) !important; /* Force dark text */
+  font-weight: 500;
+}
+
+.phub-textarea:focus {
+  outline: none;
+  border-color: var(--phub-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.phub-textarea::placeholder {
+  color: var(--phub-text-placeholder);
+}
+
+/* === SELECT === */
+.phub-select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--phub-gray-200);
+  border-radius: var(--phub-radius-md);
+  font-size: 0.875rem;
+  background: white;
+  color: var(--phub-text-primary) !important; /* Force dark text */
+  cursor: pointer;
+  transition: var(--phub-transition-fast);
+}
+
+.phub-select:focus {
+  outline: none;
+  border-color: var(--phub-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* === DATE INPUTS === */
+.phub-date-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--phub-space-md);
+}
+
+@media (max-width: 640px) {
+  .phub-date-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* === SUBTASKS === */
+.phub-subtask-container {
+  border: 1px solid var(--phub-gray-200);
+  border-radius: var(--phub-radius-md);
+  background: white;
+  box-shadow: var(--phub-shadow-sm);
+}
+
+.phub-subtask-header {
+  padding: var(--phub-space-md);
+  background: white;
+  border-bottom: 1px solid var(--phub-gray-200);
+  border-radius: var(--phub-radius-md) var(--phub-radius-md) 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.phub-subtask-list {
+  padding: var(--phub-space-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--phub-space-xs);
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.phub-subtask-item {
+  display: flex;
+  align-items: center;
+  gap: var(--phub-space-sm);
+  padding: var(--phub-space-sm);
+  background: white;
+  border: 1px solid var(--phub-gray-200);
+  border-radius: var(--phub-radius-sm);
+}
+
+/* === FORM ACTIONS === */
+.phub-form-actions {
+  display: flex;
+  gap: var(--phub-space-md);
+  padding: var(--phub-space-xl);
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-top: 1px solid var(--phub-gray-200);
+}
+
+.phub-btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--phub-radius-md);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--phub-transition-fast);
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: var(--phub-space-xs);
+}
+
+.phub-btn-primary {
+  background: var(--phub-primary);
+  color: white;
+  flex: 1;
+}
+
+.phub-btn-primary:hover:not(:disabled) {
+  background: var(--phub-primary-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--phub-shadow-md);
+}
+
+.phub-btn-secondary {
+  background: white;
+  color: var(--phub-text-secondary);
+  border: 2px solid var(--phub-gray-200);
+}
+
+.phub-btn-secondary:hover {
+  background: var(--phub-gray-50);
+  border-color: var(--phub-gray-300);
+}
+
+.phub-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* === HELPFUL TIPS (Fixed Dark Text Issue) === */
+/* === HELPFUL TIPS SECTION - Improved formatting === */
+.phub-tips-section {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(139, 92, 246, 0.05) 100%);
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  border-radius: var(--phub-radius-lg);
+  padding: var(--phub-space-lg);
+  margin-top: var(--phub-space-lg);
+}
+
+.phub-tips-header {
+  display: flex;
+  align-items: center;
+  gap: var(--phub-space-sm);
+  margin-bottom: var(--phub-space-md);
+  font-size: 0.875rem;
+  font-weight: 800;
+  color: var(--phub-primary-dark);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.phub-tips-list {
+  margin: 0;
+  padding-left: var(--phub-space-lg);
+  font-size: 0.875rem;
+  color: var(--phub-text-body);
+  line-height: 1.7;
+  list-style-type: disc;
+}
+
+.phub-tips-list li {
+  margin-bottom: var(--phub-space-sm);
+}
+
+.phub-tips-list li:last-child {
+  margin-bottom: 0;
+}
+
+.phub-tips-list strong {
+  color: var(--phub-text-primary);
+  font-weight: 700;
+}
+
+/* === ERROR MESSAGES === */
+.phub-error-message {
+  display: flex;
+  align-items: center;
+  gap: var(--phub-space-xs);
+  color: var(--phub-error);
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: var(--phub-space-sm) var(--phub-space-md);
+  background: rgba(220, 38, 38, 0.1);
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  border-radius: var(--phub-radius-md);
+  margin-top: var(--phub-space-xs);
+}
+
+/* === CHARACTER COUNTER === */
+.phub-char-counter {
+  font-size: 0.75rem;
+  color: var(--phub-text-muted);
+  text-align: right;
+  margin-top: var(--phub-space-xs);
+}
+
+/* === RESPONSIVE DESIGN === */
+@media (max-width: 768px) {
+  .phub-productive-form-container {
+    width: 95vw;
+    max-height: 95vh;
+  }
+  
+  .phub-productive-form-header,
+  .phub-productive-form-body,
+  .phub-form-actions {
+    padding: var(--phub-space-lg);
+  }
+  
+  .phub-quick-actions {
+    flex-direction: column;
+  }
+  
+  .phub-priority-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .phub-form-actions {
+    flex-direction: column;
+  }
+}
+
+/* === UTILITY CLASSES === */
+.phub-hidden {
+  display: none;
+}
+
+.phub-loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.phub-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

@@ -378,16 +378,41 @@ These fields are included in all task API responses and can be set/updated via t
 - **Production Warning:** If the app is not running in debug or development mode, a warning is shown at startup reminding you to check all security settings, including CSRF protection.
 - **Session Cookie Security:** The backend sets `SESSION_COOKIE_SECURE`, `SESSION_COOKIE_HTTPONLY`, and `SESSION_COOKIE_SAMESITE` in the Flask config for best security practices.
 - **CSRF Protection:**
-  - All state-changing API requests (POST, PUT, DELETE) require a valid CSRF token sent in the `X-CSRF-Token` header. The token is generated per session and must match the value stored in the session. Login and register endpoints are excluded for demonstration.
-  - If the CSRF token is missing or invalid, the API returns a 400 error.
-  - To obtain the CSRF token, call an authenticated endpoint and extract the token from the session (see below for usage).
+  - All state-changing API requests (POST, PUT, DELETE) require a valid CSRF token sent in the `X-CSRF-Token` header. The token is generated per session and stored as a cookie (`_csrf_token`), not in the Flask session.
+  - The backend validates CSRF tokens by comparing the `X-CSRF-Token` header value with the `_csrf_token` cookie value.
+  - If the CSRF token is missing or invalid, the API returns a 403 error with message "Invalid or missing CSRF token".
+  - Login and register endpoints are excluded from CSRF protection for initial authentication.
+  - To obtain the CSRF token, call the `/api/csrf-token` endpoint which sets the token cookie and returns it in JSON format.
 
 ---
 
 ## CSRF Token Usage
-- After login, call any authenticated GET endpoint (e.g., `/api/tasks`) to establish a session. The CSRF token is generated and stored in the session.
-- To retrieve the CSRF token, you may need to expose an endpoint or include it in a response (e.g., as a custom header or in the JSON response). For now, the backend generates it per session.
-- For all POST, PUT, DELETE requests, include the CSRF token in the `X-CSRF-Token` header.
+- **Obtaining Token:** Call `GET /api/csrf-token` to generate and receive a CSRF token. This endpoint is public and sets the `_csrf_token` cookie.
+- **Token Storage:** The CSRF token is stored in a cookie (`_csrf_token`) that is accessible to JavaScript (`httponly=false`).
+- **Token Transmission:** Include the token in the `X-CSRF-Token` header for all POST, PUT, DELETE requests.
+- **Token Validation:** Backend compares the header token with the cookie token for validation.
+
+### Example CSRF Usage:
+```javascript
+// Get CSRF token
+const response = await fetch('/api/csrf-token', { credentials: 'include' });
+const data = await response.json();
+const csrfToken = data.csrf_token;
+
+// Use token in subsequent requests
+await fetch('/api/tasks', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-CSRF-Token': csrfToken
+  },
+  credentials: 'include',
+  body: JSON.stringify(taskData)
+});
+
+// Or read from cookie directly
+const csrfToken = document.cookie.match(/_csrf_token=([^;]+)/)?.[1];
+```
 
 ---
 
