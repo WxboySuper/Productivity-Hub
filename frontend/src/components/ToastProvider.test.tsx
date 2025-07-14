@@ -637,5 +637,48 @@ describe('ToastProvider', () => {
       });
       expect(screen.getByText('Negative')).toBeInTheDocument();
     });
+
+    it('should handle unknown toast types with default styling', async () => {
+      vi.useRealTimers();
+
+      // Helper component to access showToast directly
+      function DefaultTestComponent() {
+        const { showToast } = useToast();
+        
+        return (
+          <button 
+            data-testid="unknown-btn" 
+            onClick={() => showToast({ type: 'unknown' as 'success', title: 'Unknown Type Toast', message: 'Testing defaults' })}
+          >
+            Show Unknown
+          </button>
+        );
+      }
+
+      render(
+        <ToastProvider>
+          <DefaultTestComponent />
+        </ToastProvider>
+      );
+
+      // Create a toast with an unknown type to trigger default cases
+      fireEvent.click(screen.getByTestId('unknown-btn'));
+
+      await waitFor(() => {
+        expect(screen.getByText('Unknown Type Toast')).toBeInTheDocument();
+      });
+
+      // Check that default styling is applied
+      const toastContainer = screen.getByText('Unknown Type Toast').closest('[class*="border-gray-200"]');
+      expect(toastContainer).toHaveClass('border-gray-200');
+      expect(toastContainer).toHaveClass('min-w-80', 'max-w-md', 'rounded-lg', 'shadow-lg', 'border', 'p-4');
+
+      // Check that default colors are applied  
+      const titleElement = screen.getByText('Unknown Type Toast');
+      expect(titleElement).toHaveClass('text-gray-800');
+      
+      const messageElement = screen.getByText('Testing defaults');
+      expect(messageElement).toHaveClass('text-gray-700');
+    });
   });
 });
