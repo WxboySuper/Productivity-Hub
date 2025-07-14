@@ -34,3 +34,4 @@ Thumbs.db
 # Temp Docs
 docs/temp/*
 docs/temp
+*/app.backup.py
