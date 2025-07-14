@@ -577,17 +577,172 @@ def get_csrf_token():
     response.set_cookie('_csrf_token', token, httponly=False, samesite='Lax')
     return response
 
+# Password Reset Routes
+@app.route('/api/password-reset/request', methods=['POST'])
+def password_reset_request():
+    """Request a password reset: accepts email, generates token, stores it, sends email (timing-equalized)."""
+    import time
+    logger.info("Password reset request endpoint accessed.")
+    if not request.is_json:
+        logger.error("Password reset request failed: Request must be JSON.")
+        return error_response("Request must be JSON", 400)
+
+    data = request.get_json()
+    email = data.get('email')
+    if not email or not email.strip():
+        logger.error("Password reset request failed: Email is required.")
+        # Always perform dummy email send for timing equalization
+        send_email("dummy@localhost", "Password Reset Request", "If this were real, you'd get a reset link.")
+        time.sleep(0.5)  # Simulate token generation delay
+        return error_response("Email is required", 400)
+
+    user = User.query.filter_by(email=email.strip()).first()
+    # Always perform token generation and email send, even if user does not exist
+    token = secrets.token_urlsafe(48)
+    expiration_minutes = int(os.environ.get('PASSWORD_RESET_TOKEN_EXPIRATION_MINUTES', 60))
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=expiration_minutes)
+    if user:
+        prt = PasswordResetToken(user_id=user.id, token=token, expires_at=expires_at)
+        db.session.add(prt)
+        db.session.commit()
+        logger.info("Password reset token generated for user_id=%s (expires at %s)", user.id, expires_at.isoformat())
+        frontend_base_url = os.environ.get('FRONTEND_BASE_URL', 'http://localhost:3000')
+        reset_link = f"{frontend_base_url.rstrip('/')}/password-reset/confirm?token={token}"
+        email_body = render_password_reset_email(reset_link, expiration_minutes)
+        email_sent = send_email(user.email, "Password Reset Request", email_body)
+        if not email_sent:
+            logger.error("Failed to send password reset email")
+    else:
+        # Simulate token generation and email send for non-existent user
+        send_email("dummy@localhost", "Password Reset Request", "If this were real, you'd get a reset link.")
+        time.sleep(0.5)  # Simulate token generation delay
+    # Always return generic message
+    if app.config.get('DEBUG', False) or app.config.get('TESTING', False):
+        return jsonify({
+            "message": f"Password reset email sent to {email}" if user else "Email not found, no reset sent",
+            "token": token if user else None  # Include token in test/debug mode
+        }), 200
+    return jsonify({"message": "If the email exists, a password reset link will be sent."}), 200
+
+@app.route('/api/password-reset/confirm', methods=['POST'])
+def password_reset_confirm():
+    """
+    Confirm a password reset: accepts token and new_password, validates and updates password.
+    """
+    logger.info("Password reset confirmation endpoint accessed.")
+    if not request.is_json:
+        logger.error("Password reset confirm failed: Request must be JSON.")
+        return error_response("Request must be JSON", 400)
+
+    data = request.get_json()
+    token = data.get('token')
+    new_password = data.get('new_password')
+    if not token or not new_password:
+        logger.error("Password reset confirm failed: Token and new_password are required.")
+        return error_response("Token and new_password are required", 400)
+
+    prt = PasswordResetToken.query.filter_by(token=token).first()
+    if not prt:
+        logger.warning("Password reset confirm failed: Invalid token.")
+        return error_response("Invalid or expired token", 400)
+    if prt.used:
+        logger.warning("Password reset confirm failed: Token already used.")
+        return error_response("Invalid or expired token", 400)
+
+    # Ensure expires_at is always timezone-aware (UTC)
+    if prt.expires_at.tzinfo is None:
+        expires_at_aware = prt.expires_at.replace(tzinfo=timezone.utc)
+    else:
+        expires_at_aware = prt.expires_at
+    if expires_at_aware < datetime.now(timezone.utc):
+        logger.warning("Password reset confirm failed: Token expired.")
+        return error_response("Invalid or expired token", 400)
+
+    user = db.session.get(User, prt.user_id)
+    if not user:
+        logger.error("Password reset confirm failed: User not found.")
+        return error_response("Invalid or expired token", 400)
+
+    if not is_strong_password(new_password):
+        logger.error("Password reset confirm failed: Weak password.")
+        return error_response("Password must be at least 8 characters long and include uppercase, lowercase, numbers, and special characters.", 400)
+
+    user.set_password(new_password)
+    prt.used = True
+    db.session.commit()
+    logger.info("Password reset successful for user_id=%s", user.id)
+    return jsonify({"message": "Password reset successful"}), 200
+
+# Email configuration (set these as environment variables)
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'localhost')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 1025))  # Default to local debug SMTP
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'false').lower() == 'true'
+EMAIL_FROM = os.environ.get('EMAIL_FROM', 'noreply@localhost')
+
+def send_email(to_address, subject, body):
+    """
+    Send an email using SMTP. Logs success or failure.
+    """
+    msg = EmailMessage()
+    msg['Subject'] = subject
+    msg['From'] = EMAIL_FROM
+    msg['To'] = to_address
+    msg.set_content(body)
+    try:
+        if EMAIL_USE_TLS:
+            server = smtplib.SMTP(EMAIL_HOST, EMAIL_PORT)
+            server.starttls()
+        else:
+            server = smtplib.SMTP(EMAIL_HOST, EMAIL_PORT)
+        if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD:
+            server.login(EMAIL_HOST_USER, EMAIL_HOST_PASSWORD)
+        server.send_message(msg)
+        server.quit()
+        logger.info("Password reset email sent to %s", to_address)
+        return True
+    except Exception as e:
+        logger.error("Failed to send email to %s: %s", to_address, e)
+        return False
+
+# Helper for password reset email template
+def render_password_reset_email(reset_link, expiration_minutes=60):
+    """
+    Render the password reset email body using a template.
+    """
+    template = Template(
+        """Hello,\n\nA password reset was requested for your account. If this was you, click the link below to reset your password.\n\n$reset_link\n\nThis link will expire in $expiration_minutes minutes.\n\nIf you did not request this, you can ignore this email.\n\nThanks,\nProductivity Hub Team"""
+    )
+    return template.substitute(reset_link=reset_link, expiration_minutes=expiration_minutes)
+
 # Project Endpoints
 @app.route('/api/projects', methods=['GET'])
 @login_required
 def get_projects():
-    """Get all projects for the current user."""
+    """Get all projects for the current user, paginated."""
     logger.info("Projects GET endpoint accessed.")
     user = get_current_user()
-    projects = Project.query.filter_by(user_id=user.id).order_by(Project.created_at.desc()).all()
+    
+    # Parse pagination parameters
+    try:
+        page = int(request.args.get('page', 1))
+        per_page = int(request.args.get('per_page', 20))
+    except ValueError:
+        logger.warning("Invalid pagination parameters for projects GET.")
+        return error_response("Invalid pagination parameters.", 400)
+    
+    per_page = max(1, min(per_page, 100))  # Limit per_page to reasonable range
+    logger.debug("Paginating projects: page=%s, per_page=%s", page, per_page)
+    
+    # Build query
+    query = Project.query.filter_by(user_id=user.id).order_by(Project.created_at.desc())
+    
+    # Paginate
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
     
     projects_data = []
-    for project in projects:
+    for project in pagination.items:
         projects_data.append({
             "id": project.id,
             "name": project.name,
@@ -597,7 +752,13 @@ def get_projects():
         })
     
     logger.info("Returning %d projects for user: %s", len(projects_data), user.username)
-    return jsonify({"projects": projects_data}), 200
+    return jsonify({
+        "projects": projects_data,
+        "total": pagination.total,
+        "pages": pagination.pages,
+        "current_page": pagination.page,
+        "per_page": pagination.per_page
+    }), 200
 
 @app.route('/api/projects', methods=['POST'])
 @login_required
@@ -638,6 +799,26 @@ def create_project():
         db.session.rollback()
         logger.error("Project creation failed: %s", e)
         return error_response("Failed to create project", 500)
+
+@app.route('/api/projects/<int:project_id>', methods=['GET'])
+@login_required
+def get_project(project_id):
+    """Get a specific project by ID."""
+    logger.info("Projects GET endpoint accessed for project ID: %s", project_id)
+    user = get_current_user()
+    
+    project = Project.query.filter_by(id=project_id, user_id=user.id).first()
+    if not project:
+        return error_response("Project not found", 404)
+    
+    logger.info("Returning project '%s' for user: %s", project.name, user.username)
+    return jsonify({
+        "id": project.id,
+        "name": project.name,
+        "description": project.description,
+        "created_at": project.created_at.isoformat(),
+        "updated_at": project.updated_at.isoformat()
+    }), 200
 
 @app.route('/api/projects/<int:project_id>', methods=['PUT'])
 @login_required
@@ -709,13 +890,29 @@ def delete_project(project_id):
 @app.route('/api/tasks', methods=['GET'])
 @login_required
 def get_tasks():
-    """Get all tasks for the current user."""
+    """Get all tasks for the current user, paginated."""
     logger.info("Tasks GET endpoint accessed.")
     user = get_current_user()
-    tasks = Task.query.filter_by(user_id=user.id).order_by(Task.created_at.desc()).all()
+    
+    # Parse pagination parameters
+    try:
+        page = int(request.args.get('page', 1))
+        per_page = int(request.args.get('per_page', 20))
+    except ValueError:
+        logger.warning("Invalid pagination parameters for tasks GET.")
+        return error_response("Invalid pagination parameters.", 400)
+    
+    per_page = max(1, min(per_page, 100))  # Limit per_page to reasonable range
+    logger.debug("Paginating tasks: page=%s, per_page=%s", page, per_page)
+    
+    # Build query
+    query = Task.query.filter_by(user_id=user.id).order_by(Task.created_at.desc())
+    
+    # Paginate
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
     
     tasks_data = []
-    for task in tasks:
+    for task in pagination.items:
         task_dict = {
             "id": task.id,
             "title": task.title,
@@ -758,7 +955,13 @@ def get_tasks():
         tasks_data.append(task_dict)
     
     logger.info("Returning %d tasks for user: %s", len(tasks_data), user.username)
-    return jsonify(tasks_data), 200
+    return jsonify({
+        "tasks": tasks_data,
+        "total": pagination.total,
+        "pages": pagination.pages,
+        "current_page": pagination.page,
+        "per_page": pagination.per_page
+    }), 200
 
 @app.route('/api/tasks', methods=['POST'])
 @login_required
@@ -817,6 +1020,10 @@ def create_task():
                 task.start_date = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
             except ValueError:
                 return error_response("Invalid start_date format", 400)
+        
+        # Validate that start_date is not after due_date
+        if task.start_date and task.due_date and task.start_date > task.due_date:
+            return error_response("start_date cannot be after due_date", 400)
                 
         if recurrence:
             task.recurrence = recurrence
@@ -965,6 +1172,10 @@ def update_task(task_id):
                 
         if 'recurrence' in data:
             task.recurrence = data['recurrence']
+        
+        # Validate that start_date is not after due_date
+        if task.start_date and task.due_date and task.start_date > task.due_date:
+            return error_response("start_date cannot be after due_date", 400)
         
         db.session.commit()
         
