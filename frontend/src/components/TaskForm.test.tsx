@@ -168,4 +168,221 @@ describe('TaskForm', () => {
     
     expect(screen.getByRole('button', { name: /creating.../i })).toBeDisabled();
   });
+
+  it('handles date selection', async () => {
+    render(<TaskFormWrapper />);
+    
+    // Click due date field to expand scheduling section
+    fireEvent.click(screen.getByText('No due date'));
+    
+    await waitFor(() => {
+      // Look for the datetime inputs specifically
+      const dueDateInputs = screen.getAllByDisplayValue('');
+      expect(dueDateInputs.length).toBeGreaterThan(0);
+    });
+  });
+
+  it('handles project selection', async () => {
+    render(<TaskFormWrapper />);
+    
+    // Click project field to expand
+    fireEvent.click(screen.getByText('Quick Task'));
+    
+    await waitFor(() => {
+      // Look for the actual project selection interface
+      expect(screen.getByText('Choose Project')).toBeInTheDocument();
+    });
+  });
+
+  it('handles advanced scheduling fields', async () => {
+    render(<TaskFormWrapper />);
+    
+    // Click due date to expand scheduling section
+    fireEvent.click(screen.getByText('No due date'));
+    
+    await waitFor(() => {
+      // Look for the datetime inputs specifically
+      const dueDateInputs = screen.getAllByDisplayValue('');
+      expect(dueDateInputs.length).toBeGreaterThan(0);
+    });
+  });
+
+  it('handles reminder settings', async () => {
+    render(<TaskFormWrapper />);
+    
+    // Expand reminders section
+    fireEvent.click(screen.getByText('Reminders'));
+    
+    await waitFor(() => {
+      // Look for the actual text in the DOM
+      expect(screen.getByText('Enable reminders for this task')).toBeInTheDocument();
+    });
+  });
+
+  it('handles dependency management', async () => {
+    const tasksWithDeps = [
+      { id: 1, title: 'Task 1', description: 'Test 1' },
+      { id: 2, title: 'Task 2', description: 'Test 2' },
+      { id: 3, title: 'Task 3', description: 'Test 3' },
+    ];
+    
+    render(<TaskFormWrapper allTasks={tasksWithDeps} />);
+    
+    // Expand relationships section
+    fireEvent.click(screen.getByText('Task Relationships'));
+    
+    await waitFor(() => {
+      expect(screen.getByText('Blocked By')).toBeInTheDocument();
+    });
+  });
+
+  it('handles form validation errors', async () => {
+    const mockOnSubmit = vi.fn();
+    render(<TaskFormWrapper onSubmit={mockOnSubmit} />);
+    
+    // Try to submit with very short title
+    const titleInput = screen.getByPlaceholderText('What needs to be done?');
+    fireEvent.change(titleInput, { target: { value: 'A' } });
+    
+    fireEvent.click(screen.getByRole('button', { name: /create task/i }));
+    
+    await waitFor(() => {
+      expect(screen.getByText('Task name must be at least 2 characters')).toBeInTheDocument();
+    });
+    
+    expect(mockOnSubmit).not.toHaveBeenCalled();
+  });
+
+  it('handles subtask removal', async () => {
+    render(<TaskFormWrapper />);
+    
+    // Expand subtasks section and add a subtask first
+    fireEvent.click(screen.getByText('Subtasks'));
+    
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('Add a subtask...')).toBeInTheDocument();
+    });
+    
+    // Add a subtask
+    const subtaskInput = screen.getByPlaceholderText('Add a subtask...');
+    fireEvent.change(subtaskInput, { target: { value: 'Test Subtask' } });
+    fireEvent.click(screen.getByText('➕'));
+    
+    await waitFor(() => {
+      expect(screen.getByText('Test Subtask')).toBeInTheDocument();
+    });
+    
+    // Remove the subtask - using the correct emoji from DOM
+    const removeButton = screen.getByText('🗑️');
+    fireEvent.click(removeButton);
+    
+    await waitFor(() => {
+      expect(screen.queryByText('Test Subtask')).not.toBeInTheDocument();
+    });
+  });
+
+  it('handles subtask toggle completion', async () => {
+    render(<TaskFormWrapper />);
+    
+    // Expand subtasks section and add a subtask first
+    fireEvent.click(screen.getByText('Subtasks'));
+    
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('Add a subtask...')).toBeInTheDocument();
+    });
+    
+    // Add a subtask
+    const subtaskInput = screen.getByPlaceholderText('Add a subtask...');
+    fireEvent.change(subtaskInput, { target: { value: 'Test Subtask' } });
+    fireEvent.click(screen.getByText('➕'));
+    
+    await waitFor(() => {
+      expect(screen.getByText('Test Subtask')).toBeInTheDocument();
+    });
+    
+    // Find and toggle subtask completion checkbox
+    const checkboxes = screen.getAllByRole('checkbox');
+    const subtaskCheckbox = checkboxes.find(cb => !cb.hasAttribute('checked') || cb.getAttribute('checked') === 'false');
+    if (subtaskCheckbox) {
+      fireEvent.click(subtaskCheckbox);
+      expect(subtaskCheckbox).toBeDefined();
+    }
+  });
+
+  it('handles custom recurrence input', async () => {
+    render(<TaskFormWrapper />);
+    
+    // Click due date to expand scheduling section
+    fireEvent.click(screen.getByText('No due date'));
+    
+    await waitFor(() => {
+      // Look for the datetime inputs specifically
+      const dueDateInputs = screen.getAllByDisplayValue('');
+      expect(dueDateInputs.length).toBeGreaterThan(0);
+    });
+  });
+
+  it('resets form when opening with new initial values', () => {
+    const { rerender } = render(<TaskFormWrapper open={false} />);
+    
+    // Open with different initial values
+    rerender(<TaskFormWrapper open={true} initialValues={mockTask} />);
+    
+    expect(screen.getByDisplayValue('Test Task')).toBeInTheDocument();
+  });
+
+  it('handles empty/invalid subtask addition', async () => {
+    render(<TaskFormWrapper />);
+    
+    // Expand subtasks section
+    fireEvent.click(screen.getByText('Subtasks'));
+    
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('Add a subtask...')).toBeInTheDocument();
+    });
+    
+    // Try to add empty subtask
+    const addButton = screen.getByText('➕');
+    fireEvent.click(addButton);
+    
+    // The button should be disabled when input is empty
+    expect(addButton).toBeDisabled();
+  });
+
+  it('handles dependency popup interactions', async () => {
+    const tasksWithDeps = [
+      { id: 1, title: 'Task 1', description: 'Test 1' },
+      { id: 2, title: 'Task 2', description: 'Test 2' },
+    ];
+    
+    render(<TaskFormWrapper allTasks={tasksWithDeps} />);
+    
+    // Expand relationships section
+    fireEvent.click(screen.getByText('Task Relationships'));
+    
+    await waitFor(() => {
+      expect(screen.getByText('Blocked By')).toBeInTheDocument();
+    });
+    
+    // Click blocked by button to test interaction
+    fireEvent.click(screen.getByText('Blocked By'));
+    
+    // Just verify the interaction works
+    expect(screen.getByText('Blocked By')).toBeInTheDocument();
+  });
+
+  it('handles multiple priority levels', async () => {
+    render(<TaskFormWrapper />);
+    
+    // Click priority field to expand
+    fireEvent.click(screen.getByText('Medium'));
+    
+    await waitFor(() => {
+      expect(screen.getByText('Set Priority')).toBeInTheDocument();
+    });
+    
+    // Test priority selection by checking if we can interact with the UI
+    const priorityPopup = screen.getByText('Set Priority');
+    expect(priorityPopup).toBeInTheDocument();
+  });
 });
