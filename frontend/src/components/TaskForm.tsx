@@ -590,8 +590,9 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
                 
                 {reminderEnabled && (
                   <div>
-                    <label className="modern-field-label">Reminder Time</label>
+                    <label htmlFor="reminder-time" className="modern-field-label">Reminder Time</label>
                     <input
+                      id="reminder-time"
                       type="datetime-local"
                       className="modern-input"
                       value={reminderTime}
