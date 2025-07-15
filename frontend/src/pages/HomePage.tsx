@@ -3,7 +3,7 @@ import AppHeader from '../components/AppHeader';
 
 function HomePage() {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col" data-testid="home-page">
       <AppHeader />
       <main className="flex-1 flex flex-col items-center justify-center relative z-10 px-4">
         <div className="w-full max-w-md bg-white/95 rounded-xl shadow-2xl p-10 flex flex-col items-center border border-blue-200 backdrop-blur-sm z-10 mt-10 phub-glass">
