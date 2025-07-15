@@ -94,7 +94,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           </div>
 
           {/* Visual emphasis for danger actions */}
-          {type === 'danger' && (
+          {(type === 'danger' || !['warning', 'info'].includes(type)) && (
             <div style={{
               background: 'rgba(220, 38, 38, 0.05)',
               border: '1px solid rgba(220, 38, 38, 0.2)',

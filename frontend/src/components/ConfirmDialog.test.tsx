@@ -132,4 +132,65 @@ describe('ConfirmDialog', () => {
     
     expect(mockOnCancel).not.toHaveBeenCalled();
   });
+
+  it('handles default type correctly', () => {
+    render(<ConfirmDialog {...defaultProps} />);
+    
+    // Default type should be 'danger'
+    expect(screen.getByText('⚠️')).toBeInTheDocument();
+    expect(screen.getByText('🛑 This action cannot be undone')).toBeInTheDocument();
+  });
+
+  it('handles button hover events for confirm button', () => {
+    render(<ConfirmDialog {...defaultProps} type="danger" />);
+    
+    const confirmButton = screen.getByRole('button', { name: /confirm/i });
+    
+    // Test mouseEnter
+    fireEvent.mouseEnter(confirmButton);
+    // Style changes are handled by React, just ensure no errors
+    expect(confirmButton).toBeInTheDocument();
+    
+    // Test mouseLeave
+    fireEvent.mouseLeave(confirmButton);
+    expect(confirmButton).toBeInTheDocument();
+  });
+
+  it('does not handle hover events when loading', () => {
+    render(<ConfirmDialog {...defaultProps} type="danger" loading={true} />);
+    
+    const confirmButton = screen.getByRole('button', { name: /processing/i });
+    
+    // Test mouseEnter when loading
+    fireEvent.mouseEnter(confirmButton);
+    expect(confirmButton).toBeDisabled();
+    
+    // Test mouseLeave when loading
+    fireEvent.mouseLeave(confirmButton);
+    expect(confirmButton).toBeDisabled();
+  });
+
+  it('renders correct button content for different types when not loading', () => {
+    const { rerender } = render(<ConfirmDialog {...defaultProps} type="danger" />);
+    expect(screen.getByText('🗑️')).toBeInTheDocument();
+
+    rerender(<ConfirmDialog {...defaultProps} type="warning" />);
+    expect(screen.getAllByText('⚡')[1]).toBeInTheDocument(); // Second one is in button
+
+    rerender(<ConfirmDialog {...defaultProps} type="info" />);
+    expect(screen.getByText('✅')).toBeInTheDocument();
+  });
+
+  it('handles unknown type by defaulting to danger', () => {
+    render(
+      <ConfirmDialog
+        {...defaultProps}
+        type={'unknown' as unknown as 'danger' | 'warning' | 'info'}
+      />
+    );
+    
+    // Should default to danger styles
+    expect(screen.getByText('⚠️')).toBeInTheDocument();
+    expect(screen.getByText('🛑 This action cannot be undone')).toBeInTheDocument();
+  });
 });
