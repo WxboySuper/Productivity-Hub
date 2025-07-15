@@ -1,38 +1,41 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 // Helper to read a cookie value by name
-function getCookie(name: string): string | null {
+export function getCookie(name: string): string | null {
   const match = document.cookie.match(new RegExp(`(^| )${name}=([^;]+)`));
   return match ? decodeURIComponent(match[2]) : null;
 }
 
 // Helper to fetch CSRF token if missing
-async function ensureCsrfToken(): Promise<string> {
-  let token = getCookie('_csrf_token');
-  if (!token) {
-    const res = await fetch('/api/csrf-token', { credentials: 'include' });
+export async function ensureCsrfToken(): Promise<string | null> {
+  let token = getCookie('csrftoken');
+  if (token) return token;
+  try {
+    const res = await fetch('/api/csrf-token', { method: 'GET', credentials: 'include' });
+    if (!res.ok) return null;
     const data = await res.json();
-    token = data.csrf_token;
+    return data.csrf_token || null;
+  } catch (err) {
+    console.error('Error getting CSRF token:', err);
+    return null;
   }
-  return token || '';
 }
 
 // Logout verification helper
-async function verifyLogoutSuccess(): Promise<boolean> {
+export async function verifyLogoutSuccess(): Promise<boolean> {
   try {
     const response = await fetch('/api/auth/check', {
       method: 'GET',
       credentials: 'include',
     });
-    
     if (response.ok) {
       const data = await response.json();
-      return !data.authenticated; // Should be false after logout
+      return !data.authenticated;
     }
-    return true; // If auth check fails, assume logged out
+    return false;
   } catch (error) {
     console.error('Error verifying logout:', error);
-    return true; // Assume logged out on error
+    return false;
   }
 }
 
