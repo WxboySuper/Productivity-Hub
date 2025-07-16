@@ -424,6 +424,54 @@ describe('Auth Context', () => {
         expect(screen.getByTestId('user-id')).toHaveTextContent('none');
       });
     });
+
+    it('should handle successful logout but failed verification', async () => {
+      const mockUser = { id: 1, username: 'testuser', email: 'test@example.com' };
+      
+      // Initial auth check - user is logged in
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ authenticated: true, user: mockUser }),
+      });
+
+      // Mock CSRF token request
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ csrf_token: 'test-csrf-token' }),
+      });
+
+      // Mock successful logout request
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ message: 'Logged out successfully' }),
+      });
+
+      // Mock logout verification that shows user is still authenticated (verification failed)
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ authenticated: true }),
+      });
+
+      render(
+        <AuthProvider>
+          <TestComponent />
+        </AuthProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('is-authenticated')).toHaveTextContent('true');
+      });
+
+      await act(() => {
+        screen.getByTestId('logout-btn').click();
+      });
+
+      // The frontend state should still be cleared even if verification fails
+      await waitFor(() => {
+        expect(screen.getByTestId('is-authenticated')).toHaveTextContent('false');
+        expect(screen.getByTestId('user-id')).toHaveTextContent('none');
+      });
+    });
   });
 
   describe('useAuth hook', () => {
