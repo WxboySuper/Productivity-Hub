@@ -15,6 +15,8 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/setupTests.ts'],
     css: true,
+    reporter: 'verbose',
+    logLevel: 'info',
     coverage: {
       reporter: ['text', 'json', 'html'],
       exclude: [
@@ -24,6 +26,9 @@ export default defineConfig({
         '**/*.config.*',
         'src/index.tsx',
         'src/reportWebVitals.ts',
+        'src/main.tsx',
+        '**/*.test.tsx',
+        '**/*.test.ts'
       ],
     },
   },
