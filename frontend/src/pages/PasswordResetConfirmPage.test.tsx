@@ -502,6 +502,40 @@ describe('PasswordResetConfirmPage', () => {
         );
       });
     });
+
+    it('handles case where CSRF token fetch returns null/empty token', async () => {
+      // Mock the CSRF token fetch to return empty token
+      (global.fetch as Mock)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ csrf_token: null })
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ message: 'Password reset successful' })
+        });
+
+      render(<PasswordResetConfirmPageWrapper />);
+
+      const passwordInput = screen.getByLabelText('New Password');
+      const confirmPasswordInput = screen.getByLabelText('Confirm New Password');
+      const submitButton = screen.getByRole('button', { name: /set new password/i });
+
+      fireEvent.change(passwordInput, { target: { value: 'newpassword123' } });
+      fireEvent.change(confirmPasswordInput, { target: { value: 'newpassword123' } });
+      fireEvent.click(submitButton);
+
+      await waitFor(() => {
+        // Should still make the request without CSRF token header
+        expect(global.fetch).toHaveBeenCalledWith('/api/password-reset/confirm', 
+          expect.objectContaining({
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          })
+        );
+      });
+    });
   });
 
   describe('Accessibility', () => {
