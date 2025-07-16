@@ -196,8 +196,15 @@ describe('PasswordResetRequestPage', () => {
 
   describe('Error State Handling', () => {
     it('displays server error message on API failure', async () => {
+      // Mock CSRF token fetch (exactly like success tests)
       mockFetch.mockResolvedValueOnce({
-        ok: false,
+        ok: true,
+        json: () => Promise.resolve({ csrf_token: 'test-csrf-token' }),
+      } as Response);
+      
+      // Mock password reset request with server error
+      mockFetch.mockResolvedValueOnce({
+        ok: false,  // Server error response
         json: () => Promise.resolve({ error: 'Email not found' }),
       } as Response);
 
@@ -210,14 +217,21 @@ describe('PasswordResetRequestPage', () => {
       fireEvent.click(submitButton);
 
       await waitFor(() => {
-        expect(screen.getByText('Network error. Please try again.')).toBeInTheDocument();
+        expect(screen.getByText('Email not found')).toBeInTheDocument();
       });
     });
 
     it('displays generic error message when server returns no specific error', async () => {
+      // Mock CSRF token fetch (exactly like success tests)
       mockFetch.mockResolvedValueOnce({
-        ok: false,
-        json: () => Promise.resolve({}),
+        ok: true,
+        json: () => Promise.resolve({ csrf_token: 'test-csrf-token' }),
+      } as Response);
+      
+      // Mock password reset request with server error but no error field
+      mockFetch.mockResolvedValueOnce({
+        ok: false,  // Server error response
+        json: () => Promise.resolve({}), // No error field
       } as Response);
 
       render(<PasswordResetRequestPageWrapper />);
@@ -229,7 +243,7 @@ describe('PasswordResetRequestPage', () => {
       fireEvent.click(submitButton);
 
       await waitFor(() => {
-        expect(screen.getByText('Network error. Please try again.')).toBeInTheDocument();
+        expect(screen.getByText('Failed to send password reset email.')).toBeInTheDocument();
       });
     });
 
@@ -431,6 +445,78 @@ describe('PasswordResetRequestPage', () => {
           headers: {
             'Content-Type': 'application/json',
             'X-CSRF-Token': 'fetched-csrf-token',
+          },
+          credentials: 'include',
+          body: JSON.stringify({ email: 'user@example.com' }),
+        });
+      });
+    });
+
+    it('handles missing CSRF token in response gracefully', async () => {
+      mockCookie.mockReturnValue('');
+      
+      // Mock CSRF token fetch without csrf_token field
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({}), // No csrf_token field
+        } as Response)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ message: 'Reset email sent' }),
+        } as Response);
+
+      render(<PasswordResetRequestPageWrapper />);
+      
+      const emailInput = screen.getByLabelText(/email/i);
+      const submitButton = screen.getByRole('button', { name: /send reset link/i });
+      
+      fireEvent.change(emailInput, { target: { value: 'user@example.com' } });
+      fireEvent.click(submitButton);
+
+      await waitFor(() => {
+        expect(mockFetch).toHaveBeenCalledWith('/api/csrf-token', { credentials: 'include' });
+        expect(mockFetch).toHaveBeenCalledWith('/api/password-reset/request', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            // Should handle missing CSRF token gracefully
+          },
+          credentials: 'include',
+          body: JSON.stringify({ email: 'user@example.com' }),
+        });
+      });
+    });
+
+    it('properly assigns fetched CSRF token when available', async () => {
+      mockCookie.mockReturnValue('');
+      
+      // Mock CSRF token fetch WITH csrf_token field to hit the assignment line
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ csrf_token: 'fetched-token-123' }), // Has csrf_token field
+        } as Response)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ message: 'Reset email sent' }),
+        } as Response);
+
+      render(<PasswordResetRequestPageWrapper />);
+      
+      const emailInput = screen.getByLabelText(/email/i);
+      const submitButton = screen.getByRole('button', { name: /send reset link/i });
+      
+      fireEvent.change(emailInput, { target: { value: 'user@example.com' } });
+      fireEvent.click(submitButton);
+
+      await waitFor(() => {
+        expect(mockFetch).toHaveBeenCalledWith('/api/csrf-token', { credentials: 'include' });
+        expect(mockFetch).toHaveBeenCalledWith('/api/password-reset/request', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': 'fetched-token-123',
           },
           credentials: 'include',
           body: JSON.stringify({ email: 'user@example.com' }),
