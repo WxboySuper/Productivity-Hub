@@ -44,6 +44,18 @@ describe('BackgroundContext', () => {
     
     expect(screen.getByTestId('current-background')).toHaveTextContent('neural-network');
   });
+
+  it('throws error when useBackground is used outside provider', () => {
+    // Capture console error to avoid cluttering test output
+    const originalError = console.error;
+    console.error = vi.fn();
+
+    expect(() => {
+      render(<TestBackgroundComponent />);
+    }).toThrow('useBackground must be used within a BackgroundProvider');
+
+    console.error = originalError;
+  });
 });
 
 describe('BackgroundSwitcher', () => {
