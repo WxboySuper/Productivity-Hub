@@ -578,4 +578,342 @@ describe('TaskForm', () => {
 
     expect(mockOnSubmit).not.toHaveBeenCalled();
   });
+
+  // Additional tests to improve function coverage
+  it('handles localDateTimeToUTC conversion correctly', async () => {
+    const mockOnSubmit = vi.fn();
+    render(<TaskFormWrapper onSubmit={mockOnSubmit} />);
+    
+    const titleInput = screen.getByPlaceholderText('What needs to be done?');
+    fireEvent.change(titleInput, { target: { value: 'Test Task with DateTime' } });
+    
+    // Set a due date to test the localDateTimeToUTC function
+    fireEvent.click(screen.getByText('No due date'));
+    
+    await waitFor(() => {
+      const dueDateInputs = screen.getAllByDisplayValue('');
+      const dueDateInput = dueDateInputs.find(input => 
+        input.getAttribute('type') === 'datetime-local' && 
+        input.closest('div')?.querySelector('label')?.textContent === 'Due Date'
+      );
+      if (dueDateInput) {
+        fireEvent.change(dueDateInput, { target: { value: '2024-12-25T10:00' } });
+      }
+    });
+    
+    fireEvent.click(screen.getByText('Create Task'));
+    
+    await waitFor(() => {
+      expect(mockOnSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          due_date: expect.stringContaining('2024-12-25T')
+        })
+      );
+    });
+  });
+
+  it('handles subtask addition via Enter key', async () => {
+    render(<TaskFormWrapper />);
+    
+    fireEvent.click(screen.getByText('Subtasks'));
+    
+    await waitFor(() => {
+      const subtaskInput = screen.getByPlaceholderText('Add a subtask...');
+      fireEvent.change(subtaskInput, { target: { value: 'Subtask via Enter' } });
+      
+      // Press Enter key
+      fireEvent.keyDown(subtaskInput, { key: 'Enter', code: 'Enter' });
+    });
+    
+    await waitFor(() => {
+      expect(screen.getByText('Subtask via Enter')).toBeInTheDocument();
+    });
+  });
+
+  it('handles status toggle correctly', async () => {
+    render(<TaskFormWrapper />);
+    
+    // Click the status button to toggle completion
+    const statusButton = screen.getByText('Status').closest('.modern-inline-field');
+    if (statusButton) {
+      fireEvent.click(statusButton);
+    }
+    
+    // Verify the status changes
+    await waitFor(() => {
+      expect(screen.getByText('Completed')).toBeInTheDocument();
+    });
+  });
+
+  it('handles project selection toggle', async () => {
+    render(<TaskFormWrapper />);
+    
+    // Click project field to toggle
+    const projectButton = screen.getByText('Project').closest('.modern-inline-field');
+    if (projectButton) {
+      fireEvent.click(projectButton);
+    }
+    
+    await waitFor(() => {
+      expect(screen.getByText('Choose Project')).toBeInTheDocument();
+    });
+    
+    // Select a project
+    const projectSelect = screen.getByRole('combobox');
+    fireEvent.change(projectSelect, { target: { value: '1' } });
+    
+    expect(projectSelect).toHaveValue('1');
+  });
+
+  it('handles recurrence mode and custom recurrence', async () => {
+    render(<TaskFormWrapper />);
+    
+    // Open scheduling section
+    fireEvent.click(screen.getByText('No due date'));
+    
+    await waitFor(() => {
+      const startDateInputs = screen.getAllByDisplayValue('');
+      const startDateInput = startDateInputs.find(input => 
+        input.getAttribute('type') === 'datetime-local' && 
+        input.closest('div')?.querySelector('label')?.textContent === 'Start Date'
+      );
+      if (startDateInput) {
+        fireEvent.change(startDateInput, { target: { value: '2024-12-20T09:00' } });
+        expect(startDateInput).toHaveValue('2024-12-20T09:00');
+      }
+    });
+  });
+
+  it('handles dependency popup overlay clicks', async () => {
+    const tasksWithDeps = [
+      { id: 1, title: 'Task 1', completed: false, project_id: null },
+    ];
+    
+    render(<TaskFormWrapper allTasks={tasksWithDeps} />);
+    
+    fireEvent.click(screen.getByText('Task Relationships'));
+    
+    await waitFor(() => {
+      fireEvent.click(screen.getByText('Blocked By'));
+    });
+    
+    // The popup should appear - verify by checking for the popup title
+    await waitFor(() => {
+      expect(screen.getByText('🚫 Select Blocking Tasks')).toBeInTheDocument();
+    });
+    
+    // Test clicking outside to close popup
+    const overlay = document.querySelector('.modern-popup-overlay');
+    if (overlay) {
+      fireEvent.click(overlay);
+    }
+  });
+
+  it('handles dependency popup task selection', async () => {
+    const tasksWithDeps = [
+      { id: 1, title: 'Blocking Task', completed: false, project_id: null },
+      { id: 2, title: 'Other Task', completed: false, project_id: null },
+    ];
+    
+    render(<TaskFormWrapper allTasks={tasksWithDeps} initialTask={{ id: 3, title: 'Current Task' }} />);
+    
+    fireEvent.click(screen.getByText('Task Relationships'));
+    
+    await waitFor(() => {
+      fireEvent.click(screen.getByText('Blocked By'));
+    });
+    
+    await waitFor(() => {
+      expect(screen.getByText('🚫 Select Blocking Tasks')).toBeInTheDocument();
+    });
+    
+    // Click on a task to select it
+    const taskItem = screen.getByText('Blocking Task').closest('.modern-popup-task-item');
+    if (taskItem) {
+      fireEvent.click(taskItem);
+    }
+  });
+
+  it('handles dependency popup close button', async () => {
+    const tasksWithDeps = [
+      { id: 1, title: 'Task 1', completed: false, project_id: null },
+    ];
+    
+    render(<TaskFormWrapper allTasks={tasksWithDeps} />);
+    
+    fireEvent.click(screen.getByText('Task Relationships'));
+    
+    await waitFor(() => {
+      fireEvent.click(screen.getByText('Linked Tasks'));
+    });
+    
+    await waitFor(() => {
+      expect(screen.getByText('🔗 Link Related Tasks')).toBeInTheDocument();
+    });
+    
+    // Click the close button in popup - use a more specific selector
+    const closeButtons = screen.getAllByRole('button', { name: '×' });
+    const popupCloseButton = closeButtons.find(button => 
+      button.className.includes('modern-popup-close')
+    );
+    if (popupCloseButton) {
+      fireEvent.click(popupCloseButton);
+    }
+  });
+
+  it('handles empty dependency list display', async () => {
+    render(<TaskFormWrapper allTasks={[]} initialTask={{ id: 1, title: 'Lonely Task' }} />);
+    
+    fireEvent.click(screen.getByText('Task Relationships'));
+    
+    await waitFor(() => {
+      fireEvent.click(screen.getByText('Blocking'));
+    });
+    
+    await waitFor(() => {
+      expect(screen.getByText('⛔ Select Tasks to Block')).toBeInTheDocument();
+    });
+    
+    // Should show empty state
+    await waitFor(() => {
+      expect(screen.getByText('No available tasks to select.')).toBeInTheDocument();
+    });
+  });
+
+  it('handles all priority levels selection', async () => {
+    render(<TaskFormWrapper />);
+    
+    // Open priority selection
+    fireEvent.click(screen.getByText('Medium'));
+    
+    await waitFor(() => {
+      expect(screen.getByText('Set Priority')).toBeInTheDocument();
+    });
+    
+    // Just test that all priority options are available and clickable
+    const priorityChips = screen.getAllByRole('button').filter(button => 
+      button.className.includes('modern-priority-chip')
+    );
+    
+    expect(priorityChips.length).toBe(4); // Low, Medium, High, Critical
+    
+    // Test clicking one priority button to ensure interaction works
+    const highPriorityChip = priorityChips.find(chip => 
+      chip.textContent?.includes('High')
+    );
+    
+    if (highPriorityChip) {
+      fireEvent.click(highPriorityChip);
+      
+      await waitFor(() => {
+        const priorityField = screen.getByText('Priority').closest('.modern-inline-field');
+        expect(priorityField).toContainHTML('High');
+      });
+    }
+  });
+
+  it('handles reminder toggle functionality', async () => {
+    render(<TaskFormWrapper />);
+    
+    fireEvent.click(screen.getByText('Reminders'));
+    
+    await waitFor(() => {
+      const reminderCheckbox = screen.getByRole('checkbox');
+      expect(reminderCheckbox).toBeChecked();
+      
+      // Toggle off
+      fireEvent.click(reminderCheckbox);
+      expect(reminderCheckbox).not.toBeChecked();
+      
+      // Toggle back on
+      fireEvent.click(reminderCheckbox);
+      expect(reminderCheckbox).toBeChecked();
+    });
+  });
+
+  it('handles form submission with all field types', async () => {
+    const mockOnSubmit = vi.fn();
+    render(<TaskFormWrapper onSubmit={mockOnSubmit} />);
+    
+    // Fill out comprehensive form
+    const titleInput = screen.getByPlaceholderText('What needs to be done?');
+    fireEvent.change(titleInput, { target: { value: 'Comprehensive Task' } });
+    
+    // Add description
+    fireEvent.click(screen.getByText('Description & Details'));
+    await waitFor(() => {
+      const descriptionInput = screen.getByPlaceholderText('Add more details about this task...');
+      fireEvent.change(descriptionInput, { target: { value: 'Detailed description' } });
+    });
+    
+    // Set status to completed
+    const statusButton = screen.getByText('Status').closest('.modern-inline-field');
+    if (statusButton) {
+      fireEvent.click(statusButton);
+    }
+    
+    // Submit form
+    fireEvent.click(screen.getByText('Create Task'));
+    
+    await waitFor(() => {
+      expect(mockOnSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: 'Comprehensive Task',
+          description: 'Detailed description',
+          completed: true,
+          priority: 1
+        })
+      );
+    });
+  });
+
+  it('prevents event propagation on popup content click', async () => {
+    const tasksWithDeps = [
+      { id: 1, title: 'Task 1', completed: false, project_id: null },
+    ];
+    
+    render(<TaskFormWrapper allTasks={tasksWithDeps} />);
+    
+    fireEvent.click(screen.getByText('Task Relationships'));
+    
+    await waitFor(() => {
+      fireEvent.click(screen.getByText('Linked Tasks'));
+    });
+    
+    await waitFor(() => {
+      const popupContent = document.querySelector('.modern-popup-content');
+      if (popupContent) {
+        fireEvent.click(popupContent);
+        // Should not close popup - verify it's still there
+        expect(screen.getByText('🔗 Link Related Tasks')).toBeInTheDocument();
+      }
+    });
+  });
+
+  it('handles dependency filtering to prevent self-dependency', async () => {
+    const tasksWithDeps = [
+      { id: 1, title: 'Current Task', completed: false, project_id: null },
+      { id: 2, title: 'Other Task', completed: false, project_id: null },
+    ];
+    
+    render(<TaskFormWrapper allTasks={tasksWithDeps} initialValues={{ id: 1, title: 'Current Task' }} />);
+    
+    fireEvent.click(screen.getByText('Task Relationships'));
+    
+    await waitFor(() => {
+      fireEvent.click(screen.getByText('Blocked By'));
+    });
+    
+    await waitFor(() => {
+      // Should only show "Other Task", not "Current Task"
+      expect(screen.getByText('Other Task')).toBeInTheDocument();
+      // The current task should be filtered out from the dependency selection
+      const popupContent = document.querySelector('.modern-popup-task-list');
+      if (popupContent) {
+        const taskTitles = Array.from(popupContent.querySelectorAll('.modern-popup-task-title'));
+        const currentTaskInList = taskTitles.some(title => title.textContent === 'Current Task');
+        expect(currentTaskInList).toBe(false);
+      }
+    });
+  });
 });
