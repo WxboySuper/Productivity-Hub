@@ -51,6 +51,8 @@ const TaskDetails: React.FC<TaskDetailsModalProps> = ({
   projects = []
 }) => {
   const [showEditForm, setShowEditForm] = useState(false);
+  const [editFormLoading, setEditFormLoading] = useState(false);
+  const [editFormError, setEditFormError] = useState<string | null>(null);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     overview: true,
     details: false,
@@ -72,8 +74,65 @@ const TaskDetails: React.FC<TaskDetailsModalProps> = ({
         reminders: Boolean(task?.reminder_enabled)
       });
       setShowEditForm(false);
+      // Reset form state when modal opens
+      setEditFormError(null);
+      setEditFormLoading(false);
     }
   }, [open, task]);
+
+  // Helper function to ensure CSRF token
+  const ensureCsrfToken = async () => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/csrf-token`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+      if (response.ok) {
+        const data = await response.json();
+        return data.csrf_token;
+      }
+    } catch (error) {
+      console.error('Failed to fetch CSRF token:', error);
+    }
+    return null;
+  };
+
+  // Handle task update
+  const handleTaskUpdate = async (updatedTask: any) => {
+    if (!task) return;
+    
+    setEditFormLoading(true);
+    setEditFormError(null);
+    
+    try {
+      const csrfToken = await ensureCsrfToken();
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/tasks/${task.id}`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
+        },
+        body: JSON.stringify(updatedTask),
+      });
+      
+      if (!response.ok) {
+        const data = await response.json();
+        const errorMessage = data.error || 'Failed to update task';
+        throw new Error(errorMessage);
+      }
+      
+      // Success - close form and call callback
+      setShowEditForm(false);
+      if (onEdit) onEdit();
+      
+    } catch (err: unknown) {
+      const finalErrorMessage = err instanceof Error ? err.message : 'Unknown error';
+      setEditFormError(finalErrorMessage);
+    } finally {
+      setEditFormLoading(false);
+    }
+  };
 
   const toggleSection = (section: string) => {
     setExpandedSections(prev => ({
@@ -103,7 +162,7 @@ const TaskDetails: React.FC<TaskDetailsModalProps> = ({
           }
         }}
       >
-        <div className="modern-form-container" style={{ maxWidth: '600px' }}>
+        <div className="modern-form-container" style={{ maxWidth: '600px' }} data-testid="task-details">
           {/* Header */}
           <div className="modern-form-header">
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--modern-space-md)' }}>
@@ -397,12 +456,9 @@ const TaskDetails: React.FC<TaskDetailsModalProps> = ({
         <TaskForm
           open={showEditForm}
           onClose={() => setShowEditForm(false)}
-          onSubmit={(updatedTask: any) => {
-            setShowEditForm(false);
-            if (onEdit) onEdit();
-          }}
-          loading={false}
-          error={null}
+          onSubmit={handleTaskUpdate}
+          loading={editFormLoading}
+          error={editFormError}
           projects={projects}
           allTasks={tasks}
           initialValues={task}

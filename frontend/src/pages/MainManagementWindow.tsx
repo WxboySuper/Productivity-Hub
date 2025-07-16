@@ -418,11 +418,16 @@ const MainManagementWindow: React.FC = () => {
       setEditTask(null);
       fetchTasks();
       // Reopen details modal for updated task
-      const updatedTaskRes = await fetch(`/api/tasks/${editTask.id}`);
-      if (updatedTaskRes.ok) {
-        const updatedTask = await updatedTaskRes.json();
-        setSelectedTask(getTaskWithProject(updatedTask));
-        setTaskDetailsOpen(true);
+      try {
+        const updatedTaskRes = await fetch(`/api/tasks/${editTask.id}`);
+        if (updatedTaskRes.ok) {
+          const updatedTask = await updatedTaskRes.json();
+          setSelectedTask(getTaskWithProject(updatedTask));
+          setTaskDetailsOpen(true);
+        }
+      } catch (fetchError) {
+        // If fetching updated task fails, just log it and continue
+        console.warn('Failed to fetch updated task details:', fetchError);
       }
     } catch (err: unknown) {
       setTaskFormError(err instanceof Error ? err.message : 'Unknown error');
@@ -962,7 +967,7 @@ const MainManagementWindow: React.FC = () => {
 
   // Move TaskForm outside of content block so it is always mounted
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col" data-testid="main-management-window">
       <AppHeader 
         rightContent={
           <BackgroundSwitcher 
