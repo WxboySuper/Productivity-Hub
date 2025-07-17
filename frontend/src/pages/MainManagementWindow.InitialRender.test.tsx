@@ -5,69 +5,17 @@ import MainManagementWindow from './MainManagementWindow';
 import { AuthProvider } from '../auth';
 import { BackgroundProvider } from '../context/BackgroundContext';
 import { ToastProvider } from '../components/ToastProvider';
+import {
+  setupFetchMock,
+  setupBeforeEach,
+  mockAuth,
+  mockBackgroundContext,
+  mockToastContext,
+  mockNavigate,
+} from './__tests__/testUtils';
 
-// Setup global fetch mock properly
-global.fetch = vi.fn().mockImplementation((url: string) => {
-  if (url === '/api/csrf-token') {
-    return Promise.resolve({
-      ok: true,
-      json: () => Promise.resolve({ csrf_token: 'mock-token' }),
-    } as Response);
-  }
-  if (url === '/api/projects') {
-    return Promise.resolve({
-      ok: true,
-      json: () => Promise.resolve({ 
-        projects: [
-          { id: 1, name: 'Test Project', description: 'Test project description' }
-        ] 
-      }),
-    } as Response);
-  }
-  if (url === '/api/tasks') {
-    return Promise.resolve({
-      ok: true,
-      json: () => Promise.resolve({ 
-        tasks: [
-          { 
-            id: 1, 
-            title: 'Test Task', 
-            description: 'Test task description', 
-            projectId: 1,
-            parent_id: null,
-            completed: false 
-          },
-          { 
-            id: 2, 
-            title: 'Quick Task', 
-            description: 'A quick task', 
-            projectId: null,
-            parent_id: null,
-            completed: false 
-          }
-        ] 
-      }),
-    } as Response);
-  }
-  // Default fallback
-  return Promise.resolve({
-    ok: false,
-    json: () => Promise.resolve({ error: 'Not found' }),
-  } as Response);
-});
-
-// Create a typed version of the mock for easier use
-const mockFetch = global.fetch as ReturnType<typeof vi.fn>;
-
-// Mock the auth hook
-const mockAuth = {
-  isAuthenticated: true,
-  isLoading: false,
-  user: { id: 1, username: 'testuser', email: 'test@example.com' },
-  login: vi.fn(),
-  logout: vi.fn().mockResolvedValue(true),
-  checkAuth: vi.fn(),
-};
+// Setup global fetch mock
+setupFetchMock();
 
 // Mock AuthProvider
 vi.mock('../auth', () => ({
@@ -78,11 +26,6 @@ vi.mock('../auth', () => ({
 }));
 
 // Mock BackgroundProvider
-const mockBackgroundContext = {
-  backgroundType: 'creative-dots',
-  setBackgroundType: vi.fn(),
-};
-
 vi.mock('../context/BackgroundContext', () => ({
   BackgroundProvider: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="background-provider">{children}</div>
@@ -91,13 +34,6 @@ vi.mock('../context/BackgroundContext', () => ({
 }));
 
 // Mock ToastProvider
-const mockToastContext = {
-  showSuccess: vi.fn(),
-  showError: vi.fn(),
-  showWarning: vi.fn(),
-  showInfo: vi.fn(),
-};
-
 vi.mock('../components/ToastProvider', () => ({
   ToastProvider: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="toast-provider">{children}</div>
@@ -106,7 +42,6 @@ vi.mock('../components/ToastProvider', () => ({
 }));
 
 // Mock router navigate
-const mockNavigate = vi.fn();
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
   return {
@@ -127,16 +62,10 @@ const MainManagementWindowWrapper: React.FC = () => (
   </BrowserRouter>
 );
 
+// Setup common mocks
 describe('MainManagementWindow - Initial Render & Sidebar', () => {
   beforeEach(() => {
-    mockFetch.mockClear();
-    mockAuth.logout.mockClear();
-    mockBackgroundContext.setBackgroundType.mockClear();
-    mockToastContext.showSuccess.mockClear();
-    mockToastContext.showError.mockClear();
-    mockToastContext.showWarning.mockClear();
-    mockToastContext.showInfo.mockClear();
-    mockNavigate.mockClear();
+    setupBeforeEach();
   });
 
   afterEach(() => {
