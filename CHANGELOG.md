@@ -8,32 +8,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - For every stable, alpha, or beta release, summarize all API changes (new endpoints, deleted endpoints, changes to endpoints, etc.) in the changelog, even if they were already documented in dev releases. This ensures the release notes provide a complete overview of API evolution for each version.
 
 ## [v0.12.0-dev10] - 2025-07-15
-- **ULTIMATE ACHIEVEMENT: All Frontend Tests Passing - 283 Tests Complete** - Reached the ultimate milestone with all 283 frontend tests passing, establishing comprehensive testing foundation across the entire frontend codebase with exceptional reliability and coverage
-- **COMPLETE SUCCESS: PasswordResetConfirmPage Test Resolution** - Successfully resolved all 12 timeout failures in PasswordResetConfirmPage.test.tsx, transforming from 12 failed tests to perfect 21/21 passing tests (100% success rate) through systematic timer configuration fixes and proper async/sync pattern implementation
-- **Timer Management Mastery Achievement** - Solved complex timer testing challenges by switching from fake timers to real timers globally in test configuration, resolving React Testing Library waitFor conflicts that were causing false timeout failures across multiple test suites
-- **Comprehensive Test Infrastructure Excellence** - Achieved remarkable milestone with 283 total frontend tests passing across all components, pages, and utilities, demonstrating exceptional test coverage and reliability patterns that serve as the gold standard for React component testing
-- **Advanced Testing Pattern Innovation** - Established sophisticated testing approaches including dual timer strategies (fake/real timer coordination), complex DOM element selection with filtering patterns, comprehensive async operation testing, and systematic debugging methodologies for component behavior analysis
-- **MAJOR ACHIEVEMENT: Comprehensive Frontend Testing Infrastructure Complete** - Reached exceptional milestone with robust testing foundation covering 149+ components and growing, establishing multiple perfect 100% test pass rates across authentication flows, form components, error boundaries, notification systems, and complex UI interactions
-- **COMPLETE SUCCESS: RegisterPage Test Suite Achievement** - Successfully transformed RegisterPage.test.tsx from 6 failing tests to perfect 25/25 passing tests (100% success rate), completing comprehensive authentication page testing coverage including form validation, submission flows, error handling, accessibility, and timer coordination
-- **COMPLETE SUCCESS: MainManagementWindow Test Suite Achievement** - Successfully fixed all 9 remaining test failures in MainManagementWindow.test.tsx, achieving perfect 18/18 passing tests (100% success rate) and completing comprehensive testing coverage for the core application interface
-- **PERFECT 100% Code Coverage for ToastProvider** - Achieved complete test coverage across all metrics (statements, branches, functions, lines) for ToastProvider component, establishing gold standard for component testing
-- **OUTSTANDING 96.4% Code Coverage for NotificationCenter** - Completed comprehensive 33-test suite for NotificationCenter component covering authentication, API polling, browser notifications, modal management, and CSRF token handling with only 6 uncovered error handling lines
-- **Authentication Testing Excellence** - Completed comprehensive RegisterPage testing covering 9 distinct test categories: Page Structure (4 tests), Form Fields (3 tests), Form Validation (2 tests), Form Submission (4 tests), Error Handling (4 tests), Accessibility (3 tests), Layout and Styling (2 tests), and User Experience (3 tests)
-- **Complex Timer Coordination Mastery** - Resolved sophisticated timer testing challenges in RegisterPage involving component's setTimeout(3000) navigation delay, implementing dual-strategy approach with vi.useFakeTimers() for controlled tests and vi.useRealTimers() with extended timeouts for natural component behavior validation
-- **Form Submission Flow Validation** - Achieved complete testing coverage of registration form submission including successful registration with navigation timing, form clearing on success, comprehensive error handling for server/network failures, and proper loading state management during async operations
-- **Advanced Accessibility Testing** - Implemented comprehensive accessibility testing including form label associations, heading hierarchy validation, and error information accessibility with proper username/email field completion for password validation testing
-- **Testing Strategy Innovation** - Developed sophisticated testing approaches for authentication forms including proper fetch API mocking, react-router-dom navigation mocking, timer management for delayed navigation, and comprehensive error state validation matching actual component behavior
-- **Advanced Test Debugging Mastery** - Resolved complex testing challenges including multiple element conflicts using getAllByText() with filtering strategies, error message format alignment with actual component behavior (⚠️ error pattern), and button text expectation corrections ("New Project" vs "Add Project")
-- **Component Behavior Analysis Excellence** - Identified and addressed discrepancies between test expectations and actual component implementation, particularly around project fetch error handling where component shows "No projects found" instead of specific error messages, demonstrating thorough understanding of application behavior
-- **Text Selector Strategy Innovation** - Implemented sophisticated DOM element selection patterns using getAllByText() with element filtering to handle sidebar vs main content conflicts ("All Tasks"/"Quick Tasks"), establishing robust patterns for complex UI testing scenarios
-- **Error Handling Test Alignment** - Discovered and documented actual error rendering pattern in component (⚠️ {error} format) and updated tests to match real implementation behavior, ensuring tests accurately validate production functionality
-- **Advanced Testing Capabilities Mastered** - Established robust patterns for timer management (real/fake timer switching), browser API mocking (Notification API, permissions), authentication integration (useAuth hook mocking), modal and UI testing, performance validation, and form validation testing
-- **Technical Infrastructure Excellence** - Implemented Vitest 2.1.9 with @testing-library/react, comprehensive coverage tracking, reusable testing patterns for complex React components, complete testing guidance documentation, and systematic approaches for authentication component testing
-- **Timer Management Resolution Breakthrough** - Solved complex timer testing challenges with proper vi.useFakeTimers() lifecycle management, act() wrappers for React state updates, strategic real/fake timer switching for async operations, and innovative dual-approach strategy for component setTimeout testing
-- **Component Testing Pattern Mastery** - Comprehensive testing of modals, forms, error boundaries, accessibility features, user interactions, context providers, component isolation, DOM selection optimization, React state updates, edge case coverage, and authentication flows
-- **Async Testing Pattern Refinement** - Maintained proper waitFor() patterns throughout all test fixes while optimizing for reliability and performance, demonstrating mastery of React Testing Library async testing approaches for both timer-controlled and natural async operations
-- **Testing Infrastructure Completion** - Achieved comprehensive test coverage across Initial Render, Sidebar Functionality, Projects View, Quick Actions View, Task Management, Background Management, Error Handling, Component Integration, Authentication Forms, and User Registration Flow test suites with systematic fixes for each category
-- **Developer Experience Enhancement** - Eliminated timer-related test failures, established fast reliable test execution, created systematic debugging approaches for complex component testing scenarios, documented reusable testing utilities, and established patterns for authentication component testing with timer coordination
+
+### Test Infrastructure Improvements
+- Refactored MainManagementWindow UI tests: Split monolithic 4,147-line test file into 9 focused, maintainable test files (3,437 lines total)
+- Fixed 31 failing tests caused by component migration to hooks architecture (`useProjects`, `useTasks`)
+- Created organized test directory structure: `/MainManagementWindow/` with 9 specialized test files covering all feature areas
+- Added test utilities: Centralized mock setups and common patterns in `testUtils.ts` to eliminate code duplication
+- Enhanced test safety: Added 5-second timeouts to all `waitFor` calls for better test reliability
+- Fixed async testing patterns: Corrected improper `await` usage in test callbacks and separated `act()` from `waitFor()` calls
+
+### Test Coverage Organization
+- Initial Render & Sidebar tests: 6 tests for component mounting, navigation, and logout functionality
+- Task Form & Management tests: 7 tests for task CRUD operations and form handling
+- Project Form & Management tests: 6 tests for project operations and deletion confirmation
+- Quick Tasks tests: 3 tests for rapid task creation and management
+- Background & Toast Provider tests: 3 tests for notification and background processing
+- Error Handling & Edge Cases tests: 10 tests for error scenarios and boundary conditions
+- State Management & UI Interactions tests: 21 tests for component state and user interactions
+- Helper Functions tests: 21 tests for utility function coverage
+- Additional Coverage tests: 23 tests for comprehensive feature validation
+
+### Technical Fixes
+- Updated component mocking: Fixed TaskForm, ProjectForm, and TaskDetails mocks for hook-based architecture
+- Resolved duplicate element selection: Fixed "Found multiple elements" errors with specific DOM targeting
+- Corrected hook mock structure: Aligned API response mocks with `useProjects`/`useTasks` hook expectations
+- Fixed import paths: Resolved all test import issues after directory restructuring
 
 ## [v0.12.0-dev9] - 2025-07-13
 ### Added
