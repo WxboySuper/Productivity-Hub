@@ -1,10 +1,10 @@
 import { render, screen, fireEvent, waitFor, act, cleanup } from '@testing-library/react';
 import { vi, beforeEach, afterEach, describe, it, expect } from 'vitest';
 import { BrowserRouter } from 'react-router-dom';
-import MainManagementWindow from './MainManagementWindow';
-import { AuthProvider } from '../auth';
-import { BackgroundProvider } from '../context/BackgroundContext';
-import { ToastProvider } from '../components/ToastProvider';
+import MainManagementWindow from '../MainManagementWindow';
+import { AuthProvider } from '../../auth';
+import { BackgroundProvider } from '../../context/BackgroundContext';
+import { ToastProvider } from '../../components/ToastProvider';
 
 // Setup global fetch mock properly
 global.fetch = vi.fn().mockImplementation((url: string) => {
@@ -37,13 +37,13 @@ global.fetch = vi.fn().mockImplementation((url: string) => {
             parent_id: null,
             completed: false 
           },
-          { 
-            id: 2, 
-            title: 'Quick Task', 
-            description: 'A quick task', 
+          {
+            id: 2,
+            title: 'Quick Task',
+            description: 'A quick task',
             projectId: null,
             parent_id: null,
-            completed: false 
+            completed: false
           }
         ] 
       }),
@@ -224,7 +224,7 @@ describe('MainManagementWindow - Project Form & Management', () => {
           json: () => Promise.resolve({ error: 'Not found' }),
         } as Response);
       });
-      
+
       await act(async () => {
         render(<MainManagementWindowWrapper />);
       });
@@ -233,7 +233,7 @@ describe('MainManagementWindow - Project Form & Management', () => {
         expect(screen.getByTestId('main-management-window')).toBeInTheDocument();
       }, { timeout: 5000 });
       
-      const projectsButton = screen.getAllByText('Projects').find(button => 
+      const projectsButton = screen.getAllByText('Projects').find(button =>
         button.closest('.phub-sidebar-nav')
       )?.closest('button');
       if (projectsButton) {
@@ -287,7 +287,7 @@ describe('MainManagementWindow - Project Form & Management', () => {
         expect(screen.getByTestId('main-management-window')).toBeInTheDocument();
       }, { timeout: 5000 });
       
-      const projectsButton = screen.getAllByText('Projects').find(button => 
+      const projectsButton = screen.getAllByText('Projects').find(button =>
         button.closest('.phub-sidebar-nav')
       )?.closest('button');
       if (projectsButton) {
@@ -345,7 +345,7 @@ describe('MainManagementWindow - Project Form & Management', () => {
         expect(screen.getByTestId('main-management-window')).toBeInTheDocument();
       }, { timeout: 5000 });
       
-      const projectsButton = screen.getAllByText('Projects').find(button => 
+      const projectsButton = screen.getAllByText('Projects').find(button =>
         button.closest('.phub-sidebar-nav')
       )?.closest('button');
       if (projectsButton) {
@@ -376,7 +376,7 @@ describe('MainManagementWindow - Project Form & Management', () => {
       const testProject = { id: 1, name: 'Test Project', description: 'Test Description' };
       
       mockFetch.mockReset();
-      
+
       // Projects fetch when switching to projects view
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -392,14 +392,14 @@ describe('MainManagementWindow - Project Form & Management', () => {
       await act(async () => {
         render(<MainManagementWindowWrapper />);
       });
-      
+
       // Wait for initial load
       await waitFor(() => {
         expect(screen.getByRole('main')).toBeInTheDocument();
       }, { timeout: 5000 });
-      
+
       // Switch to Projects view
-      const projectsButton = screen.getAllByText('Projects').find(button => 
+      const projectsButton = screen.getAllByText('Projects').find(button =>
         button.closest('.phub-sidebar-nav')
       )?.closest('button');
       if (projectsButton) {
@@ -426,7 +426,7 @@ describe('MainManagementWindow - Project Form & Management', () => {
       const testProject = { id: 1, name: 'Test Project', description: 'Test Description' };
       
       mockFetch.mockReset();
-      
+
       // Projects fetch when switching to projects view
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -442,14 +442,14 @@ describe('MainManagementWindow - Project Form & Management', () => {
       await act(async () => {
         render(<MainManagementWindowWrapper />);
       });
-      
+
       // Wait for initial load
       await waitFor(() => {
         expect(screen.getByRole('main')).toBeInTheDocument();
       }, { timeout: 5000 });
-      
+
       // Switch to Projects view
-      const projectsButton = screen.getAllByText('Projects').find(button => 
+      const projectsButton = screen.getAllByText('Projects').find(button =>
         button.closest('.phub-sidebar-nav')
       )?.closest('button');
       if (projectsButton) {
@@ -497,8 +497,8 @@ describe('MainManagementWindow - Project Form & Management', () => {
       await waitFor(() => {
         expect(screen.getByTestId('main-management-window')).toBeInTheDocument();
       }, { timeout: 5000 });
-      
-      const projectsButton = screen.getAllByText('Projects').find(button => 
+
+      const projectsButton = screen.getAllByText('Projects').find(button =>
         button.closest('.phub-sidebar-nav')
       )?.closest('button');
       if (projectsButton) {
@@ -508,7 +508,7 @@ describe('MainManagementWindow - Project Form & Management', () => {
       const addProjectButton = await waitFor(() => {
         return screen.getByText('Add Project');
       }, { timeout: 5000 });
-      
+
       await act(async () => {
         fireEvent.click(addProjectButton);
       });

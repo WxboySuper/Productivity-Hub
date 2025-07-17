@@ -1,10 +1,10 @@
 import { render, screen, fireEvent, waitFor, act, cleanup } from '@testing-library/react';
 import { vi, beforeEach, afterEach, describe, it, expect } from 'vitest';
 import { BrowserRouter } from 'react-router-dom';
-import MainManagementWindow from './MainManagementWindow';
-import { AuthProvider } from '../auth';
-import { BackgroundProvider } from '../context/BackgroundContext';
-import { ToastProvider } from '../components/ToastProvider';
+import MainManagementWindow from '../MainManagementWindow';
+import { AuthProvider } from '../../auth';
+import { BackgroundProvider } from '../../context/BackgroundContext';
+import { ToastProvider } from '../../components/ToastProvider';
 
 // Setup global fetch mock properly
 global.fetch = vi.fn().mockImplementation((url: string) => {
@@ -105,13 +105,13 @@ const mockProjects = {
 
 const mockTasks = {
   tasks: [
-    { 
-      id: 1, 
-      title: 'Test Task', 
-      description: 'Test task description', 
+    {
+      id: 1,
+      title: 'Test Task',
+      description: 'Test task description',
       projectId: 1,
       parent_id: null,
-      completed: false 
+      completed: false
     }
   ],
   loading: false,
@@ -212,22 +212,22 @@ describe('MainManagementWindow - State Management & UI Interactions', () => {
     // Reset all mocks before each test
     vi.clearAllMocks();
     mockFetch.mockClear();
-    
+
     // Reset mock objects to default state
     mockProjects.error = null;
     mockProjects.loading = false;
     mockProjects.projects = [{ id: 1, name: 'Test Project', description: 'Test project description' }];
-    
+
     mockTasks.error = null;
     mockTasks.loading = false;
     mockTasks.tasks = [
-      { 
-        id: 1, 
-        title: 'Test Task', 
-        description: 'Test task description', 
+      {
+        id: 1,
+        title: 'Test Task',
+        description: 'Test task description',
         projectId: 1,
         parent_id: null,
-        completed: false 
+        completed: false
       }
     ];
   });
@@ -335,13 +335,13 @@ describe('MainManagementWindow - State Management & UI Interactions', () => {
 
   describe('Inline Function Coverage', () => {
     it('handles inline arrow function in task title clicks for task details', async () => {
-      const task = { 
-        id: 1, 
-        title: 'Test Task 1', 
-        description: 'Test task description', 
+      const task = {
+        id: 1,
+        title: 'Test Task 1',
+        description: 'Test task description',
         projectId: 1,
         parent_id: null,
-        completed: false 
+        completed: false
       };
 
       mockTasks.tasks = [task];
@@ -355,7 +355,7 @@ describe('MainManagementWindow - State Management & UI Interactions', () => {
       const taskTitles = screen.queryAllByText('Test Task 1');
       if (taskTitles.length > 0) {
         fireEvent.click(taskTitles[0]);
-        
+
         await waitFor(() => {
           const taskDetails = screen.queryByTestId('task-details');
           if (taskDetails) {
@@ -378,7 +378,7 @@ describe('MainManagementWindow - State Management & UI Interactions', () => {
       // Verify initial state (not collapsed)
       const sidebar = document.querySelector('.phub-sidebar');
       expect(sidebar).not.toHaveClass('phub-sidebar-collapsed');
-      
+
       fireEvent.click(collapseButton);
 
       // Check that the sidebar state changes by looking for the collapsed class
@@ -388,13 +388,13 @@ describe('MainManagementWindow - State Management & UI Interactions', () => {
     });
 
     it('handles task interaction buttons', async () => {
-      const task = { 
-        id: 1, 
-        title: 'Test Task 1', 
-        description: 'Test task description', 
+      const task = {
+        id: 1,
+        title: 'Test Task 1',
+        description: 'Test task description',
         projectId: null,
         parent_id: null,
-        completed: false 
+        completed: false
       };
 
       mockTasks.tasks = [task];
@@ -413,13 +413,13 @@ describe('MainManagementWindow - State Management & UI Interactions', () => {
     });
 
     it('handles task details interactions', async () => {
-      const task = { 
-        id: 1, 
-        title: 'Test Task 1', 
-        description: 'Test task description', 
+      const task = {
+        id: 1,
+        title: 'Test Task 1',
+        description: 'Test task description',
         projectId: null,
         parent_id: null,
-        completed: false 
+        completed: false
       };
 
       mockTasks.tasks = [task];
@@ -438,7 +438,7 @@ describe('MainManagementWindow - State Management & UI Interactions', () => {
           if (screen.queryByTestId('task-details')) {
             const toggleButton = screen.getByText('Toggle Complete');
             fireEvent.click(toggleButton);
-            
+
             const deleteButton = screen.getByText('Delete');
             fireEvent.click(deleteButton);
           }

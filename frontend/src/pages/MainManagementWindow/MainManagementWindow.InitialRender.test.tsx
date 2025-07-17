@@ -1,10 +1,10 @@
 import { render, screen, fireEvent, waitFor, act, cleanup } from '@testing-library/react';
 import { vi, beforeEach, afterEach, describe, it, expect } from 'vitest';
 import { BrowserRouter } from 'react-router-dom';
-import MainManagementWindow from './MainManagementWindow';
-import { AuthProvider } from '../auth';
-import { BackgroundProvider } from '../context/BackgroundContext';
-import { ToastProvider } from '../components/ToastProvider';
+import MainManagementWindow from '../MainManagementWindow';
+import { AuthProvider } from '../../auth';
+import { BackgroundProvider } from '../../context/BackgroundContext';
+import { ToastProvider } from '../../components/ToastProvider';
 import {
   setupFetchMock,
   setupBeforeEach,
@@ -12,7 +12,7 @@ import {
   mockBackgroundContext,
   mockToastContext,
   mockNavigate,
-} from './__tests__/testUtils';
+} from '../__tests__/testUtils';
 
 // Setup global fetch mock
 setupFetchMock();
@@ -126,14 +126,14 @@ describe('MainManagementWindow - Initial Render & Sidebar', () => {
       // Check that All Tasks view is active by default
       // The active class should be on the All Tasks button
       const allTasksButtons = screen.getAllByText('All Tasks');
-      const allTasksButton = allTasksButtons.find(button => 
+      const allTasksButton = allTasksButtons.find(button =>
         button.closest('.phub-sidebar-nav')
       )?.closest('button');
       expect(allTasksButton).toHaveClass('phub-sidebar-item-active');
       
       // Check that the main content shows tasks-related content
       await waitFor(() => {
-        const allTasksInMain = screen.getAllByText('All Tasks').find(element => 
+        const allTasksInMain = screen.getAllByText('All Tasks').find(element =>
           element.closest('main')
         );
         expect(allTasksInMain).toBeInTheDocument();
@@ -189,14 +189,14 @@ describe('MainManagementWindow - Initial Render & Sidebar', () => {
       // Initially "All Tasks" should be active
       const allTasksButtons = screen.getAllByText('All Tasks');
       // Get the one inside the sidebar navigation
-      const allTasksButton = allTasksButtons.find(button => 
+      const allTasksButton = allTasksButtons.find(button =>
         button.closest('.phub-sidebar-nav')
       )?.closest('button');
       expect(allTasksButton).toHaveClass('phub-sidebar-item-active');
 
       // Click on Quick Tasks
       const quickTasksButtons = screen.getAllByText('Quick Tasks');
-      const quickTasksButton = quickTasksButtons.find(button => 
+      const quickTasksButton = quickTasksButtons.find(button =>
         button.closest('.phub-sidebar-nav')
       )?.closest('button');
       await act(async () => {
@@ -209,7 +209,7 @@ describe('MainManagementWindow - Initial Render & Sidebar', () => {
 
       // Click on Projects
       const projectsButtons = screen.getAllByText('Projects');
-      const projectsButton = projectsButtons.find(button => 
+      const projectsButton = projectsButtons.find(button =>
         button.closest('.phub-sidebar-nav')
       )?.closest('button');
       await act(async () => {
@@ -232,7 +232,7 @@ describe('MainManagementWindow - Initial Render & Sidebar', () => {
 
       // Find and click the Sign Out button
       const signOutButtons = screen.getAllByText('Sign Out');
-      const signOutButton = signOutButtons.find(button => 
+      const signOutButton = signOutButtons.find(button =>
         button.closest('.phub-sidebar-nav')
       )?.closest('button');
       await act(async () => {

@@ -1,10 +1,10 @@
 import { render, screen, fireEvent, waitFor, act, cleanup } from '@testing-library/react';
 import { vi, beforeEach, afterEach, describe, it, expect } from 'vitest';
 import { BrowserRouter } from 'react-router-dom';
-import MainManagementWindow from './MainManagementWindow';
-import { AuthProvider } from '../auth';
-import { BackgroundProvider } from '../context/BackgroundContext';
-import { ToastProvider } from '../components/ToastProvider';
+import MainManagementWindow from '../MainManagementWindow';
+import { AuthProvider } from '../../auth';
+import { BackgroundProvider } from '../../context/BackgroundContext';
+import { ToastProvider } from '../../components/ToastProvider';
 
 // Setup global fetch mock properly
 global.fetch = vi.fn().mockImplementation((url: string) => {
@@ -37,13 +37,13 @@ global.fetch = vi.fn().mockImplementation((url: string) => {
             parent_id: null,
             completed: false 
           },
-          { 
-            id: 2, 
-            title: 'Quick Task', 
-            description: 'A quick task', 
+          {
+            id: 2,
+            title: 'Quick Task',
+            description: 'A quick task',
             projectId: null,
             parent_id: null,
-            completed: false 
+            completed: false
           }
         ] 
       }),
@@ -212,7 +212,7 @@ describe('MainManagementWindow - Task Form & Management', () => {
           fireEvent.click(addNewButton);
         });
       }
-      
+
       await waitFor(() => {
         expect(screen.getByTestId('task-form')).toBeInTheDocument();
       }, { timeout: 5000 });
@@ -305,11 +305,11 @@ describe('MainManagementWindow - Task Form & Management', () => {
     });
 
     it('handles task completion toggling', async () => {
-      const testTask = { 
-        id: 1, 
-        title: 'Test Task', 
-        completed: false, 
-        projectId: 1, 
+      const testTask = {
+        id: 1,
+        title: 'Test Task',
+        completed: false,
+        projectId: 1,
         parent_id: null,
         description: 'Test task description'
       };
@@ -354,11 +354,11 @@ describe('MainManagementWindow - Task Form & Management', () => {
     });
 
     it('handles task deletion', async () => {
-      const testTask = { 
-        id: 1, 
-        title: 'Test Task', 
-        completed: false, 
-        projectId: 1, 
+      const testTask = {
+        id: 1,
+        title: 'Test Task',
+        completed: false,
+        projectId: 1,
         parent_id: null,
         description: 'Test task description'
       };
@@ -399,11 +399,11 @@ describe('MainManagementWindow - Task Form & Management', () => {
     });
 
     it('opens task details when clicking on task title', async () => {
-      const testTask = { 
-        id: 1, 
-        title: 'Test Task', 
-        completed: false, 
-        projectId: 1, 
+      const testTask = {
+        id: 1,
+        title: 'Test Task',
+        completed: false,
+        projectId: 1,
         parent_id: null,
         description: 'Test task description'
       };

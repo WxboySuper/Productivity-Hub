@@ -1,10 +1,10 @@
 import { render, screen, fireEvent, waitFor, act, cleanup } from '@testing-library/react';
 import { vi, beforeEach, afterEach, describe, it, expect } from 'vitest';
 import { BrowserRouter } from 'react-router-dom';
-import MainManagementWindow from './MainManagementWindow';
-import { AuthProvider } from '../auth';
-import { BackgroundProvider } from '../context/BackgroundContext';
-import { ToastProvider } from '../components/ToastProvider';
+import MainManagementWindow from '../MainManagementWindow';
+import { AuthProvider } from '../../auth';
+import { BackgroundProvider } from '../../context/BackgroundContext';
+import { ToastProvider } from '../../components/ToastProvider';
 
 // Setup global fetch mock properly
 global.fetch = vi.fn().mockImplementation((url: string) => {
@@ -105,13 +105,13 @@ const mockProjects = {
 
 const mockTasks = {
   tasks: [
-    { 
-      id: 1, 
-      title: 'Test Task', 
-      description: 'Test task description', 
+    {
+      id: 1,
+      title: 'Test Task',
+      description: 'Test task description',
       projectId: 1,
       parent_id: null,
-      completed: false 
+      completed: false
     }
   ],
   loading: false,
@@ -223,25 +223,25 @@ describe('MainManagementWindow - Error Handling & Edge Cases', () => {
     vi.clearAllMocks();
     mockFetch.mockClear();
     mockNavigate.mockClear();
-    
+
     // Reset mock objects to default state
     mockProjects.error = null;
     mockProjects.loading = false;
     mockProjects.projects = [{ id: 1, name: 'Test Project', description: 'Test project description' }];
-    
+
     mockTasks.error = null;
     mockTasks.loading = false;
     mockTasks.tasks = [
-      { 
-        id: 1, 
-        title: 'Test Task', 
-        description: 'Test task description', 
+      {
+        id: 1,
+        title: 'Test Task',
+        description: 'Test task description',
         projectId: 1,
         parent_id: null,
-        completed: false 
+        completed: false
       }
     ];
-    
+
     mockAuth.logout.mockResolvedValue(true);
   });
 
@@ -266,7 +266,7 @@ describe('MainManagementWindow - Error Handling & Edge Cases', () => {
       mockProjects.projects = [];
 
       render(<MainManagementWindowWrapper />);
-      
+
       const projectsButton = screen.getByText('Projects').closest('button');
       if (projectsButton) {
         fireEvent.click(projectsButton);
@@ -374,10 +374,10 @@ describe('MainManagementWindow - Error Handling & Edge Cases', () => {
     });
 
     it('handles task with subtasks and shows subtask count', async () => {
-      const taskWithSubtasks = { 
-        id: 1, 
-        title: 'Parent Task', 
-        completed: false, 
+      const taskWithSubtasks = {
+        id: 1,
+        title: 'Parent Task',
+        completed: false,
         projectId: null,
         parent_id: null,
         subtasks: [
@@ -395,10 +395,10 @@ describe('MainManagementWindow - Error Handling & Edge Cases', () => {
     });
 
     it('disables task completion when subtasks are incomplete', async () => {
-      const taskWithIncompleteSubtasks = { 
-        id: 1, 
-        title: 'Parent Task', 
-        completed: false, 
+      const taskWithIncompleteSubtasks = {
+        id: 1,
+        title: 'Parent Task',
+        completed: false,
         projectId: null,
         parent_id: null,
         subtasks: [

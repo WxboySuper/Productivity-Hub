@@ -1,10 +1,10 @@
-import { render, screen, fireEvent, waitFor, act, cleanup } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import { vi, beforeEach, afterEach, describe, it, expect } from 'vitest';
 import { BrowserRouter } from 'react-router-dom';
-import MainManagementWindow from './MainManagementWindow';
-import { AuthProvider } from '../auth';
-import { BackgroundProvider } from '../context/BackgroundContext';
-import { ToastProvider } from '../components/ToastProvider';
+import MainManagementWindow from '../MainManagementWindow';
+import { AuthProvider } from '../../auth';
+import { BackgroundProvider } from '../../context/BackgroundContext';
+import { ToastProvider } from '../../components/ToastProvider';
 
 // Setup global fetch mock properly
 global.fetch = vi.fn().mockImplementation((url: string) => {
@@ -36,6 +36,14 @@ global.fetch = vi.fn().mockImplementation((url: string) => {
             projectId: 1,
             parent_id: null,
             completed: false 
+          },
+          {
+            id: 2,
+            title: 'Quick Task',
+            description: 'A quick task',
+            projectId: null,
+            parent_id: null,
+            completed: false
           }
         ] 
       }),
@@ -51,6 +59,35 @@ global.fetch = vi.fn().mockImplementation((url: string) => {
 // Create a typed version of the mock for easier use
 const mockFetch = global.fetch as ReturnType<typeof vi.fn>;
 
+// Helper function to set up empty state mocks
+const setupEmptyStateMocks = () => {
+  mockFetch.mockClear();
+  mockFetch.mockImplementation((url: string) => {
+    if (url === '/api/csrf-token') {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ csrf_token: 'mock-token' }),
+      } as Response);
+    }
+    if (url === '/api/projects') {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ projects: [] }),
+      } as Response);
+    }
+    if (url === '/api/tasks') {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ tasks: [] }),
+      } as Response);
+    }
+    return Promise.resolve({
+      ok: false,
+      json: () => Promise.resolve({ error: 'Not found' }),
+    } as Response);
+  });
+};
+
 // Mock the auth hook
 const mockAuth = {
   isAuthenticated: true,
@@ -62,34 +99,8 @@ const mockAuth = {
 };
 
 vi.mock('../auth', () => ({
-  useAuth: () => mockAuth,
   AuthProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-}));
-
-// Mock the background context
-const mockBackground = {
-  backgroundType: 'creative-dots' as const,
-  setBackgroundType: vi.fn(),
-};
-
-vi.mock('../context/BackgroundContext', () => ({
-  useBackground: () => mockBackground,
-  BackgroundProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-}));
-
-// Mock the toast context
-const mockToast = {
-  showSuccess: vi.fn(),
-  showError: vi.fn(),
-  showWarning: vi.fn(),
-  showInfo: vi.fn(),
-  showToast: vi.fn(),
-  removeToast: vi.fn(),
-};
-
-vi.mock('../components/ToastProvider', () => ({
-  useToast: () => mockToast,
-  ToastProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  useAuth: () => mockAuth,
 }));
 
 // Mock hooks
@@ -115,6 +126,14 @@ vi.mock('../hooks/useTasks', () => ({
         projectId: 1,
         parent_id: null,
         completed: false 
+      },
+      {
+        id: 2,
+        title: 'Quick Task',
+        description: 'A quick task',
+        projectId: null,
+        parent_id: null,
+        completed: false
       }
     ],
     loading: false,
@@ -124,24 +143,6 @@ vi.mock('../hooks/useTasks', () => ({
     deleteTask: vi.fn(),
     refetch: vi.fn(),
   }),
-}));
-
-// Mock the BackgroundSwitcher component
-vi.mock('../components/BackgroundSwitcher', () => ({
-  default: ({
-    currentBackground,
-    onBackgroundChange,
-  }: {
-    currentBackground: string;
-    onBackgroundChange: (type: string) => void;
-  }) => (
-    <button
-      data-testid="background-switcher"
-      onClick={() => onBackgroundChange('neural-network')}
-    >
-      Background: {currentBackground}
-    </button>
-  ),
 }));
 
 // Mock the TaskForm component
@@ -221,7 +222,7 @@ const MainManagementWindowWrapper = () => (
   </BrowserRouter>
 );
 
-describe('MainManagementWindow - Background & Toast Providers', () => {
+describe('MainManagementWindow - Quick Tasks', () => {
   beforeEach(() => {
     // Reset all mocks before each test
     vi.clearAllMocks();
@@ -232,39 +233,55 @@ describe('MainManagementWindow - Background & Toast Providers', () => {
     cleanup();
   });
 
-  describe('Background Management', () => {
-    it('changes background when background switcher is used', () => {
-      act(() => {
-        render(<MainManagementWindowWrapper />);
-      });
-      
-      const backgroundSwitcher = screen.getByTestId('background-switcher');
-      act(() => {
-        fireEvent.click(backgroundSwitcher);
-      });
-      
-      expect(mockBackground.setBackgroundType).toHaveBeenCalledWith('neural-network');
-    });
-  });
-
-  describe('Component Integration', () => {
-    it('integrates with all required context providers', () => {
+  describe('Quick Tasks View', () => {
+    it('switches to quick tasks view and shows quick tasks', async () => {
       render(<MainManagementWindowWrapper />);
       
-      // Check that main component renders successfully with all providers
-      expect(screen.getByTestId('main-management-window')).toBeInTheDocument();
-      
-      // Check background switcher is present and working
-      expect(screen.getByTestId('background-switcher')).toBeInTheDocument();
+      const quickTasksButton = screen.getByText('Quick Tasks').closest('button');
+      if (quickTasksButton) {
+        fireEvent.click(quickTasksButton);
+      }
+
+      // Look for quick task specifically - the hook should provide this
+      await waitFor(() => {
+        expect(screen.getByText('Quick Task')).toBeInTheDocument();
+      }, { timeout: 5000 });
     });
 
-    it('handles form dialogs properly', () => {
+    it('shows empty state for quick tasks when none exist', async () => {
+      setupEmptyStateMocks();
+
       render(<MainManagementWindowWrapper />);
       
-      // Check that forms don't render initially (they should be closed)
-      expect(screen.queryByTestId('task-form')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('project-form')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('task-details')).not.toBeInTheDocument();
+      const quickTasksButton = screen.getByText('Quick Tasks').closest('button');
+      if (quickTasksButton) {
+        fireEvent.click(quickTasksButton);
+      }
+
+      await waitFor(() => {
+        expect(screen.getByText('No quick tasks found')).toBeInTheDocument();
+        expect(screen.getByText('Add Quick Task')).toBeInTheDocument();
+      }, { timeout: 5000 });
+    });
+
+    it('opens task form when clicking Add Quick Task', async () => {
+      setupEmptyStateMocks();
+
+      render(<MainManagementWindowWrapper />);
+      
+      const quickTasksButton = screen.getByText('Quick Tasks').closest('button');
+      if (quickTasksButton) {
+        fireEvent.click(quickTasksButton);
+      }
+
+      await waitFor(() => {
+        const addQuickTaskButton = screen.getByText('Add Quick Task');
+        fireEvent.click(addQuickTaskButton);
+      }, { timeout: 5000 });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('task-form')).toBeInTheDocument();
+      }, { timeout: 5000 });
     });
   });
 });
