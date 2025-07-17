@@ -856,14 +856,14 @@ const MainManagementWindow: React.FC = () => {
                           <input
                             type="checkbox"
                             checked={task.completed}
-                            onChange={() => handleToggleTask(task.id)}
+                            onChange={() => handleTaskToggle(task.id)}
                             className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
                             disabled={task.subtasks && task.subtasks.length > 0 && task.subtasks.some((st: any) => !st.completed)}
                             title={task.subtasks && task.subtasks.length > 0 && task.subtasks.some((st: any) => !st.completed) ? 'Complete all subtasks first' : ''}
                           />
                           <div
                             className="phub-item-title cursor-pointer flex-1"
-                            onClick={() => { setSelectedTask(getTaskWithProject(task)); setTaskDetailsOpen(true); }}
+                            onClick={() => handleTaskTitleClick(task)}
                             style={{
                               textDecoration: task.completed ? 'line-through' : 'none',
                               opacity: task.completed ? 0.6 : 1
@@ -873,14 +873,14 @@ const MainManagementWindow: React.FC = () => {
                           </div>
                           <button
                             className="phub-action-btn-secondary"
-                            onClick={() => openTaskForm(task)}
+                            onClick={() => handleTaskEdit(task)}
                             style={{ padding: '0.5rem', fontSize: '0.8rem' }}
                           >
                             Edit
                           </button>
                           <button
                             className="px-2 py-1 rounded transition-colors font-semibold"
-                            onClick={() => handleDeleteTask(task.id)}
+                            onClick={() => handleTaskDelete(task.id)}
                             style={{
                               background: 'linear-gradient(135deg, #ef4444, #dc2626)',
                               color: 'white',
@@ -964,6 +964,24 @@ const MainManagementWindow: React.FC = () => {
     window.addEventListener('openTaskDetails', handler);
     return () => window.removeEventListener('openTaskDetails', handler);
   }, [allTasks, projects]);
+
+  // Helper functions for project task actions
+  const handleTaskToggle = useCallback((taskId: number) => {
+    handleToggleTask(taskId);
+  }, []);
+
+  const handleTaskTitleClick = useCallback((task: any) => {
+    setSelectedTask(getTaskWithProject(task));
+    setTaskDetailsOpen(true);
+  }, []);
+
+  const handleTaskEdit = useCallback((task: any) => {
+    openTaskForm(task);
+  }, []);
+
+  const handleTaskDelete = useCallback((taskId: number) => {
+    handleDeleteTask(taskId);
+  }, []);
 
   // Move TaskForm outside of content block so it is always mounted
   return (
