@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 export interface Project {
   id: number;
   name: string;
-  description: string;
+  description?: string;
 }
 
 export function useProjects() {

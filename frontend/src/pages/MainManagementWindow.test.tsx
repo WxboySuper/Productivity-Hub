@@ -129,6 +129,20 @@ vi.mock('../components/ToastProvider', () => ({
   ToastProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
+// Mock the useProjects hook to control project data in tests
+const mockProjects = {
+  projects: [
+    { id: 1, name: 'Test Project', description: 'Test project description' }
+  ],
+  loading: false,
+  error: null,
+  refetch: vi.fn().mockResolvedValue(undefined)
+};
+
+vi.mock('../hooks/useProjects', () => ({
+  useProjects: () => mockProjects,
+}));
+
 // Mock the NotificationCenter component
 vi.mock('../components/NotificationCenter', () => ({
   default: () => <div data-testid="notification-center">NotificationCenter</div>,
@@ -271,9 +285,49 @@ describe('MainManagementWindow', () => {
     // Reset mockFetch to a clean state 
     mockFetch.mockReset();
     
+    // Reset hook mocks
+    mockProjects.projects = [
+      { id: 1, name: 'Test Project', description: 'Test project description' }
+    ];
+    mockProjects.loading = false;
+    mockProjects.error = null;
+    mockProjects.refetch.mockReset();
+    
     // Set up minimal default fetch mock responses
+    // Note: With useProjects hook, we don't expect /api/projects calls in most tests
     mockFetch.mockImplementation((url: string) => {
-      console.warn(`Unexpected fetch call to: ${url}`);
+      if (url === '/api/csrf-token') {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ csrf_token: 'mock-token' }),
+        } as Response);
+      }
+      if (url === '/api/tasks') {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ 
+            tasks: [
+              { 
+                id: 1, 
+                title: 'Test Task', 
+                description: 'Test task description', 
+                projectId: 1,
+                parent_id: null,
+                completed: false 
+              },
+              { 
+                id: 2, 
+                title: 'Quick Task', 
+                description: 'A quick task', 
+                projectId: null,
+                parent_id: null,
+                completed: false 
+              }
+            ] 
+          }),
+        } as Response);
+      }
+      // For any other calls, return a default response without warnings
       return Promise.resolve({
         ok: true,
         json: () => Promise.resolve({}),
@@ -297,9 +351,8 @@ describe('MainManagementWindow', () => {
       expect(screen.getAllByText('Add New')[0]).toBeInTheDocument();
       expect(screen.getAllByTestId('background-switcher')[0]).toBeInTheDocument();
       
-      // Wait for async fetch calls to complete
+      // Wait for tasks to load (useProjects hook doesn't need explicit API calls)
       await waitFor(() => {
-        expect(mockFetch).toHaveBeenCalledWith('/api/projects', { credentials: 'include' });
         expect(mockFetch).toHaveBeenCalledWith('/api/tasks', { credentials: 'include' });
       });
     });
@@ -319,9 +372,9 @@ describe('MainManagementWindow', () => {
       expect(projectsElements.length).toBeGreaterThan(0);
       expect(signOutElements.length).toBeGreaterThan(0);
       
-      // Wait for fetch calls to complete
+      // Tasks are loaded automatically
       await waitFor(() => {
-        expect(mockFetch).toHaveBeenCalled();
+        expect(mockFetch).toHaveBeenCalledWith('/api/tasks', { credentials: 'include' });
       });
     });
 
@@ -338,7 +391,7 @@ describe('MainManagementWindow', () => {
       expect(sidebarButton).toHaveClass('phub-sidebar-item-active');
       
       await waitFor(() => {
-        expect(mockFetch).toHaveBeenCalled();
+        expect(mockFetch).toHaveBeenCalledWith('/api/tasks', { credentials: 'include' });
       });
     });
   });
@@ -356,12 +409,13 @@ describe('MainManagementWindow', () => {
       
       expect(screen.getByLabelText('Expand sidebar')).toBeInTheDocument();
       
+      // Wait for initial task loading
       await waitFor(() => {
-        expect(mockFetch).toHaveBeenCalled();
+        expect(mockFetch).toHaveBeenCalledWith('/api/tasks', { credentials: 'include' });
       });
     });
 
-    it('switches between different views', () => {
+    it('switches between different views', async () => {
       act(() => {
         render(<MainManagementWindowWrapper />);
       });
@@ -374,6 +428,11 @@ describe('MainManagementWindow', () => {
       }
       
       expect(projectsButton).toHaveClass('phub-sidebar-item-active');
+      
+      // Wait for any state updates to complete
+      await waitFor(() => {
+        expect(screen.getByText('Your Projects')).toBeInTheDocument();
+      });
     });
 
     it('handles logout when logout button is clicked', async () => {
@@ -440,11 +499,9 @@ describe('MainManagementWindow', () => {
 
   describe('Project Form', () => {
     it('opens project form when switching to projects and clicking Add Project', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ projects: [] }),
-      } as Response);
-
+      // Set up empty projects for this test
+      mockProjects.projects = [];
+      
       act(() => {
         render(<MainManagementWindowWrapper />);
       });
@@ -464,10 +521,8 @@ describe('MainManagementWindow', () => {
     });
 
     it('closes project form when cancel is clicked', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve([]),
-      } as Response);
+      // Set up empty projects for this test
+      mockProjects.projects = [];
 
       act(() => {
         render(<MainManagementWindowWrapper />);
@@ -518,17 +573,22 @@ describe('MainManagementWindow', () => {
 
   describe('Error Handling', () => {
     it('shows error state when tasks fetch fails', async () => {
-      // Clear all previous mocks and set up fresh ones
-      mockFetch.mockReset();
-      
-      // Set up CSRF token mock first
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ csrf_token: 'mock-token' }),
-      } as Response);
-      
       // Set up failing tasks fetch
-      mockFetch.mockRejectedValueOnce(new Error('Tasks fetch failed'));
+      mockFetch.mockImplementation((url: string) => {
+        if (url === '/api/csrf-token') {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ csrf_token: 'mock-token' }),
+          } as Response);
+        }
+        if (url === '/api/tasks') {
+          return Promise.reject(new Error('Tasks fetch failed'));
+        }
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({}),
+        } as Response);
+      });
 
       render(<MainManagementWindowWrapper />);
 
@@ -538,7 +598,9 @@ describe('MainManagementWindow', () => {
     });
 
     it('shows error state when projects fetch fails', async () => {
-      setupEmptyStateMocks();
+      // Set up empty projects (no error, just empty state)
+      mockProjects.error = null;
+      mockProjects.projects = [];
 
       render(<MainManagementWindowWrapper />);
       
