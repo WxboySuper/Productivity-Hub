@@ -27,6 +27,7 @@ Thumbs.db
 .vscode
 .qodo
 .qodo/*
+create-random-branch.ps1
 
 # db
 */productivity_hub.db
