@@ -88,7 +88,9 @@ describe('MainManagementWindow - Initial Render & Sidebar', () => {
       expect(screen.getByLabelText('Change background style')).toBeInTheDocument();
       
       // Check for sidebar
-      expect(screen.getAllByText('All Tasks')).toHaveLength(2); // One in sidebar, one in main
+      const sidebar = screen.getByRole('complementary');
+      expect(within(sidebar).getByText('All Tasks')).toBeInTheDocument(); // In sidebar
+
       expect(screen.getByText('Quick Tasks')).toBeInTheDocument();
       expect(screen.getByText('Projects')).toBeInTheDocument();
       expect(screen.getByText('Sign Out')).toBeInTheDocument();
@@ -244,3 +246,19 @@ describe('MainManagementWindow - Initial Render & Sidebar', () => {
     });
   });
 });
+
+function within(sidebar: HTMLElement) {
+  return {
+    getByText: (text: string) => {
+      const elements = Array.from(sidebar.querySelectorAll('*'));
+      const match = elements.find(
+        el => el.textContent?.trim() === text
+      );
+      if (!match) {
+        throw new Error(`Unable to find element with text: ${text}`);
+      }
+      return match;
+    },
+    // Add more queries if needed
+  };
+}

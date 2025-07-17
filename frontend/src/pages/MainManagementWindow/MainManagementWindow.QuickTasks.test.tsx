@@ -277,10 +277,11 @@ describe('MainManagementWindow - Quick Tasks', () => {
 
       render(<MainManagementWindowWrapper />);
       
-      const quickTasksButton = screen.getByText('Quick Tasks').closest('button');
-      if (quickTasksButton) {
-        fireEvent.click(quickTasksButton);
-      }
+      const addQuickTaskButton = await waitFor(() => {
+        return screen.getByText('Add Quick Task');
+      }, { timeout: 5000 });
+
+      fireEvent.click(addQuickTaskButton);
 
       await waitFor(() => {
         expect(screen.getByText('No quick tasks found')).toBeInTheDocument();
