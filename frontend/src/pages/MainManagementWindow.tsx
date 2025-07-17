@@ -966,22 +966,22 @@ const MainManagementWindow: React.FC = () => {
   }, [allTasks, projects]);
 
   // Helper functions for project task actions
-  const handleTaskToggle = useCallback((taskId: number) => {
+  const handleTaskToggle = (taskId: number) => {
     handleToggleTask(taskId);
-  }, []);
+  };
 
-  const handleTaskTitleClick = useCallback((task: any) => {
+  const handleTaskTitleClick = (task: any) => {
     setSelectedTask(getTaskWithProject(task));
     setTaskDetailsOpen(true);
-  }, []);
+  };
 
-  const handleTaskEdit = useCallback((task: any) => {
+  const handleTaskEdit = (task: any) => {
     openTaskForm(task);
-  }, []);
+  };
 
-  const handleTaskDelete = useCallback((taskId: number) => {
+  const handleTaskDelete = (taskId: number) => {
     handleDeleteTask(taskId);
-  }, []);
+  };
 
   // Move TaskForm outside of content block so it is always mounted
   return (
