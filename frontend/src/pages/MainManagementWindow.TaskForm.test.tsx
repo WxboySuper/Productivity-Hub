@@ -210,7 +210,7 @@ describe('MainManagementWindow - Task Form & Management', () => {
       if (addNewButton) {
         await act(async () => {
           fireEvent.click(addNewButton);
-        }, { timeout: 5000 });
+        });
       }
       
       await waitFor(() => {
@@ -221,7 +221,7 @@ describe('MainManagementWindow - Task Form & Management', () => {
     it('closes task form when cancel is clicked', async () => {
       await act(async () => {
         render(<MainManagementWindowWrapper />);
-      }, { timeout: 5000 });
+      });
       
       await waitFor(() => {
         expect(screen.getByTestId('main-management-window')).toBeInTheDocument();
@@ -231,7 +231,7 @@ describe('MainManagementWindow - Task Form & Management', () => {
       if (addNewButton) {
         await act(async () => {
           fireEvent.click(addNewButton);
-        }, { timeout: 5000 });
+        });
       }
 
       await waitFor(() => {
@@ -243,7 +243,7 @@ describe('MainManagementWindow - Task Form & Management', () => {
       if (cancelButton) {
         await act(async () => {
           fireEvent.click(cancelButton);
-        }, { timeout: 5000 });
+        });
       }
 
       await waitFor(() => {
@@ -274,7 +274,7 @@ describe('MainManagementWindow - Task Form & Management', () => {
 
       await act(async () => {
         render(<MainManagementWindowWrapper />);
-      }, { timeout: 5000 });
+      });
       
       await waitFor(() => {
         expect(screen.getByTestId('main-management-window')).toBeInTheDocument();
