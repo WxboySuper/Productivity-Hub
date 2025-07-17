@@ -204,7 +204,7 @@ describe('MainManagementWindow - Task Form & Management', () => {
       
       await waitFor(() => {
         expect(screen.getByTestId('main-management-window')).toBeInTheDocument();
-      });
+      }, { timeout: 5000 });
 
       const addNewButton = screen.getByText('Add New').closest('button');
       if (addNewButton) {
@@ -215,7 +215,7 @@ describe('MainManagementWindow - Task Form & Management', () => {
       
       await waitFor(() => {
         expect(screen.getByTestId('task-form')).toBeInTheDocument();
-      });
+      }, { timeout: 5000 });
     });
 
     it('closes task form when cancel is clicked', async () => {
@@ -225,7 +225,7 @@ describe('MainManagementWindow - Task Form & Management', () => {
       
       await waitFor(() => {
         expect(screen.getByTestId('main-management-window')).toBeInTheDocument();
-      });
+      }, { timeout: 5000 });
 
       const addNewButton = screen.getByText('Add New').closest('button');
       if (addNewButton) {

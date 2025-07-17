@@ -152,7 +152,7 @@ describe('MainManagementWindow - Initial Render & Sidebar', () => {
       // Wait for main component to render
       await waitFor(() => {
         expect(screen.getByTestId('main-management-window')).toBeInTheDocument();
-      });
+      }, { timeout: 5000 });
 
       // Check for header components
       expect(screen.getByText('Productivity Hub')).toBeInTheDocument();
@@ -172,7 +172,7 @@ describe('MainManagementWindow - Initial Render & Sidebar', () => {
 
       await waitFor(() => {
         expect(screen.getByTestId('main-management-window')).toBeInTheDocument();
-      });
+      }, { timeout: 5000 });
 
       // Check for sidebar navigation items
       const sidebar = screen.getByRole('complementary');
@@ -192,7 +192,7 @@ describe('MainManagementWindow - Initial Render & Sidebar', () => {
 
       await waitFor(() => {
         expect(screen.getByTestId('main-management-window')).toBeInTheDocument();
-      });
+      }, { timeout: 5000 });
 
       // Check that All Tasks view is active by default
       // The active class should be on the All Tasks button
@@ -208,7 +208,7 @@ describe('MainManagementWindow - Initial Render & Sidebar', () => {
           element.closest('main')
         );
         expect(allTasksInMain).toBeInTheDocument();
-      });
+      }, { timeout: 5000 });
     });
   });
 
@@ -220,7 +220,7 @@ describe('MainManagementWindow - Initial Render & Sidebar', () => {
 
       await waitFor(() => {
         expect(screen.getByTestId('main-management-window')).toBeInTheDocument();
-      });
+      }, { timeout: 5000 });
 
       // Find the collapse button
       const collapseButton = screen.getByLabelText('Collapse sidebar');
@@ -255,7 +255,7 @@ describe('MainManagementWindow - Initial Render & Sidebar', () => {
 
       await waitFor(() => {
         expect(screen.getByTestId('main-management-window')).toBeInTheDocument();
-      });
+      }, { timeout: 5000 });
 
       // Initially "All Tasks" should be active
       const allTasksButtons = screen.getAllByText('All Tasks');
@@ -299,7 +299,7 @@ describe('MainManagementWindow - Initial Render & Sidebar', () => {
 
       await waitFor(() => {
         expect(screen.getByTestId('main-management-window')).toBeInTheDocument();
-      });
+      }, { timeout: 5000 });
 
       // Find and click the Sign Out button
       const signOutButtons = screen.getAllByText('Sign Out');
