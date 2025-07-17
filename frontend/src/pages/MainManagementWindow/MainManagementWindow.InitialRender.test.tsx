@@ -18,7 +18,7 @@ import {
 setupFetchMock();
 
 // Mock AuthProvider
-vi.mock('../auth', () => ({
+vi.mock('../../auth', () => ({
   AuthProvider: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="auth-provider">{children}</div>
   ),
@@ -26,7 +26,7 @@ vi.mock('../auth', () => ({
 }));
 
 // Mock BackgroundProvider
-vi.mock('../context/BackgroundContext', () => ({
+vi.mock('../../context/BackgroundContext', () => ({
   BackgroundProvider: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="background-provider">{children}</div>
   ),
@@ -34,7 +34,7 @@ vi.mock('../context/BackgroundContext', () => ({
 }));
 
 // Mock ToastProvider
-vi.mock('../components/ToastProvider', () => ({
+vi.mock('../../components/ToastProvider', () => ({
   ToastProvider: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="toast-provider">{children}</div>
   ),

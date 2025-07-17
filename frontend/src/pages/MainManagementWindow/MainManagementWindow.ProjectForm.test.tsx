@@ -70,7 +70,7 @@ const mockAuth = {
 };
 
 // Mock AuthProvider
-vi.mock('../auth', () => ({
+vi.mock('../../auth', () => ({
   AuthProvider: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="auth-provider">{children}</div>
   ),
@@ -83,7 +83,7 @@ const mockBackgroundContext = {
   setBackgroundType: vi.fn(),
 };
 
-vi.mock('../context/BackgroundContext', () => ({
+vi.mock('../../context/BackgroundContext', () => ({
   BackgroundProvider: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="background-provider">{children}</div>
   ),
@@ -98,7 +98,7 @@ const mockToastContext = {
   showInfo: vi.fn(),
 };
 
-vi.mock('../components/ToastProvider', () => ({
+vi.mock('../../components/ToastProvider', () => ({
   ToastProvider: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="toast-provider">{children}</div>
   ),
@@ -116,7 +116,7 @@ vi.mock('react-router-dom', async () => {
 });
 
 // Mock the ProjectForm component
-vi.mock('../components/ProjectForm', () => ({
+vi.mock('../../components/ProjectForm', () => ({
   default: ({
     onCreate,
     onClose,
@@ -147,7 +147,7 @@ vi.mock('../components/ProjectForm', () => ({
 }));
 
 // Mock the ConfirmDialog component
-vi.mock('../components/ConfirmDialog', () => ({
+vi.mock('../../components/ConfirmDialog', () => ({
   default: ({
     open,
     title,

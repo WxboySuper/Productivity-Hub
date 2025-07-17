@@ -61,7 +61,7 @@ const mockAuth = {
   checkAuth: vi.fn(),
 };
 
-vi.mock('../auth', () => ({
+vi.mock('../../auth', () => ({
   useAuth: () => mockAuth,
   AuthProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
@@ -72,7 +72,7 @@ const mockBackground = {
   setBackgroundType: vi.fn(),
 };
 
-vi.mock('../context/BackgroundContext', () => ({
+vi.mock('../../context/BackgroundContext', () => ({
   useBackground: () => mockBackground,
   BackgroundProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
@@ -87,13 +87,13 @@ const mockToast = {
   removeToast: vi.fn(),
 };
 
-vi.mock('../components/ToastProvider', () => ({
+vi.mock('../../components/ToastProvider', () => ({
   useToast: () => mockToast,
   ToastProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
 // Mock hooks
-vi.mock('../hooks/useProjects', () => ({
+vi.mock('../../hooks/useProjects', () => ({
   useProjects: () => ({
     projects: [{ id: 1, name: 'Test Project', description: 'Test project description' }],
     loading: false,
@@ -105,7 +105,7 @@ vi.mock('../hooks/useProjects', () => ({
   }),
 }));
 
-vi.mock('../hooks/useTasks', () => ({
+vi.mock('../../hooks/useTasks', () => ({
   useTasks: () => ({
     tasks: [
       {
@@ -127,7 +127,7 @@ vi.mock('../hooks/useTasks', () => ({
 }));
 
 // Mock the BackgroundSwitcher component
-vi.mock('../components/BackgroundSwitcher', () => ({
+vi.mock('../../components/BackgroundSwitcher', () => ({
   default: ({
     currentBackground,
     onBackgroundChange,
@@ -145,7 +145,7 @@ vi.mock('../components/BackgroundSwitcher', () => ({
 }));
 
 // Mock the TaskForm component
-vi.mock('../components/TaskForm', () => ({
+vi.mock('../../components/TaskForm', () => ({
   default: ({ open, onSubmit, onClose, error }: any) => {
     if (!open) return null;
     return (
@@ -162,7 +162,7 @@ vi.mock('../components/TaskForm', () => ({
 }));
 
 // Mock the ProjectForm component
-vi.mock('../components/ProjectForm', () => ({
+vi.mock('../../components/ProjectForm', () => ({
   default: ({ open, onSubmit, onClose, error }: any) => {
     if (!open) return null;
     return (
@@ -179,7 +179,7 @@ vi.mock('../components/ProjectForm', () => ({
 }));
 
 // Mock the TaskDetails component
-vi.mock('../components/TaskDetails', () => ({
+vi.mock('../../components/TaskDetails', () => ({
   default: ({ open, task, onClose, onUpdate, onDelete }: any) => {
     if (!open) return null;
     return (
@@ -197,7 +197,7 @@ vi.mock('../components/TaskDetails', () => ({
 }));
 
 // Mock ConfirmDialog
-vi.mock('../components/ConfirmDialog', () => ({
+vi.mock('../../components/ConfirmDialog', () => ({
   default: ({ open, onConfirm, onCancel }: any) => {
     if (!open) return null;
     return (

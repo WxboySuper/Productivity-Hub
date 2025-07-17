@@ -70,7 +70,7 @@ const mockAuth = {
 };
 
 // Mock AuthProvider
-vi.mock('../auth', () => ({
+vi.mock('../../auth', () => ({
   AuthProvider: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="auth-provider">{children}</div>
   ),
@@ -83,7 +83,7 @@ const mockBackgroundContext = {
   setBackgroundType: vi.fn(),
 };
 
-vi.mock('../context/BackgroundContext', () => ({
+vi.mock('../../context/BackgroundContext', () => ({
   BackgroundProvider: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="background-provider">{children}</div>
   ),
@@ -98,7 +98,7 @@ const mockToastContext = {
   showInfo: vi.fn(),
 };
 
-vi.mock('../components/ToastProvider', () => ({
+vi.mock('../../components/ToastProvider', () => ({
   ToastProvider: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="toast-provider">{children}</div>
   ),
@@ -116,7 +116,7 @@ vi.mock('react-router-dom', async () => {
 });
 
 // Mock the TaskForm component
-vi.mock('../components/TaskForm', () => ({
+vi.mock('../../components/TaskForm', () => ({
   default: ({
     onSubmit,
     onClose,
@@ -148,7 +148,7 @@ vi.mock('../components/TaskForm', () => ({
 }));
 
 // Mock the TaskDetails component
-vi.mock('../components/TaskDetails', () => ({
+vi.mock('../../components/TaskDetails', () => ({
   default: ({
     open,
     onClose,
