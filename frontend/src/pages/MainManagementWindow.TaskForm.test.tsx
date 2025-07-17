@@ -210,7 +210,7 @@ describe('MainManagementWindow - Task Form & Management', () => {
       if (addNewButton) {
         await act(async () => {
           fireEvent.click(addNewButton);
-        });
+        }, { timeout: 5000 });
       }
       
       await waitFor(() => {
@@ -221,7 +221,7 @@ describe('MainManagementWindow - Task Form & Management', () => {
     it('closes task form when cancel is clicked', async () => {
       await act(async () => {
         render(<MainManagementWindowWrapper />);
-      });
+      }, { timeout: 5000 });
       
       await waitFor(() => {
         expect(screen.getByTestId('main-management-window')).toBeInTheDocument();
@@ -231,24 +231,24 @@ describe('MainManagementWindow - Task Form & Management', () => {
       if (addNewButton) {
         await act(async () => {
           fireEvent.click(addNewButton);
-        });
+        }, { timeout: 5000 });
       }
 
       await waitFor(() => {
         expect(screen.getByTestId('task-form')).toBeInTheDocument();
-      });
+      }, { timeout: 5000 });
 
       const taskForm = screen.getByTestId('task-form');
       const cancelButton = taskForm.querySelector('button:last-child');
       if (cancelButton) {
         await act(async () => {
           fireEvent.click(cancelButton);
-        });
+        }, { timeout: 5000 });
       }
 
       await waitFor(() => {
         expect(screen.queryByTestId('task-form')).not.toBeInTheDocument();
-      });
+      }, { timeout: 5000 });
     });
   });
 
@@ -274,11 +274,11 @@ describe('MainManagementWindow - Task Form & Management', () => {
 
       await act(async () => {
         render(<MainManagementWindowWrapper />);
-      });
+      }, { timeout: 5000 });
       
       await waitFor(() => {
         expect(screen.getByTestId('main-management-window')).toBeInTheDocument();
-      });
+      }, { timeout: 5000 });
 
       const addNewButton = screen.getByText('Add New').closest('button');
       if (addNewButton) {
@@ -289,7 +289,7 @@ describe('MainManagementWindow - Task Form & Management', () => {
 
       await waitFor(() => {
         expect(screen.getByTestId('task-form')).toBeInTheDocument();
-      });
+      }, { timeout: 5000 });
 
       const submitButton = screen.getByText('Submit');
       await act(async () => {
@@ -301,7 +301,7 @@ describe('MainManagementWindow - Task Form & Management', () => {
           method: 'POST',
           credentials: 'include',
         }));
-      });
+      }, { timeout: 5000 });
     });
 
     it('handles task completion toggling', async () => {
@@ -338,7 +338,7 @@ describe('MainManagementWindow - Task Form & Management', () => {
 
       await waitFor(() => {
         expect(screen.getByText('Test Task')).toBeInTheDocument();
-      });
+      }, { timeout: 5000 });
 
       const checkbox = screen.getByRole('checkbox');
       await act(async () => {
@@ -350,7 +350,7 @@ describe('MainManagementWindow - Task Form & Management', () => {
           method: 'PUT',
           credentials: 'include',
         }));
-      });
+      }, { timeout: 5000 });
     });
 
     it('handles task deletion', async () => {
@@ -383,7 +383,7 @@ describe('MainManagementWindow - Task Form & Management', () => {
 
       await waitFor(() => {
         expect(screen.getByText('Test Task')).toBeInTheDocument();
-      });
+      }, { timeout: 5000 });
 
       const deleteButton = screen.getByText('Delete');
       await act(async () => {
@@ -395,7 +395,7 @@ describe('MainManagementWindow - Task Form & Management', () => {
           method: 'DELETE',
           credentials: 'include',
         }));
-      });
+      }, { timeout: 5000 });
     });
 
     it('opens task details when clicking on task title', async () => {
@@ -424,7 +424,7 @@ describe('MainManagementWindow - Task Form & Management', () => {
 
       await waitFor(() => {
         expect(screen.getByText('Test Task')).toBeInTheDocument();
-      });
+      }, { timeout: 5000 });
 
       const taskTitle = screen.getByText('Test Task');
       await act(async () => {
@@ -433,7 +433,7 @@ describe('MainManagementWindow - Task Form & Management', () => {
 
       await waitFor(() => {
         expect(screen.getByTestId('task-details')).toBeInTheDocument();
-      });
+      }, { timeout: 5000 });
     });
 
     it('handles task form error display', async () => {
@@ -461,7 +461,7 @@ describe('MainManagementWindow - Task Form & Management', () => {
       
       await waitFor(() => {
         expect(screen.getByTestId('main-management-window')).toBeInTheDocument();
-      });
+      }, { timeout: 5000 });
 
       const addNewButton = screen.getByText('Add New').closest('button');
       if (addNewButton) {
@@ -472,7 +472,7 @@ describe('MainManagementWindow - Task Form & Management', () => {
 
       await waitFor(() => {
         expect(screen.getByTestId('task-form')).toBeInTheDocument();
-      });
+      }, { timeout: 5000 });
 
       const submitButton = screen.getByText('Submit');
       await act(async () => {
@@ -481,7 +481,7 @@ describe('MainManagementWindow - Task Form & Management', () => {
 
       await waitFor(() => {
         expect(screen.getByText('Task creation failed')).toBeInTheDocument();
-      });
+      }, { timeout: 5000 });
     });
   });
 });

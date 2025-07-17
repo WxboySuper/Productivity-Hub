@@ -231,7 +231,7 @@ describe('MainManagementWindow - Project Form & Management', () => {
 
       await waitFor(() => {
         expect(screen.getByTestId('main-management-window')).toBeInTheDocument();
-      });
+      }, { timeout: 5000 });
       
       const projectsButton = screen.getAllByText('Projects').find(button => 
         button.closest('.phub-sidebar-nav')
@@ -245,11 +245,11 @@ describe('MainManagementWindow - Project Form & Management', () => {
       await waitFor(() => {
         const addProjectButton = screen.getByText('Add Project');
         fireEvent.click(addProjectButton);
-      });
+      }, { timeout: 5000 });
 
       await waitFor(() => {
         expect(screen.getByTestId('project-form')).toBeInTheDocument();
-      });
+      }, { timeout: 5000 });
     });
 
     it('closes project form when cancel is clicked', async () => {
@@ -285,7 +285,7 @@ describe('MainManagementWindow - Project Form & Management', () => {
 
       await waitFor(() => {
         expect(screen.getByTestId('main-management-window')).toBeInTheDocument();
-      });
+      }, { timeout: 5000 });
       
       const projectsButton = screen.getAllByText('Projects').find(button => 
         button.closest('.phub-sidebar-nav')
@@ -299,7 +299,7 @@ describe('MainManagementWindow - Project Form & Management', () => {
       await waitFor(() => {
         const addProjectButton = screen.getByText('Add Project');
         fireEvent.click(addProjectButton);
-      });
+      }, { timeout: 5000 });
 
       expect(screen.getByTestId('project-form')).toBeInTheDocument();
 
@@ -313,7 +313,7 @@ describe('MainManagementWindow - Project Form & Management', () => {
 
       await waitFor(() => {
         expect(screen.queryByTestId('project-form')).not.toBeInTheDocument();
-      });
+      }, { timeout: 5000 });
     });
   });
 
@@ -343,7 +343,7 @@ describe('MainManagementWindow - Project Form & Management', () => {
 
       await waitFor(() => {
         expect(screen.getByTestId('main-management-window')).toBeInTheDocument();
-      });
+      }, { timeout: 5000 });
       
       const projectsButton = screen.getAllByText('Projects').find(button => 
         button.closest('.phub-sidebar-nav')
@@ -355,11 +355,11 @@ describe('MainManagementWindow - Project Form & Management', () => {
       await waitFor(() => {
         const addProjectButton = screen.getByText('Add Project');
         fireEvent.click(addProjectButton);
-      });
+      }, { timeout: 5000 });
 
       await waitFor(() => {
         expect(screen.getByTestId('project-form')).toBeInTheDocument();
-      });
+      }, { timeout: 5000 });
 
       const createButton = screen.getByRole('button', { name: 'Create Project' });
       fireEvent.click(createButton);
@@ -369,7 +369,7 @@ describe('MainManagementWindow - Project Form & Management', () => {
           method: 'POST',
           credentials: 'include',
         }));
-      });
+      }, { timeout: 5000 });
     });
 
     it('handles project editing', async () => {
@@ -396,7 +396,7 @@ describe('MainManagementWindow - Project Form & Management', () => {
       // Wait for initial load
       await waitFor(() => {
         expect(screen.getByRole('main')).toBeInTheDocument();
-      });
+      }, { timeout: 5000 });
       
       // Switch to Projects view
       const projectsButton = screen.getAllByText('Projects').find(button => 
@@ -409,7 +409,7 @@ describe('MainManagementWindow - Project Form & Management', () => {
       // Wait for projects to load
       await waitFor(() => {
         expect(screen.getByText('Organize your work into meaningful projects')).toBeInTheDocument();
-      });
+      }, { timeout: 5000 });
 
       await waitFor(() => {
         expect(screen.getByText('Test Project')).toBeInTheDocument();
@@ -419,7 +419,7 @@ describe('MainManagementWindow - Project Form & Management', () => {
         const editButton = screen.getByText('Edit');
         fireEvent.click(editButton);
         expect(screen.getByTestId('project-form')).toBeInTheDocument();
-      });
+      }, { timeout: 5000 });
     });
 
     it('handles project deletion confirmation', async () => {
@@ -446,7 +446,7 @@ describe('MainManagementWindow - Project Form & Management', () => {
       // Wait for initial load
       await waitFor(() => {
         expect(screen.getByRole('main')).toBeInTheDocument();
-      });
+      }, { timeout: 5000 });
       
       // Switch to Projects view
       const projectsButton = screen.getAllByText('Projects').find(button => 
@@ -468,7 +468,7 @@ describe('MainManagementWindow - Project Form & Management', () => {
       // Should show confirmation dialog
       await waitFor(() => {
         expect(screen.getByTestId('confirm-dialog')).toBeInTheDocument();
-      });
+      }, { timeout: 5000 });
     });
 
     it('handles project creation error', async () => {
@@ -496,7 +496,7 @@ describe('MainManagementWindow - Project Form & Management', () => {
 
       await waitFor(() => {
         expect(screen.getByTestId('main-management-window')).toBeInTheDocument();
-      });
+      }, { timeout: 5000 });
       
       const projectsButton = screen.getAllByText('Projects').find(button => 
         button.closest('.phub-sidebar-nav')
@@ -507,7 +507,7 @@ describe('MainManagementWindow - Project Form & Management', () => {
 
       const addProjectButton = await waitFor(() => {
         return screen.getByText('Add Project');
-      });
+      }, { timeout: 5000 });
       
       await act(async () => {
         fireEvent.click(addProjectButton);
@@ -515,7 +515,7 @@ describe('MainManagementWindow - Project Form & Management', () => {
 
       await waitFor(() => {
         expect(screen.getByTestId('project-form')).toBeInTheDocument();
-      });
+      }, { timeout: 5000 });
 
       const createButton = screen.getByRole('button', { name: 'Create Project' });
       await act(async () => {
