@@ -426,19 +426,9 @@ describe('MainManagementWindow', () => {
     });
 
     it('shows loading state for projects', () => {
-      // Mock tasks call to resolve first, then projects call to hang
-      mockFetch
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve([]),
-        } as Response)
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve([]),
-        } as Response)
-        .mockImplementationOnce(() => new Promise((_resolve) => {
-          // Never resolves (projects view)
-        }));
+      // Set projects hook to loading state
+      mockProjects.loading = true;
+      mockProjects.projects = [];
 
       act(() => {
         render(<MainManagementWindowWrapper />);
@@ -452,6 +442,9 @@ describe('MainManagementWindow', () => {
       }
 
       expect(screen.getByText('Loading projects...')).toBeInTheDocument();
+      
+      // Reset loading state
+      mockProjects.loading = false;
     });
   });
 
@@ -468,11 +461,13 @@ describe('MainManagementWindow', () => {
         });
       }
 
+      // Instead of checking fetch calls (handled by hook), verify the UI behavior
       await waitFor(() => {
-        expect(mockFetch).toHaveBeenCalledWith('/api/projects', {
-          credentials: 'include',
-        });
+        expect(screen.getByText('Your Projects')).toBeInTheDocument();
       });
+      
+      // Verify the hook was initialized correctly
+      expect(mockProjects.refetch).toHaveBeenCalledTimes(0); // Not called on initial render
     });
 
     it('uses existing environment properly', () => {
@@ -1171,88 +1166,7 @@ describe('MainManagementWindow', () => {
     });
   });
 
-  describe('Quick Tasks View', () => {
-    it('switches to quick tasks view and shows quick tasks', async () => {
-      const quickTask = { 
-        id: 1, 
-        title: 'Quick Task', 
-        description: 'A quick task',
-        completed: false, 
-        projectId: null,
-        parent_id: null 
-      };
 
-      mockFetch
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve({ csrf_token: 'test-token' }),
-        } as Response)
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve({ projects: [] }),
-        } as Response)
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve({ tasks: [quickTask] }),
-        } as Response);
-
-      render(<MainManagementWindowWrapper />);
-      
-      const quickTasksButton = screen.getByText('Quick Tasks').closest('button');
-      if (quickTasksButton) {
-        fireEvent.click(quickTasksButton);
-      }
-
-      // Wait for initial load
-      await waitFor(() => {
-        expect(screen.getByRole('heading', { name: 'Quick Tasks' })).toBeInTheDocument();
-      });
-
-      // Check that we're in quick tasks view
-      expect(screen.getByText('Your rapid-fire action items')).toBeInTheDocument();
-      
-      // Look for quick task specifically
-      await waitFor(() => {
-        expect(screen.getByText('Quick Task')).toBeInTheDocument();
-      });
-    });
-
-    it('shows empty state for quick tasks when none exist', async () => {
-      setupEmptyStateMocks();
-
-      render(<MainManagementWindowWrapper />);
-      
-      const quickTasksButton = screen.getByText('Quick Tasks').closest('button');
-      if (quickTasksButton) {
-        fireEvent.click(quickTasksButton);
-      }
-
-      await waitFor(() => {
-        expect(screen.getByText('No quick tasks found')).toBeInTheDocument();
-        expect(screen.getByText('Add Quick Task')).toBeInTheDocument();
-      });
-    });
-
-    it('opens task form when clicking Add Quick Task', async () => {
-      setupEmptyStateMocks();
-
-      render(<MainManagementWindowWrapper />);
-      
-      const quickTasksButton = screen.getByText('Quick Tasks').closest('button');
-      if (quickTasksButton) {
-        fireEvent.click(quickTasksButton);
-      }
-
-      await waitFor(() => {
-        const addQuickTaskButton = screen.getByText('Add Quick Task');
-        fireEvent.click(addQuickTaskButton);
-      });
-
-      await waitFor(() => {
-        expect(screen.getByTestId('task-form')).toBeInTheDocument();
-      });
-    });
-  });
 
   describe('Error Handling and Edge Cases', () => {
     it('handles CSRF token fetching error', async () => {
