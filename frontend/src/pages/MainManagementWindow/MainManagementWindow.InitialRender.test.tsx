@@ -62,6 +62,22 @@ const MainManagementWindowWrapper: React.FC = () => (
   </BrowserRouter>
 );
 
+function within(sidebar: HTMLElement) {
+  return {
+    getByText: (text: string) => {
+      const elements = Array.from(sidebar.querySelectorAll('*'));
+      const match = elements.find(
+        el => el.textContent?.trim() === text
+      );
+      if (!match) {
+        throw new Error(`Unable to find element with text: ${text}`);
+      }
+      return match;
+    },
+    // Add more queries if needed
+  };
+}
+
 // Setup common mocks
 describe('MainManagementWindow - Initial Render & Sidebar', () => {
   beforeEach(() => {
@@ -246,19 +262,3 @@ describe('MainManagementWindow - Initial Render & Sidebar', () => {
     });
   });
 });
-
-function within(sidebar: HTMLElement) {
-  return {
-    getByText: (text: string) => {
-      const elements = Array.from(sidebar.querySelectorAll('*'));
-      const match = elements.find(
-        el => el.textContent?.trim() === text
-      );
-      if (!match) {
-        throw new Error(`Unable to find element with text: ${text}`);
-      }
-      return match;
-    },
-    // Add more queries if needed
-  };
-}

@@ -155,10 +155,11 @@ type TaskFormProps = {
 vi.mock('../../components/TaskForm', () => ({
   default: ({ open, onSubmit, onClose, error }: TaskFormProps) => {
     if (!open) return null;
+    const handleSubmit = () => onSubmit({ title: 'Test Task', description: 'Test Description' });
     return (
       <div data-testid="task-form">
         <h2>Task Form</h2>
-        <button onClick={() => onSubmit({ title: 'Test Task', description: 'Test Description' })}>
+        <button onClick={handleSubmit}>
           Submit
         </button>
         <button onClick={onClose}>Cancel</button>
@@ -178,10 +179,11 @@ type ProjectFormProps = {
 vi.mock('../../components/ProjectForm', () => ({
   default: ({ open, onSubmit, onClose, error }: ProjectFormProps) => {
     if (!open) return null;
+    const handleSubmit = () => onSubmit({ name: 'Test Project', description: 'Test Description' });
     return (
       <div data-testid="project-form">
         <h2>Project Form</h2>
-        <button onClick={() => onSubmit({ name: 'Test Project', description: 'Test Description' })}>
+        <button onClick={handleSubmit}>
           Submit
         </button>
         <button onClick={onClose}>Cancel</button>
@@ -202,14 +204,16 @@ type TaskDetailsProps = {
 vi.mock('../../components/TaskDetails', () => ({
   default: ({ open, task, onClose, onUpdate, onDelete }: TaskDetailsProps) => {
     if (!open) return null;
+    const handleToggleComplete = () => onUpdate({ ...task, completed: !task.completed });
+    const handleDelete = () => onDelete(task.id);
     return (
       <div data-testid="task-details">
         <h2>Task Details</h2>
         <div>{task?.title}</div>
-        <button onClick={() => onUpdate({ ...task, completed: !task.completed })}>
+        <button onClick={handleToggleComplete}>
           Toggle Complete
         </button>
-        <button onClick={() => onDelete(task.id)}>Delete</button>
+        <button onClick={handleDelete}>Delete</button>
         <button onClick={onClose}>Close</button>
       </div>
     );
