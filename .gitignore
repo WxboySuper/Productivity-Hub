@@ -23,6 +23,15 @@ Thumbs.db
 
 # Misc
 *.sqlite3
+.vscode/*
+.vscode
+.qodo
+.qodo/*
 
 # db
 */productivity_hub.db
+
+# Temp Docs
+docs/temp/*
+docs/temp
+*/app.backup.py

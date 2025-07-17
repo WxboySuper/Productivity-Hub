@@ -34,58 +34,57 @@ export default function PasswordResetConfirmPage() {
   const handleConfirmPasswordChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setConfirmPassword(e.target.value);
   }, []);
+  const handleSubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError(null);
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+    setLoading(true);
+    try {
+      let csrfToken = getCookie('_csrf_token');
+      if (!csrfToken) {
+        csrfToken = await ensureCsrfToken();
+      }
+      const res = await fetch("/api/password-reset/confirm", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
+        },
+        credentials: 'include',
+        body: JSON.stringify({ token: resetToken, new_password: password }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Password reset failed.");
+      } else {
+        setError("Password reset successful! Redirecting to login page in 3 seconds...");
+        setTimeout(() => {
+          navigate("/login");
+        }, 3000);
+      }
+    } catch (err) {
+      setError("Network error. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }, [password, confirmPassword, navigate, resetToken]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-100 via-blue-200 to-green-100">
+    <div className="min-h-screen flex flex-col phub-main-content">
       <AppHeader />
-      <main className="flex-1 flex flex-col items-center justify-center">
-        <div className="w-full max-w-md bg-white/90 rounded-xl shadow-2xl p-10 flex flex-col items-center border border-blue-200 backdrop-blur-sm z-10 mt-10">
-          <h2 className="text-2xl font-bold mb-6 text-center">Set New Password</h2>
+      <main className="flex-1 flex flex-col items-center justify-center px-4">
+        <div className="w-full max-w-md bg-white/95 rounded-xl shadow-2xl p-10 flex flex-col items-center border border-blue-200 backdrop-blur-sm z-10 mt-10 phub-glass">
+          <h2 className="text-2xl font-bold mb-6 text-center phub-text-gradient">Set New Password</h2>
           {error && (
             <div className="mb-4 flex items-center gap-2 rounded border border-red-300 bg-red-50 px-4 py-3 text-red-800 shadow-sm animate-fade-in">
               <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12A9 9 0 1 1 3 12a9 9 0 0 1 18 0Z" /></svg>
               <span className="font-semibold">{error}</span>
             </div>
           )}
-          <form
-            onSubmit={async (e) => {
-              e.preventDefault();
-              setError(null);
-              if (password !== confirmPassword) {
-                setError("Passwords do not match.");
-                return;
-              }
-              setLoading(true);
-              try {
-                let csrfToken = getCookie('_csrf_token');
-                if (!csrfToken) {
-                  csrfToken = await ensureCsrfToken();
-                }
-                const res = await fetch("/api/password-reset/confirm", {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                    ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
-                  },
-                  credentials: 'include',
-                  body: JSON.stringify({ token: resetToken, new_password: password }),
-                });
-                const data = await res.json();
-                if (!res.ok) {
-                  setError(data.error || "Password reset failed.");
-                } else {
-                  setError("Password reset successful! Redirecting to login page in 3 seconds...");
-                  setTimeout(() => {
-                    navigate("/login");
-                  }, 3000);
-                }
-              } catch (err) {
-                setError("Network error. Please try again.");
-              } finally {
-                setLoading(false);
-              }
-            }}
-          >
+          <form onSubmit={handleSubmit}>
             <div className="mb-4 w-full">
               <label className="block mb-1 font-medium" htmlFor="password">
                 New Password
@@ -118,7 +117,7 @@ export default function PasswordResetConfirmPage() {
             </div>
             <button
               type="submit"
-              className="w-full bg-blue-600 text-white font-semibold py-2 rounded hover:bg-blue-700 transition"
+              className="phub-action-btn w-full justify-center"
               disabled={loading}
             >
               {loading ? "Resetting..." : "Set New Password"}

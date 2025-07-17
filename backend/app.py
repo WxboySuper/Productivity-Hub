@@ -1,25 +1,28 @@
+import os
 import sys
+import re
+import secrets
+import logging
+import warnings
+import smtplib
+import threading
+import calendar
+import zoneinfo
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-import os
-import logging
 from email_validator import validate_email, EmailNotValidError
 from werkzeug.security import generate_password_hash, check_password_hash
-import re
 from functools import wraps
 from datetime import datetime, timezone, timedelta
-import warnings
-import zoneinfo
-import secrets
-import smtplib
 from email.message import EmailMessage
 from string import Template
-import time
+from dateutil.rrule import rrule, rrulestr, DAILY, WEEKLY, MONTHLY
 
 # Explicitly check for .env file and load success
-DOTENV_PATH = os.path.join(os.path.dirname(__file__), '.env')
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+DOTENV_PATH = os.path.join(BASE_DIR, '.env')
 if not os.path.exists(DOTENV_PATH):
     print(f"ERROR: .env file not found at {DOTENV_PATH}. Application will exit.")
     sys.exit(1)
@@ -43,10 +46,9 @@ logger.info("Logging is configured.")
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
 # Set database path to be in the same directory as this file
-BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 db_path = os.path.join(BASE_DIR, 'productivity_hub.db')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', f'sqlite:///{db_path}')
-app.config['SESSION_COOKIE_SECURE'] = True  # Use secure cookies in production
+app.config['SESSION_COOKIE_SECURE'] = False  # Set to True in production with HTTPS
 app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevent JavaScript access to session cookies
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Set SameSite policy for session cookies
 
@@ -60,6 +62,20 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
 logger.info("SQLAlchemy is set up.")
+
+# Association table for task dependencies (blocked by/blocking)
+task_dependencies = db.Table(
+    'task_dependencies',
+    db.Column('blocker_id', db.Integer, db.ForeignKey('task.id', ondelete='CASCADE'), primary_key=True),
+    db.Column('blocked_id', db.Integer, db.ForeignKey('task.id', ondelete='CASCADE'), primary_key=True)
+)
+
+# Association table for linked/related tasks (non-blocking relationships)
+task_links = db.Table(
+    'task_links',
+    db.Column('task_a_id', db.Integer, db.ForeignKey('task.id', ondelete='CASCADE'), primary_key=True),
+    db.Column('task_b_id', db.Integer, db.ForeignKey('task.id', ondelete='CASCADE'), primary_key=True)
+)
 
 # Model Definitions
 class User(db.Model):
@@ -88,8 +104,35 @@ class Task(db.Model):
     completed = db.Column(db.Boolean, default=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     project_id = db.Column(db.Integer, db.ForeignKey('project.id', ondelete='SET NULL'), nullable=True)
+    parent_id = db.Column(db.Integer, db.ForeignKey('task.id', ondelete='CASCADE'), nullable=True)  # Subtask support
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     updated_at = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now())
+
+    # Subtasks relationship
+    subtasks = db.relationship('Task', backref=db.backref('parent', remote_side=[id]), lazy=True, cascade='all, delete-orphan')
+
+    # Task dependencies (blocked by/blocking)
+    blocked_by = db.relationship(
+        'Task', secondary=task_dependencies,
+        primaryjoin=id==task_dependencies.c.blocked_id,
+        secondaryjoin=id==task_dependencies.c.blocker_id,
+        backref=db.backref('blocking', lazy='dynamic'),
+        lazy='dynamic'
+    )
+
+    # Linked/related tasks (non-blocking relationships)
+    linked_tasks = db.relationship(
+        'Task', secondary=task_links,
+        primaryjoin=id==task_links.c.task_a_id,
+        secondaryjoin=id==task_links.c.task_b_id,
+        lazy='dynamic'
+    )
+
+    # Reminder fields
+    reminder_time = db.Column(db.DateTime, nullable=True)
+    reminder_recurring = db.Column(db.String, nullable=True)  # e.g., 'DAILY', 'WEEKLY', rrule string, etc.
+    reminder_snoozed_until = db.Column(db.DateTime, nullable=True)
+    reminder_enabled = db.Column(db.Boolean, default=True, nullable=False)
 
 class Project(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -112,6 +155,21 @@ class PasswordResetToken(db.Model):
 
     user = db.relationship('User', backref=db.backref('password_reset_tokens', lazy=True))
 
+class Notification(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    task_id = db.Column(db.Integer, db.ForeignKey('task.id'), nullable=True)
+    title = db.Column(db.String(100), nullable=True)  # Optional title for notifications
+    message = db.Column(db.String(255), nullable=False)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+    read = db.Column(db.Boolean, default=False, nullable=False)
+    snoozed_until = db.Column(db.DateTime, nullable=True)
+    type = db.Column(db.String(32), default='reminder', nullable=False)
+    show_at = db.Column(db.DateTime, nullable=True)  # When the notification should appear
+
+    user = db.relationship('User', backref=db.backref('notifications', lazy=True))
+    task = db.relationship('Task', backref=db.backref('notifications', lazy=True))
+
 # Helper Functions
 def init_db():
     """
@@ -122,7 +180,6 @@ def init_db():
     with app.app_context():
         db.create_all()
     logger.info("Database tables created.")
-
 
 def is_strong_password(password):
     """
@@ -154,7 +211,6 @@ def is_strong_password(password):
     logger.debug("Password is strong.")
     return True
 
-
 def get_current_user():
     """
     Retrieve the current user from the session.
@@ -172,43 +228,14 @@ def get_current_user():
     logger.info("No user_id in session.")
     return None
 
-
-def serialize_task(task):
+def error_response(message, code):
     """
-    Serialize a Task SQLAlchemy object to a dictionary for API responses.
-    Converts datetime fields to ISO 8601 strings. Logs serialization event.
+    Return a JSON error response with logging.
+    - Logs the error message.
+    - Returns a tuple (jsonify, code) for Flask endpoints.
     """
-    logger.debug("Serializing task: %s", task.id)
-    return {
-        "id": task.id,
-        "title": task.title,
-        "description": task.description,
-        "due_date": task.due_date.isoformat() if task.due_date else None,
-        "start_date": task.start_date.isoformat() if task.start_date else None,  # New
-        "priority": task.priority,
-        "recurrence": task.recurrence,  # New
-        "completed": task.completed,
-        "project_id": task.project_id,
-        "created_at": task.created_at.isoformat() if task.created_at else None,
-        "updated_at": task.updated_at.isoformat() if task.updated_at else None,
-    }
-
-
-def serialize_project(project):
-    """
-    Serialize a Project SQLAlchemy object to a dictionary for API responses.
-    Converts datetime fields to ISO 8601 strings. Logs serialization event.
-    """
-    logger.debug("Serializing project: %s", project.id)
-    return {
-        "id": project.id,
-        "name": project.name,
-        "description": project.description,
-        "user_id": project.user_id,
-        "created_at": project.created_at.isoformat() if project.created_at else None,
-        "updated_at": project.updated_at.isoformat() if project.updated_at else None,
-    }
-
+    logger.error(message)
+    return jsonify({"error": message}), code
 
 def login_required(f):
     """
@@ -221,21 +248,25 @@ def login_required(f):
         user = get_current_user()
         if not user:
             logger.warning("Unauthorized access attempt.")
-            return jsonify({"error": "Authentication required"}), 401
+            return error_response("Authentication required", 401)
         return f(*args, **kwargs)
     return decorated_function
 
-
 def generate_csrf_token():
     """
-    Generate a CSRF token and store it in the session if not present.
+    Generate a CSRF token and return it. 
+    The token should be set as a cookie by the caller.
     Returns the CSRF token string.
     """
-    if "_csrf_token" not in session:
-        logger.info("Generating new CSRF token.")
-        session["_csrf_token"] = secrets.token_hex(16)
-    return session["_csrf_token"]
-
+    # Check if token already exists in cookie
+    existing_token = request.cookies.get("_csrf_token")
+    if existing_token:
+        logger.debug("Using existing CSRF token from cookie.")
+        return existing_token
+    
+    # Generate new token
+    logger.info("Generating new CSRF token.")
+    return secrets.token_hex(16)
 
 def csrf_protect():
     """
@@ -252,265 +283,20 @@ def csrf_protect():
         if request.endpoint in ("login", "register"):
             logger.debug("CSRF check skipped for login/register endpoint.")
             return
-        token = session.get("_csrf_token")
+        
+        # Get CSRF token from cookie (not session)
+        token = request.cookies.get("_csrf_token")
         header_token = request.headers.get("X-CSRF-Token")
+        
+        logger.debug("CSRF token validation - Cookie: %s, Header: %s", 
+                    token[:10] + "..." if token else "None",
+                    header_token[:10] + "..." if header_token else "None")
+        
         if not token or token != header_token:
-            logger.warning("CSRF token missing or invalid.")
+            logger.warning("CSRF token missing or invalid. Cookie: %s, Header: %s", token, header_token)
             return error_response("Invalid or missing CSRF token", 403)
 
 app.before_request(csrf_protect)
-
-# Helper for configurable timezone
-DEFAULT_TIMEZONE = os.environ.get("DEFAULT_TIMEZONE", "UTC")
-try:
-    # Accept both 'UTC' and 'Etc/UTC' for compatibility
-    try:
-        local_tz = zoneinfo.ZoneInfo(DEFAULT_TIMEZONE)
-    except Exception:
-        local_tz = zoneinfo.ZoneInfo("Etc/UTC")
-except Exception:
-    local_tz = None
-
-
-def parse_local_datetime(dt_str):
-    """
-    Parse an ISO 8601 datetime string, applying the configured timezone if missing.
-    Returns a timezone-aware datetime object. Logs parsing events.
-    """
-    logger.debug("Parsing datetime string: %s", dt_str)
-    dt = datetime.fromisoformat(dt_str)
-    if dt.tzinfo is None and local_tz:
-        dt = dt.replace(tzinfo=local_tz)
-    logger.debug("Parsed datetime: %s", dt)
-    return dt
-
-# --- Global Helper Functions for Validation and Updates ---
-def validate_and_update_username(user, username):
-    """
-    Validate and update a user's username.
-    - Ensures the username is not empty and is unique.
-    - Updates the user object if valid and changed.
-    Returns True if updated, False if unchanged, or (jsonify, code) tuple on error.
-    """
-    logger.debug("Validating and updating username.")
-    if not username or not username.strip():
-        return error_response("Username is required and cannot be empty.", 400)
-    if username != user.username:
-        if User.query.filter_by(username=username).first():
-            return error_response("Username already exists.", 400)
-        logger.info("Username updated from %s to %s.", user.username, username.strip())
-        user.username = username.strip()
-        return True
-    logger.debug("Username unchanged.")
-    return False
-
-
-def validate_and_update_email(user, email):
-    """
-    Validate and update a user's email address.
-    - Ensures the email is not empty, valid, and unique.
-    - Updates the user object if valid and changed.
-    Returns True if updated, False if unchanged, or (jsonify, code) tuple on error.
-    """
-    logger.debug("Validating and updating email.")
-    if not email or not email.strip():
-        return error_response("Email is required and cannot be empty.", 400)
-    try:
-        validate_email(email)
-    except EmailNotValidError as e:
-        return error_response(str(e), 400)
-    if email != user.email:
-        if User.query.filter_by(email=email).first():
-            return error_response("Email already exists.", 400)
-        logger.info("Email updated from %s to %s.", user.email, email.strip())
-        user.email = email.strip()
-        return True
-    logger.debug("Email unchanged.")
-    return False
-
-
-def validate_and_update_password(user, password):
-    """
-    Validate and update a user's password.
-    - Ensures the password is not empty and meets strength requirements.
-    - Updates the user object if valid.
-    Returns True if updated, or (jsonify, code) tuple on error.
-    """
-    logger.debug("Validating and updating password.")
-    if not password or not password.strip():
-        return error_response("Password is required and cannot be empty.", 400)
-    if not is_strong_password(password):
-        return error_response("Password must be at least 8 characters long and include uppercase, lowercase, numbers, and special characters.", 400)
-    logger.info("Password updated for user: %s (ID: %s)", user.username, user.id)
-    user.set_password(password)
-    return True
-
-
-def validate_and_update_task_title(task, title):
-    """
-    Validate and update a task's title.
-    - Ensures the title is not empty.
-    - Updates the task object if valid.
-    Returns True if updated, or (jsonify, code) tuple on error.
-    """
-    if not title or not title.strip():
-        return error_response("Title is required and cannot be empty.", 400)
-    logger.info("Updating title for task_id=%s", task.id)
-    task.title = title.strip()
-    return True
-
-
-def validate_and_update_task_priority(task, priority):
-    """
-    Validate and update a task's priority.
-    - Ensures the priority is an integer between 0 and 3.
-    - Updates the task object if valid.
-    Returns True if updated, or (jsonify, code) tuple on error.
-    """
-    if not isinstance(priority, int) or not (0 <= priority <= 3):
-        return error_response("Priority must be an integer between 0 and 3.", 400)
-    logger.info("Updating priority for task_id=%s", task.id)
-    task.priority = priority
-    return True
-
-
-def validate_and_update_task_due_date(task, due_date_str):
-    """
-    Validate and update a task's due date.
-    - Parses the due date string as ISO 8601, applies timezone if missing.
-    - Updates the task object if valid, or clears if empty.
-    Returns True if updated, or (jsonify, code) tuple on error.
-    """
-    if due_date_str:
-        try:
-            task.due_date = parse_local_datetime(due_date_str)
-        except Exception:
-            return error_response("Invalid due_date format. Use ISO 8601 with or without timezone.", 400)
-    else:
-        logger.info("Clearing due_date for task_id=%s", task.id)
-        task.due_date = None
-    return True
-
-
-def validate_and_update_task_start_date(task, start_date_str):
-    """
-    Validate and update a task's start date.
-    - Parses the start date string as ISO 8601, applies timezone if missing.
-    - Updates the task object if valid, or clears if empty.
-    Returns True if updated, or (jsonify, code) tuple on error.
-    """
-    if start_date_str:
-        try:
-            task.start_date = parse_local_datetime(start_date_str)
-        except Exception:
-            return error_response("Invalid start_date format. Use ISO 8601 with or without timezone.", 400)
-    else:
-        logger.info("Clearing start_date for task_id=%s", task.id)
-        task.start_date = None
-    return True
-
-
-def validate_and_update_task_recurrence(task, recurrence):
-    """
-    Validate and update a task's recurrence rule.
-    - Accepts a string (e.g., 'daily', 'weekly', 'custom') or JSON string.
-    - Updates the task object if valid, or clears if empty.
-    Returns True if updated, or (jsonify, code) tuple on error.
-    """
-    if recurrence:
-        if not isinstance(recurrence, str):
-            return error_response("Recurrence must be a string.", 400)
-        logger.info("Updating recurrence for task_id=%s", task.id)
-        task.recurrence = recurrence.strip()
-    else:
-        logger.info("Clearing recurrence for task_id=%s", task.id)
-        task.recurrence = None
-    return True
-
-
-def validate_and_update_task_project(task, user, project_id):
-    """
-    Validate and update a task's project assignment.
-    - Ensures the project exists and is owned by the user, or clears if None.
-    - Updates the task object if valid.
-    Returns True if updated, or (jsonify, code) tuple on error.
-    """
-    if project_id is not None:
-        project = Project.query.filter_by(id=project_id, user_id=user.id).first()
-        if not project:
-            return error_response("Project not found or does not belong to the current user.", 404)
-        logger.info("Updating project_id for task_id=%s", task.id)
-        task.project_id = project_id
-    else:
-        logger.info("Clearing project_id for task_id=%s", task.id)
-        task.project_id = None
-    return True
-
-# --- Pure validation helpers for task creation ---
-def validate_task_start_date(start_date_str):
-    """
-    Validate and parse a start date string (ISO 8601, applies timezone if missing).
-    Returns (parsed_datetime, None) if valid, or (None, (jsonify, code)) on error.
-    """
-    if start_date_str:
-        try:
-            dt = parse_local_datetime(start_date_str)
-            return dt, None
-        except Exception:
-            return None, error_response("Invalid start_date format. Use ISO 8601 with or without timezone.", 400)
-    return None, None
-
-
-def validate_task_recurrence(recurrence):
-    """
-    Validate and clean a recurrence value (string or None).
-    Returns (cleaned_value, None) if valid, or (None, (jsonify, code)) on error.
-    """
-    if recurrence:
-        if not isinstance(recurrence, str):
-            return None, error_response("Recurrence must be a string.", 400)
-        return recurrence.strip(), None
-    return None, None
-
-
-def error_response(message, code):
-    """
-    Return a JSON error response with logging.
-    - Logs the error message.
-    - Returns a tuple (jsonify, code) for Flask endpoints.
-    """
-    logger.error(message)
-    return jsonify({"error": message}), code
-
-
-def get_object_or_404(model, object_id, user_id=None):
-    """
-    Retrieve a SQLAlchemy model instance by id (and user_id if provided).
-    Returns the object if found, or a JSON error response with 404 if not found.
-    """
-    query = model.query.filter_by(id=object_id)
-    if user_id is not None and hasattr(model, 'user_id'):
-        query = query.filter_by(user_id=user_id)
-    obj = query.first()
-    if not obj:
-        return error_response(f"{model.__name__} not found", 404)
-    return obj
-
-
-def paginate_query(query, page, per_page, serializer):
-    """
-    Paginate a SQLAlchemy query and serialize the results.
-    Returns a dict with items, total, pages, current_page, and per_page.
-    """
-    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
-    items = [serializer(item) for item in pagination.items]
-    return {
-        "items": items,
-        "total": pagination.total,
-        "pages": pagination.pages,
-        "current_page": pagination.page,
-        "per_page": pagination.per_page
-    }
 
 # Route Definitions
 @app.route('/')
@@ -520,7 +306,6 @@ def home():
     return "Welcome to the Productivity Hub Backend!"
 
 # User Endpoints (Registration, Login, Logout, Profile)
-# Route for User Registration
 @app.route('/api/register', methods=['POST'])
 def register():
     """User registration endpoint."""
@@ -528,7 +313,7 @@ def register():
 
     if not request.is_json:
         logger.error("Request must be JSON.")
-        return jsonify({"error": "Content-Type must be application/json"}), 400
+        return error_response("Request must be JSON", 400)
 
     data = request.get_json()
 
@@ -539,7 +324,7 @@ def register():
     # Validate Input
     if not username or not email or not password or not username.strip() or not email.strip() or not password.strip():
         logger.error("Missing required fields: username, email, or password.")
-        return jsonify({"error": "Missing required fields"}), 400
+        return error_response("Missing required fields: username, email, or password", 400)
 
     # Validate Email
     try:
@@ -547,12 +332,12 @@ def register():
         logger.info("Email %s is valid.", email)
     except EmailNotValidError as e:
         logger.error("Invalid email: %s", e)
-        return jsonify({"error": str(e)}), 400
+        return error_response(f"Invalid email: {e}", 400)
 
     # Validate Password Strength
     if not is_strong_password(password):
         logger.error("Weak password provided.")
-        return jsonify({"error": "Password must be at least 8 characters long and include uppercase, lowercase, numbers, and special characters."}), 400
+        return error_response("Password must be at least 8 characters long and include uppercase, lowercase, numbers, and special characters.", 400)
 
     # Remove pre-check for existing user and rely on DB constraints
     try:
@@ -565,13 +350,12 @@ def register():
         logger.error("User registration failed: %s", e)
         # Check for unique constraint violation
         if 'UNIQUE constraint failed' in str(e):
-            return jsonify({"error": "username or email already exists"}), 400
-        return jsonify({"error": "Registration failed"}), 500
+            return error_response("Username or email already exists", 400)
+        return error_response("Registration failed", 500)
 
     logger.info("User %s registered successfully.", username)
     return jsonify({"message": "User registered successfully"}), 201
 
-# Route for User Login/Logout
 @app.route('/api/login', methods=['POST'])
 def login():
     """User login endpoint."""
@@ -579,7 +363,7 @@ def login():
 
     if not request.is_json:
         logger.error("Request must be JSON.")
-        return jsonify({"error": "Content-Type must be application/json"}), 400
+        return error_response("Request must be JSON", 400)
 
     data = request.get_json()
     username_or_email = data.get('username') or data.get('email')
@@ -588,7 +372,7 @@ def login():
     # Validate Input
     if not username_or_email or not password or not username_or_email.strip() or not password.strip():
         logger.error("Missing required fields: username/email or password.")
-        return jsonify({"error": "Missing required fields"}), 400
+        return error_response("Missing required fields: username/email or password", 400)
 
     # Find user by username or email
     user = User.query.filter(
@@ -606,12 +390,28 @@ def login():
     if not user or not password_valid:
         # Log the invalid login attempt
         logger.warning("Invalid login attempt for user: %s", username_or_email)
-        return jsonify({"error": "Invalid username/email or password"}), 401
+        return error_response("Invalid username/email or password", 401)
 
     # Set session on successful login
     session['user_id'] = user.id
+    
+    # Force session to be saved
+    session.permanent = True
+    session.modified = True
+    
+    # Debug session after login
+    logger.debug("Session after login: %s", dict(session))
+    logger.debug("Session ID after login: %s", session.get('_id', 'No session ID'))
+    
     logger.info("User %s logged in successfully.", user.username)
-    return jsonify({"message": "Login successful"}), 200
+    return jsonify({
+        "message": "Login successful",
+        "session_debug": {
+            "user_id": session.get('user_id'),
+            "has_session_id": bool(session.get('_id')),
+            "session_keys": list(session.keys())
+        }
+    }), 200
 
 @app.route('/api/logout', methods=['POST'])
 def logout():
@@ -620,9 +420,48 @@ def logout():
     Clears the user's session, effectively logging them out.
     """
     logger.info("Logout endpoint accessed.")
-    session.pop('user_id', None)
+    session.clear()  # Clear the entire session
     logger.info("User logged out successfully.")
     return jsonify({"message": "Logout successful"}), 200
+
+@app.route('/api/auth/check', methods=['GET'])
+def check_auth():
+    """
+    Check if the user is currently authenticated.
+    Returns authentication status and user info if logged in.
+    """
+    # Debug session information
+    logger.debug("Session contents: %s", dict(session))
+    logger.debug("Session ID: %s", session.get('_id', 'No session ID'))
+    logger.debug("User ID from session: %s", session.get('user_id', 'No user ID'))
+    
+    user = get_current_user()
+    if user:
+        logger.info("Auth check: User %s (ID: %s) is authenticated", user.username, user.id)
+        return jsonify({
+            "authenticated": True,
+            "user": {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email
+            },
+            "session_info": {
+                "has_session_id": bool(session.get('_id')),
+                "has_user_id": bool(session.get('user_id')),
+                "session_keys": list(session.keys())
+            }
+        }), 200
+    else:
+        logger.info("Auth check: No authenticated user")
+        return jsonify({
+            "authenticated": False,
+            "user": None,
+            "session_info": {
+                "has_session_id": bool(session.get('_id')),
+                "has_user_id": bool(session.get('user_id')),
+                "session_keys": list(session.keys())
+            }
+        }), 200
 
 @app.route('/api/profile', methods=['GET'])
 @login_required
@@ -637,313 +476,116 @@ def get_profile():
         "email": user.email
     }), 200
 
-@app.route('/api/profile', methods=['PUT'])
+@app.route('/api/notifications', methods=['GET'])
 @login_required
-def update_profile():
-    """Update the current user's profile (username, email, password)."""
-    logger.info("Profile PUT endpoint accessed.")
+def get_notifications():
+    """Get all notifications for the current user."""
+    logger.info("Notifications GET endpoint accessed.")
     user = get_current_user()
-    data = request.get_json()
-    updated = False
+    notifications = Notification.query.filter_by(user_id=user.id).order_by(Notification.created_at.desc()).all()
+    
+    notifications_data = []
+    for notification in notifications:
+        notification_dict = {
+            "id": notification.id,
+            "title": notification.title,
+            "message": notification.message,
+            "read": notification.read,
+            "created_at": notification.created_at.isoformat(),
+            "task_id": notification.task_id
+        }
+        # Include show_at if it exists
+        if notification.show_at:
+            notification_dict["show_at"] = notification.show_at.isoformat()
+        # Include snoozed_until if it exists
+        if hasattr(notification, 'snoozed_until') and notification.snoozed_until:
+            notification_dict["snoozed_until"] = notification.snoozed_until.isoformat()
+        
+        notifications_data.append(notification_dict)
+    
+    logger.info("Returning %d notifications for user: %s", len(notifications_data), user.username)
+    return jsonify(notifications_data), 200
 
-    if "username" in data:
-        result = validate_and_update_username(user, data["username"])
-        if isinstance(result, tuple):
-            return result
-        if result:
-            updated = True
-    if "email" in data:
-        result = validate_and_update_email(user, data["email"])
-        if isinstance(result, tuple):
-            return result
-        if result:
-            updated = True
-    if "password" in data:
-        result = validate_and_update_password(user, data["password"])
-        if isinstance(result, tuple):
-            return result
-        if result:
-            updated = True
-
-    if not updated:
-        return error_response("No valid fields to update.", 400)
+@app.route('/api/notifications/<int:notification_id>/dismiss', methods=['POST'])
+@login_required
+def dismiss_notification(notification_id):
+    """Mark a notification as read/dismissed."""
+    logger.info("Notification dismiss endpoint accessed for notification ID: %s", notification_id)
+    user = get_current_user()
+    
+    notification = Notification.query.filter_by(id=notification_id, user_id=user.id).first()
+    if not notification:
+        logger.warning("Notification not found or doesn't belong to user: %s", notification_id)
+        return jsonify({"error": "Notification not found"}), 404
+    
+    notification.read = True
     db.session.commit()
-    logger.info("Profile updated successfully for user: %s (ID: %s)", user.username, user.id)
-    return jsonify({"message": "Profile updated successfully."}), 200
+    
+    logger.info("Notification %s dismissed by user: %s", notification_id, user.username)
+    return jsonify({"success": True}), 200
 
-# Routes for Task Management
-@app.route('/api/tasks', methods=['GET'])
+@app.route('/api/notifications/<int:notification_id>/snooze', methods=['POST'])
 @login_required
-def get_tasks():
-    """Get all tasks for the current user, paginated."""
-    logger.info("Tasks GET endpoint accessed.")
+def snooze_notification(notification_id):
+    """Snooze a notification for a specified duration."""
+    logger.info("Notification snooze endpoint accessed for notification ID: %s", notification_id)
     user = get_current_user()
+    
+    notification = Notification.query.filter_by(id=notification_id, user_id=user.id).first()
+    if not notification:
+        logger.warning("Notification not found or doesn't belong to user: %s", notification_id)
+        return jsonify({"error": "Notification not found"}), 404
+    
+    data = request.get_json()
+    if not data or 'minutes' not in data:
+        return jsonify({"error": "Minutes parameter is required"}), 400
+    
     try:
-        page = int(request.args.get('page', 1))
-        per_page = int(request.args.get('per_page', 20))
-    except ValueError:
-        logger.warning("Invalid pagination parameters for tasks GET.")
-        return error_response("Invalid pagination parameters.", 400)
-    per_page = max(1, min(per_page, 100))
-    logger.debug("Paginating tasks: page=%s, per_page=%s", page, per_page)
-    result = paginate_query(Task.query.filter_by(user_id=user.id).order_by(Task.id.desc()), page, per_page, serialize_task)
-    logger.info("Returning %s tasks for user: %s (ID: %s)", len(result['items']), user.username, user.id)
-    return jsonify({
-        "tasks": result['items'],
-        "total": result['total'],
-        "pages": result['pages'],
-        "current_page": result['current_page'],
-        "per_page": result['per_page']
-    }), 200
+        minutes = int(data['minutes'])
+        if minutes <= 0:
+            return jsonify({"error": "Minutes must be positive"}), 400
+        
+        # Calculate snooze time
+        snooze_until = datetime.now(timezone.utc) + timedelta(minutes=minutes)
+        
+        # Update notification with snooze time
+        if not hasattr(notification, 'snoozed_until'):
+            # If the column doesn't exist, we'll need to add it to the model
+            logger.warning("Notification model missing snoozed_until field")
+            return jsonify({"error": "Snooze functionality not available"}), 500
+        
+        notification.snoozed_until = snooze_until
+        db.session.commit()
+        
+        logger.info("Notification %s snoozed for %d minutes by user: %s", notification_id, minutes, user.username)
+        return jsonify({"success": True, "snoozed_until": snooze_until.isoformat()}), 200
+        
+    except (ValueError, TypeError):
+        return jsonify({"error": "Invalid minutes value"}), 400
 
-@app.route('/api/tasks/<int:task_id>', methods=['GET'])
-@login_required
-def get_task(task_id):
-    """Get a specific task by ID."""
-    logger.info("Task GET endpoint accessed for task_id=%s", task_id)
-    user = get_current_user()
-    task = get_object_or_404(Task, task_id, user.id)
-    if isinstance(task, tuple):
-        return task
-    logger.info("Returning task: %s for user: %s (ID: %s)", task.id, user.username, user.id)
-    return jsonify(serialize_task(task)), 200
-
-@app.route('/api/tasks', methods=['POST'])
-@login_required
-def create_task():
-    """Create a new task."""
-    logger.info("Task POST endpoint accessed.")
-    user = get_current_user()
-    data = request.get_json()
-    title = data.get('title')
-
-    if not title or not title.strip():
-        logger.error("Task creation failed: Title is required and cannot be empty.")
-        return error_response("Title is required and cannot be empty.", 400)
-
-    # Validate and parse priority
-    priority = data.get('priority', 1)
-    if not isinstance(priority, int) or not (0 <= priority <= 3):
-        logger.error("Task creation failed: Invalid priority value.")
-        return error_response("Priority must be an integer between 0 and 3.", 400)
-
-    # Parse due_date if provided
-    due_date = None
-    due_date_str = data.get('due_date')
-    if due_date_str:
-        try:
-            due_date = parse_local_datetime(due_date_str)
-        except Exception:
-            logger.error("Task creation failed: Invalid due_date format.")
-            return error_response("Invalid due_date format. Use ISO 8601 with or without timezone.", 400)
-
-    # Validate start_date and recurrence using helpers
-    start_date = None
-    start_date_str = data.get('start_date')
-    start_date, err = validate_task_start_date(start_date_str)
-    if err:
-        return err
-    recurrence = data.get('recurrence')
-    recurrence, err = validate_task_recurrence(recurrence)
-    if err:
-        return err
-
-    # Validation: if both start_date and due_date are set, start_date must be <= due_date
-    if start_date and due_date and start_date > due_date:
-        logger.error("Task creation failed: start_date cannot be after due_date.")
-        return error_response("start_date cannot be after due_date.", 400)
-
-    # Validate and check project ownership if project_id is provided
-    project_id = data.get('project_id')
-    if project_id is not None:
-        project = Project.query.filter_by(id=project_id, user_id=user.id).first()
-        if not project:
-            logger.error("Task creation failed: Project not found or not owned by user. project_id=%s", project_id)
-            return error_response("Project not found or does not belong to the current user.", 404)
-
-    task = Task(
-        title=title.strip(),
-        description=data.get('description'),
-        due_date=due_date,
-        start_date=start_date,  # Include new field
-        priority=priority,
-        recurrence=recurrence,  # Include new field
-        completed=data.get('completed', False),
-        user_id=user.id,
-        project_id=project_id
-    )
-
-    db.session.add(task)
-    db.session.commit()
-    logger.info("Task created successfully: task_id=%s for user: %s (ID: %s)", task.id, user.username, user.id)
-    return jsonify(serialize_task(task)), 201
-
-@app.route('/api/tasks/<int:task_id>', methods=['PUT'])
-@login_required
-def update_task(task_id):
-    """Update an existing task."""
-    logger.info("Task PUT endpoint accessed for task_id=%s", task_id)
-    user = get_current_user()
-    task = Task.query.filter_by(id=task_id, user_id=user.id).first()
-
-    if not task:
-        return error_response("Task not found", 404)
-
-    data = request.get_json()
-
-    # Map of field name to (validator function, value)
-    field_validators = [
-        ("title", validate_and_update_task_title),
-        ("due_date", validate_and_update_task_due_date),
-        ("priority", validate_and_update_task_priority),
-        ("project_id", lambda t, v: validate_and_update_task_project(t, user, v)),
-        ("start_date", validate_and_update_task_start_date),
-        ("recurrence", validate_and_update_task_recurrence),
-    ]
-    for field, validator in field_validators:
-        if field in data:
-            result = validator(task, data[field])
-            if isinstance(result, tuple):
-                return result
-
-    # Direct assignments for simple fields
-    if "description" in data:
-        logger.info("Updating description for task_id=%s", task.id)
-        task.description = data["description"]
-    if "completed" in data:
-        logger.info("Updating completed status for task_id=%s", task.id)
-        task.completed = data["completed"]
-
-    # Validation: if both start_date and due_date are set, start_date must be <= due_date
-    if task.start_date and task.due_date and task.start_date > task.due_date:
-        logger.error("Task update failed: start_date cannot be after due_date.")
-        return error_response("start_date cannot be after due_date.", 400)
-
-    db.session.commit()
-    logger.info("Task updated successfully: task_id=%s", task_id)
-    return jsonify(serialize_task(task)), 200
-
-@app.route('/api/tasks/<int:task_id>', methods=['DELETE'])
-@login_required
-def delete_task(task_id):
-    """Delete a task."""
-    logger.info("Task DELETE endpoint accessed for task_id=%s", task_id)
-    user = get_current_user()
-    task = Task.query.filter_by(id=task_id, user_id=user.id).first()
-
-    if not task:
-        logger.error("Task deletion failed: Task not found. task_id=%s", task_id)
-        return jsonify({"error": "Task not found"}), 404
-
-    db.session.delete(task)
-    db.session.commit()
-    logger.info("Task deleted successfully: task_id=%s", task_id)
-    return jsonify({"message": "Task deleted successfully"}), 200
-
-# Routes for Project Management
-@app.route('/api/projects', methods=['GET'])
-@login_required
-def get_projects():
-    """Get all projects for the current user, paginated."""
-    logger.info("Projects GET endpoint accessed.")
-    user = get_current_user()
-    try:
-        page = int(request.args.get('page', 1))
-        per_page = int(request.args.get('per_page', 20))
-    except ValueError:
-        logger.warning("Invalid pagination parameters for projects GET.")
-        return error_response("Invalid pagination parameters.", 400)
-    per_page = max(1, min(per_page, 100))
-    logger.debug("Paginating projects: page=%s, per_page=%s", page, per_page)
-    result = paginate_query(Project.query.filter_by(user_id=user.id).order_by(Project.id.desc()), page, per_page, serialize_project)
-    logger.info("Returning %s projects for user: %s (ID: %s)", len(result['items']), user.username, user.id)
-    return jsonify({
-        "projects": result['items'],
-        "total": result['total'],
-        "pages": result['pages'],
-        "current_page": result['current_page'],
-        "per_page": result['per_page']
-    }), 200
-
-@app.route('/api/projects/<int:project_id>', methods=['GET'])
-@login_required
-def get_project(project_id):
-    """Get a specific project by ID."""
-    logger.info("Project GET endpoint accessed for project_id=%s", project_id)
-    user = get_current_user()
-    project = get_object_or_404(Project, project_id, user.id)
-    if isinstance(project, tuple):
-        return project
-    logger.info("Returning project: %s for user: %s (ID: %s)", project.id, user.username, user.id)
-    return jsonify(serialize_project(project)), 200
-
-@app.route('/api/projects', methods=['POST'])
-@login_required
-def create_project():
-    """Create a new project."""
-    logger.info("Project POST endpoint accessed.")
-    user = get_current_user()
-    data = request.get_json()
-    name = data.get('name')
-    if not name or not name.strip():
-        logger.error("Project creation failed: Name is required and cannot be empty.")
-        return error_response("Name is required and cannot be empty.", 400)
-    project = Project(
-        name=name.strip(),
-        description=data.get('description'),
-        user_id=user.id
-    )
-    db.session.add(project)
-    db.session.commit()
-    logger.info("Project created successfully: project_id=%s for user: %s (ID: %s)", project.id, user.username, user.id)
-    return jsonify(serialize_project(project)), 201
-
-@app.route('/api/projects/<int:project_id>', methods=['PUT'])
-@login_required
-def update_project(project_id):
-    """Update an existing project."""
-    logger.info("Project PUT endpoint accessed for project_id=%s", project_id)
-    user = get_current_user()
-    project = get_object_or_404(Project, project_id, user.id)
-    if isinstance(project, tuple):
-        return project
-    data = request.get_json()
-    if 'name' in data:
-        if not data['name'] or not data['name'].strip():
-            logger.error("Project update failed: Name is required and cannot be empty.")
-            return error_response("Name is required and cannot be empty.", 400)
-        logger.info("Updating name for project_id=%s", project_id)
-        project.name = data['name'].strip()
-    if 'description' in data:
-        logger.info("Updating description for project_id=%s", project_id)
-        project.description = data['description']
-    db.session.commit()
-    logger.info("Project updated successfully: project_id=%s", project_id)
-    return jsonify(serialize_project(project)), 200
-
-@app.route('/api/projects/<int:project_id>', methods=['DELETE'])
-@login_required
-def delete_project(project_id):
-    """Delete a project."""
-    logger.info("Project DELETE endpoint accessed for project_id=%s", project_id)
-    user = get_current_user()
-    project = get_object_or_404(Project, project_id, user.id)
-    if isinstance(project, tuple):
-        return project
-    db.session.delete(project)
-    db.session.commit()
-    logger.info("Project deleted successfully: project_id=%s", project_id)
-    return jsonify({"message": "Project deleted successfully"}), 200
+@app.route('/api/csrf-token', methods=['GET'])
+def get_csrf_token():
+    """
+    Public endpoint to generate and set a CSRF token for the current session.
+    Returns the CSRF token in JSON and sets it in the session/cookie.
+    This allows unauthenticated users to obtain a CSRF token for password reset and other flows.
+    """
+    logger.info("CSRF token endpoint accessed.")
+    token = generate_csrf_token()
+    response = jsonify({"csrf_token": token})
+    # Set cookie explicitly for frontend JS if needed (optional, Flask session cookie is usually enough)
+    response.set_cookie('_csrf_token', token, httponly=False, samesite='Lax')
+    return response
 
 # Password Reset Routes
-# Route for requesting a password reset
 @app.route('/api/password-reset/request', methods=['POST'])
 def password_reset_request():
     """Request a password reset: accepts email, generates token, stores it, sends email (timing-equalized)."""
+    import time
     logger.info("Password reset request endpoint accessed.")
     if not request.is_json:
         logger.error("Password reset request failed: Request must be JSON.")
-        return jsonify({"error": "Content-Type must be application/json"}), 400
+        return error_response("Request must be JSON", 400)
 
     data = request.get_json()
     email = data.get('email')
@@ -952,7 +594,7 @@ def password_reset_request():
         # Always perform dummy email send for timing equalization
         send_email("dummy@localhost", "Password Reset Request", "If this were real, you'd get a reset link.")
         time.sleep(0.5)  # Simulate token generation delay
-        return jsonify({"message": "If the email exists, a password reset link will be sent."}), 200
+        return error_response("Email is required", 400)
 
     user = User.query.filter_by(email=email.strip()).first()
     # Always perform token generation and email send, even if user does not exist
@@ -969,7 +611,7 @@ def password_reset_request():
         email_body = render_password_reset_email(reset_link, expiration_minutes)
         email_sent = send_email(user.email, "Password Reset Request", email_body)
         if not email_sent:
-            logger.error("Password reset email failed to send to %s", user.email)
+            logger.error("Failed to send password reset email")
     else:
         # Simulate token generation and email send for non-existent user
         send_email("dummy@localhost", "Password Reset Request", "If this were real, you'd get a reset link.")
@@ -977,9 +619,8 @@ def password_reset_request():
     # Always return generic message
     if app.config.get('DEBUG', False) or app.config.get('TESTING', False):
         return jsonify({
-            "message": "If the email exists, a password reset link will be sent.",
-            "token": token,
-            "expires_at": expires_at.isoformat()
+            "message": f"Password reset email sent to {email}" if user else "Email not found, no reset sent",
+            "token": token if user else None  # Include token in test/debug mode
         }), 200
     return jsonify({"message": "If the email exists, a password reset link will be sent."}), 200
 
@@ -991,22 +632,22 @@ def password_reset_confirm():
     logger.info("Password reset confirmation endpoint accessed.")
     if not request.is_json:
         logger.error("Password reset confirm failed: Request must be JSON.")
-        return jsonify({"error": "Content-Type must be application/json"}), 400
+        return error_response("Request must be JSON", 400)
 
     data = request.get_json()
     token = data.get('token')
     new_password = data.get('new_password')
     if not token or not new_password:
         logger.error("Password reset confirm failed: Token and new_password are required.")
-        return jsonify({"error": "Token and new_password are required."}), 400
+        return error_response("Token and new_password are required", 400)
 
     prt = PasswordResetToken.query.filter_by(token=token).first()
     if not prt:
         logger.warning("Password reset confirm failed: Invalid token.")
-        return jsonify({"error": "Invalid or expired token."}), 400
+        return error_response("Invalid or expired token", 400)
     if prt.used:
         logger.warning("Password reset confirm failed: Token already used.")
-        return jsonify({"error": "This token has already been used."}), 400
+        return error_response("Invalid or expired token", 400)
 
     # Ensure expires_at is always timezone-aware (UTC)
     if prt.expires_at.tzinfo is None:
@@ -1015,22 +656,22 @@ def password_reset_confirm():
         expires_at_aware = prt.expires_at
     if expires_at_aware < datetime.now(timezone.utc):
         logger.warning("Password reset confirm failed: Token expired.")
-        return jsonify({"error": "Invalid or expired token."}), 400
+        return error_response("Invalid or expired token", 400)
 
     user = db.session.get(User, prt.user_id)
     if not user:
-        logger.error("Password reset confirm failed: User not found for token.")
-        return jsonify({"error": "Invalid token."}), 400
+        logger.error("Password reset confirm failed: User not found.")
+        return error_response("Invalid or expired token", 400)
 
     if not is_strong_password(new_password):
-        logger.warning("Password reset confirm failed: Weak password.")
-        return jsonify({"error": "Password does not meet strength requirements."}), 400
+        logger.error("Password reset confirm failed: Weak password.")
+        return error_response("Password must be at least 8 characters long and include uppercase, lowercase, numbers, and special characters.", 400)
 
     user.set_password(new_password)
     prt.used = True
     db.session.commit()
     logger.info("Password reset successful for user_id=%s", user.id)
-    return jsonify({"message": "Password has been reset successfully."}), 200
+    return jsonify({"message": "Password reset successful"}), 200
 
 # Email configuration (set these as environment variables)
 EMAIL_HOST = os.environ.get('EMAIL_HOST', 'localhost')
@@ -1039,7 +680,6 @@ EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
 EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'false').lower() == 'true'
 EMAIL_FROM = os.environ.get('EMAIL_FROM', 'noreply@localhost')
-
 
 def send_email(to_address, subject, body):
     """
@@ -1076,19 +716,521 @@ def render_password_reset_email(reset_link, expiration_minutes=60):
     )
     return template.substitute(reset_link=reset_link, expiration_minutes=expiration_minutes)
 
-@app.route('/api/csrf-token', methods=['GET'])
-def get_csrf_token():
-    """
-    Public endpoint to generate and set a CSRF token for the current session.
-    Returns the CSRF token in JSON and sets it in the session/cookie.
-    This allows unauthenticated users to obtain a CSRF token for password reset and other flows.
-    """
-    logger.info("CSRF token endpoint accessed.")
-    token = generate_csrf_token()
-    response = jsonify({"csrf_token": token})
-    # Set cookie explicitly for frontend JS if needed (optional, Flask session cookie is usually enough)
-    response.set_cookie('_csrf_token', token, httponly=False, samesite='Lax')
-    return response, 200
+# Project Endpoints
+@app.route('/api/projects', methods=['GET'])
+@login_required
+def get_projects():
+    """Get all projects for the current user, paginated."""
+    logger.info("Projects GET endpoint accessed.")
+    user = get_current_user()
+    
+    # Parse pagination parameters
+    try:
+        page = int(request.args.get('page', 1))
+        per_page = int(request.args.get('per_page', 20))
+    except ValueError:
+        logger.warning("Invalid pagination parameters for projects GET.")
+        return error_response("Invalid pagination parameters.", 400)
+    
+    per_page = max(1, min(per_page, 100))  # Limit per_page to reasonable range
+    logger.debug("Paginating projects: page=%s, per_page=%s", page, per_page)
+    
+    # Build query
+    query = Project.query.filter_by(user_id=user.id).order_by(Project.created_at.desc())
+    
+    # Paginate
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+    
+    projects_data = []
+    for project in pagination.items:
+        projects_data.append({
+            "id": project.id,
+            "name": project.name,
+            "description": project.description,
+            "created_at": project.created_at.isoformat(),
+            "updated_at": project.updated_at.isoformat()
+        })
+    
+    logger.info("Returning %d projects for user: %s", len(projects_data), user.username)
+    return jsonify({
+        "projects": projects_data,
+        "total": pagination.total,
+        "pages": pagination.pages,
+        "current_page": pagination.page,
+        "per_page": pagination.per_page
+    }), 200
+
+@app.route('/api/projects', methods=['POST'])
+@login_required
+def create_project():
+    """Create a new project for the current user."""
+    logger.info("Projects POST endpoint accessed.")
+    user = get_current_user()
+    
+    if not request.is_json:
+        return error_response("Request must be JSON", 400)
+    
+    data = request.get_json()
+    name = data.get('name')
+    description = data.get('description', '')
+    
+    if not name or not name.strip():
+        return error_response("Project name is required", 400)
+    
+    try:
+        project = Project(
+            name=name.strip(),
+            description=description.strip() if description else '',
+            user_id=user.id
+        )
+        db.session.add(project)
+        db.session.commit()
+        
+        logger.info("Project '%s' created successfully for user: %s", project.name, user.username)
+        return jsonify({
+            "id": project.id,
+            "name": project.name,
+            "description": project.description,
+            "created_at": project.created_at.isoformat(),
+            "updated_at": project.updated_at.isoformat()
+        }), 201
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error("Project creation failed: %s", e)
+        return error_response("Failed to create project", 500)
+
+@app.route('/api/projects/<int:project_id>', methods=['GET'])
+@login_required
+def get_project(project_id):
+    """Get a specific project by ID."""
+    logger.info("Projects GET endpoint accessed for project ID: %s", project_id)
+    user = get_current_user()
+    
+    project = Project.query.filter_by(id=project_id, user_id=user.id).first()
+    if not project:
+        return error_response("Project not found", 404)
+    
+    logger.info("Returning project '%s' for user: %s", project.name, user.username)
+    return jsonify({
+        "id": project.id,
+        "name": project.name,
+        "description": project.description,
+        "created_at": project.created_at.isoformat(),
+        "updated_at": project.updated_at.isoformat()
+    }), 200
+
+@app.route('/api/projects/<int:project_id>', methods=['PUT'])
+@login_required
+def update_project(project_id):
+    """Update an existing project."""
+    logger.info("Projects PUT endpoint accessed for project ID: %s", project_id)
+    user = get_current_user()
+    
+    project = Project.query.filter_by(id=project_id, user_id=user.id).first()
+    if not project:
+        return error_response("Project not found", 404)
+    
+    if not request.is_json:
+        return error_response("Request must be JSON", 400)
+    
+    data = request.get_json()
+    name = data.get('name')
+    description = data.get('description')
+    
+    if not name or not name.strip():
+        return error_response("Project name is required", 400)
+    
+    try:
+        project.name = name.strip()
+        if description is not None:
+            project.description = description.strip()
+        
+        db.session.commit()
+        
+        logger.info("Project '%s' updated successfully for user: %s", project.name, user.username)
+        return jsonify({
+            "id": project.id,
+            "name": project.name,
+            "description": project.description,
+            "created_at": project.created_at.isoformat(),
+            "updated_at": project.updated_at.isoformat()
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error("Project update failed: %s", e)
+        return error_response("Failed to update project", 500)
+
+@app.route('/api/projects/<int:project_id>', methods=['DELETE'])
+@login_required
+def delete_project(project_id):
+    """Delete an existing project and all its tasks."""
+    logger.info("Projects DELETE endpoint accessed for project ID: %s", project_id)
+    user = get_current_user()
+    
+    project = Project.query.filter_by(id=project_id, user_id=user.id).first()
+    if not project:
+        return error_response("Project not found", 404)
+    
+    try:
+        project_name = project.name
+        db.session.delete(project)
+        db.session.commit()
+        
+        logger.info("Project '%s' deleted successfully for user: %s", project_name, user.username)
+        return jsonify({"message": "Project deleted successfully"}), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error("Project deletion failed: %s", e)
+        return error_response("Failed to delete project", 500)
+
+# Task Endpoints
+@app.route('/api/tasks', methods=['GET'])
+@login_required
+def get_tasks():
+    """Get all tasks for the current user, paginated."""
+    logger.info("Tasks GET endpoint accessed.")
+    user = get_current_user()
+    
+    # Parse pagination parameters
+    try:
+        page = int(request.args.get('page', 1))
+        per_page = int(request.args.get('per_page', 20))
+    except ValueError:
+        logger.warning("Invalid pagination parameters for tasks GET.")
+        return error_response("Invalid pagination parameters.", 400)
+    
+    per_page = max(1, min(per_page, 100))  # Limit per_page to reasonable range
+    logger.debug("Paginating tasks: page=%s, per_page=%s", page, per_page)
+    
+    # Build query
+    query = Task.query.filter_by(user_id=user.id).order_by(Task.created_at.desc())
+    
+    # Paginate
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+    
+    tasks_data = []
+    for task in pagination.items:
+        task_dict = {
+            "id": task.id,
+            "title": task.title,
+            "description": task.description,
+            "completed": task.completed,
+            "priority": task.priority,
+            "project_id": task.project_id,
+            "parent_id": task.parent_id,
+            "created_at": task.created_at.isoformat(),
+            "updated_at": task.updated_at.isoformat()
+        }
+        
+        # Include optional fields if they exist
+        if task.due_date:
+            task_dict["due_date"] = task.due_date.isoformat()
+        if task.start_date:
+            task_dict["start_date"] = task.start_date.isoformat()
+        if task.recurrence:
+            task_dict["recurrence"] = task.recurrence
+            
+        # Add subtasks
+        subtasks = []
+        for subtask in task.subtasks:
+            subtask_dict = {
+                "id": subtask.id,
+                "title": subtask.title,
+                "description": subtask.description,
+                "completed": subtask.completed,
+                "priority": subtask.priority,
+                "created_at": subtask.created_at.isoformat(),
+                "updated_at": subtask.updated_at.isoformat()
+            }
+            if subtask.due_date:
+                subtask_dict["due_date"] = subtask.due_date.isoformat()
+            if subtask.start_date:
+                subtask_dict["start_date"] = subtask.start_date.isoformat()
+            subtasks.append(subtask_dict)
+        
+        task_dict["subtasks"] = subtasks
+        tasks_data.append(task_dict)
+    
+    logger.info("Returning %d tasks for user: %s", len(tasks_data), user.username)
+    return jsonify({
+        "tasks": tasks_data,
+        "total": pagination.total,
+        "pages": pagination.pages,
+        "current_page": pagination.page,
+        "per_page": pagination.per_page
+    }), 200
+
+@app.route('/api/tasks', methods=['POST'])
+@login_required
+def create_task():
+    """Create a new task for the current user."""
+    logger.info("Tasks POST endpoint accessed.")
+    user = get_current_user()
+    
+    if not request.is_json:
+        return error_response("Request must be JSON", 400)
+    
+    data = request.get_json()
+    title = data.get('title')
+    description = data.get('description', '')
+    project_id = data.get('project_id')
+    parent_id = data.get('parent_id')
+    priority = data.get('priority', 1)
+    due_date = data.get('due_date')
+    start_date = data.get('start_date')
+    recurrence = data.get('recurrence')
+    
+    if not title or not title.strip():
+        return error_response("Task title is required", 400)
+    
+    # Validate project_id belongs to user
+    if project_id:
+        project = Project.query.filter_by(id=project_id, user_id=user.id).first()
+        if not project:
+            return error_response("Invalid project ID", 400)
+    
+    # Validate parent_id belongs to user
+    if parent_id:
+        parent_task = Task.query.filter_by(id=parent_id, user_id=user.id).first()
+        if not parent_task:
+            return error_response("Invalid parent task ID", 400)
+    
+    try:
+        task = Task(
+            title=title.strip(),
+            description=description.strip() if description else '',
+            user_id=user.id,
+            project_id=project_id,
+            parent_id=parent_id,
+            priority=priority
+        )
+        
+        # Parse dates if provided
+        if due_date:
+            try:
+                task.due_date = datetime.fromisoformat(due_date.replace('Z', '+00:00'))
+            except ValueError:
+                return error_response("Invalid due_date format", 400)
+                
+        if start_date:
+            try:
+                task.start_date = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
+            except ValueError:
+                return error_response("Invalid start_date format", 400)
+        
+        # Validate that start_date is not after due_date
+        if task.start_date and task.due_date and task.start_date > task.due_date:
+            return error_response("start_date cannot be after due_date", 400)
+                
+        if recurrence:
+            task.recurrence = recurrence
+        
+        db.session.add(task)
+        db.session.commit()
+        
+        logger.info("Task '%s' created successfully for user: %s", task.title, user.username)
+        
+        task_dict = {
+            "id": task.id,
+            "title": task.title,
+            "description": task.description,
+            "completed": task.completed,
+            "priority": task.priority,
+            "project_id": task.project_id,
+            "parent_id": task.parent_id,
+            "created_at": task.created_at.isoformat(),
+            "updated_at": task.updated_at.isoformat(),
+            "subtasks": []
+        }
+        
+        if task.due_date:
+            task_dict["due_date"] = task.due_date.isoformat()
+        if task.start_date:
+            task_dict["start_date"] = task.start_date.isoformat()
+        if task.recurrence:
+            task_dict["recurrence"] = task.recurrence
+            
+        return jsonify(task_dict), 201
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error("Task creation failed: %s", e)
+        return error_response("Failed to create task", 500)
+
+@app.route('/api/tasks/<int:task_id>', methods=['GET'])
+@login_required
+def get_task(task_id):
+    """Get a specific task by ID."""
+    logger.info("Tasks GET endpoint accessed for task ID: %s", task_id)
+    user = get_current_user()
+    
+    task = Task.query.filter_by(id=task_id, user_id=user.id).first()
+    if not task:
+        return error_response("Task not found", 404)
+    
+    task_dict = {
+        "id": task.id,
+        "title": task.title,
+        "description": task.description,
+        "completed": task.completed,
+        "priority": task.priority,
+        "project_id": task.project_id,
+        "parent_id": task.parent_id,
+        "created_at": task.created_at.isoformat(),
+        "updated_at": task.updated_at.isoformat()
+    }
+    
+    if task.due_date:
+        task_dict["due_date"] = task.due_date.isoformat()
+    if task.start_date:
+        task_dict["start_date"] = task.start_date.isoformat()
+    if task.recurrence:
+        task_dict["recurrence"] = task.recurrence
+        
+    # Add subtasks
+    subtasks = []
+    for subtask in task.subtasks:
+        subtask_dict = {
+            "id": subtask.id,
+            "title": subtask.title,
+            "description": subtask.description,
+            "completed": subtask.completed,
+            "priority": subtask.priority,
+            "created_at": subtask.created_at.isoformat(),
+            "updated_at": subtask.updated_at.isoformat()
+        }
+        if subtask.due_date:
+            subtask_dict["due_date"] = subtask.due_date.isoformat()
+        if subtask.start_date:
+            subtask_dict["start_date"] = subtask.start_date.isoformat()
+        subtasks.append(subtask_dict)
+    
+    task_dict["subtasks"] = subtasks
+    
+    logger.info("Returning task '%s' for user: %s", task.title, user.username)
+    return jsonify(task_dict), 200
+
+@app.route('/api/tasks/<int:task_id>', methods=['PUT'])
+@login_required
+def update_task(task_id):
+    """Update an existing task."""
+    logger.info("Tasks PUT endpoint accessed for task ID: %s", task_id)
+    user = get_current_user()
+    
+    task = Task.query.filter_by(id=task_id, user_id=user.id).first()
+    if not task:
+        return error_response("Task not found", 404)
+    
+    if not request.is_json:
+        return error_response("Request must be JSON", 400)
+    
+    data = request.get_json()
+    
+    try:
+        # Update fields if provided
+        if 'title' in data:
+            if not data['title'] or not data['title'].strip():
+                return error_response("Task title is required", 400)
+            task.title = data['title'].strip()
+            
+        if 'description' in data:
+            task.description = data['description'].strip() if data['description'] else ''
+            
+        if 'completed' in data:
+            task.completed = bool(data['completed'])
+            
+        if 'priority' in data:
+            task.priority = data['priority']
+            
+        if 'project_id' in data:
+            if data['project_id']:
+                project = Project.query.filter_by(id=data['project_id'], user_id=user.id).first()
+                if not project:
+                    return error_response("Invalid project ID", 400)
+            task.project_id = data['project_id']
+            
+        if 'due_date' in data:
+            if data['due_date']:
+                try:
+                    task.due_date = datetime.fromisoformat(data['due_date'].replace('Z', '+00:00'))
+                except ValueError:
+                    return error_response("Invalid due_date format", 400)
+            else:
+                task.due_date = None
+                
+        if 'start_date' in data:
+            if data['start_date']:
+                try:
+                    task.start_date = datetime.fromisoformat(data['start_date'].replace('Z', '+00:00'))
+                except ValueError:
+                    return error_response("Invalid start_date format", 400)
+            else:
+                task.start_date = None
+                
+        if 'recurrence' in data:
+            task.recurrence = data['recurrence']
+        
+        # Validate that start_date is not after due_date
+        if task.start_date and task.due_date and task.start_date > task.due_date:
+            return error_response("start_date cannot be after due_date", 400)
+        
+        db.session.commit()
+        
+        logger.info("Task '%s' updated successfully for user: %s", task.title, user.username)
+        
+        task_dict = {
+            "id": task.id,
+            "title": task.title,
+            "description": task.description,
+            "completed": task.completed,
+            "priority": task.priority,
+            "project_id": task.project_id,
+            "parent_id": task.parent_id,
+            "created_at": task.created_at.isoformat(),
+            "updated_at": task.updated_at.isoformat(),
+            "subtasks": []
+        }
+        
+        if task.due_date:
+            task_dict["due_date"] = task.due_date.isoformat()
+        if task.start_date:
+            task_dict["start_date"] = task.start_date.isoformat()
+        if task.recurrence:
+            task_dict["recurrence"] = task.recurrence
+            
+        return jsonify(task_dict), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error("Task update failed: %s", e)
+        return error_response("Failed to update task", 500)
+
+@app.route('/api/tasks/<int:task_id>', methods=['DELETE'])
+@login_required
+def delete_task(task_id):
+    """Delete an existing task and all its subtasks."""
+    logger.info("Tasks DELETE endpoint accessed for task ID: %s", task_id)
+    user = get_current_user()
+    
+    task = Task.query.filter_by(id=task_id, user_id=user.id).first()
+    if not task:
+        return error_response("Task not found", 404)
+    
+    try:
+        task_title = task.title
+        db.session.delete(task)
+        db.session.commit()
+        
+        logger.info("Task '%s' deleted successfully for user: %s", task_title, user.username)
+        return jsonify({"message": "Task deleted successfully"}), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error("Task deletion failed: %s", e)
+        return error_response("Failed to delete task", 500)
 
 if __name__ == '__main__':
     init_db()

@@ -25,6 +25,10 @@ All endpoints require the user to be authenticated (session-based). Include the 
   - `recurrence`: string, optional, recurrence rule (e.g., 'daily', 'weekly', 'custom')
   - `completed`: boolean, completion status
   - `project_id`: integer, optional, associated project ID
+  - `reminder_time`: string, ISO 8601 datetime, when to show the reminder (optional)
+  - `reminder_recurring`: string, optional recurrence rule (e.g., 'DAILY', 'WEEKLY', or rrule string)
+  - `reminder_snoozed_until`: string, ISO 8601 datetime, if snoozed (optional, managed by backend/UI)
+  - `reminder_enabled`: boolean, whether reminders are enabled for this task (default: true)
 
 ### Get Task by ID
 **GET** `/api/tasks/<task_id>`
@@ -40,6 +44,10 @@ All endpoints require the user to be authenticated (session-based). Include the 
   - `recurrence`: string, optional, recurrence rule (e.g., 'daily', 'weekly', 'custom')
   - `completed`: boolean, completion status
   - `project_id`: integer, optional, associated project ID
+  - `reminder_time`: string, ISO 8601 datetime, when to show the reminder (optional)
+  - `reminder_recurring`: string, optional recurrence rule (e.g., 'DAILY', 'WEEKLY', or rrule string)
+  - `reminder_snoozed_until`: string, ISO 8601 datetime, if snoozed (optional, managed by backend/UI)
+  - `reminder_enabled`: boolean, whether reminders are enabled for this task (default: true)
 
 ### Create Task
 **POST** `/api/tasks`
@@ -299,20 +307,112 @@ All endpoints require the user to be authenticated (session-based). Include the 
 
 ---
 
+## Task Reminder & Notification Endpoints
+
+### Task Reminder Fields
+All task endpoints now support the following additional fields:
+- `reminder_time`: string, ISO 8601 datetime, when to show the reminder (optional)
+- `reminder_recurring`: string, optional recurrence rule (e.g., 'DAILY', 'WEEKLY', or rrule string)
+- `reminder_snoozed_until`: string, ISO 8601 datetime, if snoozed (optional, managed by backend/UI)
+- `reminder_enabled`: boolean, whether reminders are enabled for this task (default: true)
+
+These fields are included in all task API responses and can be set/updated via the create/update endpoints.
+
+---
+
+## Notification Endpoints
+
+### List Notifications
+**GET** `/api/notifications`
+- Returns a list of notifications for the current user (unread first, then by created_at desc).
+- Response: `200 OK`, JSON array of notifications.
+- Response fields:
+  - `id`: integer, notification ID
+  - `task_id`: integer, optional, related task ID
+  - `message`: string, notification message
+  - `created_at`: string, ISO 8601 datetime
+  - `read`: boolean, whether the notification has been read/dismissed
+  - `snoozed_until`: string, ISO 8601 datetime, if snoozed (optional)
+  - `type`: string, notification type (e.g., 'reminder')
+
+### Snooze Notification
+**POST** `/api/notifications/<notification_id>/snooze`
+- Snoozes a notification for a given number of minutes (default: 10).
+- Request JSON:
+  ```json
+  { "minutes": 10 }
+  ```
+- Response: `200 OK`, JSON message and new `snoozed_until` time.
+- Errors: `404` if notification not found.
+
+### Dismiss Notification
+**POST** `/api/notifications/<notification_id>/dismiss`
+- Marks a notification as read/dismissed.
+- Response: `200 OK`, JSON message.
+- Errors: `404` if notification not found.
+
+---
+
+## Reminder/Notification Model
+
+### Notification
+- `id`: integer, primary key
+- `user_id`: integer, foreign key to User
+- `task_id`: integer, foreign key to Task (nullable)
+- `message`: string, notification message
+- `created_at`: string, ISO 8601 datetime
+- `read`: boolean, whether the notification has been read
+- `snoozed_until`: string, ISO 8601 datetime, if snoozed (optional)
+- `type`: string, notification type (e.g., 'reminder')
+
+---
+
+## Reminder Generation
+- The backend automatically generates notifications for tasks with reminders enabled when the reminder time (and recurrence, if set) is due.
+- Notifications are only generated if not already present and unread for the same task/user.
+- Snoozed notifications will not reappear until after the snooze period.
+
+---
+
 ## Security Notes
 - **Production Warning:** If the app is not running in debug or development mode, a warning is shown at startup reminding you to check all security settings, including CSRF protection.
 - **Session Cookie Security:** The backend sets `SESSION_COOKIE_SECURE`, `SESSION_COOKIE_HTTPONLY`, and `SESSION_COOKIE_SAMESITE` in the Flask config for best security practices.
 - **CSRF Protection:**
-  - All state-changing API requests (POST, PUT, DELETE) require a valid CSRF token sent in the `X-CSRF-Token` header. The token is generated per session and must match the value stored in the session. Login and register endpoints are excluded for demonstration.
-  - If the CSRF token is missing or invalid, the API returns a 400 error.
-  - To obtain the CSRF token, call an authenticated endpoint and extract the token from the session (see below for usage).
+  - All state-changing API requests (POST, PUT, DELETE) require a valid CSRF token sent in the `X-CSRF-Token` header. The token is generated per session and stored as a cookie (`_csrf_token`), not in the Flask session.
+  - The backend validates CSRF tokens by comparing the `X-CSRF-Token` header value with the `_csrf_token` cookie value.
+  - If the CSRF token is missing or invalid, the API returns a 403 error with message "Invalid or missing CSRF token".
+  - Login and register endpoints are excluded from CSRF protection for initial authentication.
+  - To obtain the CSRF token, call the `/api/csrf-token` endpoint which sets the token cookie and returns it in JSON format.
 
 ---
 
 ## CSRF Token Usage
-- After login, call any authenticated GET endpoint (e.g., `/api/tasks`) to establish a session. The CSRF token is generated and stored in the session.
-- To retrieve the CSRF token, you may need to expose an endpoint or include it in a response (e.g., as a custom header or in the JSON response). For now, the backend generates it per session.
-- For all POST, PUT, DELETE requests, include the CSRF token in the `X-CSRF-Token` header.
+- **Obtaining Token:** Call `GET /api/csrf-token` to generate and receive a CSRF token. This endpoint is public and sets the `_csrf_token` cookie.
+- **Token Storage:** The CSRF token is stored in a cookie (`_csrf_token`) that is accessible to JavaScript (`httponly=false`).
+- **Token Transmission:** Include the token in the `X-CSRF-Token` header for all POST, PUT, DELETE requests.
+- **Token Validation:** Backend compares the header token with the cookie token for validation.
+
+### Example CSRF Usage:
+```javascript
+// Get CSRF token
+const response = await fetch('/api/csrf-token', { credentials: 'include' });
+const data = await response.json();
+const csrfToken = data.csrf_token;
+
+// Use token in subsequent requests
+await fetch('/api/tasks', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-CSRF-Token': csrfToken
+  },
+  credentials: 'include',
+  body: JSON.stringify(taskData)
+});
+
+// Or read from cookie directly
+const csrfToken = document.cookie.match(/_csrf_token=([^;]+)/)?.[1];
+```
 
 ---
 
@@ -353,3 +453,57 @@ All endpoints require the user to be authenticated (session-based). Include the 
 ---
 
 *Expand this file as you add more endpoints or features.*
+
+---
+
+## Task Dependencies Endpoints
+
+#### Get Task Dependencies
+**GET** `/api/tasks/<task_id>/dependencies`
+- Returns all dependencies for a task (tasks this task is blocked by, and tasks it is blocking).
+- Response: `200 OK`, JSON object:
+  ```json
+  {
+    "blocked_by": [ { ...task }, ... ],
+    "blocking": [ { ...task }, ... ]
+  }
+  ```
+- Each dependency is a full task object (see Get Task by ID).
+- Errors: `404` if task not found.
+
+#### Set Task Dependencies (Replace All)
+**POST** `/api/tasks/<task_id>/dependencies`
+- Sets the dependencies for a task, replacing all existing dependencies.
+- Request JSON:
+  ```json
+  {
+    "blocked_by": [2, 3],   // IDs of tasks this task is blocked by
+    "blocking": [4, 5]      // IDs of tasks this task is blocking
+  }
+  ```
+- Response: `200 OK`, JSON updated task object.
+- Errors: `404` if task not found.
+
+#### Patch Task Dependencies (Add/Remove)
+**PATCH** `/api/tasks/<task_id>/dependencies`
+- Add or remove specific dependencies for a task.
+- Request JSON:
+  ```json
+  {
+    "add_blocked_by": [2],
+    "remove_blocked_by": [3],
+    "add_blocking": [4],
+    "remove_blocking": [5]
+  }
+  ```
+- All fields are optional arrays of task IDs.
+- Response: `200 OK`, JSON updated task object.
+- Errors: `404` if task not found.
+
+#### Notes
+- All dependency endpoints require authentication and CSRF token for state-changing requests.
+- Only tasks owned by the current user can be set as dependencies.
+- The main task create/update endpoints also accept `blocked_by` and `blocking` arrays in the payload to set dependencies at creation/update time.
+- The `blocked_by` and `blocking` fields in the task object are arrays of task IDs.
+
+---

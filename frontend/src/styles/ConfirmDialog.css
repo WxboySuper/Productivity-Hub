@@ -1,0 +1,735 @@
+/* ====================================================================
+   PRODUCTIVITY HUB - CREATIVE FORM DESIGN SYSTEM
+   A unique, modern UI approach with better contrast and creative elements
+   ==================================================================== */
+
+/* === ROOT VARIABLES === */
+:root {
+  /* Primary Color Palette - Darker, more sophisticated */
+  --phub-primary: #1e40af;
+  --phub-primary-light: #3b82f6;
+  --phub-primary-dark: #1e3a8a;
+  --phub-secondary: #7c3aed;
+  --phub-secondary-light: #a855f7;
+  
+  /* Sophisticated Grays */
+  --phub-gray-50: #f8fafc;
+  --phub-gray-100: #f1f5f9;
+  --phub-gray-200: #e2e8f0;
+  --phub-gray-300: #cbd5e1;
+  --phub-gray-400: #94a3b8;
+  --phub-gray-500: #64748b;
+  --phub-gray-600: #475569;
+  --phub-gray-700: #334155;
+  --phub-gray-800: #1e293b;
+  --phub-gray-900: #0f172a;
+  
+  /* Success/Error Colors */
+  --phub-success: #059669;
+  --phub-success-light: #10b981;
+  --phub-error: #dc2626;
+  --phub-error-light: #ef4444;
+  --phub-warning: #d97706;
+  --phub-warning-light: #f59e0b;
+  
+  /* Creative Accent Colors */
+  --phub-accent-purple: #8b5cf6;
+  --phub-accent-pink: #ec4899;
+  --phub-accent-cyan: #06b6d4;
+  --phub-accent-emerald: #10b981;
+  
+  /* Form Specific Colors */
+  --phub-form-bg: #ffffff;
+  --phub-form-border: var(--phub-gray-200);
+  --phub-form-shadow: rgba(15, 23, 42, 0.08);
+  --phub-input-bg: var(--phub-gray-50);
+  --phub-input-border: var(--phub-gray-300);
+  --phub-input-focus: var(--phub-primary);
+  
+  /* Typography */
+  --phub-font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --phub-font-mono: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+  
+  /* Spacing */
+  --phub-space-xs: 0.25rem;
+  --phub-space-sm: 0.5rem;
+  --phub-space-md: 1rem;
+  --phub-space-lg: 1.5rem;
+  --phub-space-xl: 2rem;
+  --phub-space-2xl: 3rem;
+  
+  /* Border Radius */
+  --phub-radius-sm: 0.375rem;
+  --phub-radius-md: 0.5rem;
+  --phub-radius-lg: 0.75rem;
+  --phub-radius-xl: 1rem;
+  --phub-radius-2xl: 1.5rem;
+  
+  /* Shadows */
+  --phub-shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
+  --phub-shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.1), 0 2px 4px -1px rgba(15, 23, 42, 0.06);
+  --phub-shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.1), 0 4px 6px -2px rgba(15, 23, 42, 0.05);
+  --phub-shadow-xl: 0 20px 25px -5px rgba(15, 23, 42, 0.1), 0 10px 10px -5px rgba(15, 23, 42, 0.04);
+  
+  /* Transitions */
+  --phub-transition-fast: 0.15s ease-out;
+  --phub-transition-normal: 0.25s ease-out;
+  --phub-transition-slow: 0.4s ease-out;
+}
+
+/* === CREATIVE MODAL BACKDROP === */
+.phub-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(135deg, 
+    rgba(15, 23, 42, 0.4) 0%, 
+    rgba(30, 64, 175, 0.3) 35%, 
+    rgba(124, 58, 237, 0.25) 70%, 
+    rgba(15, 23, 42, 0.4) 100%);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center; /* Center vertically in viewport */
+  justify-content: center; /* Center horizontally in viewport */
+  z-index: 50;
+  animation: phub-backdrop-appear var(--phub-transition-normal) ease-out;
+  /* Ensure viewport centering */
+  min-height: 100vh;
+  max-height: 100vh;
+  overflow: auto;
+}
+
+@keyframes phub-backdrop-appear {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(8px);
+  }
+}
+
+/* === CREATIVE FORM CONTAINER === */
+.phub-form-container {
+  background: linear-gradient(145deg, 
+    rgba(255, 255, 255, 0.95) 0%, 
+    rgba(248, 250, 252, 0.98) 50%, 
+    rgba(241, 245, 249, 0.95) 100%);
+  border: 1px solid var(--phub-gray-200);
+  border-radius: var(--phub-radius-2xl);
+  box-shadow: 
+    var(--phub-shadow-xl),
+    0 0 0 1px rgba(255, 255, 255, 0.1) inset,
+    0 1px 0 rgba(255, 255, 255, 0.6) inset;
+  backdrop-filter: blur(20px);
+  width: 100%;
+  max-width: 42rem;
+  max-height: 90vh;
+  overflow: hidden;
+  animation: phub-form-appear var(--phub-transition-slow) cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+}
+
+@keyframes phub-form-appear {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* === FORM HEADER === */
+.phub-form-header {
+  background: linear-gradient(135deg, 
+    var(--phub-primary) 0%, 
+    var(--phub-secondary) 100%);
+  color: white;
+  padding: var(--phub-space-xl) var(--phub-space-xl) var(--phub-space-lg);
+  border-radius: var(--phub-radius-2xl) var(--phub-radius-2xl) 0 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.phub-form-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.1) 0%, 
+    transparent 50%, 
+    rgba(255, 255, 255, 0.05) 100%);
+  pointer-events: none;
+}
+
+.phub-form-title {
+  font-family: var(--phub-font-primary);
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  margin: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.phub-form-subtitle {
+  font-size: 0.875rem;
+  opacity: 0.9;
+  margin-top: var(--phub-space-xs);
+  position: relative;
+  z-index: 1;
+}
+
+/* === FORM BODY === */
+.phub-form-body {
+  padding: var(--phub-space-xl);
+  max-height: 60vh;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+
+.phub-form-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.phub-form-body::-webkit-scrollbar-track {
+  background: var(--phub-gray-100);
+  border-radius: var(--phub-radius-sm);
+}
+
+.phub-form-body::-webkit-scrollbar-thumb {
+  background: var(--phub-gray-400);
+  border-radius: var(--phub-radius-sm);
+}
+
+.phub-form-body::-webkit-scrollbar-thumb:hover {
+  background: var(--phub-gray-500);
+}
+
+/* === CREATIVE INPUT FIELD === */
+.phub-field-group {
+  margin-bottom: var(--phub-space-lg);
+  position: relative;
+}
+
+.phub-field-label {
+  display: block;
+  font-family: var(--phub-font-primary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--phub-gray-700);
+  margin-bottom: var(--phub-space-sm);
+  letter-spacing: 0.025em;
+  transition: color var(--phub-transition-fast);
+}
+
+.phub-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.phub-input {
+  width: 100%;
+  background: var(--phub-input-bg);
+  border: 2px solid var(--phub-input-border);
+  border-radius: var(--phub-radius-lg);
+  padding: 0.875rem 1rem;
+  font-family: var(--phub-font-primary);
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--phub-gray-800);
+  transition: all var(--phub-transition-normal);
+  box-shadow: var(--phub-shadow-sm);
+  outline: none;
+}
+
+.phub-input:focus {
+  background: white;
+  border-color: var(--phub-input-focus);
+  box-shadow: 
+    var(--phub-shadow-md),
+    0 0 0 3px rgba(30, 64, 175, 0.1);
+  transform: translateY(-1px);
+}
+
+.phub-input::placeholder {
+  color: var(--phub-gray-400);
+  font-weight: 400;
+}
+
+/* Input with icon */
+.phub-input-with-icon {
+  padding-left: 2.75rem;
+}
+
+.phub-input-icon {
+  position: absolute;
+  left: 0.875rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--phub-gray-500);
+  font-size: 1.125rem;
+  transition: color var(--phub-transition-fast);
+  pointer-events: none;
+}
+
+.phub-input:focus + .phub-input-icon,
+.phub-input-wrapper:focus-within .phub-input-icon {
+  color: var(--phub-input-focus);
+}
+
+/* === TEXTAREA === */
+.phub-textarea {
+  min-height: 100px;
+  resize: vertical;
+  font-family: var(--phub-font-primary);
+  line-height: 1.5;
+}
+
+/* === SELECT DROPDOWN === */
+.phub-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.75rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  padding-right: 2.5rem;
+  cursor: pointer;
+}
+
+.phub-select:focus {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%231e40af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+}
+
+/* === CREATIVE PRIORITY SELECTOR === */
+.phub-priority-group {
+  display: flex;
+  gap: var(--phub-space-sm);
+  padding: var(--phub-space-sm);
+  background: var(--phub-gray-50);
+  border-radius: var(--phub-radius-lg);
+  border: 1px solid var(--phub-gray-200);
+}
+
+.phub-priority-option {
+  flex: 1;
+  background: white;
+  border: 2px solid var(--phub-gray-200);
+  border-radius: var(--phub-radius-md);
+  padding: var(--phub-space-sm) var(--phub-space-md);
+  cursor: pointer;
+  transition: all var(--phub-transition-fast);
+  text-align: center;
+  font-size: 0.875rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--phub-space-xs);
+  min-height: 2.5rem;
+}
+
+.phub-priority-option:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--phub-shadow-md);
+}
+
+.phub-priority-option.low {
+  color: var(--phub-accent-cyan);
+  border-color: rgba(6, 182, 212, 0.3);
+}
+
+.phub-priority-option.low.selected {
+  background: rgba(6, 182, 212, 0.1);
+  border-color: var(--phub-accent-cyan);
+  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
+}
+
+.phub-priority-option.medium {
+  color: var(--phub-accent-emerald);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.phub-priority-option.medium.selected {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: var(--phub-accent-emerald);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.phub-priority-option.high {
+  color: var(--phub-warning);
+  border-color: rgba(217, 119, 6, 0.3);
+}
+
+.phub-priority-option.high.selected {
+  background: rgba(217, 119, 6, 0.1);
+  border-color: var(--phub-warning);
+  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.1);
+}
+
+.phub-priority-option.critical {
+  color: var(--phub-error);
+  border-color: rgba(220, 38, 38, 0.3);
+}
+
+.phub-priority-option.critical.selected {
+  background: rgba(220, 38, 38, 0.1);
+  border-color: var(--phub-error);
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+/* === DATE TIME PICKER === */
+.phub-datetime-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--phub-space-md);
+}
+
+.phub-datetime-field {
+  position: relative;
+}
+
+.phub-datetime-input {
+  padding-left: 2.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* === SUBTASK LIST === */
+.phub-subtask-container {
+  background: var(--phub-gray-50);
+  border-radius: var(--phub-radius-lg);
+  padding: var(--phub-space-md);
+  border: 1px solid var(--phub-gray-200);
+}
+
+.phub-subtask-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--phub-space-md);
+}
+
+.phub-subtask-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--phub-gray-700);
+}
+
+.phub-subtask-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--phub-space-sm);
+}
+
+.phub-subtask-item {
+  background: white;
+  border: 1px solid var(--phub-gray-200);
+  border-radius: var(--phub-radius-md);
+  padding: var(--phub-space-sm) var(--phub-space-md);
+  display: flex;
+  align-items: center;
+  gap: var(--phub-space-sm);
+  transition: all var(--phub-transition-fast);
+}
+
+.phub-subtask-item:hover {
+  box-shadow: var(--phub-shadow-sm);
+  transform: translateY(-1px);
+}
+
+.phub-subtask-checkbox {
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: var(--phub-radius-sm);
+  border: 2px solid var(--phub-gray-300);
+  background: white;
+  cursor: pointer;
+  transition: all var(--phub-transition-fast);
+  position: relative;
+}
+
+.phub-subtask-checkbox:checked {
+  background: var(--phub-primary);
+  border-color: var(--phub-primary);
+}
+
+.phub-subtask-checkbox:checked::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+
+.phub-subtask-text {
+  flex: 1;
+  font-size: 0.875rem;
+  color: var(--phub-gray-700);
+}
+
+.phub-subtask-text.completed {
+  text-decoration: line-through;
+  color: var(--phub-gray-400);
+}
+
+/* === ADD SUBTASK INPUT === */
+.phub-add-subtask {
+  display: flex;
+  gap: var(--phub-space-sm);
+  margin-top: var(--phub-space-md);
+}
+
+.phub-add-subtask-input {
+  flex: 1;
+  font-size: 0.875rem;
+  padding: var(--phub-space-sm) var(--phub-space-md);
+}
+
+.phub-add-subtask-btn {
+  background: var(--phub-primary);
+  color: white;
+  border: none;
+  border-radius: var(--phub-radius-md);
+  padding: var(--phub-space-sm) var(--phub-space-md);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--phub-transition-fast);
+}
+
+.phub-add-subtask-btn:hover {
+  background: var(--phub-primary-dark);
+  transform: translateY(-1px);
+}
+
+/* === FORM ACTIONS === */
+.phub-form-actions {
+  padding: var(--phub-space-lg) var(--phub-space-xl);
+  border-top: 1px solid var(--phub-gray-200);
+  background: var(--phub-gray-50);
+  display: flex;
+  gap: var(--phub-space-md);
+  justify-content: flex-end;
+}
+
+.phub-btn {
+  font-family: var(--phub-font-primary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--phub-radius-lg);
+  border: none;
+  cursor: pointer;
+  transition: all var(--phub-transition-fast);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--phub-space-xs);
+  min-width: 120px;
+  justify-content: center;
+}
+
+.phub-btn:hover {
+  transform: translateY(-1px);
+}
+
+.phub-btn:active {
+  transform: translateY(0);
+}
+
+.phub-btn.primary {
+  background: linear-gradient(135deg, var(--phub-primary) 0%, var(--phub-secondary) 100%);
+  color: white;
+  box-shadow: var(--phub-shadow-md);
+}
+
+.phub-btn.primary:hover {
+  box-shadow: var(--phub-shadow-lg);
+}
+
+.phub-btn.secondary {
+  background: white;
+  color: var(--phub-gray-700);
+  border: 2px solid var(--phub-gray-300);
+}
+
+.phub-btn.secondary:hover {
+  border-color: var(--phub-gray-400);
+  box-shadow: var(--phub-shadow-sm);
+}
+
+.phub-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* === ERROR STATES === */
+.phub-field-error .phub-input {
+  border-color: var(--phub-error);
+  background: rgba(220, 38, 38, 0.05);
+}
+
+.phub-field-error .phub-field-label {
+  color: var(--phub-error);
+}
+
+.phub-error-message {
+  font-size: 0.75rem;
+  color: var(--phub-error);
+  margin-top: var(--phub-space-xs);
+  display: flex;
+  align-items: center;
+  gap: var(--phub-space-xs);
+}
+
+/* === SUCCESS STATES === */
+.phub-field-success .phub-input {
+  border-color: var(--phub-success);
+  background: rgba(5, 150, 105, 0.05);
+}
+
+/* === LOADING STATES === */
+.phub-loading {
+  position: relative;
+  overflow: hidden;
+}
+
+.phub-loading::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(255, 255, 255, 0.4) 50%, 
+    transparent 100%);
+  animation: phub-loading-shimmer 1.5s infinite;
+}
+
+@keyframes phub-loading-shimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+/* === RESPONSIVE DESIGN === */
+@media (max-width: 768px) {
+  .phub-form-container {
+    margin: var(--phub-space-md);
+    max-width: calc(100vw - 2rem);
+  }
+  
+  .phub-datetime-group {
+    grid-template-columns: 1fr;
+  }
+  
+  .phub-priority-group {
+    flex-wrap: wrap;
+  }
+  
+  .phub-priority-option {
+    min-width: calc(50% - 0.25rem);
+  }
+  
+  .phub-form-actions {
+    flex-direction: column-reverse;
+  }
+  
+  .phub-btn {
+    width: 100%;
+  }
+}
+
+/* === ACCESSIBILITY === */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.phub-input:focus,
+.phub-btn:focus {
+  outline: 2px solid var(--phub-primary);
+  outline-offset: 2px;
+}
+
+/* === DARK MODE SUPPORT (for future) === */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --phub-form-bg: #1e293b;
+    --phub-input-bg: #334155;
+    --phub-input-border: #475569;
+    --phub-gray-50: #0f172a;
+    --phub-gray-100: #1e293b;
+    --phub-gray-200: #334155;
+  }
+}
+
+/* === CREATIVE FLOATING ELEMENTS === */
+.phub-floating-elements {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.phub-floating-circle {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  animation: phub-float 6s ease-in-out infinite;
+}
+
+.phub-floating-circle:nth-child(1) {
+  width: 60px;
+  height: 60px;
+  top: 10%;
+  right: 15%;
+  animation-delay: 0s;
+}
+
+.phub-floating-circle:nth-child(2) {
+  width: 80px;
+  height: 80px;
+  bottom: 15%;
+  left: 10%;
+  animation-delay: 2s;
+}
+
+.phub-floating-circle:nth-child(3) {
+  width: 40px;
+  height: 40px;
+  top: 60%;
+  right: 8%;
+  animation-delay: 4s;
+}
+
+@keyframes phub-float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translateY(-20px) rotate(180deg);
+    opacity: 0.6;
+  }
+}

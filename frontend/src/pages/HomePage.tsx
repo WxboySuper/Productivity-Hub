@@ -3,27 +3,27 @@ import AppHeader from '../components/AppHeader';
 
 function HomePage() {
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-100 via-blue-200 to-green-100">
+    <div className="min-h-screen flex flex-col" data-testid="home-page">
       <AppHeader />
-      <main className="flex-1 flex-col items-center justify-center">
-        <div className="w-full max-w-md bg-white/90 rounded-xl shadow-2xl p-10 flex flex-col items-center border border-blue-200 backdrop-blur-sm z-10 mt-10">
+      <main className="flex-1 flex flex-col items-center justify-center relative z-10 px-4">
+        <div className="w-full max-w-md bg-white/95 rounded-xl shadow-2xl p-10 flex flex-col items-center border border-blue-200 backdrop-blur-sm z-10 mt-10 phub-glass">
           {/* Reduced nesting by extracting content into smaller components or sections (JS-0415) */}
-          <h1 className="text-4xl font-extrabold mb-4 text-blue-700 text-center drop-shadow">Productivity Hub</h1>
+          <h1 className="text-4xl font-extrabold mb-4 text-center drop-shadow phub-text-gradient">Productivity Hub</h1>
           <p className="text-lg text-gray-700 mb-8 text-center">
             Your all-in-one productivity assistant. Organize tasks, manage projects, and boost your workflow—all in one place.
           </p>
           <div className="flex flex-col gap-4 w-full">
             <Link
-              to="/login"
-              className="w-full bg-blue-600 text-white font-semibold py-3 rounded-lg hover:bg-blue-700 transition text-center text-lg shadow-md"
+              to="/register"
+              className="phub-action-btn w-full text-center justify-center"
             >
-              Login
+              Get Started
             </Link>
             <Link
-              to="/register"
-              className="w-full bg-green-600 text-white font-semibold py-3 rounded-lg hover:bg-green-700 transition text-center text-lg shadow-md"
+              to="/login"
+              className="w-full bg-gradient-to-r from-gray-600 to-gray-700 text-white font-semibold py-3 rounded-lg hover:from-gray-700 hover:to-gray-800 transition-all duration-200 text-center text-lg shadow-md transform hover:scale-105 flex justify-center items-center"
             >
-              Register
+              Sign In
             </Link>
           </div>
         </div>

@@ -20,59 +20,62 @@ export default function RegisterPage() {
     []
   );
 
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      setError(null);
+      if (form.password !== form.confirmPassword) {
+        setError("Passwords do not match.");
+        return;
+      }
+      setLoading(true);
+      try {
+        const response = await fetch("/api/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: form.username,
+            email: form.email,
+            password: form.password,
+          }),
+        });
+        const data: { error?: string } = await response.json();
+        if (!response.ok) {
+          setError(data.error || "Registration failed.");
+        } else {
+          setTimeout(() => {
+            navigate("/login");
+          }, 3000);
+          setForm({ username: "", email: "", password: "", confirmPassword: "" });
+        }
+      } catch (err) {
+        setError("Network error. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [form, navigate]
+  );
+
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-100 via-blue-200 to-green-100">
+    <div className="min-h-screen flex flex-col">
       <AppHeader />
-      <main className="flex-1 flex flex-col items-center justify-center">
-        <div className="w-full max-w-md bg-white/90 rounded-xl shadow-2xl p-10 flex flex-col items-center border border-blue-200 backdrop-blur-sm z-10 mt-10">
-          <h2 className="text-2xl font-bold mb-6 text-center">Register</h2>
+      <main className="flex-1 flex flex-col items-center justify-center relative z-10 px-4">
+        <div className="w-full max-w-lg bg-white/95 rounded-xl shadow-2xl p-10 flex flex-col items-center border border-blue-200 backdrop-blur-sm z-10 mt-10 phub-glass">
+          <h2 className="text-2xl font-bold mb-6 text-center phub-text-gradient">Register</h2>
           {error && (
             <div className="mb-4 flex items-center gap-2 rounded border border-red-300 bg-red-50 px-4 py-3 text-red-800 shadow-sm animate-fade-in">
               <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12A9 9 0 1 1 3 12a9 9 0 0 1 18 0Z" /></svg>
               <span className="font-semibold">{error}</span>
             </div>
           )}
-          <form
-            onSubmit={async (e) => {
-              e.preventDefault();
-              setError(null);
-              if (form.password !== form.confirmPassword) {
-                setError("Passwords do not match.");
-                return;
-              }
-              setLoading(true);
-              try {
-                const response = await fetch("/api/register", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    username: form.username,
-                    email: form.email,
-                    password: form.password,
-                  }),
-                });
-                const data: { error?: string } = await response.json();
-                if (!response.ok) {
-                  setError(data.error || "Registration failed.");
-                } else {
-                  setTimeout(() => {
-                    navigate("/login");
-                  }, 3000);
-                  setForm({ username: "", email: "", password: "", confirmPassword: "" });
-                }
-              } catch (err) {
-                setError("Network error. Please try again.");
-              } finally {
-                setLoading(false);
-              }
-            }}
-          >
+          <form onSubmit={handleSubmit}>
             <div className="mb-4">
               <label className="block mb-1 font-medium" htmlFor="username">
                 Username
               </label>
               <input
-                className="w-full border rounded px-3 py-2"
+                className="w-full border rounded px-4 py-3 text-base"
                 type="text"
                 id="username"
                 name="username"
@@ -80,6 +83,7 @@ export default function RegisterPage() {
                 onChange={handleChange}
                 required
                 autoComplete="username"
+                placeholder="Choose a username"
               />
             </div>
             <div className="mb-4">
@@ -87,7 +91,7 @@ export default function RegisterPage() {
                 Email
               </label>
               <input
-                className="w-full border rounded px-3 py-2"
+                className="w-full border rounded px-4 py-3 text-base"
                 type="email"
                 id="email"
                 name="email"
@@ -95,6 +99,7 @@ export default function RegisterPage() {
                 onChange={handleChange}
                 required
                 autoComplete="email"
+                placeholder="Enter your email address"
               />
             </div>
             <div className="mb-4">
@@ -102,7 +107,7 @@ export default function RegisterPage() {
                 Password
               </label>
               <input
-                className="w-full border rounded px-3 py-2"
+                className="w-full border rounded px-4 py-3 text-base"
                 type="password"
                 id="password"
                 name="password"
@@ -110,6 +115,7 @@ export default function RegisterPage() {
                 onChange={handleChange}
                 required
                 autoComplete="new-password"
+                placeholder="Create a secure password"
               />
             </div>
             <div className="mb-6">
@@ -117,7 +123,7 @@ export default function RegisterPage() {
                 Confirm Password
               </label>
               <input
-                className="w-full border rounded px-3 py-2"
+                className="w-full border rounded px-4 py-3 text-base"
                 type="password"
                 id="confirmPassword"
                 name="confirmPassword"
@@ -125,14 +131,15 @@ export default function RegisterPage() {
                 onChange={handleChange}
                 required
                 autoComplete="new-password"
+                placeholder="Confirm your password"
               />
             </div>
             <button
               type="submit"
-              className="w-full bg-blue-600 text-white font-semibold py-2 rounded hover:bg-blue-700 transition"
+              className="phub-action-btn w-full justify-center"
               disabled={loading}
             >
-              {loading ? "Registering..." : "Register"}
+              {loading ? "Creating Account..." : "Create Account"}
             </button>
           </form>
         </div>
