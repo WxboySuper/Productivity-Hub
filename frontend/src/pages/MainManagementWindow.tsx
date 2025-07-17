@@ -9,15 +9,10 @@ import BackgroundSwitcher from '../components/BackgroundSwitcher';
 import { useAuth } from '../auth';
 import { useBackground } from '../context/BackgroundContext';
 import { useToast } from '../components/ToastProvider';
+import { useProjects, type Project } from '../hooks/useProjects';
 import '../styles/ProjectForm.css';
 import '../styles/PageLayouts.css';
 import '../styles/MainLayout.css';
-
-interface Project {
-  id: number;
-  name: string;
-  description?: string;
-}
 
 interface Task {
   id: number;
@@ -97,14 +92,15 @@ const MainManagementWindow: React.FC = () => {
   const { backgroundType, setBackgroundType } = useBackground();
   const { showSuccess, showError, showWarning, showInfo } = useToast();
   const navigate = useNavigate();
+  
+  // Use the custom hooks for projects
+  const { projects, loading: projectsLoading, error: projectsError, refetch: refetchProjects } = useProjects();
+  
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeView, setActiveView] = useState<'all' | 'quick' | 'projects'>('all');
-  const [projects, setProjects] = useState<Project[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [tasksLoading, setTasksLoading] = useState(false);
   const [tasksError, setTasksError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -119,30 +115,6 @@ const MainManagementWindow: React.FC = () => {
   const [taskFormLoading, setTaskFormLoading] = useState(false);
   const [taskFormError, setTaskFormError] = useState<string | null>(null);
   const [editTask, setEditTask] = useState<any | null>(null); // Track task being edited
-
-  useEffect(() => {
-    if (activeView === 'projects') {
-      setLoading(true);
-      setError(null);
-      fetch('/api/projects', {
-        credentials: 'include',
-      })
-        .then((res) => res.ok ? res.json() : Promise.reject('Failed to fetch projects'))
-        .then((data) => setProjects(data.projects || []))
-        .catch((err) => setError(typeof err === 'string' ? err : 'Unknown error'))
-        .finally(() => setLoading(false));
-    }
-  }, [activeView]);
-
-  // Fetch projects on mount (before tasks)
-  useEffect(() => {
-    fetch('/api/projects', {
-      credentials: 'include',
-    })
-      .then((res) => res.ok ? res.json() : Promise.reject('Failed to fetch projects'))
-      .then((data) => setProjects(data.projects || []))
-      .catch(() => setProjects([]));
-  }, []);
 
   // Fetch tasks from API
   const fetchTasks = useCallback(() => {
@@ -209,7 +181,7 @@ const MainManagementWindow: React.FC = () => {
         throw new Error(data.error || 'Failed to create project');
       }
       const newProject = await response.json();
-      setProjects((prev) => [...prev, newProject]);
+      await refetchProjects(); // Refetch projects from the hook
       setShowForm(false);
     } catch (err: unknown) {
       setFormError(err instanceof Error ? err.message : 'Unknown error');
@@ -240,7 +212,7 @@ const MainManagementWindow: React.FC = () => {
         throw new Error(data.error || 'Failed to update project');
       }
       const updatedProject = await response.json();
-      setProjects((prev) => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
+      await refetchProjects(); // Refetch projects from the hook
       setEditProject(null);
     } catch (err: unknown) {
       setFormError(err instanceof Error ? err.message : 'Unknown error');
@@ -270,7 +242,7 @@ const MainManagementWindow: React.FC = () => {
         const data = await response.json();
         throw new Error(data.error || 'Failed to delete project');
       }
-      setProjects((prev) => prev.filter(p => p.id !== deleteProject.id));
+      await refetchProjects(); // Refetch projects from the hook
       setDeleteProject(null);
       setSelectedProject(null);
     } catch (err: unknown) {
@@ -451,21 +423,9 @@ const MainManagementWindow: React.FC = () => {
 
   // Ensure projects are loaded before opening the task form
   const openTaskForm = (task: any = null) => {
-    if (activeView !== 'projects') {
-      // If not in projects view, fetch projects first
-      fetch('/api/projects', {
-        credentials: 'include',
-      })
-        .then((res) => res.ok ? res.json() : Promise.reject('Failed to fetch projects'))
-        .then((data) => setProjects(data.projects || []))
-        .finally(() => {
-          setEditTask(task ? getTaskWithProject(task) : null);
-          setShowTaskForm(true);
-        });
-    } else {
-      setEditTask(task ? getTaskWithProject(task) : null);
-      setShowTaskForm(true);
-    }
+    // Projects are always available from the hook now
+    setEditTask(task ? getTaskWithProject(task) : null);
+    setShowTaskForm(true);
   };
 
   // Debug helper function to test auth verification
@@ -721,9 +681,9 @@ const MainManagementWindow: React.FC = () => {
               <h2 className="phub-section-title">Your Projects</h2>
               <p className="phub-section-subtitle">Organize your work into meaningful projects</p>
             </div>
-            {loading && <div className="phub-loading">Loading projects...</div>}
-            {error && <div className="phub-error">⚠️ {error}</div>}
-            {!loading && !error && projects.length === 0 && (
+            {projectsLoading && <div className="phub-loading">Loading projects...</div>}
+            {projectsError && <div className="phub-error">⚠️ {projectsError}</div>}
+            {!projectsLoading && !projectsError && projects.length === 0 && (
               <div className="phub-empty-state">
                 <div className="phub-empty-icon">📁</div>
                 <h3 className="phub-empty-title">No projects found</h3>
