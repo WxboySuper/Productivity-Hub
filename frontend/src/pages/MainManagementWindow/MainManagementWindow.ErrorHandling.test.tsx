@@ -103,6 +103,16 @@ const mockProjects = {
   refetch: vi.fn(),
 };
 
+type MockTask = {
+  id: number;
+  title: string;
+  description: string;
+  completed: boolean;
+  projectId: number | null;
+  parent_id: number | null;
+  subtasks?: { id: number; title: string; completed: boolean }[];
+};
+
 const mockTasks = {
   tasks: [
     {
@@ -115,7 +125,7 @@ const mockTasks = {
     }
   ],
   loading: false,
-  error: null,
+  error: null as string | null,
   createTask: vi.fn(),
   updateTask: vi.fn(),
   deleteTask: vi.fn(),
@@ -140,9 +150,50 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
-// Mock the TaskForm component
+
+interface TaskFormProps {
+  open: boolean;
+  onSubmit: (task: { title: string; description: string }) => void;
+  onClose: () => void;
+  error?: string | null;
+}
+interface ProjectFormProps {
+  open: boolean;
+  onSubmit: (project: { name: string; description: string }) => void;
+  onClose: () => void;
+  error?: string | null;
+}
+interface TaskDetailsProps {
+  open: boolean;
+  task: {
+    id: number;
+    title: string;
+    description: string;
+    completed: boolean;
+    projectId: number | null;
+    parent_id: number | null;
+    subtasks?: { id: number; title: string; completed: boolean }[];
+  };
+  onClose: () => void;
+  onUpdate: (task: {
+    id: number;
+    title: string;
+    description: string;
+    completed: boolean;
+    projectId: number | null;
+    parent_id: number | null;
+    subtasks?: { id: number; title: string; completed: boolean }[];
+  }) => void;
+  onDelete: (id: number) => void;
+}
+interface ConfirmDialogProps {
+  open: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}
+
 vi.mock('../../components/TaskForm', () => ({
-  default: ({ open, onSubmit, onClose, error }: any) => {
+  default: ({ open, onSubmit, onClose, error }: TaskFormProps) => {
     if (!open) return null;
     return (
       <div data-testid="task-form">
@@ -157,9 +208,8 @@ vi.mock('../../components/TaskForm', () => ({
   },
 }));
 
-// Mock the ProjectForm component  
 vi.mock('../../components/ProjectForm', () => ({
-  default: ({ open, onSubmit, onClose, error }: any) => {
+  default: ({ open, onSubmit, onClose, error }: ProjectFormProps) => {
     if (!open) return null;
     return (
       <div data-testid="project-form">
@@ -174,9 +224,9 @@ vi.mock('../../components/ProjectForm', () => ({
   },
 }));
 
-// Mock the TaskDetails component
 vi.mock('../../components/TaskDetails', () => ({
-  default: ({ open, task, onClose, onUpdate, onDelete }: any) => {
+  default: (props: TaskDetailsProps) => {
+    const { open, task, onClose, onUpdate, onDelete } = props;
     if (!open) return null;
     return (
       <div data-testid="task-details">
@@ -192,9 +242,8 @@ vi.mock('../../components/TaskDetails', () => ({
   },
 }));
 
-// Mock ConfirmDialog
 vi.mock('../../components/ConfirmDialog', () => ({
-  default: ({ open, onConfirm, onCancel }: any) => {
+  default: ({ open, onConfirm, onCancel }: ConfirmDialogProps) => {
     if (!open) return null;
     return (
       <div data-testid="confirm-dialog">
@@ -250,7 +299,7 @@ describe('MainManagementWindow - Error Handling & Edge Cases', () => {
   });
 
   describe('Error Handling', () => {
-    it('shows error state when tasks fetch fails', async () => {
+    it('shows error state when tasks fetch fails', () => {
       mockTasks.error = 'Tasks fetch failed';
       mockTasks.tasks = [];
 
@@ -373,12 +422,13 @@ describe('MainManagementWindow - Error Handling & Edge Cases', () => {
       }, { timeout: 5000 });
     });
 
-    it('handles task with subtasks and shows subtask count', async () => {
-      const taskWithSubtasks = {
+    it('handles task with subtasks and shows subtask count', () => {
+      const taskWithSubtasks: MockTask = {
         id: 1,
         title: 'Parent Task',
+        description: 'Parent task description',
         completed: false,
-        projectId: null,
+        projectId: 1,
         parent_id: null,
         subtasks: [
           { id: 2, title: 'Subtask 1', completed: false },
@@ -386,7 +436,12 @@ describe('MainManagementWindow - Error Handling & Edge Cases', () => {
         ]
       };
 
-      mockTasks.tasks = [taskWithSubtasks];
+      mockTasks.tasks = [{
+        ...taskWithSubtasks,
+        projectId: 1,
+        description: taskWithSubtasks.description || '',
+        parent_id: null,
+      }];
 
       render(<MainManagementWindowWrapper />);
 
@@ -394,12 +449,13 @@ describe('MainManagementWindow - Error Handling & Edge Cases', () => {
       expect(screen.getByTestId('main-management-window')).toBeInTheDocument();
     });
 
-    it('disables task completion when subtasks are incomplete', async () => {
-      const taskWithIncompleteSubtasks = {
+    it('disables task completion when subtasks are incomplete', () => {
+      const taskWithIncompleteSubtasks: MockTask = {
         id: 1,
         title: 'Parent Task',
+        description: 'Parent task description',
         completed: false,
-        projectId: null,
+        projectId: 1,
         parent_id: null,
         subtasks: [
           { id: 2, title: 'Subtask 1', completed: false },
@@ -407,7 +463,12 @@ describe('MainManagementWindow - Error Handling & Edge Cases', () => {
         ]
       };
 
-      mockTasks.tasks = [taskWithIncompleteSubtasks];
+      mockTasks.tasks = [{
+        ...taskWithIncompleteSubtasks,
+        projectId: 1,
+        description: taskWithIncompleteSubtasks.description || '',
+        parent_id: null,
+      }];
 
       render(<MainManagementWindowWrapper />);
 

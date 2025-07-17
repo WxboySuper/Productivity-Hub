@@ -225,7 +225,7 @@ describe('MainManagementWindow - Project Form & Management', () => {
         } as Response);
       });
 
-      await act(async () => {
+      await act(() => {
         render(<MainManagementWindowWrapper />);
       });
 
@@ -237,7 +237,7 @@ describe('MainManagementWindow - Project Form & Management', () => {
         button.closest('.phub-sidebar-nav')
       )?.closest('button');
       if (projectsButton) {
-        await act(async () => {
+        await act(() => {
           fireEvent.click(projectsButton);
         });
       }
@@ -279,7 +279,7 @@ describe('MainManagementWindow - Project Form & Management', () => {
         } as Response);
       });
 
-      await act(async () => {
+      await act(() => {
         render(<MainManagementWindowWrapper />);
       });
 
@@ -291,7 +291,7 @@ describe('MainManagementWindow - Project Form & Management', () => {
         button.closest('.phub-sidebar-nav')
       )?.closest('button');
       if (projectsButton) {
-        await act(async () => {
+        await act(() => {
           fireEvent.click(projectsButton);
         });
       }
@@ -306,7 +306,7 @@ describe('MainManagementWindow - Project Form & Management', () => {
       const projectForm = screen.getByTestId('project-form');
       const cancelButton = projectForm.querySelector('button:last-child');
       if (cancelButton) {
-        await act(async () => {
+        await act(() => {
           fireEvent.click(cancelButton);
         });
       }
@@ -337,7 +337,7 @@ describe('MainManagementWindow - Project Form & Management', () => {
           json: () => Promise.resolve({ id: 1, name: 'Test Project', description: 'Test Description' }),
         } as Response);
 
-      await act(async () => {
+      await act(() => {
         render(<MainManagementWindowWrapper />);
       });
 
@@ -389,7 +389,7 @@ describe('MainManagementWindow - Project Form & Management', () => {
         json: () => Promise.resolve({ tasks: [] }),
       } as Response);
 
-      await act(async () => {
+      await act(() => {
         render(<MainManagementWindowWrapper />);
       });
 
@@ -439,7 +439,7 @@ describe('MainManagementWindow - Project Form & Management', () => {
         json: () => Promise.resolve({ tasks: [] }),
       } as Response);
 
-      await act(async () => {
+      await act(() => {
         render(<MainManagementWindowWrapper />);
       });
 
@@ -490,7 +490,7 @@ describe('MainManagementWindow - Project Form & Management', () => {
           json: () => Promise.resolve({ error: 'Project name already exists' }),
         } as Response);
 
-      await act(async () => {
+      await act(() => {
         render(<MainManagementWindowWrapper />);
       });
 
@@ -509,7 +509,7 @@ describe('MainManagementWindow - Project Form & Management', () => {
         return screen.getByText('Add Project');
       }, { timeout: 5000 });
 
-      await act(async () => {
+      await act(() => {
         fireEvent.click(addProjectButton);
       });
 
@@ -518,7 +518,7 @@ describe('MainManagementWindow - Project Form & Management', () => {
       }, { timeout: 5000 });
 
       const createButton = screen.getByRole('button', { name: 'Create Project' });
-      await act(async () => {
+      await act(() => {
         fireEvent.click(createButton);
       });
 

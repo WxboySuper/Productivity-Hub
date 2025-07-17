@@ -148,16 +148,20 @@ vi.mock('../../components/TaskForm', () => ({
 }));
 
 // Mock the TaskDetails component
+interface TaskDetailsProps {
+  open: boolean;
+  onClose: () => void;
+  task: {
+    id: number;
+    title: string;
+    description: string;
+    completed: boolean;
+    projectId: number | null;
+    parent_id: number | null;
+  };
+}
 vi.mock('../../components/TaskDetails', () => ({
-  default: ({
-    open,
-    onClose,
-    task,
-  }: {
-    open: boolean;
-    onClose: () => void;
-    task: any;
-  }) => (
+  default: ({ open, onClose, task }: TaskDetailsProps) => (
     open ? (
       <div data-testid="task-details">
         <h2>Task Details</h2>
@@ -197,56 +201,56 @@ describe('MainManagementWindow - Task Form & Management', () => {
   });
 
   describe('Task Form', () => {
-    it('opens task form when Add New button is clicked', async () => {
-      await act(async () => {
+    it('opens task form when Add New button is clicked', () => {
+      act(() => {
         render(<MainManagementWindowWrapper />);
       });
       
-      await waitFor(() => {
+      waitFor(() => {
         expect(screen.getByTestId('main-management-window')).toBeInTheDocument();
       }, { timeout: 5000 });
 
       const addNewButton = screen.getByText('Add New').closest('button');
       if (addNewButton) {
-        await act(async () => {
+        act(() => {
           fireEvent.click(addNewButton);
         });
       }
 
-      await waitFor(() => {
+      waitFor(() => {
         expect(screen.getByTestId('task-form')).toBeInTheDocument();
       }, { timeout: 5000 });
     });
 
-    it('closes task form when cancel is clicked', async () => {
-      await act(async () => {
+    it('closes task form when cancel is clicked', () => {
+      act(() => {
         render(<MainManagementWindowWrapper />);
       });
       
-      await waitFor(() => {
+      waitFor(() => {
         expect(screen.getByTestId('main-management-window')).toBeInTheDocument();
       }, { timeout: 5000 });
 
       const addNewButton = screen.getByText('Add New').closest('button');
       if (addNewButton) {
-        await act(async () => {
+        act(() => {
           fireEvent.click(addNewButton);
         });
       }
 
-      await waitFor(() => {
+      waitFor(() => {
         expect(screen.getByTestId('task-form')).toBeInTheDocument();
       }, { timeout: 5000 });
 
       const taskForm = screen.getByTestId('task-form');
       const cancelButton = taskForm.querySelector('button:last-child');
       if (cancelButton) {
-        await act(async () => {
+        act(() => {
           fireEvent.click(cancelButton);
         });
       }
 
-      await waitFor(() => {
+      waitFor(() => {
         expect(screen.queryByTestId('task-form')).not.toBeInTheDocument();
       }, { timeout: 5000 });
     });
@@ -272,7 +276,7 @@ describe('MainManagementWindow - Task Form & Management', () => {
           json: () => Promise.resolve({ message: 'Task created' }),
         } as Response);
 
-      await act(async () => {
+      await act(() => {
         render(<MainManagementWindowWrapper />);
       });
       
@@ -282,7 +286,7 @@ describe('MainManagementWindow - Task Form & Management', () => {
 
       const addNewButton = screen.getByText('Add New').closest('button');
       if (addNewButton) {
-        await act(async () => {
+        await act(() => {
           fireEvent.click(addNewButton);
         });
       }
@@ -292,7 +296,7 @@ describe('MainManagementWindow - Task Form & Management', () => {
       }, { timeout: 5000 });
 
       const submitButton = screen.getByText('Submit');
-      await act(async () => {
+      await act(() => {
         fireEvent.click(submitButton);
       });
 
@@ -332,7 +336,7 @@ describe('MainManagementWindow - Task Form & Management', () => {
           json: () => Promise.resolve({ ...testTask, completed: true }),
         } as Response);
 
-      await act(async () => {
+      await act(() => {
         render(<MainManagementWindowWrapper />);
       });
 
@@ -341,7 +345,7 @@ describe('MainManagementWindow - Task Form & Management', () => {
       }, { timeout: 5000 });
 
       const checkbox = screen.getByRole('checkbox');
-      await act(async () => {
+      await act(() => {
         fireEvent.click(checkbox);
       });
 
@@ -377,7 +381,7 @@ describe('MainManagementWindow - Task Form & Management', () => {
           json: () => Promise.resolve({}),
         } as Response);
 
-      await act(async () => {
+      await act(() => {
         render(<MainManagementWindowWrapper />);
       });
 
@@ -386,7 +390,7 @@ describe('MainManagementWindow - Task Form & Management', () => {
       }, { timeout: 5000 });
 
       const deleteButton = screen.getByText('Delete');
-      await act(async () => {
+      await act(() => {
         fireEvent.click(deleteButton);
       });
 
@@ -418,7 +422,7 @@ describe('MainManagementWindow - Task Form & Management', () => {
           json: () => Promise.resolve({ tasks: [testTask] }),
         } as Response);
 
-      await act(async () => {
+      await act(() => {
         render(<MainManagementWindowWrapper />);
       });
 
@@ -427,7 +431,7 @@ describe('MainManagementWindow - Task Form & Management', () => {
       }, { timeout: 5000 });
 
       const taskTitle = screen.getByText('Test Task');
-      await act(async () => {
+      await act(() => {
         fireEvent.click(taskTitle);
       });
 
@@ -455,7 +459,7 @@ describe('MainManagementWindow - Task Form & Management', () => {
           json: () => Promise.resolve({ error: 'Task creation failed' }),
         } as Response);
 
-      await act(async () => {
+      await act(() => {
         render(<MainManagementWindowWrapper />);
       });
       
@@ -465,7 +469,7 @@ describe('MainManagementWindow - Task Form & Management', () => {
 
       const addNewButton = screen.getByText('Add New').closest('button');
       if (addNewButton) {
-        await act(async () => {
+        await act(() => {
           fireEvent.click(addNewButton);
         });
       }
@@ -475,7 +479,7 @@ describe('MainManagementWindow - Task Form & Management', () => {
       }, { timeout: 5000 });
 
       const submitButton = screen.getByText('Submit');
-      await act(async () => {
+      await act(() => {
         fireEvent.click(submitButton);
       });
 

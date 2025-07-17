@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor, act, cleanup } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import { vi, beforeEach, afterEach, describe, it, expect } from 'vitest';
 import { BrowserRouter } from 'react-router-dom';
 import MainManagementWindow from '../MainManagementWindow';
@@ -131,8 +131,15 @@ vi.mock('../../hooks/useTasks', () => ({
 }));
 
 // Mock the TaskForm component
+interface TaskFormProps {
+  open: boolean;
+  onSubmit: (task: { title: string; description: string }) => void;
+  onClose: () => void;
+  error?: string | null;
+}
+
 vi.mock('../../components/TaskForm', () => ({
-  default: ({ open, onSubmit, onClose, error }: any) => {
+  default: ({ open, onSubmit, onClose, error }: TaskFormProps) => {
     if (!open) return null;
     return (
       <div data-testid="task-form">
@@ -148,8 +155,15 @@ vi.mock('../../components/TaskForm', () => ({
 }));
 
 // Mock the ProjectForm component  
+interface ProjectFormProps {
+  open: boolean;
+  onSubmit: (project: { name: string; description: string }) => void;
+  onClose: () => void;
+  error?: string | null;
+}
+
 vi.mock('../../components/ProjectForm', () => ({
-  default: ({ open, onSubmit, onClose, error }: any) => {
+  default: ({ open, onSubmit, onClose, error }: ProjectFormProps) => {
     if (!open) return null;
     return (
       <div data-testid="project-form">
@@ -165,8 +179,16 @@ vi.mock('../../components/ProjectForm', () => ({
 }));
 
 // Mock the TaskDetails component
+interface TaskDetailsProps {
+  open: boolean;
+  task: { id: number; title: string; description: string; completed: boolean; projectId: number | null; parent_id: number | null };
+  onClose: () => void;
+  onUpdate: (task: { id: number; title: string; description: string; completed: boolean; projectId: number | null; parent_id: number | null }) => void;
+  onDelete: (id: number) => void;
+}
+
 vi.mock('../../components/TaskDetails', () => ({
-  default: ({ open, task, onClose, onUpdate, onDelete }: any) => {
+  default: ({ open, task, onClose, onUpdate, onDelete }: TaskDetailsProps) => {
     if (!open) return null;
     return (
       <div data-testid="task-details">
@@ -183,8 +205,14 @@ vi.mock('../../components/TaskDetails', () => ({
 }));
 
 // Mock ConfirmDialog
+interface ConfirmDialogProps {
+  open: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}
+
 vi.mock('../../components/ConfirmDialog', () => ({
-  default: ({ open, onConfirm, onCancel }: any) => {
+  default: ({ open, onConfirm, onCancel }: ConfirmDialogProps) => {
     if (!open) return null;
     return (
       <div data-testid="confirm-dialog">
@@ -253,12 +281,13 @@ describe('MainManagementWindow - State Management & UI Interactions', () => {
       expect(screen.getByLabelText('Collapse sidebar')).toBeInTheDocument();
     });
 
-    it('handles task normalization with project_id field compatibility', async () => {
+    it('handles task normalization with project_id field compatibility', () => {
       const taskWithProjectId = {
         id: 1,
         title: 'Backend Task',
+        description: 'Backend task description',
         completed: false,
-        project_id: 1, // Backend field format
+        projectId: 1,
         parent_id: null
       };
 
@@ -271,17 +300,19 @@ describe('MainManagementWindow - State Management & UI Interactions', () => {
       expect(screen.getByTestId('main-management-window')).toBeInTheDocument();
     });
 
-    it('handles view switching with task filtering', async () => {
+    it('handles view switching with task filtering', () => {
       const quickTask = {
         id: 1,
         title: 'Quick Task',
+        description: 'Quick task description',
         completed: false,
-        projectId: null,
+        projectId: 1,
         parent_id: null
       };
       const projectTask = {
         id: 2,
         title: 'Project Task',
+        description: 'Project task description',
         completed: false,
         projectId: 1,
         parent_id: null
@@ -304,7 +335,7 @@ describe('MainManagementWindow - State Management & UI Interactions', () => {
       expect(screen.getByTestId('main-management-window')).toBeInTheDocument();
     });
 
-    it('handles empty state rendering for all views', async () => {
+    it('handles empty state rendering for all views', () => {
       mockProjects.projects = [];
       mockTasks.tasks = [];
 
@@ -387,12 +418,12 @@ describe('MainManagementWindow - State Management & UI Interactions', () => {
       }, { timeout: 5000 });
     });
 
-    it('handles task interaction buttons', async () => {
+    it('handles task interaction buttons', () => {
       const task = {
         id: 1,
         title: 'Test Task 1',
         description: 'Test task description',
-        projectId: null,
+        projectId: 1,
         parent_id: null,
         completed: false
       };
@@ -412,12 +443,12 @@ describe('MainManagementWindow - State Management & UI Interactions', () => {
       }
     });
 
-    it('handles task details interactions', async () => {
+  it('handles task details interactions', async () => {
       const task = {
         id: 1,
         title: 'Test Task 1',
         description: 'Test task description',
-        projectId: null,
+        projectId: 1,
         parent_id: null,
         completed: false
       };
@@ -446,7 +477,7 @@ describe('MainManagementWindow - State Management & UI Interactions', () => {
       }
     });
 
-    it('handles form interactions and state', async () => {
+  it('handles form interactions and state', async () => {
       render(<MainManagementWindowWrapper />);
 
       // Open task form

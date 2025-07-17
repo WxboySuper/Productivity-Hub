@@ -74,7 +74,7 @@ describe('MainManagementWindow - Initial Render & Sidebar', () => {
 
   describe('Initial Render', () => {
     it('renders main components when authenticated', async () => {
-      await act(async () => {
+      act(() => {
         render(<MainManagementWindowWrapper />);
       });
       
@@ -95,7 +95,7 @@ describe('MainManagementWindow - Initial Render & Sidebar', () => {
     });
 
     it('renders sidebar with navigation items', async () => {
-      await act(async () => {
+      act(() => {
         render(<MainManagementWindowWrapper />);
       });
 
@@ -115,7 +115,7 @@ describe('MainManagementWindow - Initial Render & Sidebar', () => {
     });
 
     it('starts with "All Tasks" view active', async () => {
-      await act(async () => {
+      act(() => {
         render(<MainManagementWindowWrapper />);
       });
 
@@ -143,7 +143,7 @@ describe('MainManagementWindow - Initial Render & Sidebar', () => {
 
   describe('Sidebar Functionality', () => {
     it('toggles sidebar collapse state', async () => {
-      await act(async () => {
+      act(() => {
         render(<MainManagementWindowWrapper />);
       });
 
@@ -160,7 +160,7 @@ describe('MainManagementWindow - Initial Render & Sidebar', () => {
       expect(sidebar).not.toHaveClass('phub-sidebar-collapsed');
 
       // Click collapse button
-      await act(async () => {
+      act(() => {
         fireEvent.click(collapseButton);
       });
 
@@ -169,7 +169,7 @@ describe('MainManagementWindow - Initial Render & Sidebar', () => {
 
       // Click again to expand
       const expandButton = screen.getByLabelText('Expand sidebar');
-      await act(async () => {
+      act(() => {
         fireEvent.click(expandButton);
       });
 
@@ -178,7 +178,7 @@ describe('MainManagementWindow - Initial Render & Sidebar', () => {
     });
 
     it('switches between different views', async () => {
-      await act(async () => {
+      act(() => {
         render(<MainManagementWindowWrapper />);
       });
 
@@ -199,8 +199,8 @@ describe('MainManagementWindow - Initial Render & Sidebar', () => {
       const quickTasksButton = quickTasksButtons.find(button =>
         button.closest('.phub-sidebar-nav')
       )?.closest('button');
-      await act(async () => {
-        fireEvent.click(quickTasksButton!);
+      act(() => {
+        if (quickTasksButton) fireEvent.click(quickTasksButton);
       });
 
       // Check that Quick Tasks is now active
@@ -212,8 +212,8 @@ describe('MainManagementWindow - Initial Render & Sidebar', () => {
       const projectsButton = projectsButtons.find(button =>
         button.closest('.phub-sidebar-nav')
       )?.closest('button');
-      await act(async () => {
-        fireEvent.click(projectsButton!);
+      act(() => {
+        if (projectsButton) fireEvent.click(projectsButton);
       });
 
       // Check that Projects is now active
@@ -222,7 +222,7 @@ describe('MainManagementWindow - Initial Render & Sidebar', () => {
     });
 
     it('handles logout when logout button is clicked', async () => {
-      await act(async () => {
+      act(() => {
         render(<MainManagementWindowWrapper />);
       });
 
@@ -235,8 +235,8 @@ describe('MainManagementWindow - Initial Render & Sidebar', () => {
       const signOutButton = signOutButtons.find(button =>
         button.closest('.phub-sidebar-nav')
       )?.closest('button');
-      await act(async () => {
-        fireEvent.click(signOutButton!);
+      act(() => {
+        if (signOutButton) fireEvent.click(signOutButton);
       });
 
       // Check that logout was called

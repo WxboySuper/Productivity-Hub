@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
+import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import { vi, beforeEach, afterEach, describe, it, expect } from 'vitest';
 import { BrowserRouter } from 'react-router-dom';
 import MainManagementWindow from '../MainManagementWindow';
@@ -17,7 +17,7 @@ global.fetch = vi.fn().mockImplementation((url: string) => {
   if (url === '/api/projects') {
     return Promise.resolve({
       ok: true,
-      json: () => Promise.resolve({ 
+      json: () => Promise.resolve({
         projects: [
           { id: 1, name: 'Test Project', description: 'Test project description' }
         ] 
@@ -127,8 +127,34 @@ vi.mock('../../hooks/useTasks', () => ({
 }));
 
 // Mock the TaskForm component
+
+interface TaskFormProps {
+  open: boolean;
+  onSubmit: (task: { title: string; description: string }) => void;
+  onClose: () => void;
+  error?: string | null;
+}
+interface ProjectFormProps {
+  open: boolean;
+  onSubmit: (project: { name: string; description: string }) => void;
+  onClose: () => void;
+  error?: string | null;
+}
+interface TaskDetailsProps {
+  open: boolean;
+  task: { id: number; title: string; description: string; completed: boolean; projectId: number | null; parent_id: number | null };
+  onClose: () => void;
+  onUpdate: (task: { id: number; title: string; description: string; completed: boolean; projectId: number | null; parent_id: number | null }) => void;
+  onDelete: (id: number) => void;
+}
+interface ConfirmDialogProps {
+  open: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}
+
 vi.mock('../../components/TaskForm', () => ({
-  default: ({ open, onSubmit, onClose, error }: any) => {
+  default: ({ open, onSubmit, onClose, error }: TaskFormProps) => {
     if (!open) return null;
     return (
       <div data-testid="task-form">
@@ -143,9 +169,8 @@ vi.mock('../../components/TaskForm', () => ({
   },
 }));
 
-// Mock the ProjectForm component  
 vi.mock('../../components/ProjectForm', () => ({
-  default: ({ open, onSubmit, onClose, error }: any) => {
+  default: ({ open, onSubmit, onClose, error }: ProjectFormProps) => {
     if (!open) return null;
     return (
       <div data-testid="project-form">
@@ -160,9 +185,8 @@ vi.mock('../../components/ProjectForm', () => ({
   },
 }));
 
-// Mock the TaskDetails component
 vi.mock('../../components/TaskDetails', () => ({
-  default: ({ open, task, onClose, onUpdate, onDelete }: any) => {
+  default: ({ open, task, onClose, onUpdate, onDelete }: TaskDetailsProps) => {
     if (!open) return null;
     return (
       <div data-testid="task-details">
@@ -178,9 +202,8 @@ vi.mock('../../components/TaskDetails', () => ({
   },
 }));
 
-// Mock ConfirmDialog
 vi.mock('../../components/ConfirmDialog', () => ({
-  default: ({ open, onConfirm, onCancel }: any) => {
+  default: ({ open, onConfirm, onCancel }: ConfirmDialogProps) => {
     if (!open) return null;
     return (
       <div data-testid="confirm-dialog">
@@ -205,204 +228,124 @@ const MainManagementWindowWrapper = () => (
 
 describe('MainManagementWindow - Additional Coverage', () => {
   beforeEach(() => {
-    // Reset all mocks before each test
     vi.clearAllMocks();
     mockFetch.mockClear();
   });
-
   afterEach(() => {
     cleanup();
   });
 
   describe('Task Management Additional Cases', () => {
-    it('handles missing project references', async () => {
+    it('handles missing project references', () => {
       render(<MainManagementWindowWrapper />);
-      
-      // Component should render successfully even with missing project references
       expect(screen.getByTestId('main-management-window')).toBeInTheDocument();
     });
-
-    it('handles task operations with various project configurations', async () => {
+    it('handles task operations with various project configurations', () => {
       render(<MainManagementWindowWrapper />);
-      
-      // Navigate to different views to test project handling
-      const allTasksButton = screen.getAllByText('All Tasks').find(el => 
-        el.closest('.phub-sidebar-nav')
-      )?.closest('button');
-      if (allTasksButton) {
-        fireEvent.click(allTasksButton);
-      }
-
-      const quickTasksButton = screen.getAllByText('Quick Tasks').find(el => 
-        el.closest('.phub-sidebar-nav')
-      )?.closest('button');
-      if (quickTasksButton) {
-        fireEvent.click(quickTasksButton);
-      }
-
-      const projectsButton = screen.getAllByText('Projects').find(el => 
-        el.closest('.phub-sidebar-nav')
-      )?.closest('button');
-      if (projectsButton) {
-        fireEvent.click(projectsButton);
-      }
-
-      // Component should handle all view switches successfully
+      const allTasksButton = screen.getAllByText('All Tasks').find(el =>
+        el.closest('.phub-sidebar-nav'))?.closest('button');
+      if (allTasksButton) fireEvent.click(allTasksButton);
+      const quickTasksButton = screen.getAllByText('Quick Tasks').find(el =>
+        el.closest('.phub-sidebar-nav'))?.closest('button');
+      if (quickTasksButton) fireEvent.click(quickTasksButton);
+      const projectsButton = screen.getAllByText('Projects').find(el =>
+        el.closest('.phub-sidebar-nav'))?.closest('button');
+      if (projectsButton) fireEvent.click(projectsButton);
       expect(screen.getByTestId('main-management-window')).toBeInTheDocument();
     });
   });
 
   describe('Advanced Features & Edge Cases', () => {
-    it('handles component lifecycle and cleanup', async () => {
+    it('handles component lifecycle and cleanup', () => {
       const { unmount } = render(<MainManagementWindowWrapper />);
-      
-      // Component should render successfully
       expect(screen.getByTestId('main-management-window')).toBeInTheDocument();
-      
-      // Should unmount without errors
       unmount();
     });
-
-    it('handles multiple rapid interactions', async () => {
+    it('handles multiple rapid interactions', () => {
       render(<MainManagementWindowWrapper />);
-      
-      // Rapidly switch between views
-      const allTasksButton = screen.getAllByText('All Tasks').find(el => 
-        el.closest('.phub-sidebar-nav')
-      )?.closest('button');
-      const quickTasksButton = screen.getAllByText('Quick Tasks').find(el => 
-        el.closest('.phub-sidebar-nav')
-      )?.closest('button');
-      const projectsButton = screen.getAllByText('Projects').find(el => 
-        el.closest('.phub-sidebar-nav')
-      )?.closest('button');
-
+      const allTasksButton = screen.getAllByText('All Tasks').find(el =>
+        el.closest('.phub-sidebar-nav'))?.closest('button');
+      const quickTasksButton = screen.getAllByText('Quick Tasks').find(el =>
+        el.closest('.phub-sidebar-nav'))?.closest('button');
+      const projectsButton = screen.getAllByText('Projects').find(el =>
+        el.closest('.phub-sidebar-nav'))?.closest('button');
       if (allTasksButton && quickTasksButton && projectsButton) {
         fireEvent.click(allTasksButton);
         fireEvent.click(quickTasksButton);
         fireEvent.click(projectsButton);
         fireEvent.click(allTasksButton);
       }
-
-      // Component should remain stable
       expect(screen.getByTestId('main-management-window')).toBeInTheDocument();
     });
-
-    it('handles form states and transitions', async () => {
+    it('handles form states and transitions', () => {
       render(<MainManagementWindowWrapper />);
-      
-      // Test opening and closing forms rapidly
       const addNewButton = screen.getByText('Add New');
-      
-      // Open task form
       fireEvent.click(addNewButton);
-      
-      await waitFor(() => {
-        if (screen.queryByTestId('task-form')) {
-          const cancelButton = screen.getByText('Cancel');
-          fireEvent.click(cancelButton);
-        }
-      }, { timeout: 5000 });
-
-      // Should handle state transitions properly
+      if (screen.queryByTestId('task-form')) {
+        const cancelButton = screen.getByText('Cancel');
+        fireEvent.click(cancelButton);
+      }
       expect(screen.getByTestId('main-management-window')).toBeInTheDocument();
     });
-
-    it('handles window resize and responsive behavior', async () => {
+    it('handles window resize and responsive behavior', () => {
       render(<MainManagementWindowWrapper />);
-      
-      // Component should render successfully regardless of window size
       expect(screen.getByTestId('main-management-window')).toBeInTheDocument();
-      
-      // Test sidebar functionality
       const collapseButton = screen.getByLabelText('Collapse sidebar');
       fireEvent.click(collapseButton);
-      
       expect(screen.getByLabelText('Expand sidebar')).toBeInTheDocument();
     });
-
-    it('handles keyboard navigation and accessibility', async () => {
+    it('handles keyboard navigation and accessibility', () => {
       render(<MainManagementWindowWrapper />);
-      
-      // Component should be accessible
       expect(screen.getByTestId('main-management-window')).toBeInTheDocument();
-      
-      // Test basic keyboard interactions
-      const sidebar = screen.getAllByText('All Tasks').find(el => 
-        el.closest('.phub-sidebar-nav')
-      )?.closest('button');
+      const sidebar = screen.getAllByText('All Tasks').find(el =>
+        el.closest('.phub-sidebar-nav'))?.closest('button');
       if (sidebar) {
         sidebar.focus();
-        // Component should handle focus properly
         expect(document.activeElement).toBe(sidebar);
       }
     });
   });
 
   describe('Data Integration & API Handling', () => {
-    it('handles API response edge cases', async () => {
+    it('handles API response edge cases', () => {
       render(<MainManagementWindowWrapper />);
-      
-      // Component should handle various API response formats
       expect(screen.getByTestId('main-management-window')).toBeInTheDocument();
     });
-
-    it('handles concurrent operations', async () => {
+    it('handles concurrent operations', () => {
       render(<MainManagementWindowWrapper />);
-      
-      // Simulate multiple actions happening at once
       const addNewButton = screen.getByText('Add New');
-      const projectsButton = screen.getAllByText('Projects').find(el => 
-        el.closest('.phub-sidebar-nav')
-      )?.closest('button');
-      
+      const projectsButton = screen.getAllByText('Projects').find(el =>
+        el.closest('.phub-sidebar-nav'))?.closest('button');
       if (projectsButton) {
         fireEvent.click(projectsButton);
         fireEvent.click(addNewButton);
       }
-
-      // Component should handle concurrent operations
       expect(screen.getByTestId('main-management-window')).toBeInTheDocument();
     });
-
-    it('handles data synchronization scenarios', async () => {
+    it('handles data synchronization scenarios', () => {
       render(<MainManagementWindowWrapper />);
-      
-      // Test data consistency across view switches
-      const allTasksButton = screen.getAllByText('All Tasks').find(el => 
-        el.closest('.phub-sidebar-nav')
-      )?.closest('button');
-      const quickTasksButton = screen.getAllByText('Quick Tasks').find(el => 
-        el.closest('.phub-sidebar-nav')
-      )?.closest('button');
-      
+      const allTasksButton = screen.getAllByText('All Tasks').find(el =>
+        el.closest('.phub-sidebar-nav'))?.closest('button');
+      const quickTasksButton = screen.getAllByText('Quick Tasks').find(el =>
+        el.closest('.phub-sidebar-nav'))?.closest('button');
       if (allTasksButton && quickTasksButton) {
         fireEvent.click(allTasksButton);
         fireEvent.click(quickTasksButton);
         fireEvent.click(allTasksButton);
       }
-
-      // Data should remain consistent
       expect(screen.getByTestId('main-management-window')).toBeInTheDocument();
     });
   });
 
   describe('Performance & Optimization', () => {
-    it('handles large datasets efficiently', async () => {
+    it('handles large datasets efficiently', () => {
       render(<MainManagementWindowWrapper />);
-      
-      // Component should render efficiently regardless of data size
       expect(screen.getByTestId('main-management-window')).toBeInTheDocument();
     });
-
-    it('handles memory management properly', async () => {
+    it('handles memory management properly', () => {
       const { rerender } = render(<MainManagementWindowWrapper />);
-      
-      // Test rerendering scenarios
       rerender(<MainManagementWindowWrapper />);
       rerender(<MainManagementWindowWrapper />);
-      
-      // Should handle rerenders without memory leaks
       expect(screen.getByTestId('main-management-window')).toBeInTheDocument();
     });
   });

@@ -87,6 +87,24 @@ const mockToast = {
   removeToast: vi.fn(),
 };
 
+// Mock the TaskDetails component
+vi.mock('../../components/TaskDetails', () => ({
+  default: ({ open, task, onClose, onUpdate, onDelete }: TaskDetailsProps) => {
+    if (!open) return null;
+    return (
+      <div data-testid="task-details">
+        <h2>Task Details</h2>
+        <div>{task?.title}</div>
+        <button onClick={() => onUpdate({ ...task, completed: !task.completed })}>
+          Toggle Complete
+        </button>
+        <button onClick={() => onDelete(task.id)}>Delete</button>
+        <button onClick={onClose}>Close</button>
+      </div>
+    );
+  },
+}));
+
 vi.mock('../../components/ToastProvider', () => ({
   useToast: () => mockToast,
   ToastProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
@@ -126,9 +144,55 @@ vi.mock('../../hooks/useTasks', () => ({
   }),
 }));
 
-// Mock the TaskForm component
+interface TaskDetailsProps {
+  open: boolean;
+  task: {
+    id: number;
+    title: string;
+    description: string;
+    completed: boolean;
+    projectId: number | null;
+    parent_id: number | null;
+  };
+  onClose: () => void;
+  onUpdate: (task: {
+    id: number;
+    title: string;
+    description: string;
+    completed: boolean;
+    projectId: number | null;
+    parent_id: number | null;
+  }) => void;
+  onDelete: (id: number) => void;
+}
+
+interface TaskFormProps {
+  open: boolean;
+  onSubmit: (task: { title: string; description: string }) => void;
+  onClose: () => void;
+  error?: string | null;
+}
+interface ProjectFormProps {
+  open: boolean;
+  onSubmit: (project: { name: string; description: string }) => void;
+  onClose: () => void;
+  error?: string | null;
+}
+interface TaskDetailsProps {
+  open: boolean;
+  task: { id: number; title: string; description: string; completed: boolean; projectId: number | null; parent_id: number | null };
+  onClose: () => void;
+  onUpdate: (task: { id: number; title: string; description: string; completed: boolean; projectId: number | null; parent_id: number | null }) => void;
+  onDelete: (id: number) => void;
+}
+interface ConfirmDialogProps {
+  open: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}
+
 vi.mock('../../components/TaskForm', () => ({
-  default: ({ open, onSubmit, onClose, error }: any) => {
+  default: ({ open, onSubmit, onClose, error }: TaskFormProps) => {
     if (!open) return null;
     return (
       <div data-testid="task-form">
@@ -143,9 +207,8 @@ vi.mock('../../components/TaskForm', () => ({
   },
 }));
 
-// Mock the ProjectForm component  
 vi.mock('../../components/ProjectForm', () => ({
-  default: ({ open, onSubmit, onClose, error }: any) => {
+  default: ({ open, onSubmit, onClose, error }: ProjectFormProps) => {
     if (!open) return null;
     return (
       <div data-testid="project-form">
@@ -160,9 +223,8 @@ vi.mock('../../components/ProjectForm', () => ({
   },
 }));
 
-// Mock the TaskDetails component
 vi.mock('../../components/TaskDetails', () => ({
-  default: ({ open, task, onClose, onUpdate, onDelete }: any) => {
+  default: ({ open, task, onClose, onUpdate, onDelete }: TaskDetailsProps) => {
     if (!open) return null;
     return (
       <div data-testid="task-details">
@@ -178,9 +240,8 @@ vi.mock('../../components/TaskDetails', () => ({
   },
 }));
 
-// Mock ConfirmDialog
 vi.mock('../../components/ConfirmDialog', () => ({
-  default: ({ open, onConfirm, onCancel }: any) => {
+  default: ({ open, onConfirm, onCancel }: ConfirmDialogProps) => {
     if (!open) return null;
     return (
       <div data-testid="confirm-dialog">
@@ -295,7 +356,7 @@ describe('MainManagementWindow - Helper Functions', () => {
       // Verify projects context is maintained
       await waitFor(() => {
         // Look for project indicators if they exist
-        const projectElements = screen.queryAllByText(/project/i);
+  // ...existing code...
         // Just verify component continues to function
         expect(screen.getByTestId('main-management-window')).toBeInTheDocument();
       }, { timeout: 5000 });
