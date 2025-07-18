@@ -10,12 +10,13 @@ vi.mock('../components/AppHeader', () => ({
 
 // Mock navigate
 const mockNavigate = vi.fn();
+let mockSearchParams = new URLSearchParams('?token=test-token');
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
   return {
     ...actual,
     useNavigate: () => mockNavigate,
-    useSearchParams: () => [new URLSearchParams('?token=test-token'), vi.fn()],
+    useSearchParams: () => [mockSearchParams, vi.fn()],
   };
 });
 
@@ -573,6 +574,63 @@ describe('PasswordResetConfirmPage', () => {
       const submitButton = screen.getByRole('button', { name: /set new password/i });
       expect(submitButton).toBeInTheDocument();
       expect(submitButton).toHaveTextContent('Set New Password');
+    });
+  });
+});
+
+describe('PasswordResetConfirmPage - URL Parameter Edge Cases', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.clearAllTimers();
+    mockCookie.mockReturnValue('');
+    vi.useRealTimers();
+    // Reset to default token
+    mockSearchParams = new URLSearchParams('?token=test-token');
+  });
+
+  afterEach(() => {
+    vi.useFakeTimers();
+  });
+
+  it('handles missing token parameter in URL', async () => {
+    // Change the mock search params to have no token
+    mockSearchParams = new URLSearchParams('');
+    
+    // Mock CSRF token fetch
+    (global.fetch as Mock).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ csrf_token: 'test-csrf-token' }),
+    });
+    
+    // Mock password reset confirm request
+    (global.fetch as Mock).mockResolvedValueOnce({
+      ok: false,
+      json: () => Promise.resolve({ error: 'Invalid token' })
+    });
+
+    render(<PasswordResetConfirmPageWrapper />);
+
+    const passwordInput = screen.getByLabelText('New Password');
+    const confirmPasswordInput = screen.getByLabelText('Confirm New Password');
+    const submitButton = screen.getByRole('button', { name: /set new password/i });
+
+    fireEvent.change(passwordInput, { target: { value: 'newpassword123' } });
+    fireEvent.change(confirmPasswordInput, { target: { value: 'newpassword123' } });
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith('/api/password-reset/confirm', 
+        expect.objectContaining({
+          body: JSON.stringify({
+            token: '',  // Empty token due to missing URL parameter triggering the || "" fallback
+            new_password: 'newpassword123'
+          })
+        })
+      );
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Invalid token')).toBeInTheDocument();
     });
   });
 });
