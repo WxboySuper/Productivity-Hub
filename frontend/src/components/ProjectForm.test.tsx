@@ -432,6 +432,7 @@ describe('ProjectForm', () => {
 
     // Submit the form directly, bypassing the disabled button
     const form = nameInput.closest('form');
+    expect(form).toBeInTheDocument();
     fireEvent.submit(form!);
 
     // Assert the error message is shown
