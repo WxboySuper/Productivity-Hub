@@ -106,6 +106,95 @@ describe('useTasks', () => {
       });
     });
 
+    it('should set projectId as undefined if both projectId and project_id are missing', async () => {
+      const mockTasks = [
+        { id: 1, title: 'Task 1', completed: false }
+      ];
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ tasks: mockTasks }),
+      } as Response);
+
+      const { result } = renderHook(() => useTasks());
+
+      act(() => {
+        result.current.fetchTasks();
+      });
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+
+      expect(result.current.tasks).toHaveLength(1);
+      expect(result.current.tasks[0].projectId).toBeUndefined();
+    });
+
+    it('should fallback to empty array if data.tasks is undefined', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ tasks: undefined }),
+      } as Response);
+
+      const { result } = renderHook(() => useTasks());
+
+      act(() => {
+        result.current.fetchTasks();
+      });
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+
+      expect(result.current.tasks).toEqual([]);
+    });
+
+    it('should use project_id if projectId is explicitly undefined', async () => {
+      const mockTasks = [
+        { id: 1, title: 'Task 1', projectId: undefined, project_id: 42, completed: false }
+      ];
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ tasks: mockTasks }),
+      } as Response);
+
+      const { result } = renderHook(() => useTasks());
+
+      act(() => {
+        result.current.fetchTasks();
+      });
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+
+      expect(result.current.tasks[0].projectId).toBe(42);
+    });
+
+    it('should use project_id if only project_id is present', async () => {
+      const mockTasks = [
+        { id: 1, title: 'Task 1', project_id: 99, completed: false }
+      ];
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ tasks: mockTasks }),
+      } as Response);
+
+      const { result } = renderHook(() => useTasks());
+
+      act(() => {
+        result.current.fetchTasks();
+      });
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+
+      expect(result.current.tasks[0].projectId).toBe(99);
+    });
+
     it('should handle fetch error', async () => {
       const errorMessage = 'Failed to fetch tasks';
       mockFetch.mockRejectedValueOnce(new Error(errorMessage));
@@ -277,6 +366,45 @@ describe('useTasks', () => {
 
       consoleSpy.mockRestore();
     });
+
+    it('should leave other tasks unchanged when updating a single task', async () => {
+      document.cookie = '_csrf_token=test_token';
+
+      const { result } = renderHook(() => useTasks());
+
+      // Initial state: two tasks
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          tasks: [
+            { id: 1, title: 'Task 1', completed: false },
+            { id: 2, title: 'Task 2', completed: false }
+          ]
+        }),
+      } as Response);
+
+      act(() => {
+        result.current.fetchTasks();
+      });
+
+      await waitFor(() => {
+        expect(result.current.tasks).toHaveLength(2);
+      });
+
+      // Update only task 1
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ message: 'Task updated' }),
+      } as Response);
+
+      await act(async () => {
+        await result.current.updateTask(1, { completed: true });
+      });
+
+      // Task 1 should be updated, task 2 should remain unchanged
+      expect(result.current.tasks[0].completed).toBe(true);
+      expect(result.current.tasks[1]).toEqual({ id: 2, title: 'Task 2', completed: false });
+    });
   });
 
   describe('deleteTask', () => {
@@ -385,11 +513,15 @@ describe('useTasks', () => {
         await result.current.updateTask(1, { completed: true });
       });
 
-      expect(mockFetch).toHaveBeenCalledWith('/api/tasks/1', expect.objectContaining({
-        headers: expect.objectContaining({
-          'X-CSRFToken': '', // Should be empty string
-        }),
-      }));
+      // Check that /api/csrf-token was called
+      expect(mockFetch.mock.calls.some(call => call[0] === '/api/csrf-token')).toBe(true);
+
+      // Check that /api/tasks/1 was called with X-CSRFToken: ''
+      const taskCall = mockFetch.mock.calls.find(call => call[0] === '/api/tasks/1');
+      expect(taskCall).toBeDefined();
+      if (taskCall) {
+        expect(taskCall[1].headers['X-CSRFToken']).toBe('');
+      }
     });
 
     it('should parse CSRF token from cookie correctly', async () => {
@@ -430,6 +562,33 @@ describe('useTasks', () => {
       expect(mockFetch).toHaveBeenCalledWith('/api/tasks/1', expect.objectContaining({
         headers: expect.objectContaining({
           'X-CSRFToken': 'token with spaces', // Should be decoded
+        }),
+      }));
+    });
+
+    it('should fetch CSRF token if cookie value is empty string', async () => {
+      document.cookie = '_csrf_token='; // present but empty
+
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ csrf_token: 'fetched_token' }),
+        } as Response)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ message: 'Task updated' }),
+        } as Response);
+
+      const { result } = renderHook(() => useTasks());
+
+      await act(async () => {
+        await result.current.updateTask(1, { completed: true });
+      });
+
+      expect(mockFetch).toHaveBeenCalledWith('/api/csrf-token', { credentials: 'include' });
+      expect(mockFetch).toHaveBeenCalledWith('/api/tasks/1', expect.objectContaining({
+        headers: expect.objectContaining({
+          'X-CSRFToken': 'fetched_token',
         }),
       }));
     });
