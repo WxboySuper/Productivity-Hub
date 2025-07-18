@@ -326,12 +326,15 @@ const MainManagementWindow: React.FC = () => {
       });
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Failed to create task');
+        setTaskFormError(data.error || 'Failed to create task');
+        // Do NOT close the modal if there is an error
+        return;
       }
       setShowTaskForm(false);
       fetchTasks();
     } catch (err: unknown) {
       setTaskFormError(err instanceof Error ? err.message : 'Unknown error');
+      // Do NOT close the modal if there is an error
     } finally {
       setTaskFormLoading(false);
     }
