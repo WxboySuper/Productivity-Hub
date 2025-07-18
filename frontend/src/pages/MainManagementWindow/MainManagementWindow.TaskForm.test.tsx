@@ -139,12 +139,16 @@ describe('Task Form', () => {
 
     // Find submit button by text (real markup uses 'Create Task' with an icon span)
     const submitButton = Array.from(document.querySelectorAll('button')).find(
-      btn => btn.textContent && btn.textContent.includes('Create Task')
+      btn => btn.textContent?.includes('Create Task')
     );
     expect(submitButton).toBeTruthy();
-    await act(() => {
-      fireEvent.click(submitButton!);
-    });
+    if (submitButton) {
+      await act(() => {
+        fireEvent.click(submitButton);
+      });
+    } else {
+      throw new Error('Submit button not found');
+    }
 
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith('/api/tasks', expect.objectContaining({
@@ -356,17 +360,21 @@ describe('Task Form', () => {
 
     // Find submit button by text (real markup uses 'Create Task' with an icon span)
     const submitButton = Array.from(document.querySelectorAll('button')).find(
-      btn => btn.textContent && btn.textContent.includes('Create Task')
+      btn => btn.textContent?.includes('Create Task')
     );
     expect(submitButton).toBeTruthy();
+
+    if (!submitButton) {
+      throw new Error('Submit button not found');
+    }
     act(() => {
-      fireEvent.click(submitButton!);
+      fireEvent.click(submitButton);
     });
 
     // Wait for error message to appear after submitting
     await waitFor(() => {
       const errorDiv = Array.from(document.querySelectorAll('.modern-error')).find(
-        el => el.textContent && el.textContent.includes('Task creation failed')
+        el => el.textContent?.includes('Task creation failed')
       );
       if (!errorDiv) {
         throw new Error('Could not find error message: Task creation failed.');
