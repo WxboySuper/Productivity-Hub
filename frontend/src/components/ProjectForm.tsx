@@ -354,6 +354,7 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
   }, [onClose]);
 
   return (
+    // skipcq: JS-0760
     <div
       className="phub-productive-modal-backdrop"
       role="dialog"
