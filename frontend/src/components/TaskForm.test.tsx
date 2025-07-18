@@ -51,7 +51,7 @@ describe('TaskForm', () => {
   });
 
   it('renders edit task form with existing data', () => {
-    render(<TaskFormWrapper initialValues={mockTask} editMode={true} />);
+    render(<TaskFormWrapper initialValues={mockTask} editMode />);
     
     expect(screen.getByText('✏️ Edit Task')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Test Task')).toBeInTheDocument();
@@ -164,7 +164,7 @@ describe('TaskForm', () => {
   });
 
   it('disables submit button when loading', () => {
-    render(<TaskFormWrapper loading={true} />);
+    render(<TaskFormWrapper loading />);
     
     expect(screen.getByRole('button', { name: /creating.../i })).toBeDisabled();
   });
@@ -326,7 +326,7 @@ describe('TaskForm', () => {
     const { rerender } = render(<TaskFormWrapper open={false} />);
     
     // Open with different initial values
-    rerender(<TaskFormWrapper open={true} initialValues={mockTask} />);
+    rerender(<TaskFormWrapper open initialValues={mockTask} />);
     
     expect(screen.getByDisplayValue('Test Task')).toBeInTheDocument();
   });
@@ -959,7 +959,7 @@ describe('TaskForm', () => {
     render(<TaskFormWrapper 
       onSubmit={mockOnSubmit} 
       initialValues={initialTaskWithSubtasks}
-      editMode={true}
+      editMode
     />);
     
     // Submit the form to test lines 184-186 (existing subtask handling)
@@ -1309,7 +1309,7 @@ describe('TaskForm', () => {
     render(<TaskFormWrapper 
       onSubmit={mockOnSubmit} 
       initialValues={initialTaskWithRecurrence}
-      editMode={true}
+      editMode
     />);
     
     // Test the recurrence initialization (line 182)
@@ -1366,5 +1366,140 @@ describe('TaskForm', () => {
         expect(linkedTaskChips.length).toBe(1);
       });
     }
+  });
+
+  it('handles reminder time initialization with existing value', () => {
+    const taskWithReminderTime = {
+      ...mockTask,
+      reminder_enabled: true,
+      reminder_time: '2025-07-20T10:00:00Z'
+    };
+    
+    render(<TaskFormWrapper initialValues={taskWithReminderTime} editMode />);
+    
+    // This test covers line 80: reminder_time initialization when truthy
+    // Expand reminders section
+    fireEvent.click(screen.getByText('Reminders'));
+    
+    // The reminder time input should be populated with the converted value
+    const reminderInput = screen.getByDisplayValue('2025-07-20T10:00');
+    expect(reminderInput).toBeInTheDocument();
+  });
+
+  it('validates empty title specifically for line 154 coverage', () => {
+    const mockOnSubmit = vi.fn();
+    render(<TaskFormWrapper onSubmit={mockOnSubmit} />);
+    
+    const titleInput = screen.getByPlaceholderText('What needs to be done?');
+    const submitButton = screen.getByRole('button', { name: /create task/i });
+    
+    // Start with empty input, clear any default value
+    fireEvent.change(titleInput, { target: { value: '' } });
+    
+    // Try to submit with empty title - this should hit line 154
+    fireEvent.click(submitButton);
+    
+    // Verify submit wasn't called due to validation
+    expect(mockOnSubmit).not.toHaveBeenCalled();
+  });
+
+  it('covers linked task dependency popup selection - lines 684-687', async () => {
+    const availableTasks = [
+      { id: 2, title: 'Available Task 1', project_id: 1 },
+      { id: 3, title: 'Available Task 2', project_id: 1 }
+    ];
+    
+    render(<TaskFormWrapper allTasks={availableTasks} initialValues={mockTask} editMode />);
+    
+    // Expand task relationships section
+    fireEvent.click(screen.getByText('Task Relationships'));
+    
+    await waitFor(() => {
+      // Click on "Linked Tasks" button to open popup
+      const linkedButton = screen.getByText('Linked Tasks');
+      fireEvent.click(linkedButton);
+    });
+    
+    await waitFor(() => {
+      // Select a task from the popup - this should hit lines 685-687
+      const taskItem = screen.getByText('Available Task 1');
+      fireEvent.click(taskItem);
+    });
+    
+    await waitFor(() => {
+      // Verify linked task was added
+      const linkedChips = document.querySelectorAll('.modern-dependency-chip.linked');
+      expect(linkedChips.length).toBeGreaterThan(0);
+    });
+  });
+
+  it('covers fallback return true in dependency filtering - lines 674 and 709', async () => {
+    const availableTasks = [
+      { id: 2, title: 'Available Task 1', project_id: 1 },
+      { id: 3, title: 'Available Task 2', project_id: 1 }
+    ];
+    
+    render(<TaskFormWrapper allTasks={availableTasks} initialValues={mockTask} editMode />);
+    
+    // Expand task relationships section
+    fireEvent.click(screen.getByText('Task Relationships'));
+    
+    await waitFor(() => {
+      // Click on "Linked Tasks" button to open popup
+      const linkedButton = screen.getByText('Linked Tasks');
+      fireEvent.click(linkedButton);
+    });
+    
+    // This test is designed to hit the fallback cases in the filtering logic
+    // The filter functions have else clauses that return true (lines 674 and 709)
+    await waitFor(() => {
+      // Just verify the popup opened and tasks are visible
+      expect(screen.getByText('Available Task 1')).toBeInTheDocument();
+      expect(screen.getByText('Available Task 2')).toBeInTheDocument();
+    });
+  });
+
+  it('covers blocking dependency popup selection - line 684', async () => {
+    const availableTasks = [
+      { id: 2, title: 'Task to Block', project_id: 1 },
+    ];
+    
+    render(<TaskFormWrapper allTasks={availableTasks} initialValues={mockTask} editMode />);
+    
+    // Expand task relationships section
+    fireEvent.click(screen.getByText('Task Relationships'));
+    
+    await waitFor(() => {
+      // Click on "Blocking" button to open popup
+      const blockingButton = screen.getByText('Blocking');
+      fireEvent.click(blockingButton);
+    });
+    
+    await waitFor(() => {
+      // Select a task from the popup - this should hit line 684
+      const taskItem = screen.getByText('Task to Block');
+      fireEvent.click(taskItem);
+    });
+    
+    await waitFor(() => {
+      // Verify blocking task was added
+      const blockingChips = document.querySelectorAll('.modern-dependency-chip.blocking');
+      expect(blockingChips.length).toBeGreaterThan(0);
+    });
+  });
+
+  it('validates empty title to cover line 154 exactly', async () => {
+    const mockOnSubmit = vi.fn();
+    render(<TaskFormWrapper onSubmit={mockOnSubmit} />);
+    
+    // Clear title and try to submit without title - should hit line 154
+    const titleInput = screen.getByPlaceholderText('What needs to be done?');
+    fireEvent.change(titleInput, { target: { value: '   ' } }); // Only whitespace
+    
+    const submitButton = screen.getByRole('button', { name: /create task/i });
+    fireEvent.click(submitButton);
+    
+    // Should trigger validation error and not call onSubmit
+    expect(mockOnSubmit).not.toHaveBeenCalled();
   });
 });
