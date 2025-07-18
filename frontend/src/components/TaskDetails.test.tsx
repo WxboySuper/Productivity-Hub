@@ -1,12 +1,95 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import React from 'react';
 import TaskDetails from './TaskDetails';
+
+// Define types for test data based on component interfaces
+interface Task {
+  id: number;
+  title: string;
+  description?: string;
+  due_date?: string;
+  start_date?: string;
+  priority?: number;
+  recurrence?: string;
+  completed: boolean;
+  project_id?: number;
+  projectName?: string;
+  next_occurrence?: string;
+  subtasks?: Array<{
+    id: number;
+    title: string;
+    completed: boolean;
+  }>;
+  parent_id?: number | null;
+  blocked_by?: number[];
+  blocking?: number[];
+  reminder_enabled?: boolean;
+  reminder_time?: string;
+}
+
+interface TestTask {
+  id: number;
+  title: string;
+}
+
+interface TestProject {
+  id: number;
+  name: string;
+}
+
+// Define types for TaskForm props
+interface TaskUpdateData {
+  title: string;
+  description: string;
+}
+
+interface TaskFormProps {
+  open: boolean;
+  onSubmit: (task: TaskUpdateData) => void;
+  onClose: () => void;
+  loading?: boolean;
+  error?: string | null;
+}
+
+// Mock TaskForm component
+vi.mock('./TaskForm', () => {
+  let storedOnSubmit: ((task: TaskUpdateData) => void) | null = null;
+  
+  return {
+    default: ({ open, onSubmit, onClose, loading, error }: TaskFormProps) => {
+      if (!open) return null;
+      
+      // Store the onSubmit function so we can call it later
+      storedOnSubmit = onSubmit;
+      (window as unknown as { testOnSubmit: typeof storedOnSubmit }).testOnSubmit = storedOnSubmit;
+      
+      // Create handler function outside JSX to avoid arrow function in props
+      const handleSubmit = () => onSubmit({ title: 'Updated Task', description: 'Updated description' });
+      
+      return (
+        <div data-testid="task-form-mock">
+          <div>TaskForm Mock</div>
+          <button 
+            onClick={handleSubmit}
+            data-testid="submit-form"
+          >
+            Submit Form
+          </button>
+          <button onClick={onClose} data-testid="close-form">Close Form</button>
+          {loading && <div data-testid="form-loading">Loading...</div>}
+          {error && <div data-testid="form-error">{error}</div>}
+        </div>
+      );
+    }
+  };
+});
 
 describe('TaskDetails', () => {
   const mockOnClose = vi.fn();
   const mockOnEdit = vi.fn();
 
-  const baseTask = {
+  const baseTask: Task = {
     id: 1,
     title: 'Test Task',
     description: 'Test description',
@@ -27,12 +110,12 @@ describe('TaskDetails', () => {
     blocking: [3],
   };
 
-  const mockTasks = [
+  const mockTasks: TestTask[] = [
     { id: 2, title: 'Blocking Task' },
     { id: 3, title: 'Dependent Task' },
   ];
 
-  const mockProjects = [
+  const mockProjects: TestProject[] = [
     { id: 1, name: 'Test Project' },
   ];
 
@@ -47,6 +130,16 @@ describe('TaskDetails', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // Reset environment variables
+    process.env.REACT_APP_API_URL = 'http://localhost:3000';
+    // Setup default fetch mock
+    global.fetch = vi.fn();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    // Clean up global test variables
+    delete (window as unknown as { testOnSubmit?: unknown }).testOnSubmit;
   });
 
   it('does not render when open is false', () => {
@@ -271,7 +364,7 @@ describe('TaskDetails', () => {
 
   it('handles CSRF token fetch errors gracefully', () => {
     // Mock console.error to avoid noise in test output
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
     // Mock fetch to fail for CSRF token request
     const originalFetch = global.fetch;
@@ -287,5 +380,328 @@ describe('TaskDetails', () => {
     // Clean up
     global.fetch = originalFetch;
     consoleSpy.mockRestore();
+  });
+
+  describe('CSRF Token and Task Update Functionality', () => {
+    it('successfully fetches CSRF token and updates task', async () => {
+      // Mock successful CSRF token fetch
+      const mockCsrfResponse = {
+        ok: true,
+        json: vi.fn().mockResolvedValue({ csrf_token: 'mock-csrf-token' })
+      };
+      
+      // Mock successful task update
+      const mockUpdateResponse = {
+        ok: true,
+        json: vi.fn().mockResolvedValue({ success: true })
+      };
+
+      global.fetch = vi.fn()
+        .mockResolvedValueOnce(mockCsrfResponse) // First call for CSRF token
+        .mockResolvedValueOnce(mockUpdateResponse); // Second call for task update
+
+      render(<TaskDetails {...defaultProps} />);
+
+      // Open edit form
+      fireEvent.click(screen.getByRole('button', { name: /edit task/i }));
+
+      // Verify TaskForm is rendered
+      expect(screen.getByTestId('task-form-mock')).toBeInTheDocument();
+
+      // Submit the form
+      fireEvent.click(screen.getByTestId('submit-form'));
+
+      // Wait for async operations to complete
+      await waitFor(() => {
+        expect(global.fetch).toHaveBeenCalledTimes(2);
+      });
+
+      // Verify CSRF token call
+      expect(global.fetch).toHaveBeenNthCalledWith(1, 'http://localhost:3000/api/csrf-token', {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      // Verify task update call
+      expect(global.fetch).toHaveBeenNthCalledWith(2, 'http://localhost:3000/api/tasks/1', {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': 'mock-csrf-token',
+        },
+        body: JSON.stringify({ title: 'Updated Task', description: 'Updated description' }),
+      });
+
+      // Verify onEdit callback was called
+      expect(mockOnEdit).toHaveBeenCalledTimes(1);
+
+      // Verify form is closed (TaskForm should not be visible)
+      await waitFor(() => {
+        expect(screen.queryByTestId('task-form-mock')).not.toBeInTheDocument();
+      });
+    });
+
+    it('handles CSRF token fetch failure and still attempts task update', async () => {
+      // Mock failed CSRF token fetch
+      const mockCsrfResponse = {
+        ok: false,
+        json: vi.fn().mockResolvedValue({ error: 'CSRF failed' })
+      };
+      
+      // Mock successful task update (should work without CSRF token)
+      const mockUpdateResponse = {
+        ok: true,
+        json: vi.fn().mockResolvedValue({ success: true })
+      };
+
+      global.fetch = vi.fn()
+        .mockResolvedValueOnce(mockCsrfResponse) // First call for CSRF token fails
+        .mockResolvedValueOnce(mockUpdateResponse); // Second call for task update succeeds
+
+      render(<TaskDetails {...defaultProps} />);
+
+      // Open edit form
+      fireEvent.click(screen.getByRole('button', { name: /edit task/i }));
+
+      // Submit the form
+      fireEvent.click(screen.getByTestId('submit-form'));
+
+      await waitFor(() => {
+        expect(global.fetch).toHaveBeenCalledTimes(2);
+      });
+
+      // Verify task update call was made without CSRF token
+      expect(global.fetch).toHaveBeenNthCalledWith(2, 'http://localhost:3000/api/tasks/1', {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ title: 'Updated Task', description: 'Updated description' }),
+      });
+
+      expect(mockOnEdit).toHaveBeenCalledTimes(1);
+    });
+
+    it('handles CSRF token network error and continues with task update', async () => {
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+      // Mock CSRF token request to throw an error
+      const mockUpdateResponse = {
+        ok: true,
+        json: vi.fn().mockResolvedValue({ success: true })
+      };
+
+      global.fetch = vi.fn()
+        .mockRejectedValueOnce(new Error('Network error')) // CSRF token request fails
+        .mockResolvedValueOnce(mockUpdateResponse); // Task update succeeds
+
+      render(<TaskDetails {...defaultProps} />);
+
+      // Open edit form
+      fireEvent.click(screen.getByRole('button', { name: /edit task/i }));
+
+      // Submit the form
+      fireEvent.click(screen.getByTestId('submit-form'));
+
+      await waitFor(() => {
+        expect(global.fetch).toHaveBeenCalledTimes(2);
+      });
+
+      // Verify console.error was called for CSRF failure
+      expect(consoleSpy).toHaveBeenCalledWith('Failed to fetch CSRF token:', expect.any(Error));
+
+      // Verify task update call was made without CSRF token
+      expect(global.fetch).toHaveBeenNthCalledWith(2, 'http://localhost:3000/api/tasks/1', {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ title: 'Updated Task', description: 'Updated description' }),
+      });
+
+      expect(mockOnEdit).toHaveBeenCalledTimes(1);
+      consoleSpy.mockRestore();
+    });
+
+    it('handles task update failure with error response', async () => {
+      // Mock successful CSRF token fetch
+      const mockCsrfResponse = {
+        ok: true,
+        json: vi.fn().mockResolvedValue({ csrf_token: 'mock-csrf-token' })
+      };
+      
+      // Mock failed task update with error response
+      const mockUpdateResponse = {
+        ok: false,
+        json: vi.fn().mockResolvedValue({ error: 'Task update failed' })
+      };
+
+      global.fetch = vi.fn()
+        .mockResolvedValueOnce(mockCsrfResponse)
+        .mockResolvedValueOnce(mockUpdateResponse);
+
+      render(<TaskDetails {...defaultProps} />);
+
+      // Open edit form
+      fireEvent.click(screen.getByRole('button', { name: /edit task/i }));
+
+      // Submit the form
+      fireEvent.click(screen.getByTestId('submit-form'));
+
+      // Wait for error to be displayed
+      await waitFor(() => {
+        expect(screen.getByTestId('form-error')).toBeInTheDocument();
+      });
+
+      // Verify error message is displayed
+      expect(screen.getByTestId('form-error')).toHaveTextContent('Task update failed');
+
+      // Verify onEdit was not called due to error
+      expect(mockOnEdit).not.toHaveBeenCalled();
+
+      // Verify form is still open (not closed due to error)
+      expect(screen.getByTestId('task-form-mock')).toBeInTheDocument();
+    });
+
+    it('handles task update failure with default error message', async () => {
+      // Mock successful CSRF token fetch
+      const mockCsrfResponse = {
+        ok: true,
+        json: vi.fn().mockResolvedValue({ csrf_token: 'mock-csrf-token' })
+      };
+      
+      // Mock failed task update without specific error message
+      const mockUpdateResponse = {
+        ok: false,
+        json: vi.fn().mockResolvedValue({}) // No error field
+      };
+
+      global.fetch = vi.fn()
+        .mockResolvedValueOnce(mockCsrfResponse)
+        .mockResolvedValueOnce(mockUpdateResponse);
+
+      render(<TaskDetails {...defaultProps} />);
+
+      // Open edit form
+      fireEvent.click(screen.getByRole('button', { name: /edit task/i }));
+
+      // Submit the form
+      fireEvent.click(screen.getByTestId('submit-form'));
+
+      // Wait for error to be displayed
+      await waitFor(() => {
+        expect(screen.getByTestId('form-error')).toBeInTheDocument();
+      });
+
+      // Verify default error message is displayed
+      expect(screen.getByTestId('form-error')).toHaveTextContent('Failed to update task');
+    });
+
+    it('handles task update network error', async () => {
+      // Mock successful CSRF token fetch
+      const mockCsrfResponse = {
+        ok: true,
+        json: vi.fn().mockResolvedValue({ csrf_token: 'mock-csrf-token' })
+      };
+
+      global.fetch = vi.fn()
+        .mockResolvedValueOnce(mockCsrfResponse)
+        .mockRejectedValueOnce(new Error('Network error')); // Task update throws error
+
+      render(<TaskDetails {...defaultProps} />);
+
+      // Open edit form
+      fireEvent.click(screen.getByRole('button', { name: /edit task/i }));
+
+      // Submit the form
+      fireEvent.click(screen.getByTestId('submit-form'));
+
+      // Wait for error to be displayed
+      await waitFor(() => {
+        expect(screen.getByTestId('form-error')).toBeInTheDocument();
+      });
+
+      // Verify error message from thrown Error
+      expect(screen.getByTestId('form-error')).toHaveTextContent('Network error');
+    });
+
+    it('handles unknown error type in task update', async () => {
+      // Mock successful CSRF token fetch
+      const mockCsrfResponse = {
+        ok: true,
+        json: vi.fn().mockResolvedValue({ csrf_token: 'mock-csrf-token' })
+      };
+
+      global.fetch = vi.fn()
+        .mockResolvedValueOnce(mockCsrfResponse)
+        .mockRejectedValueOnce('string error'); // Non-Error object thrown
+
+      render(<TaskDetails {...defaultProps} />);
+
+      // Open edit form
+      fireEvent.click(screen.getByRole('button', { name: /edit task/i }));
+
+      // Submit the form
+      fireEvent.click(screen.getByTestId('submit-form'));
+
+      // Wait for error to be displayed
+      await waitFor(() => {
+        expect(screen.getByTestId('form-error')).toBeInTheDocument();
+      });
+
+      // Verify unknown error message
+      expect(screen.getByTestId('form-error')).toHaveTextContent('Unknown error');
+    });
+
+    it('displays loading state during task update', async () => {
+      // Mock slow responses to see loading state
+      const mockCsrfResponse = {
+        ok: true,
+        json: vi.fn().mockResolvedValue({ csrf_token: 'mock-csrf-token' })
+      };
+      
+      const mockUpdateResponse = {
+        ok: true,
+        json: vi.fn().mockResolvedValue({ success: true })
+      };
+
+      // Add delay to see loading state
+      global.fetch = vi.fn()
+        .mockResolvedValueOnce(mockCsrfResponse)
+        .mockImplementation(() => new Promise(resolve => 
+          setTimeout(() => resolve(mockUpdateResponse), 100)
+        ));
+
+      render(<TaskDetails {...defaultProps} />);
+
+      // Open edit form
+      fireEvent.click(screen.getByRole('button', { name: /edit task/i }));
+
+      // Submit the form
+      fireEvent.click(screen.getByTestId('submit-form'));
+
+      // Check that loading state is displayed
+      expect(screen.getByTestId('form-loading')).toBeInTheDocument();
+
+      // Wait for operation to complete
+      await waitFor(() => {
+        expect(screen.queryByTestId('form-loading')).not.toBeInTheDocument();
+      }, { timeout: 200 });
+    });
+
+    it('closes edit form when close button is clicked', () => {
+      render(<TaskDetails {...defaultProps} />);
+
+      // Open edit form
+      fireEvent.click(screen.getByRole('button', { name: /edit task/i }));
+      expect(screen.getByTestId('task-form-mock')).toBeInTheDocument();
+
+      // Close form
+      fireEvent.click(screen.getByTestId('close-form'));
+      expect(screen.queryByTestId('task-form-mock')).not.toBeInTheDocument();
+    });
   });
 });
