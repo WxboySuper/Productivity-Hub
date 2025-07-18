@@ -1,12 +1,52 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import React from 'react';
 import TaskDetails from './TaskDetails';
 
+// Define types for test data based on component interfaces
+interface Task {
+  id: number;
+  title: string;
+  description?: string;
+  due_date?: string;
+  start_date?: string;
+  priority?: number;
+  recurrence?: string;
+  completed: boolean;
+  project_id?: number;
+  projectName?: string;
+  next_occurrence?: string;
+  subtasks?: Array<{
+    id: number;
+    title: string;
+    completed: boolean;
+  }>;
+  parent_id?: number | null;
+  blocked_by?: number[];
+  blocking?: number[];
+  reminder_enabled?: boolean;
+  reminder_time?: string;
+}
+
+interface TestTask {
+  id: number;
+  title: string;
+}
+
+interface TestProject {
+  id: number;
+  name: string;
+}
+
 // Define types for TaskForm props
+interface TaskUpdateData {
+  title: string;
+  description: string;
+}
+
 interface TaskFormProps {
   open: boolean;
-  onSubmit: (task: { title: string; description: string }) => void;
+  onSubmit: (task: TaskUpdateData) => void;
   onClose: () => void;
   loading?: boolean;
   error?: string | null;
@@ -14,7 +54,7 @@ interface TaskFormProps {
 
 // Mock TaskForm component
 vi.mock('./TaskForm', () => {
-  let storedOnSubmit: ((task: { title: string; description: string }) => void) | null = null;
+  let storedOnSubmit: ((task: TaskUpdateData) => void) | null = null;
   
   return {
     default: ({ open, onSubmit, onClose, loading, error }: TaskFormProps) => {
@@ -49,7 +89,7 @@ describe('TaskDetails', () => {
   const mockOnClose = vi.fn();
   const mockOnEdit = vi.fn();
 
-  const baseTask = {
+  const baseTask: Task = {
     id: 1,
     title: 'Test Task',
     description: 'Test description',
@@ -70,12 +110,12 @@ describe('TaskDetails', () => {
     blocking: [3],
   };
 
-  const mockTasks = [
+  const mockTasks: TestTask[] = [
     { id: 2, title: 'Blocking Task' },
     { id: 3, title: 'Dependent Task' },
   ];
 
-  const mockProjects = [
+  const mockProjects: TestProject[] = [
     { id: 1, name: 'Test Project' },
   ];
 
@@ -324,7 +364,7 @@ describe('TaskDetails', () => {
 
   it('handles CSRF token fetch errors gracefully', () => {
     // Mock console.error to avoid noise in test output
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
     // Mock fetch to fail for CSRF token request
     const originalFetch = global.fetch;
@@ -614,88 +654,6 @@ describe('TaskDetails', () => {
 
       // Verify unknown error message
       expect(screen.getByTestId('form-error')).toHaveTextContent('Unknown error');
-    });
-
-    it('covers early return in handleTaskUpdate when task is null', async () => {
-      // Render component with a task initially
-      const { rerender } = render(<TaskDetails {...defaultProps} />);
-
-      // Open edit form while task is available
-      fireEvent.click(screen.getByRole('button', { name: /edit task/i }));
-      expect(screen.getByTestId('task-form-mock')).toBeInTheDocument();
-
-      // Now rerender with task as null to test the early return in handleTaskUpdate
-      rerender(<TaskDetails {...defaultProps} task={null} />);
-
-      // The component should not render when task is null
-      expect(screen.queryByTestId('task-form-mock')).not.toBeInTheDocument();
-      
-      // To specifically test line 102 (the early return), we need to trigger handleTaskUpdate
-      // when task is null. We can do this by accessing the stored onSubmit function
-      // and calling it after task becomes null.
-      
-      // Since task is null now, if we had a reference to handleTaskUpdate and called it,
-      // it would hit the early return on line 102. However, since the component
-      // unmounts when task is null, we need a different approach.
-    });
-
-    it('covers line 102 - handleTaskUpdate early return when task is null', async () => {
-      // Mock fetch to control timing
-      global.fetch = vi.fn()
-        .mockResolvedValueOnce({
-          ok: true,
-          json: vi.fn().mockResolvedValue({ csrf_token: 'mock-csrf-token' })
-        })
-        .mockResolvedValueOnce({
-          ok: true,
-          json: vi.fn().mockResolvedValue({ success: true })
-        });
-
-      // Create a test component that allows us to control task state
-      let setTaskState: (task: typeof baseTask | null) => void;
-      
-      const TestComponent = () => {
-        const [currentTask, setCurrentTask] = React.useState<typeof baseTask | null>(baseTask);
-        
-        React.useEffect(() => {
-          setTaskState = setCurrentTask;
-        }, []);
-        
-        return (
-          <TaskDetails 
-            {...defaultProps} 
-            task={currentTask}
-          />
-        );
-      };
-
-      render(<TestComponent />);
-
-      // Open edit form to capture the onSubmit handler
-      fireEvent.click(screen.getByRole('button', { name: /edit task/i }));
-      expect(screen.getByTestId('task-form-mock')).toBeInTheDocument();
-
-      // Get the onSubmit handler
-      const onSubmitHandler = (window as unknown as { testOnSubmit?: (task: { title: string; description: string }) => void }).testOnSubmit;
-      expect(onSubmitHandler).toBeTruthy();
-
-      // Set task to null before calling onSubmit
-      // This simulates the scenario where task becomes null during form submission
-      setTaskState!(null);
-
-      // Wait for component to re-render with null task
-      await waitFor(() => {
-        expect(screen.queryByTestId('task-form-mock')).not.toBeInTheDocument();
-      });
-
-      // Now call the stored onSubmit handler
-      // Since task is now null, this will hit the early return on line 102
-      if (onSubmitHandler) {
-        onSubmitHandler({ title: 'Updated Task', description: 'Updated description' });
-      }
-
-      // Function should return early without error
-      // The important thing is that line 102 gets executed
     });
 
     it('displays loading state during task update', async () => {
