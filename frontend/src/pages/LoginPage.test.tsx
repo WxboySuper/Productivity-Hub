@@ -53,6 +53,37 @@ describe('LoginPage', () => {
     expect(screen.getByRole('button', { name: /forgot password/i })).toBeInTheDocument();
   });
 
+  it('shows fallback error message when login fails without error property', async () => {
+      mockFetch.mockImplementation((url) => {
+        if (url === '/api/auth/check') {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ authenticated: false }),
+          } as Response);
+        }
+        if (url === '/api/login') {
+          return Promise.resolve({
+            ok: false,
+            json: () => Promise.resolve({}), // No error property
+          } as Response);
+        }
+        return Promise.reject(new Error('Unmocked fetch call'));
+      });
+
+      render(<LoginPageWrapper />);
+      fireEvent.change(screen.getByLabelText(/username or email/i), {
+        target: { value: 'wronguser' },
+      });
+      fireEvent.change(screen.getByLabelText(/password/i), {
+        target: { value: 'wrongpass' },
+      });
+      fireEvent.click(screen.getByRole('button', { name: /sign in/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText('Login failed.')).toBeInTheDocument();
+      });
+    });
+
   it('handles successful login', async () => {
     // Mock auth check first
     mockFetch.mockImplementation((url) => {
