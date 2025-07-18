@@ -367,44 +367,44 @@ describe('useTasks', () => {
       consoleSpy.mockRestore();
     });
 
-      it('should leave other tasks unchanged when updating a single task', async () => {
-        document.cookie = '_csrf_token=test_token';
+    it('should leave other tasks unchanged when updating a single task', async () => {
+      document.cookie = '_csrf_token=test_token';
 
-        const { result } = renderHook(() => useTasks());
+      const { result } = renderHook(() => useTasks());
 
-        // Initial state: two tasks
-        mockFetch.mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve({
-            tasks: [
-              { id: 1, title: 'Task 1', completed: false },
-              { id: 2, title: 'Task 2', completed: false }
-            ]
-          }),
-        } as Response);
+      // Initial state: two tasks
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          tasks: [
+            { id: 1, title: 'Task 1', completed: false },
+            { id: 2, title: 'Task 2', completed: false }
+          ]
+        }),
+      } as Response);
 
-        act(() => {
-          result.current.fetchTasks();
-        });
-
-        await waitFor(() => {
-          expect(result.current.tasks).toHaveLength(2);
-        });
-
-        // Update only task 1
-        mockFetch.mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve({ message: 'Task updated' }),
-        } as Response);
-
-        await act(async () => {
-          await result.current.updateTask(1, { completed: true });
-        });
-
-        // Task 1 should be updated, task 2 should remain unchanged
-        expect(result.current.tasks[0].completed).toBe(true);
-        expect(result.current.tasks[1]).toEqual({ id: 2, title: 'Task 2', completed: false });
+      act(() => {
+        result.current.fetchTasks();
       });
+
+      await waitFor(() => {
+        expect(result.current.tasks).toHaveLength(2);
+      });
+
+      // Update only task 1
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ message: 'Task updated' }),
+      } as Response);
+
+      await act(async () => {
+        await result.current.updateTask(1, { completed: true });
+      });
+
+      // Task 1 should be updated, task 2 should remain unchanged
+      expect(result.current.tasks[0].completed).toBe(true);
+      expect(result.current.tasks[1]).toEqual({ id: 2, title: 'Task 2', completed: false });
+    });
   });
 
   describe('deleteTask', () => {
