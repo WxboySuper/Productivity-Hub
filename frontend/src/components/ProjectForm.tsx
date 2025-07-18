@@ -138,10 +138,11 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
               }}>
                 {/* Name Field */}
                 <div className={`phub-field-group ${fieldErrors.name ? 'phub-field-error' : ''}`}>
-                  <label className="phub-field-label">
+                  <label className="phub-field-label" htmlFor="project-name">
                     Project Name <span className="phub-field-required">*</span>
                   </label>
                   <input
+                    id="project-name"
                     type="text"
                     className="phub-input"
                     placeholder="Project name..."
@@ -162,8 +163,9 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
 
                 {/* Project Type Dropdown */}
                 <div className="phub-field-group">
-                  <label className="phub-field-label">Type</label>
+                  <label className="phub-field-label" htmlFor="project-type">Type</label>
                   <select
+                    id="project-type"
                     className="phub-select"
                     value={projectType}
                     onChange={(e) => setProjectType(e.target.value)}
@@ -186,8 +188,9 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
 
               {/* Description */}
               <div className={`phub-field-group ${fieldErrors.description ? 'phub-field-error' : ''}`} style={{ marginBottom: 'var(--phub-space-sm)' }}>
-                <label className="phub-field-label">Description</label>
+                <label className="phub-field-label" htmlFor="project-description">Description</label>
                 <textarea
+                  id="project-description"
                   className="phub-textarea"
                   placeholder="Describe your project goals and scope..."
                   value={description}
