@@ -28,7 +28,8 @@ export default defineConfig({
         'src/reportWebVitals.ts',
         'src/main.tsx',
         '**/*.test.tsx',
-        '**/*.test.ts'
+        '**/*.test.ts',
+        '**/testUtils.ts',
       ],
     },
   },
