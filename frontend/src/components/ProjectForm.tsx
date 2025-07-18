@@ -34,6 +34,94 @@ interface ProjectFormBodyProps {
   currentType?: { value: string; label: string; icon: string; color: string; description: string };
   error: string | null;
 }
+const ProjectNameField: React.FC<{
+  name: string;
+  error?: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+}> = ({ name, error, onChange }) => (
+  <div className={`phub-field-group${error ? ' phub-field-error' : ''}`}>
+    <label className="phub-field-label" htmlFor="project-name">
+      Project Name <span className="phub-field-required">*</span>
+    </label>
+    <input
+      id="project-name"
+      type="text"
+      className="phub-input"
+      placeholder="Project name..."
+      value={name}
+      onChange={onChange}
+      autoFocus
+    />
+    {error && (
+      <div className="phub-error-message" style={{ fontSize: '0.75rem', marginTop: '2px' }}>
+        <span>⚠️</span>
+        {error}
+      </div>
+    )}
+    <div className="phub-char-counter" style={{ fontSize: '0.7rem' }}>
+      {name.length}/100
+    </div>
+  </div>
+);
+
+const ProjectTypeField: React.FC<{
+  projectType: string;
+  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  projectTypes: Array<{ value: string; label: string; icon: string; color: string; description: string }>;
+  currentType?: { value: string; label: string; icon: string; color: string; description: string };
+}> = ({ projectType, onChange, projectTypes, currentType }) => (
+  <div className="phub-field-group">
+    <label className="phub-field-label" htmlFor="project-type">Type</label>
+    <select
+      id="project-type"
+      className="phub-select"
+      value={projectType}
+      onChange={onChange}
+      style={{
+        background: `linear-gradient(135deg, ${currentType?.color}08, ${currentType?.color}15)`,
+        borderColor: currentType?.color
+      }}
+    >
+      {projectTypes.map((type) => (
+        <option key={type.value} value={type.value}>
+          {type.icon} {type.label}
+        </option>
+      ))}
+    </select>
+    <div style={{ fontSize: '0.75rem', color: 'var(--phub-gray-600)', marginTop: '2px' }}>
+      {currentType?.description}
+    </div>
+  </div>
+);
+
+const ProjectDescriptionField: React.FC<{
+  description: string;
+  error?: string;
+  onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+}> = ({ description, error, onChange }) => (
+  <div className={`phub-field-group${error ? ' phub-field-error' : ''}`} style={{ marginBottom: 'var(--phub-space-sm)' }}>
+    <label className="phub-field-label" htmlFor="project-description">Description</label>
+    <textarea
+      id="project-description"
+      className="phub-textarea"
+      placeholder="Describe your project goals and scope..."
+      value={description}
+      onChange={onChange}
+      rows={2}
+      style={{ minHeight: '60px' }}
+    />
+    {error && (
+      <div className="phub-error-message" style={{ fontSize: '0.75rem', marginTop: '2px' }}>
+        <span>⚠️</span>
+        {error}
+      </div>
+    )}
+    <div className="phub-char-counter" style={{ fontSize: '0.7rem' }}>
+      {description.length}/500
+    </div>
+  </div>
+);
+
 const ProjectFormBody: React.FC<ProjectFormBodyProps> = ({
   name,
   description,
@@ -59,73 +147,23 @@ const ProjectFormBody: React.FC<ProjectFormBodyProps> = ({
       gap: 'var(--phub-space-sm)',
       marginBottom: 'var(--phub-space-sm)'
     }}>
-      <div className={`phub-field-group ${fieldErrors.name ? 'phub-field-error' : ''}`}>
-        <label className="phub-field-label" htmlFor="project-name">
-          Project Name <span className="phub-field-required">*</span>
-        </label>
-        <input
-          id="project-name"
-          type="text"
-          className="phub-input"
-          placeholder="Project name..."
-          value={name}
-          onChange={handleNameChange}
-          autoFocus
-        />
-        {fieldErrors.name && (
-          <div className="phub-error-message" style={{ fontSize: '0.75rem', marginTop: '2px' }}>
-            <span>⚠️</span>
-            {fieldErrors.name}
-          </div>
-        )}
-        <div className="phub-char-counter" style={{ fontSize: '0.7rem' }}>
-          {name.length}/100
-        </div>
-      </div>
-      <div className="phub-field-group">
-        <label className="phub-field-label" htmlFor="project-type">Type</label>
-        <select
-          id="project-type"
-          className="phub-select"
-          value={projectType}
-          onChange={handleProjectTypeChange}
-          style={{
-            background: `linear-gradient(135deg, ${currentType?.color}08, ${currentType?.color}15)`,
-            borderColor: currentType?.color
-          }}
-        >
-          {projectTypes.map((type) => (
-            <option key={type.value} value={type.value}>
-              {type.icon} {type.label}
-            </option>
-          ))}
-        </select>
-        <div style={{ fontSize: '0.75rem', color: 'var(--phub-gray-600)', marginTop: '2px' }}>
-          {currentType?.description}
-        </div>
-      </div>
-    </div>
-    <div className={`phub-field-group ${fieldErrors.description ? 'phub-field-error' : ''}`} style={{ marginBottom: 'var(--phub-space-sm)' }}>
-      <label className="phub-field-label" htmlFor="project-description">Description</label>
-      <textarea
-        id="project-description"
-        className="phub-textarea"
-        placeholder="Describe your project goals and scope..."
-        value={description}
-        onChange={handleDescriptionChange}
-        rows={2}
-        style={{ minHeight: '60px' }}
+      <ProjectNameField
+        name={name}
+        error={fieldErrors.name}
+        onChange={handleNameChange}
       />
-      {fieldErrors.description && (
-        <div className="phub-error-message" style={{ fontSize: '0.75rem', marginTop: '2px' }}>
-          <span>⚠️</span>
-          {fieldErrors.description}
-        </div>
-      )}
-      <div className="phub-char-counter" style={{ fontSize: '0.7rem' }}>
-        {description.length}/500
-      </div>
+      <ProjectTypeField
+        projectType={projectType}
+        onChange={handleProjectTypeChange}
+        projectTypes={projectTypes}
+        currentType={currentType}
+      />
     </div>
+    <ProjectDescriptionField
+      description={description}
+      error={fieldErrors.description}
+      onChange={handleDescriptionChange}
+    />
   </div>
 );
 
@@ -311,7 +349,18 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
   const currentType = projectTypes.find(t => t.value === projectType);
 
   return (
-    <div className="phub-productive-modal-backdrop" onClick={handleBackdropClick}>
+    <div
+      className="phub-productive-modal-backdrop"
+      role="dialog"
+      aria-modal="true"
+      tabIndex={-1}
+      onClick={handleBackdropClick}
+      onKeyDown={e => {
+        if (e.key === 'Escape') {
+          onClose();
+        }
+      }}
+    >
       <div className="phub-productive-form-container" style={{ maxWidth: '40rem', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
         <ProjectFormHeader editMode={editMode} handleCloseButtonClick={handleCloseButtonClick} />
         <div style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
