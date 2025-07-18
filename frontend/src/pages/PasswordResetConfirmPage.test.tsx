@@ -584,7 +584,8 @@ describe('PasswordResetConfirmPage - URL Parameter Edge Cases', () => {
     vi.clearAllTimers();
     mockCookie.mockReturnValue('');
     vi.useRealTimers();
-    // Reset to default token
+
+    // Ensure mockSearchParams is reset to the expected state for tests
     mockSearchParams = new URLSearchParams('?token=test-token');
   });
 
