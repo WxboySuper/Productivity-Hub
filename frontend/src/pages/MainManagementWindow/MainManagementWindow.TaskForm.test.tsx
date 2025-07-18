@@ -164,7 +164,7 @@ describe('Task Form', () => {
       projectId: 1,
       parent_id: null,
       description: 'Test task description'
-    }
+    };
 
     fetchMock
       .mockResolvedValueOnce({
@@ -370,7 +370,7 @@ describe('Task Form', () => {
       );
       if (!errorDiv) {
         throw new Error(`Could not find error message: Task creation failed.`);
-      };
+      }
     });
 });
 });
