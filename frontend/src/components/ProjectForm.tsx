@@ -50,7 +50,6 @@ const ProjectNameField: React.FC<{
       placeholder="Project name..."
       value={name}
       onChange={onChange}
-      autoFocus
     />
     {error && (
       <div className="phub-error-message" style={{ fontSize: '0.75rem', marginTop: '2px' }}>
@@ -348,6 +347,12 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
 
   const currentType = projectTypes.find(t => t.value === projectType);
 
+  const handleBackdropKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Escape') {
+      onClose();
+    }
+  }, [onClose]);
+
   return (
     <div
       className="phub-productive-modal-backdrop"
@@ -355,11 +360,7 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
       aria-modal="true"
       tabIndex={-1}
       onClick={handleBackdropClick}
-      onKeyDown={e => {
-        if (e.key === 'Escape') {
-          onClose();
-        }
-      }}
+      onKeyDown={handleBackdropKeyDown}
     >
       <div className="phub-productive-form-container" style={{ maxWidth: '40rem', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
         <ProjectFormHeader editMode={editMode} handleCloseButtonClick={handleCloseButtonClick} />
