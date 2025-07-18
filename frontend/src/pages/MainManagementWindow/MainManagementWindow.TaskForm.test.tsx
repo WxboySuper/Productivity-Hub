@@ -1,11 +1,11 @@
 import { render, screen, fireEvent, waitFor, act, cleanup } from '@testing-library/react';
-import { afterEach, describe, it, expect, beforeEach, Mock, vi } from 'vitest';
+import { afterEach, describe, it, expect, beforeEach, Mock } from 'vitest';
 import { BrowserRouter } from 'react-router-dom';
 import MainManagementWindow from '../MainManagementWindow';
 import { AuthProvider } from '../../auth';
 import { BackgroundProvider } from '../../context/BackgroundContext';
 import { ToastProvider } from '../../components/ToastProvider';
-import { setupFetchMock, setupBeforeEach } from '../__tests__/testUtils';
+import { setupBeforeEach } from '../__tests__/testUtils';
 
 
 const fetchMock = global.fetch as Mock;
@@ -369,7 +369,7 @@ describe('Task Form', () => {
         el => el.textContent && el.textContent.includes('Task creation failed')
       );
       if (!errorDiv) {
-        throw new Error(`Could not find error message: Task creation failed.`);
+        throw new Error('Could not find error message: Task creation failed.');
       }
     });
 });
