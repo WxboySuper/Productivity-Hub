@@ -916,4 +916,358 @@ describe('TaskForm', () => {
       }
     });
   });
+
+  it('validates empty title specifically', async () => {
+    const mockOnSubmit = vi.fn();
+    render(<TaskFormWrapper onSubmit={mockOnSubmit} />);
+    
+    // Leave title completely empty (test line 154)
+    const titleInput = screen.getByPlaceholderText('What needs to be done?');
+    fireEvent.change(titleInput, { target: { value: '' } });
+    
+    fireEvent.click(screen.getByRole('button', { name: /create task/i }));
+    
+    await waitFor(() => {
+      expect(screen.getByText('Task name is required')).toBeInTheDocument();
+    });
+    
+    expect(mockOnSubmit).not.toHaveBeenCalled();
+  });
+
+  it('handles existing subtasks in form submission', async () => {
+    const mockOnSubmit = vi.fn();
+    const initialTaskWithSubtasks = {
+      title: 'Task with existing subtasks',
+      subtasks: [
+        { id: 1, title: 'Existing subtask 1', completed: false },
+        { id: 2, title: 'Existing subtask 2', completed: true }
+      ]
+    };
+    
+    render(<TaskFormWrapper 
+      onSubmit={mockOnSubmit} 
+      initialValues={initialTaskWithSubtasks}
+      editMode={true}
+    />);
+    
+    // Submit the form to test lines 184-186 (existing subtask handling)
+    fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
+    
+    await waitFor(() => {
+      expect(mockOnSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          subtasks: [
+            { id: 1, title: 'Existing subtask 1', completed: false },
+            { id: 2, title: 'Existing subtask 2', completed: true }
+          ]
+        })
+      );
+    });
+  });
+
+  it('handles dependency chips with null/missing tasks', async () => {
+    const mockTasks = [
+      { id: 1, title: 'Valid Task', completed: false, project_id: null }
+    ];
+
+    const initialTaskWithDeps = {
+      id: 2,
+      title: 'Test Task',
+      blocked_by: [1, 999], // 999 doesn't exist, tests line 533
+      blocking: [888], // doesn't exist, tests line 548
+      linked_tasks: [777] // doesn't exist, tests lines 551-563
+    };
+
+    render(<TaskFormWrapper 
+      allTasks={mockTasks} 
+      initialValues={initialTaskWithDeps}
+    />);
+
+    fireEvent.click(screen.getByText('Task Relationships'));
+    
+    await waitFor(() => {
+      // Should show the relationships section expanded
+      expect(screen.getByText('Blocked By')).toBeInTheDocument();
+      expect(screen.getByText('Blocking')).toBeInTheDocument();
+      expect(screen.getByText('Linked Tasks')).toBeInTheDocument();
+    });
+
+    // The missing tasks should be filtered out (null handling)
+    // Only valid tasks should appear in the dependency display
+    expect(screen.getByText('Valid Task')).toBeInTheDocument();
+  });
+
+  it('handles blocking dependency popup task selection', async () => {
+    const tasksWithDeps = [
+      { id: 1, title: 'Task to Block', completed: false, project_id: null },
+    ];
+    
+    render(<TaskFormWrapper allTasks={tasksWithDeps} initialValues={{ id: 2 }} />);
+    
+    fireEvent.click(screen.getByText('Task Relationships'));
+    
+    // Wait for the relationships section to expand
+    await waitFor(() => {
+      const allButtons = screen.getAllByRole('button');
+      const hasRelationshipButtons = allButtons.some(button => 
+        button.textContent?.includes('Blocked By') || 
+        button.textContent?.includes('Blocking') || 
+        button.textContent?.includes('Linked Tasks')
+      );
+      expect(hasRelationshipButtons).toBe(true);
+    });
+    
+    // Find and click the blocking button
+    const allButtons = screen.getAllByRole('button');
+    const blockingButton = allButtons.find(button => 
+      button.textContent?.includes('⛔') && button.textContent?.includes('Blocking')
+    );
+    
+    if (blockingButton) {
+      fireEvent.click(blockingButton);
+      
+      await waitFor(() => {
+        expect(screen.getByText('⛔ Select Tasks to Block')).toBeInTheDocument();
+      });
+      
+      // Click on a task to select it (tests lines 684-685)
+      const taskItem = screen.getByText('Task to Block').closest('.modern-popup-task-item');
+      if (taskItem) {
+        fireEvent.click(taskItem);
+      }
+      
+      // Popup should close after selection
+      await waitFor(() => {
+        expect(screen.queryByText('⛔ Select Tasks to Block')).not.toBeInTheDocument();
+      });
+    }
+  });
+
+  it('handles linked tasks dependency popup task selection', async () => {
+    const tasksWithDeps = [
+      { id: 1, title: 'Task to Link', completed: false, project_id: null },
+    ];
+    
+    render(<TaskFormWrapper allTasks={tasksWithDeps} initialValues={{ id: 2 }} />);
+    
+    fireEvent.click(screen.getByText('Task Relationships'));
+    
+    // Wait for the relationships section to expand
+    await waitFor(() => {
+      const allButtons = screen.getAllByRole('button');
+      const hasRelationshipButtons = allButtons.some(button => 
+        button.textContent?.includes('Blocked By') || 
+        button.textContent?.includes('Blocking') || 
+        button.textContent?.includes('Linked Tasks')
+      );
+      expect(hasRelationshipButtons).toBe(true);
+    });
+    
+    // Find and click the linked tasks button
+    const allButtons = screen.getAllByRole('button');
+    const linkedTasksButton = allButtons.find(button => 
+      button.textContent?.includes('🔗') && button.textContent?.includes('Linked Tasks')
+    );
+    
+    if (linkedTasksButton) {
+      fireEvent.click(linkedTasksButton);
+      
+      await waitFor(() => {
+        expect(screen.getByText('🔗 Link Related Tasks')).toBeInTheDocument();
+      });
+      
+      // Click on a task to select it (tests lines 686-687)
+      const taskItem = screen.getByText('Task to Link').closest('.modern-popup-task-item');
+      if (taskItem) {
+        fireEvent.click(taskItem);
+      }
+      
+      // Popup should close after selection
+      await waitFor(() => {
+        expect(screen.queryByText('🔗 Link Related Tasks')).not.toBeInTheDocument();
+      });
+    }
+  });
+
+  it('displays project information in dependency popup', async () => {
+    const mockProjects = [
+      { id: 1, name: 'Test Project' },
+      { id: 2, name: 'Another Project' }
+    ];
+    
+    const tasksWithProjects = [
+      { id: 1, title: 'Task with Project', completed: false, projectId: 1 },
+      { id: 2, title: 'Task without Project', completed: false, projectId: null },
+    ];
+    
+    render(<TaskFormWrapper 
+      allTasks={tasksWithProjects} 
+      projects={mockProjects}
+      initialValues={{ id: 3 }}
+    />);
+    
+    fireEvent.click(screen.getByText('Task Relationships'));
+    
+    await waitFor(() => {
+      fireEvent.click(screen.getByText('Blocked By'));
+    });
+    
+    await waitFor(() => {
+      expect(screen.getByText('🚫 Select Blocking Tasks')).toBeInTheDocument();
+      
+      // Test line 693-695: project display in dependency popup
+      expect(screen.getByText('Task with Project')).toBeInTheDocument();
+      expect(screen.getByText('📁 Test Project')).toBeInTheDocument();
+      
+      // Task without project should not show project info
+      expect(screen.getByText('Task without Project')).toBeInTheDocument();
+    });
+  });
+
+  it('handles dependency popup filtering edge cases', async () => {
+    const tasksWithDeps = [
+      { id: 1, title: 'Available Task', completed: false, project_id: null },
+      { id: 2, title: 'Already Blocking', completed: false, project_id: null },
+      { id: 3, title: 'Already Blocked By', completed: false, project_id: null },
+    ];
+    
+    const initialTaskWithComplexDeps = {
+      id: 4,
+      title: 'Current Task',
+      blocked_by: [3], // Task 3 is already blocking this task
+      blocking: [2], // This task is already blocking Task 2
+      linked_tasks: []
+    };
+    
+    render(<TaskFormWrapper 
+      allTasks={tasksWithDeps} 
+      initialValues={initialTaskWithComplexDeps}
+    />);
+    
+    fireEvent.click(screen.getByText('Task Relationships'));
+    
+    // Wait for the relationships section to expand
+    await waitFor(() => {
+      // Look for any relationship button to confirm section expanded
+      const allButtons = screen.getAllByRole('button');
+      const hasRelationshipButtons = allButtons.some(button => 
+        button.textContent?.includes('Blocked By') || 
+        button.textContent?.includes('Blocking') || 
+        button.textContent?.includes('Linked Tasks')
+      );
+      expect(hasRelationshipButtons).toBe(true);
+    });
+    
+    // Find and click the blocking button
+    const allButtons = screen.getAllByRole('button');
+    const blockingButton = allButtons.find(button => 
+      button.textContent?.includes('⛔') && button.textContent?.includes('Blocking')
+    );
+    
+    if (blockingButton) {
+      fireEvent.click(blockingButton);
+      
+      await waitFor(() => {
+        expect(screen.getByText('⛔ Select Tasks to Block')).toBeInTheDocument();
+        
+        // Should show Available Task and Already Blocked By, but not Already Blocking or self
+        expect(screen.getByText('Available Task')).toBeInTheDocument();
+        expect(screen.getByText('Already Blocked By')).toBeInTheDocument();
+        expect(screen.queryByText('Already Blocking')).not.toBeInTheDocument();
+        expect(screen.queryByText('Current Task')).not.toBeInTheDocument();
+      });
+      
+      // Close popup
+      const closeButtons = screen.getAllByRole('button', { name: '×' });
+      const popupCloseButton = closeButtons.find(button => 
+        button.className.includes('modern-popup-close')
+      );
+      if (popupCloseButton) {
+        fireEvent.click(popupCloseButton);
+      }
+    }
+  });
+
+  it('tests fallback return true in dependency filtering', async () => {
+    const tasksWithDeps = [
+      { id: 1, title: 'Normal Task', completed: false, project_id: null },
+    ];
+    
+    render(<TaskFormWrapper 
+      allTasks={tasksWithDeps} 
+      initialValues={{ id: 2, title: 'Current Task' }}
+    />);
+    
+    fireEvent.click(screen.getByText('Task Relationships'));
+    
+    // Wait for the relationships section to expand
+    await waitFor(() => {
+      const allButtons = screen.getAllByRole('button');
+      const hasRelationshipButtons = allButtons.some(button => 
+        button.textContent?.includes('Blocked By') || 
+        button.textContent?.includes('Blocking') || 
+        button.textContent?.includes('Linked Tasks')
+      );
+      expect(hasRelationshipButtons).toBe(true);
+    });
+    
+    // Find and click the blocked by button
+    const allButtons = screen.getAllByRole('button');
+    const blockedByButton = allButtons.find(button => 
+      button.textContent?.includes('🚫') && button.textContent?.includes('Blocked By')
+    );
+    
+    if (blockedByButton) {
+      fireEvent.click(blockedByButton);
+      
+      await waitFor(() => {
+        expect(screen.getByText('🚫 Select Blocking Tasks')).toBeInTheDocument();
+        expect(screen.getByText('Normal Task')).toBeInTheDocument();
+      });
+    }
+  });
+
+  it('handles linked tasks chip removal functionality', async () => {
+    const mockTasks = [
+      { id: 1, title: 'Linked Task 1', completed: false, project_id: null },
+      { id: 2, title: 'Linked Task 2', completed: false, project_id: null }
+    ];
+
+    const initialTaskWithLinked = {
+      id: 3,
+      title: 'Current Task',
+      blocked_by: [],
+      blocking: [],
+      linked_tasks: [1, 2]
+    };
+
+    render(<TaskFormWrapper 
+      allTasks={mockTasks} 
+      initialValues={initialTaskWithLinked}
+    />);
+
+    fireEvent.click(screen.getByText('Task Relationships'));
+    
+    await waitFor(() => {
+      // Should show linked tasks chips (tests lines 551-563)
+      expect(screen.getByText('🔗 Linked Task 1')).toBeInTheDocument();
+      expect(screen.getByText('🔗 Linked Task 2')).toBeInTheDocument();
+    });
+
+    // Remove one of the linked tasks
+    const removeButtons = screen.getAllByText('×');
+    const linkedTaskRemoveButton = removeButtons.find(button => 
+      button.closest('.modern-dependency-chip.linked')
+    );
+    
+    if (linkedTaskRemoveButton) {
+      fireEvent.click(linkedTaskRemoveButton);
+      
+      await waitFor(() => {
+        // One linked task should be removed
+        const linkedTaskChips = document.querySelectorAll('.modern-dependency-chip.linked');
+        expect(linkedTaskChips.length).toBe(1);
+      });
+    }
+  });
 });
