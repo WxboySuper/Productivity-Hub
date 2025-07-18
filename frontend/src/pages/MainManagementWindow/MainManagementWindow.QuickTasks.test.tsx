@@ -281,6 +281,12 @@ describe('MainManagementWindow - Quick Tasks', () => {
 
       render(<MainManagementWindowWrapper />);
       
+      const quickTaskButton = await waitFor(() => {
+        return screen.getByText('Quick Tasks')
+      }, { timeout: 5000 });
+
+      fireEvent.click(quickTaskButton);
+
       const addQuickTaskButton = await waitFor(() => {
         return screen.getByText('Add Quick Task');
       }, { timeout: 5000 });
