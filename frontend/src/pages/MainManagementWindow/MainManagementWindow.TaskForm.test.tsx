@@ -22,7 +22,7 @@ const MainManagementWindowWrapper: React.FC = () => (
   </BrowserRouter>
 );
 
-// Restore the test suite
+// Test suite for Task Form functionality
 describe('Task Form', () => {
 
   beforeEach(() => {
@@ -87,6 +87,7 @@ describe('Task Form', () => {
     });
     // Modal should be gone
     expect(document.querySelector('.modern-modal-backdrop')).not.toBeInTheDocument();
+  });
 
   it('creates a new task when submitting the form', async () => {
     fetchMock.mockReset();
@@ -163,7 +164,7 @@ describe('Task Form', () => {
       projectId: 1,
       parent_id: null,
       description: 'Test task description'
-    };
+    }
 
     fetchMock
       .mockResolvedValueOnce({
@@ -362,17 +363,14 @@ describe('Task Form', () => {
       fireEvent.click(submitButton!);
     });
 
-    // Print DOM for diagnosis
-    screen.debug();
     // Wait for error message to appear after submitting
     await waitFor(() => {
       const errorDiv = Array.from(document.querySelectorAll('.modern-error')).find(
         el => el.textContent && el.textContent.includes('Task creation failed')
       );
       if (!errorDiv) {
-        throw new Error(`Could not find error message: Task creation failed. DOM:\n${document.body.innerHTML}`);
+        throw new Error(`Could not find error message: Task creation failed.`);
       };
     });
-  });
 });
 });
