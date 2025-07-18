@@ -585,8 +585,8 @@ describe('PasswordResetConfirmPage - URL Parameter Edge Cases', () => {
     mockCookie.mockReturnValue('');
     vi.useRealTimers();
 
-    // Ensure mockSearchParams is reset to the expected state for tests
-    mockSearchParams = new URLSearchParams('?token=test-token');
+    // Ensure mockSearchParams is reset to a neutral state for edge case testing
+    mockSearchParams = new URLSearchParams();
   });
 
   afterEach(() => {
@@ -623,7 +623,7 @@ describe('PasswordResetConfirmPage - URL Parameter Edge Cases', () => {
       expect(global.fetch).toHaveBeenCalledWith('/api/password-reset/confirm', 
         expect.objectContaining({
           body: JSON.stringify({
-            token: '',  // Empty token due to missing URL parameter triggering the || "" fallback
+            token: '',  // Empty token from missing URL parameter fallback
             new_password: 'newpassword123'
           })
         })
