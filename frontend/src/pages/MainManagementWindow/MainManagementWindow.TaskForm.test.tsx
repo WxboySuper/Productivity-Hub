@@ -85,12 +85,8 @@ describe('Task Form', () => {
     act(() => {
       fireEvent.click(cancelButton);
     });
-    // Print DOM for diagnosis
-    screen.debug();
     // Modal should be gone
     expect(document.querySelector('.modern-modal-backdrop')).not.toBeInTheDocument();
-  });
-
 
   it('creates a new task when submitting the form', async () => {
     fetchMock.mockReset();
@@ -375,8 +371,8 @@ describe('Task Form', () => {
       );
       if (!errorDiv) {
         throw new Error(`Could not find error message: Task creation failed. DOM:\n${document.body.innerHTML}`);
-      }
-      expect(errorDiv).not.toBeNull();
-    }, { timeout: 5000 });
+      };
+    });
   });
+});
 });
