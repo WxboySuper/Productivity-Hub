@@ -54,6 +54,7 @@ describe('LoginPage', () => {
   });
 
   it('shows fallback error message when login fails without error property', async () => {
+    mockFetch.mockReset();
       mockFetch.mockImplementation((url) => {
         if (url === '/api/auth/check') {
           return Promise.resolve({
