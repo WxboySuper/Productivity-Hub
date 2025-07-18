@@ -30,7 +30,7 @@ describe('ProjectForm', () => {
         {...defaultProps} 
         initialName="Test Project"
         initialDescription="Test Description"
-        editMode={true}
+        editMode
       />
     );
     
@@ -89,7 +89,7 @@ describe('ProjectForm', () => {
   });
 
   it('disables submit button when loading', () => {
-    render(<ProjectForm {...defaultProps} loading={true} />);
+    render(<ProjectForm {...defaultProps} loading />);
     
     expect(screen.getByRole('button', { name: /creating.../i })).toBeDisabled();
   });
@@ -376,8 +376,8 @@ describe('ProjectForm', () => {
     render(
       <ProjectForm 
         {...defaultProps} 
-        loading={true} 
-        editMode={true}
+        loading
+        editMode
       />
     );
     
@@ -420,5 +420,29 @@ describe('ProjectForm', () => {
       fireEvent.click(formContainer);
       expect(mockOnClose).not.toHaveBeenCalled();
     }
+  });
+
+  it('shows required name error when submitting with empty name', async () => {
+    const mockOnCreate = vi.fn();
+    render(<ProjectForm {...defaultProps} onCreate={mockOnCreate} />);
+
+    // Clear the name input to ensure it's empty
+    const nameInput = screen.getByPlaceholderText('Project name...');
+    fireEvent.change(nameInput, { target: { value: '' } });
+
+    // Submit the form directly, bypassing the disabled button
+    const form = nameInput.closest('form');
+    expect(form).toBeInTheDocument();
+    if (form) {
+      fireEvent.submit(form);
+    }
+
+    // Assert the error message is shown
+    await waitFor(() => {
+      expect(screen.getByText('Project name is required')).toBeInTheDocument();
+    });
+
+    // Ensure onCreate is not called
+    expect(mockOnCreate).not.toHaveBeenCalled();
   });
 });
