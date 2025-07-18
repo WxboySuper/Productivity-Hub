@@ -50,6 +50,22 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
     setDescription(e.target.value);
   }, []);
 
+  const handleProjectTypeChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    setProjectType(e.target.value);
+  }, []);
+
+  const handleBackdropClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  }, [onClose]);
+
+  const handleCloseButtonClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onClose();
+  }, [onClose]);
+
   const validateForm = () => {
     const errors: Record<string, string> = {};
     
@@ -85,7 +101,7 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
   const currentType = projectTypes.find(t => t.value === projectType);
 
   return (
-    <div className="phub-productive-modal-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="phub-productive-modal-backdrop" onClick={handleBackdropClick}>
       <div className="phub-productive-form-container" style={{ 
         maxWidth: '40rem', 
         maxHeight: '90vh',
@@ -102,11 +118,7 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
           </p>
           <button 
             className="phub-productive-close-btn"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onClose();
-            }}
+            onClick={handleCloseButtonClick}
             type="button"
           >
             ×
@@ -168,7 +180,7 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
                     id="project-type"
                     className="phub-select"
                     value={projectType}
-                    onChange={(e) => setProjectType(e.target.value)}
+                    onChange={handleProjectTypeChange}
                     style={{ 
                       background: `linear-gradient(135deg, ${currentType?.color}08, ${currentType?.color}15)`,
                       borderColor: currentType?.color

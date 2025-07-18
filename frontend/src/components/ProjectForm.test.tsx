@@ -30,7 +30,7 @@ describe('ProjectForm', () => {
         {...defaultProps} 
         initialName="Test Project"
         initialDescription="Test Description"
-        editMode={true}
+        editMode
       />
     );
     
@@ -89,7 +89,7 @@ describe('ProjectForm', () => {
   });
 
   it('disables submit button when loading', () => {
-    render(<ProjectForm {...defaultProps} loading={true} />);
+    render(<ProjectForm {...defaultProps} loading />);
     
     expect(screen.getByRole('button', { name: /creating.../i })).toBeDisabled();
   });
@@ -376,8 +376,8 @@ describe('ProjectForm', () => {
     render(
       <ProjectForm 
         {...defaultProps} 
-        loading={true} 
-        editMode={true}
+        loading
+        editMode
       />
     );
     
@@ -433,7 +433,9 @@ describe('ProjectForm', () => {
     // Submit the form directly, bypassing the disabled button
     const form = nameInput.closest('form');
     expect(form).toBeInTheDocument();
-    fireEvent.submit(form!);
+    if (form) {
+      fireEvent.submit(form);
+    }
 
     // Assert the error message is shown
     await waitFor(() => {
