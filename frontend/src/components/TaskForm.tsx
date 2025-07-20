@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import '../styles/Task.css';
 
 // Pure function for testable toggle logic
@@ -91,6 +91,31 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
   );
 
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  // Ref for modal container
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  // Handle click outside and Escape key for modal close
+  useEffect(() => {
+    if (!open) return;
+
+    const handleClick = (e: MouseEvent) => {
+      if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
+        onClose();
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClick);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [open, onClose]);
 
   // Reset form when opening (only once when modal opens)
   useEffect(() => {
@@ -205,16 +230,51 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
 
   const currentPriority = priorities.find(p => p.value === priority);
 
+  // Extracted SubtasksList component to reduce nesting
+  function SubtasksList({
+    subtasks,
+    handleToggleSubtask,
+    handleRemoveSubtask
+  }: {
+    subtasks: Subtask[];
+    handleToggleSubtask: (id: number) => void;
+    handleRemoveSubtask: (id: number) => void;
+  }) {
+    return (
+      <>
+        {subtasks.map((subtask) => (
+          <div key={subtask.id} className="modern-subtask-item">
+            <input
+              type="checkbox"
+              className="modern-subtask-checkbox"
+              checked={subtask.completed}
+              onChange={() => handleToggleSubtask(subtask.id!)}
+            />
+            <span className={`modern-subtask-text ${subtask.completed ? 'completed' : ''}`}>
+              {subtask.title}
+            </span>
+            <button
+              type="button"
+              className="modern-subtask-remove"
+              onClick={() => handleRemoveSubtask(subtask.id!)}
+            >
+              🗑️
+            </button>
+          </div>
+        ))}
+      </>
+    );
+  }
+
   return (
-    <div 
-      className="modern-modal-backdrop" 
-      onClick={(e) => {
-        if (e.target === e.currentTarget) {
-          onClose();
-        }
-      }}
-    >
-      <div className="modern-form-container">
+    <div className="modern-modal-backdrop">
+      <div
+        className="modern-form-container"
+        role="dialog"
+        aria-modal="true"
+        ref={modalRef}
+      >
+        {/* Consider splitting <div className="modern-form-container">...</div> into smaller components if nesting remains an issue */}
         {/* Minimal Header */}
         <div className="modern-form-header">
           <h2 className="modern-form-title">
@@ -251,7 +311,6 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
                 placeholder="What needs to be done?"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                autoFocus
               />
               {fieldErrors.title && (
                 <div className="modern-error">
@@ -455,27 +514,12 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
                   </button>
                 </div>
 
-                {/* Subtasks List */}
-                {subtasks.map((subtask) => (
-                  <div key={subtask.id} className="modern-subtask-item">
-                    <input
-                      type="checkbox"
-                      className="modern-subtask-checkbox"
-                      checked={subtask.completed}
-                      onChange={() => handleToggleSubtask(subtask.id!)}
-                    />
-                    <span className={`modern-subtask-text ${subtask.completed ? 'completed' : ''}`}>
-                      {subtask.title}
-                    </span>
-                    <button
-                      type="button"
-                      className="modern-subtask-remove"
-                      onClick={() => handleRemoveSubtask(subtask.id!)}
-                    >
-                      🗑️
-                    </button>
-                  </div>
-                ))}
+                {/* Subtasks List - extracted to reduce nesting */}
+                <SubtasksList
+                  subtasks={subtasks}
+                  handleToggleSubtask={handleToggleSubtask}
+                  handleRemoveSubtask={handleRemoveSubtask}
+                />
               </div>
             </div>
 
@@ -647,8 +691,28 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
         
         {/* Dependency Selection Popup */}
         {dependencyPopup && (
-          <div className="modern-popup-overlay" onClick={() => setDependencyPopup(null)}>
-            <div className="modern-popup-content" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="modern-popup-overlay"
+            role="button"
+            tabIndex={0}
+            aria-label="Close dependency selection popup"
+            onClick={() => setDependencyPopup(null)}
+            onKeyDown={e => {
+              if (
+                e.key === 'Enter' ||
+                e.key === ' ' ||
+                e.key === 'Escape'
+              ) {
+                setDependencyPopup(null);
+              }
+            }}
+          >
+            <div
+              className="modern-popup-content"
+              role="dialog"
+              aria-modal="true"
+              // Removed tabIndex, onClick, onKeyDown from here
+            >
               <div className="modern-popup-header">
                 <h3 className="modern-popup-title">
                   {dependencyPopup === 'blocked-by' && '🚫 Select Blocking Tasks'}
@@ -695,6 +759,9 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
                       <div
                         key={task.id}
                         className="modern-popup-task-item"
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`Select task ${task.title}`}
                         onClick={() => {
                           if (dependencyPopup === 'blocked-by') {
                             setBlockedBy([...blockedBy, task.id]);
@@ -704,6 +771,18 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
                             setLinkedTasks([...linkedTasks, task.id]);
                           }
                           setDependencyPopup(null);
+                        }}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            if (dependencyPopup === 'blocked-by') {
+                              setBlockedBy([...blockedBy, task.id]);
+                            } else if (dependencyPopup === 'blocking') {
+                              setBlocking([...blocking, task.id]);
+                            } else if (dependencyPopup === 'linked') {
+                              setLinkedTasks([...linkedTasks, task.id]);
+                            }
+                            setDependencyPopup(null);
+                          }
                         }}
                       >
                         <div className="modern-popup-task-title">{task.title}</div>
