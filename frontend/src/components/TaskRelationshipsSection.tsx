@@ -1,0 +1,210 @@
+import { useCallback } from 'react';
+// Subcomponent for relationship buttons
+interface RelationshipButtonsProps {
+  blockedBy: number[];
+  blocking: number[];
+  linkedTasks: number[];
+  onBlockedByClick: () => void;
+  onBlockingClick: () => void;
+  onLinkedClick: () => void;
+}
+
+function RelationshipButtons({ blockedBy, blocking, linkedTasks, onBlockedByClick, onBlockingClick, onLinkedClick }: RelationshipButtonsProps) {
+  return (
+    <div className="modern-relationship-buttons">
+      <button
+        type="button"
+        className="modern-relationship-btn"
+        onClick={onBlockedByClick}
+        data-testid="blocked-by-btn"
+        aria-label="Blocked By"
+      >
+        <span className="modern-relationship-btn-icon">🚫</span>
+        <span className="modern-relationship-btn-text">Blocked By</span>
+        {blockedBy.length > 0 && <span className="modern-relationship-btn-count">{blockedBy.length}</span>}
+      </button>
+      <button
+        type="button"
+        className="modern-relationship-btn"
+        onClick={onBlockingClick}
+        data-testid="blocking-btn"
+        aria-label="Blocking"
+      >
+        <span className="modern-relationship-btn-icon">⛔</span>
+        <span className="modern-relationship-btn-text">Blocking</span>
+        {blocking.length > 0 && <span className="modern-relationship-btn-count">{blocking.length}</span>}
+      </button>
+      <button
+        type="button"
+        className="modern-relationship-btn"
+        onClick={onLinkedClick}
+        data-testid="linked-btn"
+        aria-label="Linked Tasks"
+      >
+        <span className="modern-relationship-btn-icon">🔗</span>
+        <span className="modern-relationship-btn-text">Linked Tasks</span>
+        {linkedTasks.length > 0 && <span className="modern-relationship-btn-count">{linkedTasks.length}</span>}
+      </button>
+    </div>
+  );
+}
+// Subcomponent for displaying relationship chips
+
+interface RelationshipChipsDisplayProps {
+  blockedBy: number[];
+  blocking: number[];
+  linkedTasks: number[];
+  allTasks: DependencyTask[];
+  onRemoveClick: (type: string, id: number) => void;
+}
+
+function RelationshipChipsDisplay({ blockedBy, blocking, linkedTasks, allTasks, onRemoveClick }: RelationshipChipsDisplayProps) {
+  // Use only the stable handler passed from parent
+  const handleRemoveButtonClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    const type = e.currentTarget.getAttribute('data-type');
+    const id = Number(e.currentTarget.getAttribute('data-taskid'));
+    if (type && !isNaN(id)) {
+      onRemoveClick(type, id);
+    }
+  }, [onRemoveClick]);
+
+  return (
+    <div className="modern-relationship-display">
+      {blockedBy.map((taskId: number) => {
+        const task = allTasks.find((t: DependencyTask) => t.id === taskId);
+        return task ? (
+          <div key={`blocked-${taskId}`} className="modern-dependency-chip blocked-by">
+            <span>🚫 {task.title}</span>
+            <button
+              type="button"
+              className="modern-dependency-chip-remove"
+              data-type="blocked"
+              data-taskid={taskId}
+              onClick={handleRemoveButtonClick}
+            >
+              ×
+            </button>
+          </div>
+        ) : null;
+      })}
+      {blocking.map((taskId: number) => {
+        const task = allTasks.find((t: DependencyTask) => t.id === taskId);
+        return task ? (
+          <div key={`blocking-${taskId}`} className="modern-dependency-chip blocking">
+            <span>⛔ {task.title}</span>
+            <button
+              type="button"
+              className="modern-dependency-chip-remove"
+              data-type="blocking"
+              data-taskid={taskId}
+              onClick={handleRemoveButtonClick}
+            >
+              ×
+            </button>
+          </div>
+        ) : null;
+      })}
+      {linkedTasks.map((taskId: number) => {
+        const task = allTasks.find((t: DependencyTask) => t.id === taskId);
+        return task ? (
+          <div key={`linked-${taskId}`} className="modern-dependency-chip linked">
+            <span>🔗 {task.title}</span>
+            <button
+              type="button"
+              className="modern-dependency-chip-remove"
+              data-type="linked"
+              data-taskid={taskId}
+              onClick={handleRemoveButtonClick}
+            >
+              ×
+            </button>
+          </div>
+        ) : null;
+      })}
+    </div>
+  );
+}
+interface DependencyTask {
+  id: number;
+  title: string;
+  projectId?: number;
+}
+
+interface TaskRelationshipsSectionProps {
+  expanded: boolean;
+  blockedBy: number[];
+  blocking: number[];
+  linkedTasks: number[];
+  allTasks: DependencyTask[];
+  onBlockedByClick: () => void;
+  onBlockingClick: () => void;
+  onLinkedClick: () => void;
+  onRemoveBlockedBy: (id: number) => void;
+  onRemoveBlocking: (id: number) => void;
+  onRemoveLinked: (id: number) => void;
+  onToggleExpand: () => void;
+}
+
+const TaskRelationshipsSection: React.FC<TaskRelationshipsSectionProps> = ({
+  expanded,
+  blockedBy,
+  blocking,
+  linkedTasks,
+  allTasks,
+  onBlockedByClick,
+  onBlockingClick,
+  onLinkedClick,
+  onRemoveBlockedBy,
+  onRemoveBlocking,
+  onRemoveLinked,
+  onToggleExpand,
+}) => {
+  // Stable handler for all remove actions (DeepSource recommended)
+  const handleRemoveClick = useCallback((type: string, id: number) => {
+    if (type === 'blocked') {
+      onRemoveBlockedBy(id);
+    } else if (type === 'blocking') {
+      onRemoveBlocking(id);
+    } else if (type === 'linked') {
+      onRemoveLinked(id);
+    }
+  }, [onRemoveBlockedBy, onRemoveBlocking, onRemoveLinked]);
+
+  return (
+    <div className="modern-expandable">
+      <button
+        type="button"
+        className={`modern-expandable-header ${expanded ? 'expanded' : ''}`}
+        onClick={onToggleExpand}
+        aria-label="Task Relationships"
+      >
+        <span className="modern-expandable-icon">▶️</span>
+        <h3 className="modern-expandable-title">Task Relationships</h3>
+        {(blockedBy.length > 0 || blocking.length > 0 || linkedTasks.length > 0) && (
+          <span className="modern-expandable-count">
+            ({blockedBy.length + blocking.length + linkedTasks.length} items)
+          </span>
+        )}
+      </button>
+      <div className={`modern-expandable-content ${expanded ? 'expanded' : ''}`}> 
+        <RelationshipButtons
+          blockedBy={blockedBy}
+          blocking={blocking}
+          linkedTasks={linkedTasks}
+          onBlockedByClick={onBlockedByClick}
+          onBlockingClick={onBlockingClick}
+          onLinkedClick={onLinkedClick}
+        />
+        <RelationshipChipsDisplay
+          blockedBy={blockedBy}
+          blocking={blocking}
+          linkedTasks={linkedTasks}
+          allTasks={allTasks}
+          onRemoveClick={handleRemoveClick}
+        />
+      </div>
+    </div>
+  );
+};
+
+export default TaskRelationshipsSection;
