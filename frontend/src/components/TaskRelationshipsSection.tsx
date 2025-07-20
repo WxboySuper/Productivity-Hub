@@ -59,6 +59,20 @@ interface RelationshipChipsDisplayProps {
 }
 
 function RelationshipChipsDisplay({ blockedBy, blocking, linkedTasks, allTasks, onRemoveBlockedBy, onRemoveBlocking, onRemoveLinked }: RelationshipChipsDisplayProps) {
+  // Named handlers to avoid inline arrow functions in JSX
+  function handleRemoveBlockedByClick(e: React.MouseEvent<HTMLButtonElement>) {
+    const id = Number(e.currentTarget.getAttribute('data-taskid'));
+    onRemoveBlockedBy(id);
+  }
+  function handleRemoveBlockingClick(e: React.MouseEvent<HTMLButtonElement>) {
+    const id = Number(e.currentTarget.getAttribute('data-taskid'));
+    onRemoveBlocking(id);
+  }
+  function handleRemoveLinkedClick(e: React.MouseEvent<HTMLButtonElement>) {
+    const id = Number(e.currentTarget.getAttribute('data-taskid'));
+    onRemoveLinked(id);
+  }
+
   return (
     <div className="modern-relationship-display">
       {blockedBy.map((taskId: number) => {
@@ -68,7 +82,8 @@ function RelationshipChipsDisplay({ blockedBy, blocking, linkedTasks, allTasks, 
             <span>🚫 {task.title}</span>
             <button
               type="button"
-              onClick={() => onRemoveBlockedBy(taskId)}
+              data-taskid={taskId}
+              onClick={handleRemoveBlockedByClick}
               className="modern-dependency-chip-remove"
             >
               ×
@@ -83,7 +98,8 @@ function RelationshipChipsDisplay({ blockedBy, blocking, linkedTasks, allTasks, 
             <span>⛔ {task.title}</span>
             <button
               type="button"
-              onClick={() => onRemoveBlocking(taskId)}
+              data-taskid={taskId}
+              onClick={handleRemoveBlockingClick}
               className="modern-dependency-chip-remove"
             >
               ×
@@ -98,7 +114,8 @@ function RelationshipChipsDisplay({ blockedBy, blocking, linkedTasks, allTasks, 
             <span>🔗 {task.title}</span>
             <button
               type="button"
-              onClick={() => onRemoveLinked(taskId)}
+              data-taskid={taskId}
+              onClick={handleRemoveLinkedClick}
               className="modern-dependency-chip-remove"
             >
               ×

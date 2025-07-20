@@ -51,6 +51,8 @@ function ModalContent({ children, modalRef }: { children: React.ReactNode; modal
   );
 }
 
+// Extracted component for Dependency Selection Popup
+
 // Extracted function to render dependency popup
 function renderDependencyPopup({
   dependencyPopup,
@@ -275,7 +277,6 @@ function TaskFormContent(props: {
             /* v8 ignore next 8 */
             <div className="modern-error">
               <span>⚠️</span>
-              /* v8 ignore next 8 */
               {props.fieldErrors.title}
             </div>
           )}
@@ -367,7 +368,6 @@ function DependencyPopup({
                   {task.projectId && (
                     /* v8 ignore next 8 */
                     <div className="modern-popup-task-project">
-                      /* v8 ignore next 8 */
                       📁 {projects.find(p => p.id === task.projectId)?.name || 'Unknown Project'}
                     </div>
                   )}

@@ -74,7 +74,7 @@ describe('TaskRelationshipsSection', () => {
     // blockedBy references a missing task (id: 99)
     render(
       <TaskRelationshipsSection
-        expanded={true}
+        expanded
         blockedBy={[99]}
         blocking={[]}
         linkedTasks={[]}
@@ -95,7 +95,7 @@ describe('TaskRelationshipsSection', () => {
   it('renders nothing for empty allTasks', () => {
     render(
       <TaskRelationshipsSection
-        expanded={true}
+        expanded
         blockedBy={[1]}
         blocking={[2]}
         linkedTasks={[3]}

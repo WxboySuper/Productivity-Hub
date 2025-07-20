@@ -656,7 +656,7 @@ describe('TaskForm forced coverage for unreachable lines', () => {
     expect(container.firstChild).toBeNull();
     // Directly call all handler functions
     // These are not accessible from outside, but we can simulate their effect by mounting with open=true and triggering events
-    render(<TaskFormWrapper open={true} />);
+    render(<TaskFormWrapper open />);
     // Simulate all handler events
     const input = screen.getByPlaceholderText('What needs to be done?');
     fireEvent.change(input, { target: { value: 'Force Coverage' } });
