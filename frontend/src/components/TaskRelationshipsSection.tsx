@@ -59,14 +59,14 @@ interface RelationshipChipsDisplayProps {
 }
 
 function RelationshipChipsDisplay({ blockedBy, blocking, linkedTasks, allTasks, onRemoveClick }: RelationshipChipsDisplayProps) {
-  // Single stable handler for all remove buttons
-  function handleRemoveClick(e: React.MouseEvent<HTMLButtonElement>) {
+  // Use only the stable handler passed from parent
+  const handleRemoveButtonClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
     const type = e.currentTarget.getAttribute('data-type');
     const id = Number(e.currentTarget.getAttribute('data-taskid'));
     if (type && !isNaN(id)) {
       onRemoveClick(type, id);
     }
-  }
+  }, [onRemoveClick]);
 
   return (
     <div className="modern-relationship-display">
@@ -80,7 +80,7 @@ function RelationshipChipsDisplay({ blockedBy, blocking, linkedTasks, allTasks, 
               className="modern-dependency-chip-remove"
               data-type="blocked"
               data-taskid={taskId}
-              onClick={handleRemoveClick}
+              onClick={handleRemoveButtonClick}
             >
               ×
             </button>
@@ -97,7 +97,7 @@ function RelationshipChipsDisplay({ blockedBy, blocking, linkedTasks, allTasks, 
               className="modern-dependency-chip-remove"
               data-type="blocking"
               data-taskid={taskId}
-              onClick={handleRemoveClick}
+              onClick={handleRemoveButtonClick}
             >
               ×
             </button>
@@ -114,7 +114,7 @@ function RelationshipChipsDisplay({ blockedBy, blocking, linkedTasks, allTasks, 
               className="modern-dependency-chip-remove"
               data-type="linked"
               data-taskid={taskId}
-              onClick={handleRemoveClick}
+              onClick={handleRemoveButtonClick}
             >
               ×
             </button>

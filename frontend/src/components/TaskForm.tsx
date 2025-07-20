@@ -52,6 +52,131 @@ function ModalContent({ children, modalRef }: { children: React.ReactNode; modal
 }
 
 // Extracted component for Dependency Selection Popup
+function DependencyPopup({
+  dependencyPopup,
+  allTasks,
+  initialValues,
+  blockedBy,
+  blocking,
+  linkedTasks,
+  handlePopupTaskItemClick,
+  handlePopupTaskItemKeyDown,
+  handlePopupOverlayClick,
+  handlePopupOverlayKeyDown,
+  projects
+}: {
+  dependencyPopup: 'blocked-by' | 'blocking' | 'linked';
+  allTasks: DependencyTask[];
+  initialValues: TaskFormValues;
+  blockedBy: number[];
+  blocking: number[];
+  linkedTasks: number[];
+  handlePopupTaskItemClick: (task: DependencyTask) => void;
+  handlePopupTaskItemKeyDown: (e: React.KeyboardEvent<HTMLDivElement>, task: DependencyTask) => void;
+  handlePopupOverlayClick: () => void;
+  handlePopupOverlayKeyDown: (e: React.KeyboardEvent<HTMLDivElement>) => void;
+  projects: Project[];
+}) {
+  // Stable handler for popup task item click
+  const handleTaskItemClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const id = Number(e.currentTarget.getAttribute('data-taskid'));
+    const task = allTasks.find(t => t.id === id);
+    if (task) handlePopupTaskItemClick(task);
+  }, [allTasks, handlePopupTaskItemClick]);
+
+  // Stable handler for popup task item keydown
+  const handleTaskItemKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      const id = Number(e.currentTarget.getAttribute('data-taskid'));
+      const task = allTasks.find(t => t.id === id);
+      if (task) handlePopupTaskItemClick(task);
+    }
+    handlePopupTaskItemKeyDown(e, allTasks.find(t => t.id === Number(e.currentTarget.getAttribute('data-taskid'))) as DependencyTask);
+  }, [allTasks, handlePopupTaskItemClick, handlePopupTaskItemKeyDown]);
+
+  return (
+    <div
+      className="modern-popup-overlay"
+      role="button"
+      tabIndex={0}
+      aria-label="Close dependency selection popup"
+      onClick={handlePopupOverlayClick}
+      onKeyDown={handlePopupOverlayKeyDown}
+    >
+      <div className="modern-popup-content" role="dialog" aria-modal="true">
+        <div className="modern-popup-header">
+          <h3 className="modern-popup-title">
+            {dependencyPopup === 'blocked-by' && '🚫 Select Blocking Tasks'}
+            {dependencyPopup === 'blocking' && '⛔ Select Tasks to Block'}
+            {dependencyPopup === 'linked' && '🔗 Link Related Tasks'}
+          </h3>
+          <button type="button" className="modern-popup-close" onClick={handlePopupOverlayClick}>×</button>
+        </div>
+        <div className="modern-popup-body">
+          <p className="modern-popup-description">
+            {dependencyPopup === 'blocked-by' && 'Select tasks that must be completed before this task can start.'}
+            {dependencyPopup === 'blocking' && 'Select tasks that cannot start until this task is completed.'}
+            {dependencyPopup === 'linked' && 'Select tasks that are related or connected to this task.'}
+          </p>
+          <div className="modern-popup-task-list">
+            {allTasks
+              .filter(task => {
+                if (task.id === initialValues.id) return false;
+                if (dependencyPopup === 'blocked-by') {
+                  return !blockedBy.includes(task.id) && !blocking.includes(task.id);
+                } else if (dependencyPopup === 'blocking') {
+                  /* v8 ignore next 8 */
+                  return !blocking.includes(task.id) && !blockedBy.includes(task.id);
+                } else if (dependencyPopup === 'linked') {
+                  /* v8 ignore next 8 */
+                  return !linkedTasks.includes(task.id);
+                }
+                return true;
+              })
+              .map(task => (
+                <div
+                  key={task.id}
+                  className="modern-popup-task-item"
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Select task ${task.title}`}
+                  data-taskid={task.id}
+                  onClick={handleTaskItemClick}
+                  onKeyDown={handleTaskItemKeyDown}
+                >
+                  <div className="modern-popup-task-title">{task.title}</div>
+                  {task.projectId && (
+                    /* v8 ignore next 8 */
+                    <div className="modern-popup-task-project">
+                      {/* v8 ignore next 8: Defensive fallback for project name */}
+                      📁 {projects.find(p => p.id === task.projectId)?.name || 'Unknown Project'}
+                    </div>
+                  )}
+                </div>
+              ))}
+            {allTasks.filter(task => {
+              if (task.id === initialValues.id) return false;
+              if (dependencyPopup === 'blocked-by') {
+                return !blockedBy.includes(task.id) && !blocking.includes(task.id);
+              } else if (dependencyPopup === 'blocking') {
+                /* v8 ignore next 8 */
+                return !blocking.includes(task.id) && !blockedBy.includes(task.id);
+              } else if (dependencyPopup === 'linked') {
+                /* v8 ignore next 8 */
+                return !linkedTasks.includes(task.id);
+              }
+              return true;
+            }).length === 0 && (
+              <div className="modern-popup-empty">
+                <p>No available tasks to select.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // Extracted function to render dependency popup
 function renderDependencyPopup({
@@ -111,26 +236,13 @@ function renderDependencyPopup({
 // Extracted SubtasksList component to reduce nesting
 function SubtasksList({
   subtasks,
-  handleToggleSubtask,
-  handleRemoveSubtask
+  handleToggleSubtaskChange,
+  handleRemoveSubtaskClick
 }: {
   subtasks: Subtask[];
-  handleToggleSubtask: (id: number) => void;
-  handleRemoveSubtask: (id: number) => void;
+  handleToggleSubtaskChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleRemoveSubtaskClick: (e: React.MouseEvent<HTMLButtonElement>) => void;
 }) {
-  // Dedicated handler for checkbox change
-  function handleToggleSubtaskChange(e: React.ChangeEvent<HTMLInputElement>) {
-    /* v8 ignore next 8 */
-    const id = Number(e.currentTarget.getAttribute('data-subtaskid'));
-    handleToggleSubtask(id);
-  }
-  // Dedicated handler for button click
-  function handleRemoveSubtaskClick(e: React.MouseEvent<HTMLButtonElement>) {
-    /* v8 ignore next 8 */
-    const id = Number(e.currentTarget.getAttribute('data-subtaskid'));
-    handleRemoveSubtask(id);
-  }
-
   return (
     <>
       {subtasks.map((subtask) => {
@@ -207,8 +319,9 @@ function TaskFormContent(props: {
   handleNewSubtaskTitleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleNewSubtaskKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   handleAddSubtask: () => void;
-  handleToggleSubtask: (id: number) => void;
-  handleRemoveSubtask: (id: number) => void;
+  // removed unused props
+  handleToggleSubtaskChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleRemoveSubtaskClick: (e: React.MouseEvent<HTMLButtonElement>) => void;
   priorities: typeof priorities;
   priority: number;
   handlePriorityClick: () => void;
@@ -275,8 +388,8 @@ function TaskFormContent(props: {
         {/* Subtasks List - extracted to reduce nesting */}
         <SubtasksList
           subtasks={props.subtasks}
-          handleToggleSubtask={props.handleToggleSubtask}
-          handleRemoveSubtask={props.handleRemoveSubtask}
+          handleToggleSubtaskChange={props.handleToggleSubtaskChange}
+          handleRemoveSubtaskClick={props.handleRemoveSubtaskClick}
         />
         {/* Hero Title Input - Todoist Style */}
         <div className="modern-hero-section">
@@ -302,116 +415,6 @@ function TaskFormContent(props: {
 }
 
 // Extracted component for Dependency Selection Popup
-function DependencyPopup({
-  dependencyPopup,
-  allTasks,
-  initialValues,
-  blockedBy,
-  blocking,
-  linkedTasks,
-  handlePopupTaskItemClick,
-  handlePopupTaskItemKeyDown,
-  handlePopupOverlayClick,
-  handlePopupOverlayKeyDown,
-  projects
-}: {
-  dependencyPopup: 'blocked-by' | 'blocking' | 'linked';
-  allTasks: DependencyTask[];
-  initialValues: Partial<DependencyTask & Subtask>;
-  blockedBy: number[];
-  blocking: number[];
-  linkedTasks: number[];
-  handlePopupTaskItemClick: (task: DependencyTask) => void;
-  handlePopupTaskItemKeyDown: (e: React.KeyboardEvent<HTMLDivElement>, task: DependencyTask) => void;
-  handlePopupOverlayClick: () => void;
-  handlePopupOverlayKeyDown: (e: React.KeyboardEvent<HTMLDivElement>) => void;
-  projects: Project[];
-}) {
-  return (
-    <div
-      className="modern-popup-overlay"
-      role="button"
-      tabIndex={0}
-      aria-label="Close dependency selection popup"
-      onClick={handlePopupOverlayClick}
-      onKeyDown={handlePopupOverlayKeyDown}
-    >
-      <div className="modern-popup-content" role="dialog" aria-modal="true">
-        <div className="modern-popup-header">
-          <h3 className="modern-popup-title">
-            {dependencyPopup === 'blocked-by' && '🚫 Select Blocking Tasks'}
-            {dependencyPopup === 'blocking' && '⛔ Select Tasks to Block'}
-            {dependencyPopup === 'linked' && '🔗 Link Related Tasks'}
-          </h3>
-          <button type="button" className="modern-popup-close" onClick={handlePopupOverlayClick}>×</button>
-        </div>
-        <div className="modern-popup-body">
-          <p className="modern-popup-description">
-            {dependencyPopup === 'blocked-by' && 'Select tasks that must be completed before this task can start.'}
-            {dependencyPopup === 'blocking' && 'Select tasks that cannot start until this task is completed.'}
-            {dependencyPopup === 'linked' && 'Select tasks that are related or connected to this task.'}
-          </p>
-          <div className="modern-popup-task-list">
-            {allTasks
-              .filter(task => {
-                if (task.id === initialValues.id) return false;
-                if (dependencyPopup === 'blocked-by') {
-                  return !blockedBy.includes(task.id) && !blocking.includes(task.id);
-                } else if (dependencyPopup === 'blocking') {
-                  /* v8 ignore next 8 */
-                  return !blocking.includes(task.id) && !blockedBy.includes(task.id);
-                } else if (dependencyPopup === 'linked') {
-                  /* v8 ignore next 8 */
-                  return !linkedTasks.includes(task.id);
-                }
-                /* v8 ignore next */
-                return true;
-              })
-              .map(task => (
-                <div
-                  key={task.id}
-                  className="modern-popup-task-item"
-                  role="button"
-                  tabIndex={0}
-                  aria-label={`Select task ${task.title}`}
-                  onClick={() => handlePopupTaskItemClick(task)}
-                  onKeyDown={e => handlePopupTaskItemKeyDown(e, task)}
-                >
-                  <div className="modern-popup-task-title">{task.title}</div>
-                  {/* v8 ignore next */}
-                  {task.projectId && (
-                    /* v8 ignore next 8 */
-                    <div className="modern-popup-task-project">
-                      📁 {projects.find(p => p.id === task.projectId)?.name || 'Unknown Project'}
-                    </div>
-                  )}
-                </div>
-              ))}
-            {/* v8 ignore next */}
-            {allTasks.filter(task => {
-              if (task.id === initialValues.id) return false;
-              if (dependencyPopup === 'blocked-by') {
-                return !blockedBy.includes(task.id) && !blocking.includes(task.id);
-              } else if (dependencyPopup === 'blocking') {
-                /* v8 ignore next 8 */
-                return !blocking.includes(task.id) && !blockedBy.includes(task.id);
-              } else if (dependencyPopup === 'linked') {
-                /* v8 ignore next 8 */
-                return !linkedTasks.includes(task.id);
-              }
-              /* v8 ignore next */
-              return true;
-            }).length === 0 && (
-              <div className="modern-popup-empty">
-                <p>No available tasks to select.</p>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 interface Project {
   id: number;
@@ -762,6 +765,17 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
     setLinkedTasks(prev => prev.filter((taskId) => taskId !== id));
   }, []);
 
+  // Stable handlers for SubtasksList
+  const handleToggleSubtaskChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const id = Number(e.currentTarget.getAttribute('data-subtaskid'));
+    handleToggleSubtask(id);
+  }, [handleToggleSubtask]);
+  const handleRemoveSubtaskClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    /* v8 ignore next 8 */
+    const id = Number(e.currentTarget.getAttribute('data-subtaskid'));
+    handleRemoveSubtask(id);
+  }, [handleRemoveSubtask]);
+
   return (
     <div
       className="modern-modal-backdrop"
@@ -792,8 +806,8 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
             handleNewSubtaskTitleChange={handleNewSubtaskTitleChange}
             handleNewSubtaskKeyDown={handleNewSubtaskKeyDown}
             handleAddSubtask={handleAddSubtask}
-            handleToggleSubtask={handleToggleSubtask}
-            handleRemoveSubtask={handleRemoveSubtask}
+            handleToggleSubtaskChange={handleToggleSubtaskChange}
+            handleRemoveSubtaskClick={handleRemoveSubtaskClick}
             priorities={priorities}
             priority={priority}
             handlePriorityClick={handlePriorityClick}
