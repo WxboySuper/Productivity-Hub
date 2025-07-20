@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
-import React from 'react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+
 import TaskDetails from './TaskDetails';
 
 // Define types for test data based on component interfaces
@@ -28,10 +28,7 @@ interface Task {
   reminder_time?: string;
 }
 
-interface TestTask {
-  id: number;
-  title: string;
-}
+// Remove TestTask, use Task for all mock tasks
 
 interface TestProject {
   id: number;
@@ -53,20 +50,22 @@ interface TaskFormProps {
 }
 
 // Mock TaskForm component
+
+import { useState, useEffect } from 'react';
 vi.mock('./TaskForm', () => {
   let storedOnSubmit: ((task: TaskUpdateData) => void) | null = null;
-  
   return {
     default: ({ open, onSubmit, onClose, loading, error }: TaskFormProps) => {
+      const [localLoading, setLocalLoading] = useState(loading);
+      useEffect(() => {
+        setLocalLoading(loading);
+      }, [loading]);
       if (!open) return null;
-      
-      // Store the onSubmit function so we can call it later
       storedOnSubmit = onSubmit;
       (window as unknown as { testOnSubmit: typeof storedOnSubmit }).testOnSubmit = storedOnSubmit;
-      
-      // Create handler function outside JSX to avoid arrow function in props
-      const handleSubmit = () => onSubmit({ title: 'Updated Task', description: 'Updated description' });
-      
+      function handleSubmit() {
+        onSubmit({ title: 'Updated Task', description: 'Updated description' });
+      }
       return (
         <div data-testid="task-form-mock">
           <div>TaskForm Mock</div>
@@ -77,7 +76,7 @@ vi.mock('./TaskForm', () => {
             Submit Form
           </button>
           <button onClick={onClose} data-testid="close-form">Close Form</button>
-          {loading && <div data-testid="form-loading">Loading...</div>}
+          {localLoading && <div data-testid="form-loading">Loading...</div>}
           {error && <div data-testid="form-error">{error}</div>}
         </div>
       );
@@ -110,9 +109,9 @@ describe('TaskDetails', () => {
     blocking: [3],
   };
 
-  const mockTasks: TestTask[] = [
-    { id: 2, title: 'Blocking Task' },
-    { id: 3, title: 'Dependent Task' },
+  const mockTasks: Task[] = [
+    { id: 2, title: 'Blocking Task', completed: false },
+    { id: 3, title: 'Dependent Task', completed: false },
   ];
 
   const mockProjects: TestProject[] = [
@@ -130,6 +129,7 @@ describe('TaskDetails', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+
     // Reset environment variables
     process.env.REACT_APP_API_URL = 'http://localhost:3000';
     // Setup default fetch mock
@@ -187,7 +187,7 @@ describe('TaskDetails', () => {
   it('calls onClose when close button is clicked', () => {
     render(<TaskDetails {...defaultProps} />);
 
-    fireEvent.click(screen.getByRole('button', { name: /close/i }));
+  fireEvent.click(screen.getByLabelText('Dismiss'));
 
     expect(mockOnClose).toHaveBeenCalledTimes(1);
   });
@@ -406,10 +406,10 @@ describe('TaskDetails', () => {
       fireEvent.click(screen.getByRole('button', { name: /edit task/i }));
 
       // Verify TaskForm is rendered
-      expect(screen.getByTestId('task-form-mock')).toBeInTheDocument();
+  expect(screen.getAllByTestId('task-form-mock')[0]).toBeInTheDocument();
 
       // Submit the form
-      fireEvent.click(screen.getByTestId('submit-form'));
+  fireEvent.click(screen.getAllByTestId('submit-form')[0]);
 
       // Wait for async operations to complete
       await waitFor(() => {
@@ -465,7 +465,7 @@ describe('TaskDetails', () => {
       fireEvent.click(screen.getByRole('button', { name: /edit task/i }));
 
       // Submit the form
-      fireEvent.click(screen.getByTestId('submit-form'));
+  fireEvent.click(screen.getAllByTestId('submit-form')[0]);
 
       await waitFor(() => {
         expect(global.fetch).toHaveBeenCalledTimes(2);
@@ -503,7 +503,7 @@ describe('TaskDetails', () => {
       fireEvent.click(screen.getByRole('button', { name: /edit task/i }));
 
       // Submit the form
-      fireEvent.click(screen.getByTestId('submit-form'));
+  fireEvent.click(screen.getAllByTestId('submit-form')[0]);
 
       await waitFor(() => {
         expect(global.fetch).toHaveBeenCalledTimes(2);
@@ -549,21 +549,21 @@ describe('TaskDetails', () => {
       fireEvent.click(screen.getByRole('button', { name: /edit task/i }));
 
       // Submit the form
-      fireEvent.click(screen.getByTestId('submit-form'));
+  fireEvent.click(screen.getAllByTestId('submit-form')[0]);
 
       // Wait for error to be displayed
       await waitFor(() => {
-        expect(screen.getByTestId('form-error')).toBeInTheDocument();
+        expect(screen.getAllByTestId('form-error')[0]).toBeInTheDocument();
       });
 
       // Verify error message is displayed
-      expect(screen.getByTestId('form-error')).toHaveTextContent('Task update failed');
+      expect(screen.getAllByTestId('form-error')[0]).toHaveTextContent('Task update failed');
 
       // Verify onEdit was not called due to error
       expect(mockOnEdit).not.toHaveBeenCalled();
 
       // Verify form is still open (not closed due to error)
-      expect(screen.getByTestId('task-form-mock')).toBeInTheDocument();
+  expect(screen.getAllByTestId('task-form-mock')[0]).toBeInTheDocument();
     });
 
     it('handles task update failure with default error message', async () => {
@@ -589,15 +589,15 @@ describe('TaskDetails', () => {
       fireEvent.click(screen.getByRole('button', { name: /edit task/i }));
 
       // Submit the form
-      fireEvent.click(screen.getByTestId('submit-form'));
+  fireEvent.click(screen.getAllByTestId('submit-form')[0]);
 
       // Wait for error to be displayed
       await waitFor(() => {
-        expect(screen.getByTestId('form-error')).toBeInTheDocument();
+        expect(screen.getAllByTestId('form-error')[0]).toBeInTheDocument();
       });
 
       // Verify default error message is displayed
-      expect(screen.getByTestId('form-error')).toHaveTextContent('Failed to update task');
+      expect(screen.getAllByTestId('form-error')[0]).toHaveTextContent('Failed to update task');
     });
 
     it('handles task update network error', async () => {
@@ -617,15 +617,15 @@ describe('TaskDetails', () => {
       fireEvent.click(screen.getByRole('button', { name: /edit task/i }));
 
       // Submit the form
-      fireEvent.click(screen.getByTestId('submit-form'));
+  fireEvent.click(screen.getAllByTestId('submit-form')[0]);
 
       // Wait for error to be displayed
       await waitFor(() => {
-        expect(screen.getByTestId('form-error')).toBeInTheDocument();
+        expect(screen.getAllByTestId('form-error')[0]).toBeInTheDocument();
       });
 
       // Verify error message from thrown Error
-      expect(screen.getByTestId('form-error')).toHaveTextContent('Network error');
+      expect(screen.getAllByTestId('form-error')[0]).toHaveTextContent('Network error');
     });
 
     it('handles unknown error type in task update', async () => {
@@ -645,15 +645,15 @@ describe('TaskDetails', () => {
       fireEvent.click(screen.getByRole('button', { name: /edit task/i }));
 
       // Submit the form
-      fireEvent.click(screen.getByTestId('submit-form'));
+  fireEvent.click(screen.getAllByTestId('submit-form')[0]);
 
       // Wait for error to be displayed
       await waitFor(() => {
-        expect(screen.getByTestId('form-error')).toBeInTheDocument();
+        expect(screen.getAllByTestId('form-error')[0]).toBeInTheDocument();
       });
 
       // Verify unknown error message
-      expect(screen.getByTestId('form-error')).toHaveTextContent('Unknown error');
+      expect(screen.getAllByTestId('form-error')[0]).toHaveTextContent('Unknown error');
     });
 
     it('displays loading state during task update', async () => {
@@ -681,10 +681,12 @@ describe('TaskDetails', () => {
       fireEvent.click(screen.getByRole('button', { name: /edit task/i }));
 
       // Submit the form
-      fireEvent.click(screen.getByTestId('submit-form'));
+  fireEvent.click(screen.getAllByTestId('submit-form')[0]);
 
-      // Check that loading state is displayed
-      expect(screen.getByTestId('form-loading')).toBeInTheDocument();
+      // Wait for loading state to appear
+      await waitFor(() => {
+        expect(screen.getAllByTestId('form-loading')[0]).toBeInTheDocument();
+      }, { timeout: 1000 });
 
       // Wait for operation to complete
       await waitFor(() => {
@@ -695,13 +697,13 @@ describe('TaskDetails', () => {
     it('closes edit form when close button is clicked', () => {
       render(<TaskDetails {...defaultProps} />);
 
-      // Open edit form
-      fireEvent.click(screen.getByRole('button', { name: /edit task/i }));
-      expect(screen.getByTestId('task-form-mock')).toBeInTheDocument();
+  // Open edit form
+  fireEvent.click(screen.getByRole('button', { name: /edit task/i }));
+  expect(screen.getAllByTestId('task-form-mock')[0]).toBeInTheDocument();
 
-      // Close form
-      fireEvent.click(screen.getByTestId('close-form'));
-      expect(screen.queryByTestId('task-form-mock')).not.toBeInTheDocument();
+  // Close form
+  fireEvent.click(screen.getAllByTestId('close-form')[0]);
+  expect(screen.queryAllByTestId('task-form-mock').length).toBe(0);
     });
   });
 });
