@@ -549,13 +549,13 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
   // Ref for modal container
   const modalRef = useRef<HTMLDivElement>(null);
 
-  // Backdrop click handler
-  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+  // Backdrop click handler (stable reference)
+  const handleBackdropClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) {
       /* v8 ignore next 8 */
       onClose();
     }
-  };
+  }, [onClose]);
 
   // Handle click outside and Escape key for modal close
   useEffect(() => {
