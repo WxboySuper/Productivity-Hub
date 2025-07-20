@@ -59,18 +59,17 @@ interface RelationshipChipsDisplayProps {
 }
 
 function RelationshipChipsDisplay({ blockedBy, blocking, linkedTasks, allTasks, onRemoveBlockedBy, onRemoveBlocking, onRemoveLinked }: RelationshipChipsDisplayProps) {
-  // Named handlers to avoid inline arrow functions in JSX
-  function handleRemoveBlockedByClick(e: React.MouseEvent<HTMLButtonElement>) {
+  // Single stable handler for all remove buttons
+  function handleRemoveClick(e: React.MouseEvent<HTMLButtonElement>) {
+    const type = e.currentTarget.getAttribute('data-type');
     const id = Number(e.currentTarget.getAttribute('data-taskid'));
-    onRemoveBlockedBy(id);
-  }
-  function handleRemoveBlockingClick(e: React.MouseEvent<HTMLButtonElement>) {
-    const id = Number(e.currentTarget.getAttribute('data-taskid'));
-    onRemoveBlocking(id);
-  }
-  function handleRemoveLinkedClick(e: React.MouseEvent<HTMLButtonElement>) {
-    const id = Number(e.currentTarget.getAttribute('data-taskid'));
-    onRemoveLinked(id);
+    if (type === 'blocked') {
+      onRemoveBlockedBy(id);
+    } else if (type === 'blocking') {
+      onRemoveBlocking(id);
+    } else if (type === 'linked') {
+      onRemoveLinked(id);
+    }
   }
 
   return (
@@ -82,9 +81,10 @@ function RelationshipChipsDisplay({ blockedBy, blocking, linkedTasks, allTasks, 
             <span>🚫 {task.title}</span>
             <button
               type="button"
-              data-taskid={taskId}
-              onClick={handleRemoveBlockedByClick}
               className="modern-dependency-chip-remove"
+              data-type="blocked"
+              data-taskid={taskId}
+              onClick={handleRemoveClick}
             >
               ×
             </button>
@@ -98,9 +98,10 @@ function RelationshipChipsDisplay({ blockedBy, blocking, linkedTasks, allTasks, 
             <span>⛔ {task.title}</span>
             <button
               type="button"
-              data-taskid={taskId}
-              onClick={handleRemoveBlockingClick}
               className="modern-dependency-chip-remove"
+              data-type="blocking"
+              data-taskid={taskId}
+              onClick={handleRemoveClick}
             >
               ×
             </button>
@@ -114,9 +115,10 @@ function RelationshipChipsDisplay({ blockedBy, blocking, linkedTasks, allTasks, 
             <span>🔗 {task.title}</span>
             <button
               type="button"
-              data-taskid={taskId}
-              onClick={handleRemoveLinkedClick}
               className="modern-dependency-chip-remove"
+              data-type="linked"
+              data-taskid={taskId}
+              onClick={handleRemoveClick}
             >
               ×
             </button>

@@ -118,10 +118,20 @@ function SubtasksList({
   handleToggleSubtask: (id: number) => void;
   handleRemoveSubtask: (id: number) => void;
 }) {
+  // Dedicated handler for checkbox change
+  function handleToggleSubtaskChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const id = Number(e.currentTarget.getAttribute('data-subtaskid'));
+    handleToggleSubtask(id);
+  }
+  // Dedicated handler for button click
+  function handleRemoveSubtaskClick(e: React.MouseEvent<HTMLButtonElement>) {
+    const id = Number(e.currentTarget.getAttribute('data-subtaskid'));
+    handleRemoveSubtask(id);
+  }
+
   return (
     <>
       {subtasks.map((subtask) => {
-        /* v8 ignore next: Defensive fallback for subtask id, unreachable if all subtasks have id */
         const subtaskId = typeof subtask.id === 'number' ? subtask.id : -1;
         return (
           <div key={subtaskId} className="modern-subtask-item">
@@ -129,7 +139,8 @@ function SubtasksList({
               type="checkbox"
               className="modern-subtask-checkbox"
               checked={subtask.completed}
-              onChange={() => handleToggleSubtask(subtaskId)}
+              data-subtaskid={subtaskId}
+              onChange={handleToggleSubtaskChange}
             />
             <span className={`modern-subtask-text ${subtask.completed ? 'completed' : ''}`}>
               {subtask.title}
@@ -137,7 +148,8 @@ function SubtasksList({
             <button
               type="button"
               className="modern-subtask-remove"
-              onClick={() => handleRemoveSubtask(subtaskId)}
+              data-subtaskid={subtaskId}
+              onClick={handleRemoveSubtaskClick}
             >
               🗑️
             </button>
