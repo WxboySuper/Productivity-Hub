@@ -776,92 +776,106 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
     handleRemoveSubtask(id);
   }, [handleRemoveSubtask]);
 
+  // Stable handler for modal backdrop keydown
+  const handleBackdropKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Escape' || e.key === 'Enter') {
+      onClose();
+    }
+  }, [onClose]);
+
+  // Stable handler for form submit
+  const handleFormSubmit = useCallback((event: React.FormEvent<HTMLFormElement>) => {
+    handleSubmit(event);
+  }, [handleSubmit]);
+
+  // Stable props for TaskFormContent
+  const taskFormContentProps = {
+    error,
+    fieldErrors,
+    title,
+    handleTitleChange,
+    description,
+    handleDescriptionChange,
+    expandedSections,
+    handleDetailsClick,
+    subtasks,
+    handleSubtasksClick,
+    newSubtaskTitle,
+    handleNewSubtaskTitleChange,
+    handleNewSubtaskKeyDown,
+    handleAddSubtask,
+    handleToggleSubtaskChange,
+    handleRemoveSubtaskClick,
+    priorities,
+    priority,
+    handlePriorityClick,
+    handlePriorityChipClick,
+    currentPriority,
+    completed,
+    handleStatusClick,
+    projectId,
+    projects,
+    handleProjectClick,
+    handleProjectChange,
+    dueDate,
+    handleDueDateClick,
+    handleDueDateChange,
+    startDate,
+    handleStartDateChange,
+    expandedSectionsScheduling: expandedSections.scheduling,
+    expandedSectionsProject: expandedSections.project,
+    expandedSectionsPriority: expandedSections.priority,
+    expandedSectionsReminders: expandedSections.reminders,
+    handleRemindersClick,
+    reminderEnabled,
+    handleReminderEnabledChange,
+    reminderTime,
+    handleReminderTimeChange,
+    expandedSectionsRelationships: expandedSections.relationships,
+    blockedBy,
+    blocking,
+    linkedTasks,
+    allTasks,
+    onToggleExpand: handleRelationshipsExpand,
+    onBlockedByClick: handleBlockedByClick,
+    onBlockingClick: handleBlockingClick,
+    onLinkedClick: handleLinkedClick,
+    onRemoveBlockedBy: handleRemoveBlockedBy,
+    onRemoveBlocking: handleRemoveBlocking,
+    onRemoveLinked: handleRemoveLinked,
+    TaskRelationshipsSection
+  };
+
+  // Stable props for renderDependencyPopup
+  const dependencyPopupProps = {
+    dependencyPopup,
+    allTasks,
+    initialValues,
+    blockedBy,
+    blocking,
+    linkedTasks,
+    handlePopupTaskItemClick,
+    handlePopupTaskItemKeyDown,
+    handlePopupOverlayClick,
+    handlePopupOverlayKeyDown,
+    projects
+  };
+
   return (
     <div
       className="modern-modal-backdrop"
       role="button"
       tabIndex={0}
       onClick={handleBackdropClick}
-      onKeyDown={e => {
-        if (e.key === 'Escape' || e.key === 'Enter') {
-          onClose();
-        }
-      }}
+      onKeyDown={handleBackdropKeyDown}
     >
       <ModalContent modalRef={modalRef}>
         <TaskFormHeader editMode={editMode} onClose={onClose} />
-        <form onSubmit={handleSubmit}>
-          <TaskFormContent
-            error={error}
-            fieldErrors={fieldErrors}
-            title={title}
-            handleTitleChange={handleTitleChange}
-            description={description}
-            handleDescriptionChange={handleDescriptionChange}
-            expandedSections={expandedSections}
-            handleDetailsClick={handleDetailsClick}
-            subtasks={subtasks}
-            handleSubtasksClick={handleSubtasksClick}
-            newSubtaskTitle={newSubtaskTitle}
-            handleNewSubtaskTitleChange={handleNewSubtaskTitleChange}
-            handleNewSubtaskKeyDown={handleNewSubtaskKeyDown}
-            handleAddSubtask={handleAddSubtask}
-            handleToggleSubtaskChange={handleToggleSubtaskChange}
-            handleRemoveSubtaskClick={handleRemoveSubtaskClick}
-            priorities={priorities}
-            priority={priority}
-            handlePriorityClick={handlePriorityClick}
-            handlePriorityChipClick={handlePriorityChipClick}
-            currentPriority={currentPriority}
-            completed={completed}
-            handleStatusClick={handleStatusClick}
-            projectId={projectId}
-            projects={projects}
-            handleProjectClick={handleProjectClick}
-            handleProjectChange={handleProjectChange}
-            dueDate={dueDate}
-            handleDueDateClick={handleDueDateClick}
-            handleDueDateChange={handleDueDateChange}
-            startDate={startDate}
-            handleStartDateChange={handleStartDateChange}
-            expandedSectionsScheduling={expandedSections.scheduling}
-            expandedSectionsProject={expandedSections.project}
-            expandedSectionsPriority={expandedSections.priority}
-            expandedSectionsReminders={expandedSections.reminders}
-            handleRemindersClick={handleRemindersClick}
-            reminderEnabled={reminderEnabled}
-            handleReminderEnabledChange={handleReminderEnabledChange}
-            reminderTime={reminderTime}
-            handleReminderTimeChange={handleReminderTimeChange}
-            expandedSectionsRelationships={expandedSections.relationships}
-            blockedBy={blockedBy}
-            blocking={blocking}
-            linkedTasks={linkedTasks}
-            allTasks={allTasks}
-            onToggleExpand={handleRelationshipsExpand}
-            onBlockedByClick={handleBlockedByClick}
-            onBlockingClick={handleBlockingClick}
-            onLinkedClick={handleLinkedClick}
-            onRemoveBlockedBy={handleRemoveBlockedBy}
-            onRemoveBlocking={handleRemoveBlocking}
-            onRemoveLinked={handleRemoveLinked}
-            TaskRelationshipsSection={TaskRelationshipsSection}
-          />
+        <form onSubmit={handleFormSubmit}>
+          <TaskFormContent {...taskFormContentProps} />
         </form>
         {/* Dependency Selection Popup */}
-        {renderDependencyPopup({
-          dependencyPopup,
-          allTasks,
-          initialValues,
-          blockedBy,
-          blocking,
-          linkedTasks,
-          handlePopupTaskItemClick,
-          handlePopupTaskItemKeyDown,
-          handlePopupOverlayClick,
-          handlePopupOverlayKeyDown,
-          projects
-        })}
+        {renderDependencyPopup(dependencyPopupProps)}
         <StickyActions
           onClose={onClose}
           loading={loading}

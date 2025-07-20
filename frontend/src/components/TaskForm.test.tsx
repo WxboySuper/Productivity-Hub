@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
@@ -82,7 +83,7 @@ const defaultProps: TaskFormProps = {
 
 // Wrap onSubmit to convert project_id to number if needed
 const TaskFormWrapper: React.FC<Partial<TaskFormProps>> = ({ onSubmit, allTasks, ...props }) => {
-  const handleSubmit = (task: TaskFormValues) => {
+  const handleSubmit = useCallback((task: TaskFormValues) => {
     const fixedTask = { ...task };
     if (typeof fixedTask.project_id === 'string') {
       // Convert to number or null
@@ -93,7 +94,7 @@ const TaskFormWrapper: React.FC<Partial<TaskFormProps>> = ({ onSubmit, allTasks,
     } else {
       defaultProps.onSubmit(fixedTask);
     }
-  };
+  }, [onSubmit]);
   // Convert allTasks to DependencyTask[] and ensure id is always number
   const safeAllTasks = (allTasks ?? defaultProps.allTasks)
     .filter(t => typeof t.id === 'number')
