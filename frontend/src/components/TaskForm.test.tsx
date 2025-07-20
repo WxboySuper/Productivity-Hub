@@ -3,8 +3,52 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import TaskForm from './TaskForm';
 
+// Types
+interface Subtask {
+  id?: number;
+  title: string;
+  completed: boolean;
+}
+
+interface Task {
+  id?: number;
+  title: string;
+  description?: string;
+  priority?: number;
+  completed?: boolean;
+  project_id?: number | null;
+  due_date?: string;
+  start_date?: string;
+  subtasks?: Subtask[];
+  blocked_by?: number[];
+  blocking?: number[];
+  linked_tasks?: number[];
+  recurrence?: string;
+  reminder_enabled?: boolean;
+  reminder_time?: string;
+}
+
+interface Project {
+  id: number;
+  name: string;
+  description?: string;
+}
+
+interface TaskFormProps {
+  open: boolean;
+  onClose: () => void;
+  onSubmit: (task: Task) => void;
+  loading: boolean;
+  error: string | null;
+  projects: Project[];
+  allTasks: Task[];
+  initialValues?: Task;
+  editMode?: boolean;
+  initialTask?: Task;
+}
+
 // Mock task and project data
-const mockTask = {
+const mockTask: Task = {
   id: 1,
   title: 'Test Task',
   description: 'Test Description',
@@ -16,12 +60,12 @@ const mockTask = {
   subtasks: [],
 };
 
-const mockProjects = [
+const mockProjects: Project[] = [
   { id: 1, name: 'Project 1', description: 'Test Project 1' },
   { id: 2, name: 'Project 2', description: 'Test Project 2' },
 ];
 
-const defaultProps = {
+const defaultProps: TaskFormProps = {
   open: true,
   onClose: vi.fn(),
   onSubmit: vi.fn(),
@@ -31,7 +75,7 @@ const defaultProps = {
   allTasks: [],
 };
 
-const TaskFormWrapper = ({ ...props }) => (
+const TaskFormWrapper: React.FC<Partial<TaskFormProps>> = ({ ...props }) => (
   <BrowserRouter>
     <TaskForm {...defaultProps} {...props} />
   </BrowserRouter>
@@ -40,6 +84,26 @@ const TaskFormWrapper = ({ ...props }) => (
 describe('TaskForm', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it('covers fallback branch in dependency popup filtering (lines 677-678)', async () => {
+    // Malformed task: missing id
+    const malformedTasks = [{ title: 'Malformed Task' }]; // no id
+    render(
+      <TaskFormWrapper allTasks={malformedTasks} />
+    );
+    // Open relationships section
+    fireEvent.click(screen.getByText('Task Relationships'));
+    // Open dependency popup for blocked-by
+    await waitFor(() => {
+      fireEvent.click(screen.getByText('Blocked By'));
+    });
+    // The popup should render the fallback branch (title only, no items)
+    await waitFor(() => {
+      expect(screen.getByText('🚫 Select Blocking Tasks')).toBeInTheDocument();
+      const popupItems = document.querySelectorAll('.modern-popup-task-item');
+      expect(popupItems.length).toBe(0);
+    });
   });
 
   it('renders create task form when open', () => {
@@ -1016,7 +1080,7 @@ describe('TaskForm', () => {
       { id: 1, title: 'Task to Block', completed: false, project_id: null },
     ];
     
-    render(<TaskFormWrapper allTasks={tasksWithDeps} initialValues={{ id: 2 }} />);
+    render(<TaskFormWrapper allTasks={tasksWithDeps} initialValues={{ id: 2, title: 'Task 2' }} />);
     
     fireEvent.click(screen.getByText('Task Relationships'));
     
@@ -1050,7 +1114,7 @@ describe('TaskForm', () => {
       { id: 1, title: 'Task to Link', completed: false, project_id: null },
     ];
     
-    render(<TaskFormWrapper allTasks={tasksWithDeps} initialValues={{ id: 2 }} />);
+    render(<TaskFormWrapper allTasks={tasksWithDeps} initialValues={{ id: 2, title: 'Task 2' }} />);
     
     fireEvent.click(screen.getByText('Task Relationships'));
     
@@ -1093,7 +1157,7 @@ describe('TaskForm', () => {
     render(<TaskFormWrapper 
       allTasks={tasksWithProjects} 
       projects={mockProjects}
-      initialValues={{ id: 3 }}
+      initialValues={{ id: 3, title: 'Test Task' }}
     />);
     
     fireEvent.click(screen.getByText('Task Relationships'));
@@ -1212,7 +1276,7 @@ describe('TaskForm', () => {
     render(<TaskFormWrapper 
       allTasks={tasksWithProjects} 
       projects={mockProjects}
-      initialValues={{ id: 3 }}
+      initialValues={{ id: 3, title: 'Test Task' }}
     />);
     
     fireEvent.click(screen.getByText('Task Relationships'));
@@ -1274,7 +1338,7 @@ describe('TaskForm', () => {
 
   it('covers empty dependency list filtering edge case', async () => {
     // Test the scenario where no tasks are available after filtering (lines 705, 709)
-    const noAvailableTasks = [];
+    const noAvailableTasks: Task[] = [];
     
     render(<TaskFormWrapper 
       allTasks={noAvailableTasks} 
@@ -1284,16 +1348,16 @@ describe('TaskForm', () => {
     fireEvent.click(screen.getByText('Task Relationships'));
     
     await waitFor(() => {
-      const allButtons = screen.getAllByRole('button');
-      const linkedTasksButton = allButtons.find(button => 
-        button.textContent?.includes('🔗') && button.textContent?.includes('Linked Tasks')
-      );
-      
-      if (linkedTasksButton) {
-        fireEvent.click(linkedTasksButton);
-        // This will trigger the empty task list logic (lines 705, 709)
-        // when filtering results in no available tasks
-      }
+      fireEvent.click(screen.getByText('Blocking'));
+    });
+    
+    await waitFor(() => {
+      expect(screen.getByText('⛔ Select Tasks to Block')).toBeInTheDocument();
+    });
+    
+    // Should show empty state
+    await waitFor(() => {
+      expect(screen.getByText('No available tasks to select.')).toBeInTheDocument();
     });
   });
 
@@ -1403,6 +1467,22 @@ describe('TaskForm', () => {
     expect(mockOnSubmit).not.toHaveBeenCalled();
   });
 
+    it('validates empty title specifically for line 162 coverage', async () => {
+      const mockOnSubmit = vi.fn();
+      render(<TaskFormWrapper onSubmit={mockOnSubmit} />);
+      const titleInput = screen.getByPlaceholderText('What needs to be done?');
+      fireEvent.change(titleInput, { target: { value: '   ' } });
+      // Find the form element and submit it directly
+      const form = titleInput.closest('form');
+      if (form) {
+        fireEvent.submit(form);
+      }
+      await waitFor(() => {
+        expect(screen.getByText('Task name is required')).toBeInTheDocument();
+      });
+      expect(mockOnSubmit).not.toHaveBeenCalled();
+    });
+
   it('covers linked task dependency popup selection - lines 684-687', async () => {
     const availableTasks = [
       { id: 2, title: 'Available Task 1', project_id: 1 },
@@ -1488,7 +1568,7 @@ describe('TaskForm', () => {
     });
   });
 
-  it('validates empty title to cover line 154 exactly', async () => {
+  it('validates empty title to cover line 154 exactly', () => {
     const mockOnSubmit = vi.fn();
     render(<TaskFormWrapper onSubmit={mockOnSubmit} />);
     
