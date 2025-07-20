@@ -111,10 +111,11 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
     };
     document.addEventListener('mousedown', handleClick);
     document.addEventListener('keydown', handleKeyDown);
-    return () => {
+    function cleanup() {
       document.removeEventListener('mousedown', handleClick);
       document.removeEventListener('keydown', handleKeyDown);
-    };
+    }
+    return cleanup;
   }, [open, onClose]);
 
   // Reset form when opening (only once when modal opens)
@@ -149,15 +150,12 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
     }
   }, [open]); // Remove initialValues from dependency array
 
-  const toggleSection = (section: string) => {
-    setExpandedSections(prev => {
-      const newState = {
-        ...prev,
-        [section]: !prev[section]
-      };
-      return newState;
-    });
-  };
+  function handleToggleSection(section: string) {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  }
 
   const handleAddSubtask = () => {
     if (newSubtaskTitle.trim()) {
@@ -242,28 +240,71 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
   }) {
     return (
       <>
-        {subtasks.map((subtask) => (
-          <div key={subtask.id} className="modern-subtask-item">
-            <input
-              type="checkbox"
-              className="modern-subtask-checkbox"
-              checked={subtask.completed}
-              onChange={() => handleToggleSubtask(subtask.id!)}
-            />
-            <span className={`modern-subtask-text ${subtask.completed ? 'completed' : ''}`}>
-              {subtask.title}
-            </span>
-            <button
-              type="button"
-              className="modern-subtask-remove"
-              onClick={() => handleRemoveSubtask(subtask.id!)}
-            >
-              🗑️
-            </button>
-          </div>
-        ))}
+        {subtasks.map((subtask) => {
+          // Defensive: fallback to -1 if id is undefined/null
+          const subtaskId = typeof subtask.id === 'number' ? subtask.id : -1;
+          return (
+            <div key={subtaskId} className="modern-subtask-item">
+              <input
+                type="checkbox"
+                className="modern-subtask-checkbox"
+                checked={subtask.completed}
+                onChange={() => handleToggleSubtask(subtaskId)}
+              />
+              <span className={`modern-subtask-text ${subtask.completed ? 'completed' : ''}`}>
+                {subtask.title}
+              </span>
+              <button
+                type="button"
+                className="modern-subtask-remove"
+                onClick={() => handleRemoveSubtask(subtaskId)}
+              >
+                🗑️
+              </button>
+            </div>
+          );
+        })}
       </>
     );
+  }
+
+  // Handler functions for JSX props
+  function handleTitleChange(e) { setTitle(e.target.value); }
+  function handleProjectClick(e) { e.preventDefault(); e.stopPropagation(); handleToggleSection('project'); }
+  function handleDueDateClick() { handleToggleSection('scheduling'); }
+  function handlePriorityClick() { handleToggleSection('priority'); }
+  function handleStatusClick() { setCompleted(!completed); }
+  function handleProjectChange(e) { setProjectId(e.target.value); }
+  function handleDueDateChange(e) { setDueDate(e.target.value); }
+  function handleStartDateChange(e) { setStartDate(e.target.value); }
+  function handleDescriptionChange(e) { setDescription(e.target.value); }
+  function handleDetailsClick() { handleToggleSection('details'); }
+  function handleSubtasksClick() { handleToggleSection('subtasks'); }
+  function handleNewSubtaskTitleChange(e) { setNewSubtaskTitle(e.target.value); }
+  function handleNewSubtaskKeyDown(e) { if (e.key === 'Enter') { e.preventDefault(); handleAddSubtask(); } }
+  function handleRemindersClick() { handleToggleSection('reminders'); }
+  function handleBlockedByClick() { setDependencyPopup('blocked-by'); }
+  function handleBlockingClick() { setDependencyPopup('blocking'); }
+  function handleLinkedClick() { setDependencyPopup('linked'); }
+  function handleReminderEnabledChange(e) { setReminderEnabled(e.target.checked); }
+  function handleReminderTimeChange(e) { setReminderTime(e.target.value); }
+  function handlePopupOverlayClick() { setDependencyPopup(null); }
+  function handlePopupOverlayKeyDown(e) { if (['Enter', ' ', 'Escape'].includes(e.key)) { setDependencyPopup(null); } }
+  function handlePriorityChipClick(prioValue) { setPriority(prioValue); }
+  function handlePopupTaskItemClick(task) {
+    if (dependencyPopup === 'blocked-by') {
+      setBlockedBy([...blockedBy, task.id]);
+    } else if (dependencyPopup === 'blocking') {
+      setBlocking([...blocking, task.id]);
+    } else if (dependencyPopup === 'linked') {
+      setLinkedTasks([...linkedTasks, task.id]);
+    }
+    setDependencyPopup(null);
+  }
+  function handlePopupTaskItemKeyDown(e, task) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      handlePopupTaskItemClick(task);
+    }
   }
 
   return (
@@ -274,7 +315,6 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
         aria-modal="true"
         ref={modalRef}
       >
-        {/* Consider splitting <div className="modern-form-container">...</div> into smaller components if nesting remains an issue */}
         {/* Minimal Header */}
         <div className="modern-form-header">
           <h2 className="modern-form-title">
@@ -310,7 +350,7 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
                 className={`modern-hero-input ${fieldErrors.title ? 'error' : ''}`}
                 placeholder="What needs to be done?"
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={handleTitleChange}
               />
               {fieldErrors.title && (
                 <div className="modern-error">
@@ -326,11 +366,7 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
               <button
                 type="button"
                 className="modern-inline-field"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  toggleSection('project');
-                }}
+                onClick={handleProjectClick}
               >
                 <div className="modern-inline-field-icon">🗂️</div>
                 <div className="modern-inline-field-content">
@@ -345,7 +381,7 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
               <button
                 type="button"
                 className="modern-inline-field"
-                onClick={() => toggleSection('scheduling')}
+                onClick={handleDueDateClick}
               >
                 <div className="modern-inline-field-icon">🎯</div>
                 <div className="modern-inline-field-content">
@@ -360,7 +396,7 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
               <button
                 type="button"
                 className="modern-inline-field"
-                onClick={() => toggleSection('priority')}
+                onClick={handlePriorityClick}
               >
                 <div className="modern-inline-field-icon">{currentPriority?.icon}</div>
                 <div className="modern-inline-field-content">
@@ -373,7 +409,7 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
               <button
                 type="button"
                 className="modern-inline-field"
-                onClick={() => setCompleted(!completed)}
+                onClick={handleStatusClick}
               >
                 <div className="modern-inline-field-icon">{completed ? '✅' : '⭕'}</div>
                 <div className="modern-inline-field-content">
@@ -393,7 +429,7 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
                   <select
                     className="modern-input"
                     value={projectId}
-                    onChange={(e) => setProjectId(e.target.value)}
+                    onChange={handleProjectChange}
                   >
                     <option value="">🆓 Quick Task</option>
                     {projects.map((proj) => (
@@ -418,7 +454,7 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
                         type="button"
                         className={`modern-priority-chip ${priority === prio.value ? 'selected' : ''}`}
                         data-priority={prio.value === 1 ? 'low' : prio.value === 2 ? 'medium' : 'high'}
-                        onClick={() => setPriority(prio.value)}
+                        onClick={() => handlePriorityChipClick(prio.value)}
                       >
                         <span>{prio.icon}</span>
                         <span>{prio.label}</span>
@@ -440,7 +476,7 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
                         type="datetime-local"
                         className="modern-input"
                         value={dueDate}
-                        onChange={(e) => setDueDate(e.target.value)}
+                        onChange={handleDueDateChange}
                       />
                     </div>
                     <div>
@@ -450,7 +486,7 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
                         type="datetime-local"
                         className="modern-input"
                         value={startDate}
-                        onChange={(e) => setStartDate(e.target.value)}
+                        onChange={handleStartDateChange}
                       />
                     </div>
                   </div>
@@ -463,7 +499,7 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
               <button
                 type="button"
                 className={`modern-expandable-header ${expandedSections.details ? 'expanded' : ''}`}
-                onClick={() => toggleSection('details')}
+                onClick={handleDetailsClick}
               >
                 <span className="modern-expandable-icon">▶️</span>
                 <h3 className="modern-expandable-title">Description & Details</h3>
@@ -474,7 +510,7 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
                   className="modern-input"
                   placeholder="Add more details about this task..."
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  onChange={handleDescriptionChange}
                   rows={4}
                   style={{ resize: 'vertical', minHeight: '100px' }}
                 />
@@ -486,7 +522,7 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
               <button
                 type="button"
                 className={`modern-expandable-header ${expandedSections.subtasks ? 'expanded' : ''}`}
-                onClick={() => toggleSection('subtasks')}
+                onClick={handleSubtasksClick}
               >
                 <span className="modern-expandable-icon">▶️</span>
                 <h3 className="modern-expandable-title">Subtasks</h3>
@@ -500,8 +536,8 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
                     className="modern-input"
                     placeholder="Add a subtask..."
                     value={newSubtaskTitle}
-                    onChange={(e) => setNewSubtaskTitle(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddSubtask())}
+                    onChange={handleNewSubtaskTitleChange}
+                    onKeyDown={handleNewSubtaskKeyDown}
                     style={{ flex: 1 }}
                   />
                   <button
@@ -528,7 +564,7 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
               <button
                 type="button"
                 className={`modern-expandable-header ${expandedSections.relationships ? 'expanded' : ''}`}
-                onClick={() => toggleSection('relationships')}
+                onClick={handleBlockedByClick}
               >
                 <span className="modern-expandable-icon">▶️</span>
                 <h3 className="modern-expandable-title">Task Relationships</h3>
@@ -542,7 +578,7 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
                   <button
                     type="button"
                     className="modern-relationship-btn"
-                    onClick={() => setDependencyPopup('blocked-by')}
+                    onClick={handleBlockedByClick}
                   >
                     <span className="modern-relationship-btn-icon">🚫</span>
                     <span className="modern-relationship-btn-text">Blocked By</span>
@@ -551,7 +587,7 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
                   <button
                     type="button"
                     className="modern-relationship-btn"
-                    onClick={() => setDependencyPopup('blocking')}
+                    onClick={handleBlockingClick}
                   >
                     <span className="modern-relationship-btn-icon">⛔</span>
                     <span className="modern-relationship-btn-text">Blocking</span>
@@ -560,7 +596,7 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
                   <button
                     type="button"
                     className="modern-relationship-btn"
-                    onClick={() => setDependencyPopup('linked')}
+                    onClick={handleLinkedClick}
                   >
                     <span className="modern-relationship-btn-icon">🔗</span>
                     <span className="modern-relationship-btn-text">Linked Tasks</span>
@@ -624,7 +660,7 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
               <button
                 type="button"
                 className={`modern-expandable-header ${expandedSections.reminders ? 'expanded' : ''}`}
-                onClick={() => toggleSection('reminders')}
+                onClick={handleRemindersClick}
               >
                 <span className="modern-expandable-icon">▶️</span>
                 <h3 className="modern-expandable-title">Reminders</h3>
@@ -636,7 +672,7 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
                     type="checkbox"
                     className="modern-subtask-checkbox"
                     checked={reminderEnabled}
-                    onChange={(e) => setReminderEnabled(e.target.checked)}
+                    onChange={handleReminderEnabledChange}
                   />
                   <span className="modern-field-label">Enable reminders for this task</span>
                 </div>
@@ -649,7 +685,7 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
                       type="datetime-local"
                       className="modern-input"
                       value={reminderTime}
-                      onChange={(e) => setReminderTime(e.target.value)}
+                      onChange={handleReminderTimeChange}
                     />
                   </div>
                 )}
@@ -696,22 +732,13 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
             role="button"
             tabIndex={0}
             aria-label="Close dependency selection popup"
-            onClick={() => setDependencyPopup(null)}
-            onKeyDown={e => {
-              if (
-                e.key === 'Enter' ||
-                e.key === ' ' ||
-                e.key === 'Escape'
-              ) {
-                setDependencyPopup(null);
-              }
-            }}
+            onClick={handlePopupOverlayClick}
+            onKeyDown={handlePopupOverlayKeyDown}
           >
             <div
               className="modern-popup-content"
               role="dialog"
               aria-modal="true"
-              // Removed tabIndex, onClick, onKeyDown from here
             >
               <div className="modern-popup-header">
                 <h3 className="modern-popup-title">
@@ -722,7 +749,7 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
                 <button
                   type="button"
                   className="modern-popup-close"
-                  onClick={() => setDependencyPopup(null)}
+                  onClick={handlePopupOverlayClick}
                 >
                   ×
                 </button>
@@ -762,28 +789,8 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
                         role="button"
                         tabIndex={0}
                         aria-label={`Select task ${task.title}`}
-                        onClick={() => {
-                          if (dependencyPopup === 'blocked-by') {
-                            setBlockedBy([...blockedBy, task.id]);
-                          } else if (dependencyPopup === 'blocking') {
-                            setBlocking([...blocking, task.id]);
-                          } else if (dependencyPopup === 'linked') {
-                            setLinkedTasks([...linkedTasks, task.id]);
-                          }
-                          setDependencyPopup(null);
-                        }}
-                        onKeyDown={e => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            if (dependencyPopup === 'blocked-by') {
-                              setBlockedBy([...blockedBy, task.id]);
-                            } else if (dependencyPopup === 'blocking') {
-                              setBlocking([...blocking, task.id]);
-                            } else if (dependencyPopup === 'linked') {
-                              setLinkedTasks([...linkedTasks, task.id]);
-                            }
-                            setDependencyPopup(null);
-                          }
-                        }}
+                        onClick={() => handlePopupTaskItemClick(task)}
+                        onKeyDown={e => handlePopupTaskItemKeyDown(e, task)}
                       >
                         <div className="modern-popup-task-title">{task.title}</div>
                         {task.projectId && (
