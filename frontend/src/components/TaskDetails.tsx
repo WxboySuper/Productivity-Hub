@@ -26,6 +26,352 @@ function ModalBackdrop({ onClose, children }: { onClose: () => void; children: R
 }
 
 // TaskDetailsModalContent: receives all props and renders the modal content
+// TaskDetailsHeader: displays the modal header
+function TaskDetailsHeader({ task, parentTask, setShowEditForm, onClose }: {
+  task: Task;
+  parentTask: { id: number; title: string } | null;
+  setShowEditForm: (open: boolean) => void;
+  onClose: () => void;
+}) {
+  return (
+    <div className="modern-form-header">
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--modern-space-md)' }}>
+        <span style={{ fontSize: '1.5rem' }}>{task.completed ? '✅' : '📝'}</span>
+        <div>
+          <h2 className="modern-form-title">{task.title}</h2>
+          <p className="modern-form-subtitle">
+            {task.projectName ? `📁 ${task.projectName}` : '⚡ Quick Task'}
+            {parentTask && ` • Subtask of "${parentTask.title}"`}
+          </p>
+        </div>
+      </div>
+      <div style={{ display: 'flex', gap: 'var(--modern-space-sm)' }}>
+        <button
+          className="modern-btn modern-btn-secondary"
+          onClick={() => setShowEditForm(true)}
+          type="button"
+        >
+          ✏️ Edit
+        </button>
+        <button
+          className="modern-close-btn"
+          onClick={onClose}
+          type="button"
+          aria-label="Dismiss"
+        >
+          ×
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// TaskDetailsActions: displays the modal actions
+function TaskDetailsActions({ onClose, setShowEditForm }: {
+  onClose: () => void;
+  setShowEditForm: (open: boolean) => void;
+}) {
+  return (
+    <div className="modern-form-actions">
+      <button
+        type="button"
+        className="modern-btn modern-btn-secondary"
+        onClick={onClose}
+      >
+        Close
+      </button>
+      <button
+        type="button"
+        className="modern-btn modern-btn-primary"
+        onClick={() => setShowEditForm(true)}
+        aria-label="Edit Task"
+      >
+        <span>✏️</span>
+        Edit Details
+      </button>
+    </div>
+  );
+}
+// TaskRemindersSection: displays reminders in an expandable section
+function TaskRemindersSection({ reminder_enabled, reminder_time, expanded, toggle }: {
+  reminder_enabled?: boolean;
+  reminder_time?: string;
+  expanded: boolean;
+  toggle: () => void;
+}) {
+  if (!reminder_enabled) return null;
+  return (
+    <div className="modern-expandable">
+      <button
+        type="button"
+        className={`modern-expandable-header ${expanded ? 'expanded' : ''}`}
+        onClick={toggle}
+      >
+        <span className="modern-expandable-icon">▶️</span>
+        <h3 className="modern-expandable-title">Reminders</h3>
+        <span className="modern-expandable-count">(Enabled)</span>
+      </button>
+      <div className={`modern-expandable-content ${expanded ? 'expanded' : ''}`}>
+        <div className="modern-reminder-info">
+          {reminder_time && (
+            <div className="modern-reminder-item">
+              <span className="modern-reminder-icon">🔔</span>
+              <span className="modern-reminder-text">
+                Reminder set for {new Date(reminder_time).toLocaleString()}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+// TaskDependenciesSection: displays dependencies in an expandable section
+function TaskDependenciesSection({ blockedByTasks, blockingTasks, expanded, toggle }: {
+  blockedByTasks: string[];
+  blockingTasks: string[];
+  expanded: boolean;
+  toggle: () => void;
+}) {
+  const total = blockedByTasks.length + blockingTasks.length;
+  if (!total) return null;
+  return (
+    <div className="modern-expandable">
+      <button
+        type="button"
+        className={`modern-expandable-header ${expanded ? 'expanded' : ''}`}
+        onClick={toggle}
+      >
+        <span className="modern-expandable-icon">▶️</span>
+        <h3 className="modern-expandable-title">Dependencies</h3>
+        <span className="modern-expandable-count">({total} items)</span>
+      </button>
+      <div className={`modern-expandable-content ${expanded ? 'expanded' : ''}`}>
+        <div className="modern-dependencies-grid">
+          {blockedByTasks.length > 0 && (
+            <div className="modern-dependency-section">
+              <span className="modern-dependency-label">🚫 Blocked By</span>
+              <div className="modern-dependency-list">
+                {blockedByTasks.map((taskName, index) => (
+                  <span key={index} className="modern-dependency-chip blocked-by">
+                    {taskName}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+          {blockingTasks.length > 0 && (
+            <div className="modern-dependency-section">
+              <span className="modern-dependency-label">⛔ Blocking</span>
+              <div className="modern-dependency-list">
+                {blockingTasks.map((taskName, index) => (
+                  <span key={index} className="modern-dependency-chip blocking">
+                    {taskName}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+// TaskScheduleSection: displays schedule info in an expandable section
+function TaskScheduleSection({ start_date, due_date, recurrence, next_occurrence, expanded, toggle }: {
+  start_date?: string;
+  due_date?: string;
+  recurrence?: string;
+  next_occurrence?: string;
+  expanded: boolean;
+  toggle: () => void;
+}) {
+  if (!(due_date || start_date || recurrence)) return null;
+  return (
+    <div className="modern-expandable">
+      <button
+        type="button"
+        className={`modern-expandable-header ${expanded ? 'expanded' : ''}`}
+        onClick={toggle}
+      >
+        <span className="modern-expandable-icon">▶️</span>
+        <h3 className="modern-expandable-title">Schedule</h3>
+      </button>
+      <div className={`modern-expandable-content ${expanded ? 'expanded' : ''}`}>
+        <div className="modern-schedule-grid">
+          {start_date && (
+            <div className="modern-schedule-item">
+              <span className="modern-schedule-label">📅 Start Date</span>
+              <span className="modern-schedule-value">{new Date(start_date).toLocaleString()}</span>
+            </div>
+          )}
+          {due_date && (
+            <div className="modern-schedule-item">
+              <span className="modern-schedule-label">🎯 Due Date</span>
+              <span className="modern-schedule-value">{new Date(due_date).toLocaleString()}</span>
+            </div>
+          )}
+          {recurrence && (
+            <div className="modern-schedule-item">
+              <span className="modern-schedule-label">🔄 Recurrence</span>
+              <span className="modern-schedule-value">{recurrence}</span>
+            </div>
+          )}
+          {next_occurrence && (
+            <div className="modern-schedule-item">
+              <span className="modern-schedule-label">⏭️ Next Occurrence</span>
+              <span className="modern-schedule-value">{new Date(next_occurrence).toLocaleString()}</span>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+// TaskSubtasksSection: displays subtasks in an expandable section
+function TaskSubtasksSection({ subtasks, completedSubtasks, totalSubtasks, expanded, toggle }: {
+  subtasks: Subtask[];
+  completedSubtasks: number;
+  totalSubtasks: number;
+  expanded: boolean;
+  toggle: () => void;
+}) {
+  if (!totalSubtasks) return null;
+  return (
+    <div className="modern-expandable">
+      <button
+        type="button"
+        className={`modern-expandable-header ${expanded ? 'expanded' : ''}`}
+        onClick={toggle}
+      >
+        <span className="modern-expandable-icon">▶️</span>
+        <h3 className="modern-expandable-title">Subtasks</h3>
+        <span className="modern-expandable-count">({completedSubtasks}/{totalSubtasks} completed)</span>
+      </button>
+      <div className={`modern-expandable-content ${expanded ? 'expanded' : ''}`}>
+        <div className="modern-subtasks-list">
+          {subtasks.map((subtask) => (
+            <div key={subtask.id} className="modern-subtask-detail-item">
+              <input
+                type="checkbox"
+                className="modern-subtask-checkbox"
+                checked={subtask.completed}
+                readOnly
+              />
+              <span className={`modern-subtask-text ${subtask.completed ? 'completed' : ''}`}>
+                {subtask.title}
+              </span>
+              {subtask.completed && <span className="modern-subtask-badge">✓</span>}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+// TaskDescriptionSection: displays the description in an expandable section
+function TaskDescriptionSection({ description, expanded, toggle }: {
+  description: string;
+  expanded: boolean;
+  toggle: () => void;
+}) {
+  if (!description) return null;
+  return (
+    <div className="modern-expandable">
+      <button
+        type="button"
+        className={`modern-expandable-header ${expanded ? 'expanded' : ''}`}
+        onClick={toggle}
+      >
+        <span className="modern-expandable-icon">▶️</span>
+        <h3 className="modern-expandable-title">Description</h3>
+      </button>
+      <div className={`modern-expandable-content ${expanded ? 'expanded' : ''}`}>
+        <div className="modern-description-content">
+          {description}
+        </div>
+      </div>
+    </div>
+  );
+}
+// TaskOverviewSection: displays status, priority, progress, due date, and progress bar
+// Individual chip components for overview grid
+function StatusChip({ completed }: { completed: boolean }) {
+  return (
+    <div className="modern-detail-chip">
+      <div className="modern-detail-chip-icon">{completed ? '✅' : '⭕'}</div>
+      <div className="modern-detail-chip-content">
+        <div className="modern-detail-chip-label">Status</div>
+        <div className="modern-detail-chip-value">{completed ? 'Completed' : 'In Progress'}</div>
+      </div>
+    </div>
+  );
+}
+
+function PriorityChip({ icon, label }: { icon: string; label: string }) {
+  return (
+    <div className="modern-detail-chip">
+      <div className="modern-detail-chip-icon">{icon}</div>
+      <div className="modern-detail-chip-content">
+        <div className="modern-detail-chip-label">Priority</div>
+        <div className="modern-detail-chip-value">{label}</div>
+      </div>
+    </div>
+  );
+}
+
+function ProgressChip({ completedSubtasks, totalSubtasks }: { completedSubtasks: number; totalSubtasks: number }) {
+  return (
+    <div className="modern-detail-chip">
+      <div className="modern-detail-chip-icon">📊</div>
+      <div className="modern-detail-chip-content">
+        <div className="modern-detail-chip-label">Progress</div>
+        <div className="modern-detail-chip-value">{completedSubtasks}/{totalSubtasks}</div>
+      </div>
+    </div>
+  );
+}
+
+function DueDateChip({ due_date }: { due_date: string }) {
+  return (
+    <div className="modern-detail-chip">
+      <div className="modern-detail-chip-icon">🎯</div>
+      <div className="modern-detail-chip-content">
+        <div className="modern-detail-chip-label">Due Date</div>
+        <div className="modern-detail-chip-value">{new Date(due_date).toLocaleDateString()}</div>
+      </div>
+    </div>
+  );
+}
+function TaskOverviewSection({ task, currentPriority, completedSubtasks, totalSubtasks, progressPercentage }: {
+  task: Task;
+  currentPriority: { value: number; label: string; icon: string; color: string };
+  completedSubtasks: number;
+  totalSubtasks: number;
+  progressPercentage: number;
+}) {
+  return (
+    <div className="modern-hero-section">
+      <div className="modern-quick-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))' }}>
+        <StatusChip completed={task.completed} />
+        <PriorityChip icon={currentPriority.icon} label={currentPriority.label} />
+        {totalSubtasks > 0 && <ProgressChip completedSubtasks={completedSubtasks} totalSubtasks={totalSubtasks} />}
+        {task.due_date && <DueDateChip due_date={task.due_date} />}
+      </div>
+      {/* Progress Bar for Subtasks */}
+      {totalSubtasks > 0 && (
+        <div style={{ marginTop: 'var(--modern-space-md)' }}>
+          <div className="modern-progress-bar">
+            <div
+              className="modern-progress-fill"
+              style={{ width: `${progressPercentage}%` }}
+            ></div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 interface Subtask {
   id: number;
   title: string;
@@ -101,280 +447,64 @@ function TaskDetailsModalContent({
   return (
     <div className="modern-form-container" style={{ maxWidth: '600px' }} data-testid="task-details">
       {/* Header */}
-      <div className="modern-form-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--modern-space-md)' }}>
-          <span style={{ fontSize: '1.5rem' }}>{task.completed ? '✅' : '📝'}</span>
-          <div>
-            <h2 className="modern-form-title">{task.title}</h2>
-            <p className="modern-form-subtitle">
-              {task.projectName ? `📁 ${task.projectName}` : '⚡ Quick Task'}
-              {parentTask && ` • Subtask of "${parentTask.title}"`}
-            </p>
-          </div>
-        </div>
-        <div style={{ display: 'flex', gap: 'var(--modern-space-sm)' }}>
-          <button
-            className="modern-btn modern-btn-secondary"
-            onClick={() => setShowEditForm(true)}
-            type="button"
-          >
-            ✏️ Edit
-          </button>
-          <button
-            className="modern-close-btn"
-            onClick={onClose}
-            type="button"
-            aria-label="Dismiss"
-          >
-            ×
-          </button>
-        </div>
-      </div>
+      <TaskDetailsHeader
+        task={task}
+        parentTask={parentTask}
+        setShowEditForm={setShowEditForm}
+        onClose={onClose}
+      />
 
       <div className="modern-form-content">
         <div className="modern-form-body">
           {/* Overview Section - Always Visible */}
-          <div className="modern-hero-section">
-            <div className="modern-quick-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))' }}>
-              {/* Status */}
-              <div className="modern-detail-chip">
-                <div className="modern-detail-chip-icon">{task.completed ? '✅' : '⭕'}</div>
-                <div className="modern-detail-chip-content">
-                  <div className="modern-detail-chip-label">Status</div>
-                  <div className="modern-detail-chip-value">{task.completed ? 'Completed' : 'In Progress'}</div>
-                </div>
-              </div>
-              {/* Priority */}
-              <div className="modern-detail-chip">
-                <div className="modern-detail-chip-icon">{currentPriority.icon}</div>
-                <div className="modern-detail-chip-content">
-                  <div className="modern-detail-chip-label">Priority</div>
-                  <div className="modern-detail-chip-value">{currentPriority.label}</div>
-                </div>
-              </div>
-              {/* Progress (if has subtasks) */}
-              {totalSubtasks > 0 && (
-                <div className="modern-detail-chip">
-                  <div className="modern-detail-chip-icon">📊</div>
-                  <div className="modern-detail-chip-content">
-                    <div className="modern-detail-chip-label">Progress</div>
-                    <div className="modern-detail-chip-value">{completedSubtasks}/{totalSubtasks}</div>
-                  </div>
-                </div>
-              )}
-              {/* Due Date */}
-              {task.due_date && (
-                <div className="modern-detail-chip">
-                  <div className="modern-detail-chip-icon">🎯</div>
-                  <div className="modern-detail-chip-content">
-                    <div className="modern-detail-chip-label">Due Date</div>
-                    <div className="modern-detail-chip-value">
-                      {new Date(task.due_date).toLocaleDateString()}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-            {/* Progress Bar for Subtasks */}
-            {totalSubtasks > 0 && (
-              <div style={{ marginTop: 'var(--modern-space-md)' }}>
-                <div className="modern-progress-bar">
-                  <div
-                    className="modern-progress-fill"
-                    style={{ width: `${progressPercentage}%` }}
-                  ></div>
-                </div>
-              </div>
-            )}
-          </div>
+          <TaskOverviewSection
+            task={task}
+            currentPriority={currentPriority}
+            completedSubtasks={completedSubtasks}
+            totalSubtasks={totalSubtasks}
+            progressPercentage={progressPercentage}
+          />
           {/* Description - Expandable */}
-          {task.description && (
-            <div className="modern-expandable">
-              <button
-                type="button"
-                className={`modern-expandable-header ${expandedSections.details ? 'expanded' : ''}`}
-                onClick={() => toggleSection('details')}
-              >
-                <span className="modern-expandable-icon">▶️</span>
-                <h3 className="modern-expandable-title">Description</h3>
-              </button>
-              <div className={`modern-expandable-content ${expandedSections.details ? 'expanded' : ''}`}>
-                <div className="modern-description-content">
-                  {task.description}
-                </div>
-              </div>
-            </div>
-          )}
+          <TaskDescriptionSection
+            description={task.description || ''}
+            expanded={expandedSections.details}
+            toggle={() => toggleSection('details')}
+          />
           {/* Subtasks - Expandable */}
-          {totalSubtasks > 0 && (
-            <div className="modern-expandable">
-              <button
-                type="button"
-                className={`modern-expandable-header ${expandedSections.subtasks ? 'expanded' : ''}`}
-                onClick={() => toggleSection('subtasks')}
-              >
-                <span className="modern-expandable-icon">▶️</span>
-                <h3 className="modern-expandable-title">Subtasks</h3>
-                <span className="modern-expandable-count">({completedSubtasks}/{totalSubtasks} completed)</span>
-              </button>
-              <div className={`modern-expandable-content ${expandedSections.subtasks ? 'expanded' : ''}`}>
-                <div className="modern-subtasks-list">
-                  {task.subtasks?.map((subtask) => (
-                    <div key={subtask.id} className="modern-subtask-detail-item">
-                      <input
-                        type="checkbox"
-                        className="modern-subtask-checkbox"
-                        checked={subtask.completed}
-                        readOnly
-                      />
-                      <span className={`modern-subtask-text ${subtask.completed ? 'completed' : ''}`}>
-                        {subtask.title}
-                      </span>
-                      {subtask.completed && <span className="modern-subtask-badge">✓</span>}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
+          <TaskSubtasksSection
+            subtasks={task.subtasks || []}
+            completedSubtasks={completedSubtasks}
+            totalSubtasks={totalSubtasks}
+            expanded={expandedSections.subtasks}
+            toggle={() => toggleSection('subtasks')}
+          />
           {/* Schedule - Expandable */}
-          {(task.due_date || task.start_date || task.recurrence) && (
-            <div className="modern-expandable">
-              <button
-                type="button"
-                className={`modern-expandable-header ${expandedSections.schedule ? 'expanded' : ''}`}
-                onClick={() => toggleSection('schedule')}
-              >
-                <span className="modern-expandable-icon">▶️</span>
-                <h3 className="modern-expandable-title">Schedule</h3>
-              </button>
-              <div className={`modern-expandable-content ${expandedSections.schedule ? 'expanded' : ''}`}>
-                <div className="modern-schedule-grid">
-                  {task.start_date && (
-                    <div className="modern-schedule-item">
-                      <span className="modern-schedule-label">📅 Start Date</span>
-                      <span className="modern-schedule-value">
-                        {new Date(task.start_date).toLocaleString()}
-                      </span>
-                    </div>
-                  )}
-                  {task.due_date && (
-                    <div className="modern-schedule-item">
-                      <span className="modern-schedule-label">🎯 Due Date</span>
-                      <span className="modern-schedule-value">
-                        {new Date(task.due_date).toLocaleString()}
-                      </span>
-                    </div>
-                  )}
-                  {task.recurrence && (
-                    <div className="modern-schedule-item">
-                      <span className="modern-schedule-label">🔄 Recurrence</span>
-                      <span className="modern-schedule-value">{task.recurrence}</span>
-                    </div>
-                  )}
-                  {task.next_occurrence && (
-                    <div className="modern-schedule-item">
-                      <span className="modern-schedule-label">⏭️ Next Occurrence</span>
-                      <span className="modern-schedule-value">
-                        {new Date(task.next_occurrence).toLocaleString()}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
+          <TaskScheduleSection
+            start_date={task.start_date}
+            due_date={task.due_date}
+            recurrence={task.recurrence}
+            next_occurrence={task.next_occurrence}
+            expanded={expandedSections.schedule}
+            toggle={() => toggleSection('schedule')}
+          />
           {/* Dependencies - Expandable */}
-          {(blockedByTasks.length > 0 || blockingTasks.length > 0) && (
-            <div className="modern-expandable">
-              <button
-                type="button"
-                className={`modern-expandable-header ${expandedSections.dependencies ? 'expanded' : ''}`}
-                onClick={() => toggleSection('dependencies')}
-              >
-                <span className="modern-expandable-icon">▶️</span>
-                <h3 className="modern-expandable-title">Dependencies</h3>
-                <span className="modern-expandable-count">
-                  ({blockedByTasks.length + blockingTasks.length} items)
-                </span>
-              </button>
-              <div className={`modern-expandable-content ${expandedSections.dependencies ? 'expanded' : ''}`}>
-                <div className="modern-dependencies-grid">
-                  {blockedByTasks.length > 0 && (
-                    <div className="modern-dependency-section">
-                      <span className="modern-dependency-label">🚫 Blocked By</span>
-                      <div className="modern-dependency-list">
-                        {blockedByTasks.map((taskName, index) => (
-                          <span key={index} className="modern-dependency-chip blocked-by">
-                            {taskName}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {blockingTasks.length > 0 && (
-                    <div className="modern-dependency-section">
-                      <span className="modern-dependency-label">⛔ Blocking</span>
-                      <div className="modern-dependency-list">
-                        {blockingTasks.map((taskName, index) => (
-                          <span key={index} className="modern-dependency-chip blocking">
-                            {taskName}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
+          <TaskDependenciesSection
+            blockedByTasks={blockedByTasks}
+            blockingTasks={blockingTasks}
+            expanded={expandedSections.dependencies}
+            toggle={() => toggleSection('dependencies')}
+          />
           {/* Reminders - Expandable */}
-          {task.reminder_enabled && (
-            <div className="modern-expandable">
-              <button
-                type="button"
-                className={`modern-expandable-header ${expandedSections.reminders ? 'expanded' : ''}`}
-                onClick={() => toggleSection('reminders')}
-              >
-                <span className="modern-expandable-icon">▶️</span>
-                <h3 className="modern-expandable-title">Reminders</h3>
-                <span className="modern-expandable-count">(Enabled)</span>
-              </button>
-              <div className={`modern-expandable-content ${expandedSections.reminders ? 'expanded' : ''}`}>
-                <div className="modern-reminder-info">
-                  {task.reminder_time && (
-                    <div className="modern-reminder-item">
-                      <span className="modern-reminder-icon">🔔</span>
-                      <span className="modern-reminder-text">
-                        Reminder set for {new Date(task.reminder_time).toLocaleString()}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
+          <TaskRemindersSection
+            reminder_enabled={task.reminder_enabled}
+            reminder_time={task.reminder_time}
+            expanded={expandedSections.reminders}
+            toggle={() => toggleSection('reminders')}
+          />
         </div>
       </div>
       {/* Actions */}
-      <div className="modern-form-actions">
-        <button
-          type="button"
-          className="modern-btn modern-btn-secondary"
-          onClick={onClose}
-        >
-          Close
-        </button>
-        <button
-          type="button"
-          className="modern-btn modern-btn-primary"
-          onClick={() => setShowEditForm(true)}
-          aria-label="Edit Task"
-        >
-          <span>✏️</span>
-          Edit Details
-        </button>
-      </div>
+      <TaskDetailsActions onClose={onClose} setShowEditForm={setShowEditForm} />
       {/* Edit Form Modal */}
       {showEditForm && (
         <TaskForm
