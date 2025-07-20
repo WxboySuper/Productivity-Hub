@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 // Subcomponent for relationship buttons
 interface RelationshipButtonsProps {
   blockedBy: number[];
@@ -48,27 +49,22 @@ function RelationshipButtons({ blockedBy, blocking, linkedTasks, onBlockedByClic
   );
 }
 // Subcomponent for displaying relationship chips
+
 interface RelationshipChipsDisplayProps {
   blockedBy: number[];
   blocking: number[];
   linkedTasks: number[];
   allTasks: DependencyTask[];
-  onRemoveBlockedBy: (id: number) => void;
-  onRemoveBlocking: (id: number) => void;
-  onRemoveLinked: (id: number) => void;
+  onRemoveClick: (type: string, id: number) => void;
 }
 
-function RelationshipChipsDisplay({ blockedBy, blocking, linkedTasks, allTasks, onRemoveBlockedBy, onRemoveBlocking, onRemoveLinked }: RelationshipChipsDisplayProps) {
+function RelationshipChipsDisplay({ blockedBy, blocking, linkedTasks, allTasks, onRemoveClick }: RelationshipChipsDisplayProps) {
   // Single stable handler for all remove buttons
   function handleRemoveClick(e: React.MouseEvent<HTMLButtonElement>) {
     const type = e.currentTarget.getAttribute('data-type');
     const id = Number(e.currentTarget.getAttribute('data-taskid'));
-    if (type === 'blocked') {
-      onRemoveBlockedBy(id);
-    } else if (type === 'blocking') {
-      onRemoveBlocking(id);
-    } else if (type === 'linked') {
-      onRemoveLinked(id);
+    if (type && !isNaN(id)) {
+      onRemoveClick(type, id);
     }
   }
 
@@ -162,42 +158,53 @@ const TaskRelationshipsSection: React.FC<TaskRelationshipsSectionProps> = ({
   onRemoveBlocking,
   onRemoveLinked,
   onToggleExpand,
-}) => (
-  <div className="modern-expandable">
-    <button
-      type="button"
-      className={`modern-expandable-header ${expanded ? 'expanded' : ''}`}
-      onClick={onToggleExpand}
-      aria-label="Task Relationships"
-    >
-      <span className="modern-expandable-icon">▶️</span>
-      <h3 className="modern-expandable-title">Task Relationships</h3>
-      {(blockedBy.length > 0 || blocking.length > 0 || linkedTasks.length > 0) && (
-        <span className="modern-expandable-count">
-          ({blockedBy.length + blocking.length + linkedTasks.length} items)
-        </span>
-      )}
-    </button>
-    <div className={`modern-expandable-content ${expanded ? 'expanded' : ''}`}>
-      <RelationshipButtons
-        blockedBy={blockedBy}
-        blocking={blocking}
-        linkedTasks={linkedTasks}
-        onBlockedByClick={onBlockedByClick}
-        onBlockingClick={onBlockingClick}
-        onLinkedClick={onLinkedClick}
-      />
-      <RelationshipChipsDisplay
-        blockedBy={blockedBy}
-        blocking={blocking}
-        linkedTasks={linkedTasks}
-        allTasks={allTasks}
-        onRemoveBlockedBy={onRemoveBlockedBy}
-        onRemoveBlocking={onRemoveBlocking}
-        onRemoveLinked={onRemoveLinked}
-      />
+}) => {
+  // Stable handler for all remove actions (DeepSource recommended)
+  const handleRemoveClick = useCallback((type: string, id: number) => {
+    if (type === 'blocked') {
+      onRemoveBlockedBy(id);
+    } else if (type === 'blocking') {
+      onRemoveBlocking(id);
+    } else if (type === 'linked') {
+      onRemoveLinked(id);
+    }
+  }, [onRemoveBlockedBy, onRemoveBlocking, onRemoveLinked]);
+
+  return (
+    <div className="modern-expandable">
+      <button
+        type="button"
+        className={`modern-expandable-header ${expanded ? 'expanded' : ''}`}
+        onClick={onToggleExpand}
+        aria-label="Task Relationships"
+      >
+        <span className="modern-expandable-icon">▶️</span>
+        <h3 className="modern-expandable-title">Task Relationships</h3>
+        {(blockedBy.length > 0 || blocking.length > 0 || linkedTasks.length > 0) && (
+          <span className="modern-expandable-count">
+            ({blockedBy.length + blocking.length + linkedTasks.length} items)
+          </span>
+        )}
+      </button>
+      <div className={`modern-expandable-content ${expanded ? 'expanded' : ''}`}> 
+        <RelationshipButtons
+          blockedBy={blockedBy}
+          blocking={blocking}
+          linkedTasks={linkedTasks}
+          onBlockedByClick={onBlockedByClick}
+          onBlockingClick={onBlockingClick}
+          onLinkedClick={onLinkedClick}
+        />
+        <RelationshipChipsDisplay
+          blockedBy={blockedBy}
+          blocking={blocking}
+          linkedTasks={linkedTasks}
+          allTasks={allTasks}
+          onRemoveClick={handleRemoveClick}
+        />
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default TaskRelationshipsSection;
