@@ -37,6 +37,9 @@ function TaskDetailsHeader({ task, parentTask, setShowEditForm, onClose }: {
   setShowEditForm: (open: boolean) => void;
   onClose: () => void;
 }) {
+  function handleEditClick() {
+    setShowEditForm(true);
+  }
   return (
     <div className="modern-form-header">
       <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--modern-space-md)' }}>
@@ -52,7 +55,7 @@ function TaskDetailsHeader({ task, parentTask, setShowEditForm, onClose }: {
       <div style={{ display: 'flex', gap: 'var(--modern-space-sm)' }}>
         <button
           className="modern-btn modern-btn-secondary"
-          onClick={() => setShowEditForm(true)}
+          onClick={handleEditClick}
           type="button"
         >
           ✏️ Edit
@@ -75,6 +78,9 @@ function TaskDetailsActions({ onClose, setShowEditForm }: {
   onClose: () => void;
   setShowEditForm: (open: boolean) => void;
 }) {
+  function handleEditClick() {
+    setShowEditForm(true);
+  }
   return (
     <div className="modern-form-actions">
       <button
@@ -87,7 +93,7 @@ function TaskDetailsActions({ onClose, setShowEditForm }: {
       <button
         type="button"
         className="modern-btn modern-btn-primary"
-        onClick={() => setShowEditForm(true)}
+        onClick={handleEditClick}
         aria-label="Edit Task"
       >
         <span>✏️</span>
@@ -104,12 +110,15 @@ function TaskRemindersSection({ reminder_enabled, reminder_time, expanded, toggl
   toggle: () => void;
 }) {
   if (!reminder_enabled) return null;
+  function handleToggle() {
+    toggle();
+  }
   return (
     <div className="modern-expandable">
       <button
         type="button"
         className={`modern-expandable-header ${expanded ? 'expanded' : ''}`}
-        onClick={toggle}
+        onClick={handleToggle}
       >
         <span className="modern-expandable-icon">▶️</span>
         <h3 className="modern-expandable-title">Reminders</h3>
@@ -139,12 +148,15 @@ function TaskDependenciesSection({ blockedByTasks, blockingTasks, expanded, togg
 }) {
   const total = blockedByTasks.length + blockingTasks.length;
   if (!total) return null;
+  function handleToggle() {
+    toggle();
+  }
   return (
     <div className="modern-expandable">
       <button
         type="button"
         className={`modern-expandable-header ${expanded ? 'expanded' : ''}`}
-        onClick={toggle}
+        onClick={handleToggle}
       >
         <span className="modern-expandable-icon">▶️</span>
         <h3 className="modern-expandable-title">Dependencies</h3>
@@ -156,8 +168,8 @@ function TaskDependenciesSection({ blockedByTasks, blockingTasks, expanded, togg
             <div className="modern-dependency-section">
               <span className="modern-dependency-label">🚫 Blocked By</span>
               <div className="modern-dependency-list">
-                {blockedByTasks.map((taskName, index) => (
-                  <span key={index} className="modern-dependency-chip blocked-by">
+                {blockedByTasks.map((taskName) => (
+                  <span key={taskName} className="modern-dependency-chip blocked-by">
                     {taskName}
                   </span>
                 ))}
@@ -168,8 +180,8 @@ function TaskDependenciesSection({ blockedByTasks, blockingTasks, expanded, togg
             <div className="modern-dependency-section">
               <span className="modern-dependency-label">⛔ Blocking</span>
               <div className="modern-dependency-list">
-                {blockingTasks.map((taskName, index) => (
-                  <span key={index} className="modern-dependency-chip blocking">
+                {blockingTasks.map((taskName) => (
+                  <span key={taskName} className="modern-dependency-chip blocking">
                     {taskName}
                   </span>
                 ))}
@@ -191,12 +203,15 @@ function TaskScheduleSection({ start_date, due_date, recurrence, next_occurrence
   toggle: () => void;
 }) {
   if (!(due_date || start_date || recurrence)) return null;
+  function handleToggle() {
+    toggle();
+  }
   return (
     <div className="modern-expandable">
       <button
         type="button"
         className={`modern-expandable-header ${expanded ? 'expanded' : ''}`}
-        onClick={toggle}
+        onClick={handleToggle}
       >
         <span className="modern-expandable-icon">▶️</span>
         <h3 className="modern-expandable-title">Schedule</h3>
@@ -241,12 +256,15 @@ function TaskSubtasksSection({ subtasks, completedSubtasks, totalSubtasks, expan
   toggle: () => void;
 }) {
   if (!totalSubtasks) return null;
+  function handleToggle() {
+    toggle();
+  }
   return (
     <div className="modern-expandable">
       <button
         type="button"
         className={`modern-expandable-header ${expanded ? 'expanded' : ''}`}
-        onClick={toggle}
+        onClick={handleToggle}
       >
         <span className="modern-expandable-icon">▶️</span>
         <h3 className="modern-expandable-title">Subtasks</h3>
@@ -280,12 +298,15 @@ function TaskDescriptionSection({ description, expanded, toggle }: {
   toggle: () => void;
 }) {
   if (!description) return null;
+  function handleToggle() {
+    toggle();
+  }
   return (
     <div className="modern-expandable">
       <button
         type="button"
         className={`modern-expandable-header ${expanded ? 'expanded' : ''}`}
-        onClick={toggle}
+        onClick={handleToggle}
       >
         <span className="modern-expandable-icon">▶️</span>
         <h3 className="modern-expandable-title">Description</h3>
@@ -448,6 +469,24 @@ function TaskDetailsModalContent({
   blockedByTasks,
   blockingTasks,
 }: TaskDetailsModalContentProps) {
+  function handleToggleDetails() {
+    toggleSection('details');
+  }
+  function handleToggleSubtasks() {
+    toggleSection('subtasks');
+  }
+  function handleToggleSchedule() {
+    toggleSection('schedule');
+  }
+  function handleToggleDependencies() {
+    toggleSection('dependencies');
+  }
+  function handleToggleReminders() {
+    toggleSection('reminders');
+  }
+  function handleCloseEditForm() {
+    setShowEditForm(false);
+  }
   return (
     <div className="modern-form-container" style={{ maxWidth: '600px' }} data-testid="task-details">
       {/* Header */}
@@ -472,7 +511,7 @@ function TaskDetailsModalContent({
           <TaskDescriptionSection
             description={task.description || ''}
             expanded={expandedSections.details}
-            toggle={() => toggleSection('details')}
+            toggle={handleToggleDetails}
           />
           {/* Subtasks - Expandable */}
           <TaskSubtasksSection
@@ -480,7 +519,7 @@ function TaskDetailsModalContent({
             completedSubtasks={completedSubtasks}
             totalSubtasks={totalSubtasks}
             expanded={expandedSections.subtasks}
-            toggle={() => toggleSection('subtasks')}
+            toggle={handleToggleSubtasks}
           />
           {/* Schedule - Expandable */}
           <TaskScheduleSection
@@ -489,21 +528,21 @@ function TaskDetailsModalContent({
             recurrence={task.recurrence}
             next_occurrence={task.next_occurrence}
             expanded={expandedSections.schedule}
-            toggle={() => toggleSection('schedule')}
+            toggle={handleToggleSchedule}
           />
           {/* Dependencies - Expandable */}
           <TaskDependenciesSection
             blockedByTasks={blockedByTasks}
             blockingTasks={blockingTasks}
             expanded={expandedSections.dependencies}
-            toggle={() => toggleSection('dependencies')}
+            toggle={handleToggleDependencies}
           />
           {/* Reminders - Expandable */}
           <TaskRemindersSection
             reminder_enabled={task.reminder_enabled}
             reminder_time={task.reminder_time}
             expanded={expandedSections.reminders}
-            toggle={() => toggleSection('reminders')}
+            toggle={handleToggleReminders}
           />
         </div>
       </div>
@@ -513,14 +552,14 @@ function TaskDetailsModalContent({
       {showEditForm && (
         <TaskForm
           open={showEditForm}
-          onClose={() => setShowEditForm(false)}
+          onClose={handleCloseEditForm}
           onSubmit={handleTaskUpdate}
           loading={editFormLoading}
           error={editFormError}
           projects={projects}
           allTasks={tasks}
           initialValues={task}
-          editMode={true}
+          editMode
         />
       )}
     </div>
