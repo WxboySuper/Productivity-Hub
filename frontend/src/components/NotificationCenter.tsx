@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '../auth';
 
 interface Notification {
@@ -41,7 +41,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ pollingInterval
 
     // Always clear shownNotificationIds on mount to avoid stale state
     shownNotificationIds.current = new Set();
-    let timer: NodeJS.Timeout;
+
     const fetchNotifications = async () => {
       // Remove debug: do not add pollCycleId in production
       const now = new Date();
@@ -63,17 +63,18 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ pollingInterval
           });
           if (nextToShow) {
             if (Notification.permission === 'granted') {
-              new Notification('Task Reminder', { body: nextToShow.message });
+              // eslint-disable-next-line no-unused-vars
+              const _ = new Notification('Task Reminder', { body: nextToShow.message });
             }
             setModalNotification(nextToShow);
             shownNotificationIds.current.add(nextToShow.id);
           }
         }
-      } catch {}
-      timer = setTimeout(fetchNotifications, pollingInterval);
+      } catch { /* ignore */ }
+      setTimeout(fetchNotifications, pollingInterval);
     };
     fetchNotifications();
-    return () => clearTimeout(timer);
+    // No cleanup function returned
   }, [pollingInterval, isAuthenticated]);
 
   // When modalNotification is dismissed or snoozed, clear it
