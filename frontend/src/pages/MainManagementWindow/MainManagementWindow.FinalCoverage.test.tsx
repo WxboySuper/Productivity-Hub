@@ -184,7 +184,7 @@ describe('MainManagementWindow - Final Coverage Tests', () => {
 
       // Test back navigation
       await act(async () => {
-        const backButton = screen.getByRole('button', { name: /back/i });
+        const backButton = screen.getByText('Back');
         fireEvent.click(backButton);
       });
 
@@ -209,12 +209,12 @@ describe('MainManagementWindow - Final Coverage Tests', () => {
       });
 
       await waitFor(() => {
-        expect(screen.getByTestId('task-details-modal')).toBeInTheDocument();
+        expect(screen.getByTestId('task-details')).toBeInTheDocument();
       });
 
       // Close the modal
       await act(async () => {
-        const closeButton = screen.getByLabelText('Close task details');
+        const closeButton = screen.getByText('Close');
         fireEvent.click(closeButton);
       });
     });
@@ -444,12 +444,12 @@ describe('MainManagementWindow - Final Coverage Tests', () => {
         });
 
         await waitFor(() => {
-          expect(screen.getByTestId('task-details-modal')).toBeInTheDocument();
+          expect(screen.getByTestId('task-details')).toBeInTheDocument();
         });
 
         // Close details modal
         await act(async () => {
-          const closeButton = screen.getByLabelText('Close task details');
+          const closeButton = screen.getByText('Close');
           fireEvent.click(closeButton);
         });
       }
