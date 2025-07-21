@@ -448,15 +448,15 @@ describe('MainManagementWindow - Remaining Coverage', () => {
 
       // Click the Edit Task button in details modal to cover onEdit callback
       await act(async () => {
-        const editButton = screen.getByText('Edit Task');
+        const editButton = screen.getByText('Edit Details');
         fireEvent.click(editButton);
       });
 
       // Should close details and open task form
       await waitFor(() => {
-        const formInput = screen.queryByPlaceholderText('What needs to be done?');
-        if (formInput) {
-          expect(formInput).toBeInTheDocument();
+        const formInputs = screen.queryAllByPlaceholderText('What needs to be done?');
+        if (formInputs.length > 0) {
+          expect(formInputs[0]).toBeInTheDocument();
         } else {
           // Check that details modal is no longer visible
           expect(screen.queryByTestId('task-details')).not.toBeInTheDocument();

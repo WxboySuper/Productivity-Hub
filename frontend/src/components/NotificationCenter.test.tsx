@@ -345,8 +345,10 @@ describe('NotificationCenter', () => {
       });
       fireEvent.click(screen.getByLabelText('Show notifications'));
       await waitFor(() => {
-        // All notifications should use the mocked date string
-        expect(screen.getAllByText('mocked-date').length).toBe(mockNotifications.length);
+        // Check that timestamp divs are rendered for each notification
+        // Since the dates will be formatted as actual dates, check for the presence of date strings
+        const timestampElements = screen.getAllByText(/\d{1,2}\/\d{1,2}\/\d{4}/);
+        expect(timestampElements.length).toBe(mockNotifications.length);
       });
     });
 
