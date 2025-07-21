@@ -140,33 +140,13 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ pollingInterval
   const handleModalSnooze = () => {
     if (modalNotification) handleSnooze(modalNotification.id, 10);
   };
-
-  // Remove global test notification injector for production
-  // if (typeof window !== 'undefined') {
-  //   (window as any).injectTestNotification = (message = 'This is a test in-app reminder notification.') => {
-  //     const event = new CustomEvent('injectTestNotification', { detail: { message } });
-  //     window.dispatchEvent(event);
-  //   };
-  // }
-
-  // Remove injected test notification listener for production
-  // useEffect(() => {
-  //   const handler = (e: any) => {
-  //     const msg = e.detail?.message || 'This is a test in-app reminder notification.';
-  //     setNotifications((prev) => [
-  //       {
-  //         id: Date.now(),
-  //         message: msg,
-  //         created_at: new Date().toISOString(),
-  //         read: false,
-  //         type: 'reminder',
-  //       },
-  //       ...prev,
-  //     ]);
-  //   };
-  //   window.addEventListener('injectTestNotification', handler);
-  //   return () => window.removeEventListener('injectTestNotification', handler);
-  // }, []);
+  // Notification item handlers
+  const handleNotificationDismiss = (id: number) => {
+    return () => handleDismiss(id);
+  };
+  const handleNotificationSnooze = (id: number) => {
+    return () => handleSnooze(id, 10);
+  };
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -174,10 +154,6 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ pollingInterval
   if (!isAuthenticated) {
     return null;
   }
-
-  // Notification item handlers
-  const handleNotificationDismiss = (id: number) => () => handleDismiss(id);
-  const handleNotificationSnooze = (id: number) => () => handleSnooze(id, 10);
 
   return (
     <>
