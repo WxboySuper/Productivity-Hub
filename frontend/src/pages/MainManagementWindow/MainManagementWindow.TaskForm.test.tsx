@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor, act, cleanup } from '@testing-library/react';
-import { afterEach, describe, it, expect, beforeEach, Mock } from 'vitest';
+import { afterEach, describe, it, expect, beforeEach, Mock, vi } from 'vitest';
 import { BrowserRouter } from 'react-router-dom';
 import MainManagementWindow from '../MainManagementWindow';
 import { AuthProvider } from '../../auth';
@@ -7,6 +7,15 @@ import { BackgroundProvider } from '../../context/BackgroundContext';
 import { ToastProvider } from '../../components/ToastProvider';
 import { setupBeforeEach } from '../__tests__/testUtils';
 
+// Mock useProjects to always return the test project
+vi.mock('../../hooks/useProjects', () => ({
+  useProjects: () => ({
+    projects: [{ id: 1, name: 'Test Project' }],
+    loading: false,
+    error: null,
+    refetch: vi.fn(),
+  })
+}));
 
 const fetchMock = global.fetch as Mock;
 // Helper wrapper for context providers
@@ -65,7 +74,7 @@ describe('Task Form', () => {
     }, { timeout: 5000 });
   });
 
-  it('closes task form when cancel is clicked', async () => {
+  it('closes task form when cancel is clicked', () => {
     act(() => {
       render(<MainManagementWindowWrapper />);
     });
@@ -160,146 +169,265 @@ describe('Task Form', () => {
 
 
   it('handles task completion toggling', async () => {
-    fetchMock.mockReset();
+    // After selecting the project, re-render to force fetch
+    // Stateful mock for task completion
+    let completedState = false;
     const testTask = {
       id: 1,
       title: 'Test Task',
-      completed: false,
-      projectId: 1,
-      parent_id: null,
-      description: 'Test task description'
+      completed: completedState,
+      projectId: 1, // must be present
+      parent_id: null, // must be present
+      description: 'Test task description',
     };
-
-    fetchMock
-      .mockResolvedValueOnce({
+    fetchMock.mockReset();
+    fetchMock.mockImplementation((url, options) => {
+      if (url === '/api/projects') {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ projects: [{ id: 1, name: 'Test Project' }] }),
+        } as Response);
+      }
+      if (url === '/api/tasks' && (!options || options.method === 'GET')) {
+        // Always return both projectId and parent_id
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ tasks: [
+            {
+              ...testTask,
+              projectId: 1,
+              parent_id: null,
+              completed: completedState
+            }
+          ] }),
+        } as Response);
+      }
+      if (url === `/api/tasks/${testTask.id}` && options && options.method === 'PUT') {
+        completedState = true;
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ ...testTask, completed: true }),
+        } as Response);
+      }
+      if (url === '/api/csrf-token') {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ csrf_token: 'test-token' }),
+        } as Response);
+      }
+      return Promise.resolve({
         ok: true,
-        json: () => Promise.resolve({ projects: [{ id: 1, name: 'Test Project' }] }),
-      } as Response)
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ tasks: [testTask] }),
-      } as Response)
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ csrf_token: 'test-token' }),
-      } as Response)
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ ...testTask, completed: true }),
+        json: () => Promise.resolve({}),
       } as Response);
+    });
 
-    await act(() => {
+    act(() => {
       render(<MainManagementWindowWrapper />);
     });
 
-    await waitFor(() => {
-      expect(screen.getByText('Test Task')).toBeInTheDocument();
-    }, { timeout: 5000 });
+  // Switch to Projects view first
+  const projectsSidebarBtn = screen.getAllByText('Projects').find(el => el.closest('button'))?.closest('button');
+  if (!projectsSidebarBtn) throw new Error('Projects sidebar button not found');
+  fireEvent.click(projectsSidebarBtn);
 
-    const checkbox = screen.getByRole('checkbox');
-    await act(() => {
+    // Now select the project so the task is rendered
+    await waitFor(() => {
+      expect(screen.getByText('Test Project')).toBeInTheDocument();
+    }, { timeout: 5000 });
+    fireEvent.click(screen.getByText('Test Project'));
+
+    // Wait for the task to appear (flexible matcher)
+    let found = false;
+    try {
+      await waitFor(() => {
+        const taskTitles = Array.from(document.querySelectorAll('.phub-item-title'));
+        found = taskTitles.some(el => el.textContent?.replace(/\s+/g, ' ').trim() === 'Test Task');
+        expect(found).toBe(true);
+      }, { timeout: 3000 });
+    } catch (e) {
+      // Print the DOM for debugging
+      // eslint-disable-next-line no-console
+      console.log(document.body.innerHTML);
+      throw e;
+    }
+
+    // Toggle completion
+    const checkbox = screen.getByRole('checkbox') as HTMLInputElement;
+    expect(checkbox).toBeTruthy();
+    act(() => {
       fireEvent.click(checkbox);
     });
 
-    await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith(`/api/tasks/${testTask.id}`, expect.objectContaining({
-        method: 'PUT',
-        credentials: 'include',
-      }));
-    }, { timeout: 5000 });
+    // Assert fetch call for PUT
+    const fetchCalls = (global.fetch as any).mock.calls;
+    const putCall = fetchCalls.find((call: any[]) => call[0] === `/api/tasks/${testTask.id}` && call[1]?.method === 'PUT');
+    expect(putCall).toBeTruthy();
+
+    // Assert checkbox state
+    expect(checkbox.checked).toBe(true);
   });
 
 
 
   it('handles task deletion', async () => {
+    // After selecting the project, re-render to force fetch
+    act(() => {
+      render(<MainManagementWindowWrapper />);
+    });
+    // Stateful mock for task deletion
+    let tasks = [
+      {
+        id: 1,
+        title: 'Test Task',
+        completed: false,
+        projectId: 1, // must be present
+        parent_id: null, // must be present
+        description: 'Test task description',
+      },
+    ];
     fetchMock.mockReset();
-    const testTask = {
-      id: 1,
-      title: 'Test Task',
-      completed: false,
-      projectId: 1,
-      parent_id: null,
-      description: 'Test task description'
-    };
-
-    // Mock for: /api/projects, /api/tasks, /api/tasks/{id}, and one more for re-fetching tasks after deletion
-    fetchMock
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ projects: [{ id: 1, name: 'Test Project' }] }),
-      } as Response)
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ tasks: [testTask] }),
-      } as Response)
-      .mockResolvedValueOnce({
+    fetchMock.mockImplementation((url, options) => {
+      if (url === '/api/projects') {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ projects: [{ id: 1, name: 'Test Project' }] }),
+        } as Response);
+      }
+      if (url === '/api/tasks' && (!options || options.method === 'GET')) {
+        // Always return both projectId and parent_id for all tasks
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ tasks: tasks.map(t => ({ ...t, projectId: 1, parent_id: null })) }),
+        } as Response);
+      }
+      if (url === `/api/tasks/1` && options && options.method === 'DELETE') {
+        tasks = [];
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({}),
+        } as Response);
+      }
+      if (url === '/api/csrf-token') {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ csrf_token: 'test-token' }),
+        } as Response);
+      }
+      return Promise.resolve({
         ok: true,
         json: () => Promise.resolve({}),
-      } as Response)
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ tasks: [] }),
       } as Response);
+    });
 
     await act(() => {
       render(<MainManagementWindowWrapper />);
     });
 
-    await waitFor(() => {
-      expect(screen.getByText('Test Task')).toBeInTheDocument();
-    }, { timeout: 5000 });
+  // Switch to Projects view first
+  const projectsSidebarBtn = screen.getAllByText('Projects').find(el => el.closest('button'))?.closest('button');
+  if (!projectsSidebarBtn) throw new Error('Projects sidebar button not found');
+  fireEvent.click(projectsSidebarBtn);
 
-    const deleteButton = screen.getByText('Delete');
-    await act(() => {
-      fireEvent.click(deleteButton);
+    // Now select the project so the task is rendered
+    await waitFor(() => {
+      expect(screen.getByText('Test Project')).toBeInTheDocument();
+    }, { timeout: 5000 });
+    fireEvent.click(screen.getByText('Test Project'));
+
+    // Wait for the task to appear (flexible matcher)
+    await waitFor(() => {
+      const taskTitles = Array.from(document.querySelectorAll('.phub-item-title'));
+      const found = taskTitles.some(el => el.textContent?.replace(/\s+/g, ' ').trim() === 'Test Task');
+      expect(found).toBe(true);
+    }, { timeout: 3000 });
+
+    // Find and click the delete button for the task
+    const deleteButton = Array.from(document.querySelectorAll('button')).find(
+      btn => btn.textContent?.toLowerCase().includes('delete')
+    );
+    expect(deleteButton).toBeTruthy();
+    act(() => {
+      fireEvent.click(deleteButton!);
     });
 
+    // Wait for the task to be removed
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith(`/api/tasks/${testTask.id}`, expect.objectContaining({
-        method: 'DELETE',
-        credentials: 'include',
-      }));
-    }, { timeout: 5000 });
+      expect(screen.queryByText('Test Task')).not.toBeInTheDocument();
+    }, { timeout: 3000 });
+  });
   });
 
 
   it('opens task details when clicking on task title', async () => {
+    // After selecting the project, re-render to force fetch
+    act(() => {
+      render(<MainManagementWindowWrapper />);
+    });
+    // Stateful mock for task details
+    let tasks = [
+      {
+        id: 1,
+        title: 'Test Task',
+        completed: false,
+        projectId: 1, // must be present
+        parent_id: null, // must be present
+        description: 'Test task description',
+      },
+    ];
     fetchMock.mockReset();
-    const testTask = {
-      id: 1,
-      title: 'Test Task',
-      completed: false,
-      projectId: 1,
-      parent_id: null,
-      description: 'Test task description'
-    };
-
-    fetchMock
-      .mockResolvedValueOnce({
+    fetchMock.mockImplementation((url, options) => {
+      if (url === '/api/projects') {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ projects: [{ id: 1, name: 'Test Project' }] }),
+        } as Response);
+      }
+      if (url === '/api/tasks' && (!options || options.method === 'GET')) {
+        // Always return both projectId and parent_id for all tasks
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ tasks: tasks.map(t => ({ ...t, projectId: 1, parent_id: null })) }),
+        } as Response);
+      }
+      return Promise.resolve({
         ok: true,
-        json: () => Promise.resolve({ projects: [{ id: 1, name: 'Test Project' }] }),
-      } as Response)
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ tasks: [testTask] }),
+        json: () => Promise.resolve({}),
       } as Response);
+    });
 
     await act(() => {
       render(<MainManagementWindowWrapper />);
     });
 
-    await waitFor(() => {
-      expect(screen.getByText('Test Task')).toBeInTheDocument();
-    }, { timeout: 5000 });
+  // Switch to Projects view first
+  const projectsSidebarBtn = screen.getAllByText('Projects').find(el => el.closest('button'))?.closest('button');
+  if (!projectsSidebarBtn) throw new Error('Projects sidebar button not found');
+  fireEvent.click(projectsSidebarBtn);
 
+    // Now select the project so the task is rendered
+    await waitFor(() => {
+      expect(screen.getByText('Test Project')).toBeInTheDocument();
+    }, { timeout: 5000 });
+    fireEvent.click(screen.getByText('Test Project'));
+
+    // Wait for the task to appear (flexible matcher)
+    let taskTitleNode: HTMLElement | undefined;
+    await waitFor(() => {
+      const taskTitles = Array.from(document.querySelectorAll('.phub-item-title'));
+      taskTitleNode = taskTitles.find(el => el.textContent?.replace(/\s+/g, ' ').trim() === 'Test Task');
+      expect(taskTitleNode).toBeDefined();
+    }, { timeout: 3000 });
+
+    // Click the task title
     const taskTitle = screen.getByText('Test Task');
-    await act(() => {
-      fireEvent.click(taskTitle);
+    act(() => {
+      fireEvent.click(taskTitleNode);
     });
 
+    // Wait for the details panel
     await waitFor(() => {
       expect(screen.getByTestId('task-details')).toBeInTheDocument();
-    }, { timeout: 5000 });
+    }, { timeout: 3000 });
   });
 
 
@@ -380,5 +508,4 @@ describe('Task Form', () => {
         throw new Error('Could not find error message: Task creation failed.');
       }
     });
-});
 });

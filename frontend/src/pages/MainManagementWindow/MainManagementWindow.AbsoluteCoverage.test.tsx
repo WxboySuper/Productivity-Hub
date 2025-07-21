@@ -59,14 +59,23 @@ describe('MainManagementWindow - Absolute Coverage', () => {
       const dialog = screen.getByRole('dialog');
       expect(dialog).toHaveTextContent(/at least 2 characters/i);
     });
+    // Close the create modal before opening the edit modal
+  fireEvent.click(screen.getByText('×'));
+    await waitFor(() => {
+      // Ensure the create modal is closed
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
     // Edit (backend error)
     await act(() => {
       const editButtons = screen.getAllByRole('button', { name: /edit/i });
       fireEvent.click(editButtons[0]);
     });
-    // The second input is for the edit modal
-    const editNameInput = screen.getAllByPlaceholderText(/project name/i)[1];
-    fireEvent.change(editNameInput, { target: { value: 'Valid Project' } });
+    // Wait for the edit modal input to appear
+    await waitFor(() => {
+      const inputs = screen.getAllByPlaceholderText(/project name/i);
+      expect(inputs.length).toBeGreaterThan(0);
+      fireEvent.change(inputs[0], { target: { value: 'Valid Project' } });
+    });
     fireEvent.click(screen.getByText('Save Changes'));
     // Backend error: modal closes, error appears in main window
     await waitFor(() => {

@@ -135,7 +135,7 @@ const ProjectFormBody: React.FC<ProjectFormBodyProps> = ({
 }) => (
   <div className="phub-productive-form-body" style={{ paddingBottom: 0 }}>
     {error && (
-      <div className="phub-error-message" style={{ marginBottom: 'var(--phub-space-sm)' }}>
+      <div data-testid="project-error" className="phub-error-message" style={{ marginBottom: 'var(--phub-space-sm)' }}>
         <span>⚠️</span>
         {error}
       </div>

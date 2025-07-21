@@ -143,6 +143,7 @@ vi.mock('../../hooks/useTasks', () => ({
     deleteTask: vi.fn(),
     refetch: vi.fn(),
   }),
+  ensureCsrfToken: vi.fn(() => Promise.resolve('mocked_csrf_token')),
 }));
 
 // Mock the TaskForm component

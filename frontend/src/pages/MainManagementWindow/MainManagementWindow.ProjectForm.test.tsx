@@ -6,6 +6,21 @@ import { AuthProvider } from '../../auth';
 import { BackgroundProvider } from '../../context/BackgroundContext';
 import { ToastProvider } from '../../components/ToastProvider';
 
+
+// Mock useTasks with ensureCsrfToken for CSRF-dependent tests (not used for project creation, but keep for other tests)
+vi.mock('../../hooks/useTasks', () => ({
+  useTasks: () => ({
+    tasks: [],
+    loading: false,
+    error: null,
+    createTask: vi.fn(),
+    updateTask: vi.fn(),
+    deleteTask: vi.fn(),
+    refetch: vi.fn(),
+  }),
+  ensureCsrfToken: vi.fn(() => Promise.resolve('mocked_csrf_token')),
+}));
+
 // Setup global fetch mock properly
 global.fetch = vi.fn().mockImplementation((url: string) => {
   if (url === '/api/csrf-token') {
@@ -134,16 +149,17 @@ vi.mock('../../components/ProjectForm', () => ({
       await onCreate({ name: 'Test Project', description: 'Test Description' });
     };
     return (
-    <div data-testid="project-form">
-      <h2>{editMode ? 'Edit Project' : 'Create Project'}</h2>
-      {error && <div data-testid="project-error">{error}</div>}
-      {initialName && <div>Initial: {initialName}</div>}
-      <button onClick={handleSaveClick}>
-        {editMode ? 'Save Changes' : 'Create Project'}
-      </button>
-      <button onClick={onClose}>Cancel</button>
-    </div>
-  );},
+      <div data-testid="project-form">
+        <h2>{editMode ? 'Edit Project' : 'Create Project'}</h2>
+        {error ? <div data-testid="project-error">{error}</div> : null}
+        {initialName && <div>Initial: {initialName}</div>}
+        <button onClick={handleSaveClick}>
+          {editMode ? 'Save Changes' : 'Create Project'}
+        </button>
+        <button onClick={onClose}>Cancel</button>
+      </div>
+    );
+  },
 }));
 
 // Mock the ConfirmDialog component
@@ -191,6 +207,7 @@ describe('MainManagementWindow - Project Form & Management', () => {
     mockToastContext.showWarning.mockClear();
     mockToastContext.showInfo.mockClear();
     mockNavigate.mockClear();
+    // Removed useTasksError and mockCreateTask cleanup as they are no longer used
   });
 
   afterEach(() => {
@@ -319,23 +336,36 @@ describe('MainManagementWindow - Project Form & Management', () => {
 
   describe('Project Management', () => {
     it('handles project creation successfully', async () => {
-      mockFetch
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve({ projects: [] }),
-        } as Response)
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve({ tasks: [] }),
-        } as Response)
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve({ csrf_token: 'test-token' }),
-        } as Response)
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve({ id: 1, name: 'Test Project', description: 'Test Description' }),
+  mockFetch.mockImplementation((url: string, options?: unknown) => {
+        if (url === '/api/csrf-token') {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ csrf_token: 'test-token' }),
+          } as Response);
+        }
+  if (url === '/api/projects' && (options as { method?: string })?.method === 'POST') {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ id: 1, name: 'Test Project', description: 'Test Description' }),
+          } as Response);
+        }
+        if (url === '/api/projects') {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ projects: [] }),
+          } as Response);
+        }
+        if (url === '/api/tasks') {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ tasks: [] }),
+          } as Response);
+        }
+        return Promise.resolve({
+          ok: false,
+          json: () => Promise.resolve({ error: 'Not found' }),
         } as Response);
+      });
 
       await act(() => {
         render(<MainManagementWindowWrapper />);
@@ -472,23 +502,37 @@ describe('MainManagementWindow - Project Form & Management', () => {
     });
 
     it('handles project creation error', async () => {
-      mockFetch
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve({ projects: [] }),
-        } as Response)
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve({ tasks: [] }),
-        } as Response)
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve({ csrf_token: 'test-token' }),
-        } as Response)
-        .mockResolvedValueOnce({
+      // Set up fetch mock for project creation error
+  mockFetch.mockImplementation((url: string, options?: unknown) => {
+        if (url === '/api/csrf-token') {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ csrf_token: 'test-token' }),
+          } as Response);
+        }
+  if (url === '/api/projects' && (options as { method?: string })?.method === 'POST') {
+          return Promise.resolve({
+            ok: false,
+            json: () => Promise.resolve({ error: 'Project name already exists' }),
+          } as Response);
+        }
+        if (url === '/api/projects') {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ projects: [] }),
+          } as Response);
+        }
+        if (url === '/api/tasks') {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ tasks: [] }),
+          } as Response);
+        }
+        return Promise.resolve({
           ok: false,
-          json: () => Promise.resolve({ error: 'Project name already exists' }),
+          json: () => Promise.resolve({ error: 'Not found' }),
         } as Response);
+      });
 
       await act(() => {
         render(<MainManagementWindowWrapper />);

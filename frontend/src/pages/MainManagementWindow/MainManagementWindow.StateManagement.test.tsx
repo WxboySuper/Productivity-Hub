@@ -128,6 +128,7 @@ vi.mock('../../hooks/useProjects', () => ({
 
 vi.mock('../../hooks/useTasks', () => ({
   useTasks: () => mockTasks,
+  ensureCsrfToken: vi.fn(() => Promise.resolve('mocked_csrf_token')),
 }));
 
 // Mock the TaskForm component

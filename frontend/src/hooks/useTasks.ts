@@ -99,8 +99,9 @@ export function useTasks() {
   };
 }
 
-// Helper function (would be moved to a utils file)
-async function ensureCsrfToken(): Promise<string> {
+
+// Exported helper for CSRF token, always fetches if missing (for testability)
+export async function ensureCsrfToken(): Promise<string> {
   const getCookie = (name: string): string | null => {
     const match = document.cookie.match(new RegExp(`(^| )${name}=([^;]+)`));
     return match ? decodeURIComponent(match[2]) : null;
