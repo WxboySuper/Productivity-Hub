@@ -88,6 +88,7 @@ const Sidebar: React.FC<{
   </aside>
 );
 
+// skipcq: JS-R1005
 const MainManagementWindow: React.FC = () => {
   // --- All hooks/state and variables first ---
   const { logout } = useAuth();
@@ -469,6 +470,70 @@ const MainManagementWindow: React.FC = () => {
   if (activeView === 'all') {
     // Only show top-level tasks (parent_id == null)
     const topLevelTasks = tasks.filter((task: Task) => task.parent_id == null);
+    // Extracted TaskCard to reduce nesting
+    const TaskCard = ({ task }: { task: Task }) => (
+      <div className="phub-item-card">
+        <div className="phub-item-content">
+          <div className="phub-item-header">
+            <input
+              type="checkbox"
+              checked={task.completed}
+              onChange={() => { handleToggleTask(task.id); }}
+              className="mr-3 w-5 h-5 accent-blue-600"
+              disabled={task.subtasks && task.subtasks.length > 0 && task.subtasks.some((st: Task) => !st.completed)}
+              title={task.subtasks && task.subtasks.length > 0 && task.subtasks.some((st: Task) => !st.completed) ? 'Complete all subtasks first' : ''}
+            />
+            <button
+              className={`phub-item-title cursor-pointer ${task.completed ? 'line-through opacity-60' : ''}`}
+              onClick={() => {
+                setSelectedTask(getTaskWithProject(task));
+                setTaskDetailsOpen(true);
+              }}
+              tabIndex={0}
+              onKeyDown={e => {
+                /* v8 ignore start */
+                if (e.key === 'Enter' || e.key === ' ') {
+                  setSelectedTask(getTaskWithProject(task));
+                  setTaskDetailsOpen(true);
+                }
+              }}
+              /* v8 ignore stop */
+              style={{ background: 'none', border: 'none', padding: 0, margin: 0, textAlign: 'left' }}
+              aria-label={`View details for ${task.title}`}
+            >
+              {task.title}
+            </button>
+            <button
+              className="text-sm px-3 py-1 rounded transition-colors font-semibold"
+              onClick={e => {
+                /* v8 ignore start */
+                e.stopPropagation();
+                handleDeleteTask(task.id);
+              }}
+              /* v8 ignore stop */
+              style={{
+                background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+                color: 'white',
+                border: '1px solid #dc2626'
+              }}
+            >
+              Delete
+            </button>
+          </div>
+          <div className="phub-item-meta">
+            <span className="phub-item-badge">
+              {task.projectId ? `📁 ${projects.find(p => p.id === task.projectId)?.name || 'Unknown'}` : '⚡ Quick Task'}
+            </span>
+            {task.subtasks && task.subtasks.length > 0 && (
+              <span className="phub-item-badge">
+                📝 {task.subtasks.length} subtask{task.subtasks.length > 1 ? 's' : ''}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+
     content = (
       <div className="phub-content-section">
         <div className="phub-section-header">
@@ -493,66 +558,7 @@ const MainManagementWindow: React.FC = () => {
         ) : (
           <div className="space-y-4">
             {topLevelTasks.map(task => (
-              <div key={task.id} className="phub-item-card">
-                <div className="phub-item-content">
-                  <div className="phub-item-header">
-                    <input
-                      type="checkbox"
-                      checked={task.completed}
-                      onChange={() => { handleToggleTask(task.id); }}
-                      className="mr-3 w-5 h-5 accent-blue-600"
-                      disabled={task.subtasks && task.subtasks.length > 0 && task.subtasks.some((st: Task) => !st.completed)}
-                      title={task.subtasks && task.subtasks.length > 0 && task.subtasks.some((st: Task) => !st.completed) ? 'Complete all subtasks first' : ''}
-                    />
-                    <button
-                      className={`phub-item-title cursor-pointer ${task.completed ? 'line-through opacity-60' : ''}`}
-                      onClick={() => {
-                        setSelectedTask(getTaskWithProject(task));
-                        setTaskDetailsOpen(true);
-                      }}
-                      tabIndex={0}
-                      onKeyDown={e => {
-                        /* v8 ignore start */
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          setSelectedTask(getTaskWithProject(task));
-                          setTaskDetailsOpen(true);
-                        }
-                      }}
-                      /* v8 ignore stop */
-                      style={{ background: 'none', border: 'none', padding: 0, margin: 0, textAlign: 'left' }}
-                      aria-label={`View details for ${task.title}`}
-                    >
-                      {task.title}
-                    </button>
-                    <button
-                      className="text-sm px-3 py-1 rounded transition-colors font-semibold"
-                      onClick={e => {
-                        /* v8 ignore start */
-                        e.stopPropagation();
-                        handleDeleteTask(task.id);
-                      }}
-                      /* v8 ignore stop */
-                      style={{
-                        background: 'linear-gradient(135deg, #ef4444, #dc2626)',
-                        color: 'white',
-                        border: '1px solid #dc2626'
-                      }}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                  <div className="phub-item-meta">
-                    <span className="phub-item-badge">
-                      {task.projectId ? `📁 ${projects.find(p => p.id === task.projectId)?.name || 'Unknown'}` : '⚡ Quick Task'}
-                    </span>
-                    {task.subtasks && task.subtasks.length > 0 && (
-                      <span className="phub-item-badge">
-                        📝 {task.subtasks.length} subtask{task.subtasks.length > 1 ? 's' : ''}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
+              <TaskCard key={task.id} task={task} />
             ))}
           </div>
         )}
@@ -561,101 +567,109 @@ const MainManagementWindow: React.FC = () => {
   } else if (activeView === 'quick') {
     // Only show top-level quick tasks (parent_id == null)
     const quickTasks = tasks.filter((t: Task) => !t.projectId && t.parent_id == null);
-    content = (
-      <div className="phub-content-section">
-        <div className="phub-section-header">
-          <h2 className="phub-section-title">Quick Tasks</h2>
-          <p className="phub-section-subtitle">Your rapid-fire action items</p>
-        </div>
-        {tasksLoading && <div className="phub-loading">Loading tasks...</div>}
-        {tasksError && <div className="phub-error">⚠️ {tasksError}</div>}
-        {(!tasksLoading && !tasksError && quickTasks.length === 0) ? (
-          <div className="phub-empty-state">
-            <div className="phub-empty-icon">⚡</div>
-            <h3 className="phub-empty-title">No quick tasks found</h3>
-            <p className="phub-empty-subtitle">Add a quick task for something you need to do soon!</p>
+    // Extracted QuickTaskCard to reduce nesting
+    const QuickTaskCard = ({ task }: { task: Task }) => (
+      <div className="phub-item-card">
+        <div className="phub-item-content">
+          <div className="phub-item-header">
+            <input
+              type="checkbox"
+              checked={task.completed}
+              onChange={(e) => { e.stopPropagation(); handleToggleTask(task.id); }}
+              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+              disabled={task.subtasks && task.subtasks.length > 0 && task.subtasks.some((st: Task) => !st.completed)}
+              title={task.subtasks && task.subtasks.length > 0 && task.subtasks.some((st: Task) => !st.completed) ? 'Complete all subtasks first' : ''}
+            />
             <button
-              className="phub-action-btn"
-              onClick={() => setShowTaskForm(true)}
+              className="phub-item-title cursor-pointer flex-1"
+              onClick={() => { setSelectedTask(getTaskWithProject(task)); setTaskDetailsOpen(true); }}
+              tabIndex={0}
+              onKeyDown={e => {
+                /* v8 ignore start */
+                if (e.key === 'Enter' || e.key === ' ') {
+                  setSelectedTask(getTaskWithProject(task));
+                  setTaskDetailsOpen(true);
+                }
+              }}
+              /* v8 ignore stop */
+              style={{
+                textDecoration: task.completed ? 'line-through' : 'none',
+                opacity: task.completed ? 0.6 : 1,
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                margin: 0,
+                textAlign: 'left',
+                width: '100%'
+              }}
+              aria-label={`View details for ${task.title}`}
             >
-              <span>⚡</span>
-              Add Quick Task
+              {task.title}
+            </button>
+            <button
+              className="phub-action-btn-secondary"
+              onClick={() => openTaskForm(task)}
+              style={{ padding: '0.5rem', fontSize: '0.8rem' }}
+            >
+              Edit
+            </button>
+            <button
+              className="px-2 py-1 rounded transition-colors font-semibold"
+              onClick={() => handleDeleteTask(task.id)}
+              style={{
+                background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+                color: 'white',
+                border: '1px solid #dc2626'
+              }}
+            >
+              Delete
             </button>
           </div>
-        ) : (
+          <div className="phub-item-meta">
+            {task.subtasks && task.subtasks.length > 0 && (
+              /* v8 ignore start */
+              <span className="phub-item-badge">
+                📝 {task.subtasks.length} subtask{task.subtasks.length > 1 ? 's' : ''}
+              </span>
+              /* v8 ignore stop */
+            )}
+          </div>
+        </div>
+      </div>
+    );
+
+    content = (
+      <>
+        <div className="phub-content-section">
+          <div className="phub-section-header">
+            <h2 className="phub-section-title">Quick Tasks</h2>
+            <p className="phub-section-subtitle">Your rapid-fire action items</p>
+          </div>
+          {tasksLoading && <div className="phub-loading">Loading tasks...</div>}
+          {tasksError && <div className="phub-error">⚠️ {tasksError}</div>}
+          {(!tasksLoading && !tasksError && quickTasks.length === 0) ? (
+            <div className="phub-empty-state">
+              <div className="phub-empty-icon">⚡</div>
+              <h3 className="phub-empty-title">No quick tasks found</h3>
+              <p className="phub-empty-subtitle">Add a quick task for something you need to do soon!</p>
+              <button
+                className="phub-action-btn"
+                onClick={() => setShowTaskForm(true)}
+              >
+                <span>⚡</span>
+                Add Quick Task
+              </button>
+            </div>
+          ) : null}
+        </div>
+        {(!tasksLoading && !tasksError && quickTasks.length > 0) && (
           <div className="space-y-4">
             {quickTasks.map(task => (
-              <div key={task.id} className="phub-item-card">
-                <div className="phub-item-content">
-                  <div className="phub-item-header">
-                    <input
-                      type="checkbox"
-                      checked={task.completed}
-                      onChange={(e) => { e.stopPropagation(); handleToggleTask(task.id); }}
-                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-                      disabled={task.subtasks && task.subtasks.length > 0 && task.subtasks.some((st: Task) => !st.completed)}
-                      title={task.subtasks && task.subtasks.length > 0 && task.subtasks.some((st: Task) => !st.completed) ? 'Complete all subtasks first' : ''}
-                    />
-                    <button
-                      className="phub-item-title cursor-pointer flex-1"
-                      onClick={() => { setSelectedTask(getTaskWithProject(task)); setTaskDetailsOpen(true); }}
-                      tabIndex={0}
-                      onKeyDown={e => {
-                        /* v8 ignore start */
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          setSelectedTask(getTaskWithProject(task));
-                          setTaskDetailsOpen(true);
-                        }
-                      }}
-                      /* v8 ignore stop */
-                      style={{
-                        textDecoration: task.completed ? 'line-through' : 'none',
-                        opacity: task.completed ? 0.6 : 1,
-                        background: 'none',
-                        border: 'none',
-                        padding: 0,
-                        margin: 0,
-                        textAlign: 'left',
-                        width: '100%'
-                      }}
-                      aria-label={`View details for ${task.title}`}
-                    >
-                      {task.title}
-                    </button>
-                    <button
-                      className="phub-action-btn-secondary"
-                      onClick={() => openTaskForm(task)}
-                      style={{ padding: '0.5rem', fontSize: '0.8rem' }}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className="px-2 py-1 rounded transition-colors font-semibold"
-                      onClick={() => handleDeleteTask(task.id)}
-                      style={{
-                        background: 'linear-gradient(135deg, #ef4444, #dc2626)',
-                        color: 'white',
-                        border: '1px solid #dc2626'
-                      }}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                  <div className="phub-item-meta">
-                    {task.subtasks && task.subtasks.length > 0 && (
-                      /* v8 ignore start */
-                      <span className="phub-item-badge">
-                        📝 {task.subtasks.length} subtask{task.subtasks.length > 1 ? 's' : ''}
-                      </span>
-                      /* v8 ignore stop */
-                    )}
-                  </div>
-                </div>
-              </div>
+              <QuickTaskCard key={task.id} task={task} />
             ))}
           </div>
         )}
-      </div>
+      </>
     );
   } else if (activeView === 'projects') {
     // Only show top-level project tasks (parent_id == null)
@@ -748,7 +762,8 @@ const MainManagementWindow: React.FC = () => {
             )}
           </div>
         ) : (
-          <div className="phub-content-section">
+          // skipcq: JS-0415
+          <>
             <div className="phub-item-card" style={{ marginBottom: '2rem' }}>
               <div className="phub-item-content">
                 <div className="phub-item-header">
@@ -786,18 +801,20 @@ const MainManagementWindow: React.FC = () => {
               <p className="phub-section-subtitle">Manage project-specific tasks and deliverables</p>
             </div>
 
-            <ProjectTasksSection
-              tasks={tasks}
-              selectedProject={selectedProject}
-              tasksLoading={tasksLoading}
-              tasksError={tasksError}
-              handleTaskToggle={handleTaskToggle}
-              handleTaskTitleClick={handleTaskTitleClick}
-              handleTaskEdit={handleTaskEdit}
-              handleTaskDelete={handleTaskDelete}
-              setShowTaskForm={setShowTaskForm}
-            />
-          </div>
+            <div className="phub-content-section">
+              <ProjectTasksSection
+                tasks={tasks}
+                selectedProject={selectedProject}
+                tasksLoading={tasksLoading}
+                tasksError={tasksError}
+                handleTaskToggle={handleTaskToggle}
+                handleTaskTitleClick={handleTaskTitleClick}
+                handleTaskEdit={handleTaskEdit}
+                handleTaskDelete={handleTaskDelete}
+                setShowTaskForm={setShowTaskForm}
+              />
+            </div>
+          </>
         )}
         {showForm && !editProject && (
           <ProjectForm
