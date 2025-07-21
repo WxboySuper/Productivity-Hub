@@ -140,13 +140,9 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ pollingInterval
   const handleModalSnooze = () => {
     if (modalNotification) handleSnooze(modalNotification.id, 10);
   };
-  // Notification item handlers
-  const handleNotificationDismiss = (id: number) => {
-    return () => handleDismiss(id);
-  };
-  const handleNotificationSnooze = (id: number) => {
-    return () => handleSnooze(id, 10);
-  };
+  // Notification item handlers (no arrow functions in JSX)
+  const handleNotificationDismiss = (id: number) => handleDismiss.bind(null, id);
+  const handleNotificationSnooze = (id: number) => handleSnooze.bind(null, id, 10);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
