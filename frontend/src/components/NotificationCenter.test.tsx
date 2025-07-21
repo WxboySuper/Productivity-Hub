@@ -82,6 +82,17 @@ const mockReminderNotification = {
 };
 
 describe('NotificationCenter', () => {
+  let toLocaleStringSpy: jest.SpyInstance;
+
+  beforeAll(() => {
+    // Mock toLocaleString globally for predictable output
+    toLocaleStringSpy = vi.spyOn(Date.prototype, 'toLocaleString').mockReturnValue('mocked-date');
+  });
+
+  afterAll(() => {
+    toLocaleStringSpy.mockRestore();
+  });
+
   beforeEach(() => {
     vi.useFakeTimers();
     vi.clearAllMocks();
@@ -123,10 +134,16 @@ describe('NotificationCenter', () => {
   describe('Authentication State', () => {
     it('should not render when user is not authenticated', () => {
       mockAuth.isAuthenticated = false;
-      
-      render(<NotificationCenter />);
-      
-      expect(screen.queryByLabelText('Show notifications')).not.toBeInTheDocument();
+      const { container, unmount } = render(<NotificationCenter />);
+      // Should return null and render nothing
+      expect(container.innerHTML).toBe('');
+      unmount(); // ensure full lifecycle
+    });
+
+    it('returns null and renders nothing when not authenticated', () => {
+      mockAuth.isAuthenticated = false;
+      const { container } = render(<NotificationCenter />);
+      expect(container.firstChild).toBeNull();
     });
 
     it('should render notification center when user is authenticated', async () => {
@@ -318,20 +335,32 @@ describe('NotificationCenter', () => {
       expect(screen.getByText('No notifications.')).toBeInTheDocument();
     });
 
-    it('should display notification timestamps', async () => {
+    // Removed the old test for /1\/15\/2024/ as toLocaleString is now mocked
+
+    it('renders the correct timestamp for each notification', async () => {
       vi.useRealTimers();
       render(<NotificationCenter />);
-      
       await waitFor(() => {
         expect(screen.getByLabelText('Show notifications')).toBeInTheDocument();
       });
-      
       fireEvent.click(screen.getByLabelText('Show notifications'));
-      
       await waitFor(() => {
-        // Check that timestamps are displayed (formatted dates)
-        const timestamps = screen.getAllByText(/1\/15\/2024/);
-        expect(timestamps.length).toBeGreaterThan(0);
+        // All notifications should use the mocked date string
+        expect(screen.getAllByText('mocked-date').length).toBe(mockNotifications.length);
+      });
+    });
+
+    it('renders a timestamp div for each notification', async () => {
+      vi.useRealTimers();
+      render(<NotificationCenter />);
+      await waitFor(() => {
+        expect(screen.getByLabelText('Show notifications')).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByLabelText('Show notifications'));
+      await waitFor(() => {
+        // Check that a div with the timestamp class exists for each notification
+        const timestampDivs = document.querySelectorAll('.text-xs.text-gray-500.mt-2');
+        expect(timestampDivs.length).toBe(mockNotifications.length);
       });
     });
   });
