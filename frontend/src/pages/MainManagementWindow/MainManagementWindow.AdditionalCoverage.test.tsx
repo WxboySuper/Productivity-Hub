@@ -107,6 +107,7 @@ vi.mock('../../hooks/useProjects', () => ({
 
 vi.mock('../../hooks/useTasks', () => ({
   useTasks: () => ({
+    ensureCsrfToken: vi.fn(() => Promise.resolve('mocked_csrf_token')),
     tasks: [
       { 
         id: 1, 
