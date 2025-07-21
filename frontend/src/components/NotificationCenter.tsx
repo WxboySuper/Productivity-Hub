@@ -175,6 +175,10 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ pollingInterval
     return null;
   }
 
+  // Notification item handlers
+  const handleNotificationDismiss = (id: number) => () => handleDismiss(id);
+  const handleNotificationSnooze = (id: number) => () => handleSnooze(id, 10);
+
   return (
     <>
       {/* Centered modal for latest unread reminder */}
@@ -225,45 +229,41 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ pollingInterval
             <h3 className="font-bold text-blue-700 mb-3 text-lg">🔔 Notifications</h3>
             {notifications.length === 0 && <div className="text-gray-500 text-center py-4">No notifications.</div>}
             <div className="space-y-3">
-              {notifications.map(n => {
-                const handleNotificationDismiss = () => handleDismiss(n.id);
-                const handleNotificationSnooze = () => handleSnooze(n.id, 10);
-                return (
-                  <div 
-                    key={n.id} 
-                    className={`p-4 border rounded-lg transition-all duration-200 ${
-                      n.read 
-                        ? 'border-gray-200 bg-gray-50 text-gray-600' 
-                        : 'border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-900 shadow-sm hover:shadow-md'
-                    }`}
-                  >
-                    <div className="flex justify-between items-start">
-                      <span className={`${n.read ? 'text-gray-600' : 'text-blue-900 font-medium'} flex-1 mr-3`}>
-                        {n.message}
-                      </span>
-                      {!n.read && (
-                        <div className="flex gap-2 flex-shrink-0">
-                          <button 
-                            className="phub-action-btn-secondary text-xs px-2 py-1" 
-                            onClick={handleNotificationDismiss}
-                          >
-                            Dismiss
-                          </button>
-                          <button 
-                            className="text-xs px-2 py-1 bg-yellow-400 text-yellow-900 rounded hover:bg-yellow-500 font-medium transition-colors" 
-                            onClick={handleNotificationSnooze}
-                          >
-                            Snooze 10m
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                    <div className="text-xs text-gray-500 mt-2">
-                      {new Date(n.created_at).toLocaleString()}
-                    </div>
+              {notifications.map(n => (
+                <div 
+                  key={n.id} 
+                  className={`p-4 border rounded-lg transition-all duration-200 ${
+                    n.read 
+                      ? 'border-gray-200 bg-gray-50 text-gray-600' 
+                      : 'border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-900 shadow-sm hover:shadow-md'
+                  }`}
+                >
+                  <div className="flex justify-between items-start">
+                    <span className={`${n.read ? 'text-gray-600' : 'text-blue-900 font-medium'} flex-1 mr-3`}>
+                      {n.message}
+                    </span>
+                    {!n.read && (
+                      <div className="flex gap-2 flex-shrink-0">
+                        <button 
+                          className="phub-action-btn-secondary text-xs px-2 py-1" 
+                          onClick={handleNotificationDismiss(n.id)}
+                        >
+                          Dismiss
+                        </button>
+                        <button 
+                          className="text-xs px-2 py-1 bg-yellow-400 text-yellow-900 rounded hover:bg-yellow-500 font-medium transition-colors" 
+                          onClick={handleNotificationSnooze(n.id)}
+                        >
+                          Snooze 10m
+                        </button>
+                      </div>
+                    )}
                   </div>
-                );
-              })}
+                  <div className="text-xs text-gray-500 mt-2">
+                    {new Date(n.created_at).toLocaleString()}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
