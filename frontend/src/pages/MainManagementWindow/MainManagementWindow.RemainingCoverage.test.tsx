@@ -174,7 +174,7 @@ describe('MainManagementWindow - Remaining Coverage', () => {
   describe('Subtask Display Coverage', () => {
     it('shows subtask count for tasks with subtasks', async () => {
       // Update mock to return tasks with subtasks
-      global.fetch = vi.fn().mockImplementation((url: string, options?: RequestInit) => {
+      global.fetch = vi.fn().mockImplementation((url: string, options?: RequestInit) => {  // skipcq: JS-0356
         if (url === '/api/csrf-token') {
           return Promise.resolve({
             ok: true,
@@ -363,7 +363,7 @@ describe('MainManagementWindow - Remaining Coverage', () => {
   describe('TaskDetails onEdit Coverage', () => {
     it('covers TaskDetails onEdit callback', async () => {
       // Update mock to return a task  
-      global.fetch = vi.fn().mockImplementation((url: string, options?: RequestInit) => {
+      global.fetch = vi.fn().mockImplementation((url: string, options?: RequestInit) => {  // skipcq: JS-0356
         if (url === '/api/csrf-token') {
           return Promise.resolve({
             ok: true,

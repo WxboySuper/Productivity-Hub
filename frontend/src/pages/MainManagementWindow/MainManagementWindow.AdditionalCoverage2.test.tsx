@@ -161,7 +161,7 @@ describe('MainManagementWindow - Additional Coverage', () => {
 
     it('handles auth verification error', async () => {
       // Mock fetch to return error for auth check
-      global.fetch = vi.fn().mockImplementation((url: string, options?: RequestInit) => {
+      global.fetch = vi.fn().mockImplementation((url: string, options?: RequestInit) => {  // skipcq: JS-0356
         if (url === '/api/csrf-token') {
           return Promise.resolve({
             ok: true,
