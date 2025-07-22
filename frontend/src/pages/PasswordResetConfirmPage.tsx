@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import AppHeader from '../components/AppHeader';
 
@@ -73,10 +73,13 @@ export default function PasswordResetConfirmPage() {
   }, [password, confirmPassword, navigate, resetToken]);
 
   return (
-    <div className="min-h-screen flex flex-col phub-main-content">
+    <>
       <AppHeader />
-      <main className="flex-1 flex flex-col items-center justify-center px-4">
-        <div className="w-full max-w-md bg-white/95 rounded-xl shadow-2xl p-10 flex flex-col items-center border border-blue-200 backdrop-blur-sm z-10 mt-10 phub-glass">
+      <main className="min-h-screen flex flex-col phub-main-content flex-1 items-center justify-center px-4">
+        <form
+          onSubmit={handleSubmit}
+          className="w-full max-w-md bg-white/95 rounded-xl shadow-2xl p-10 flex flex-col items-center border border-blue-200 backdrop-blur-sm z-10 mt-10 phub-glass"
+        >
           <h2 className="text-2xl font-bold mb-6 text-center phub-text-gradient">Set New Password</h2>
           {error && (
             <div className="mb-4 flex items-center gap-2 rounded border border-red-300 bg-red-50 px-4 py-3 text-red-800 shadow-sm animate-fade-in">
@@ -84,47 +87,41 @@ export default function PasswordResetConfirmPage() {
               <span className="font-semibold">{error}</span>
             </div>
           )}
-          <form onSubmit={handleSubmit}>
-            <div className="mb-4 w-full">
-              <label className="block mb-1 font-medium" htmlFor="password">
-                New Password
-              </label>
-              <input
-                className="w-full border rounded px-3 py-2"
-                type="password"
-                id="password"
-                name="password"
-                value={password}
-                onChange={handlePasswordChange}
-                required
-                autoComplete="new-password"
-              />
-            </div>
-            <div className="mb-6 w-full">
-              <label className="block mb-1 font-medium" htmlFor="confirmPassword">
-                Confirm New Password
-              </label>
-              <input
-                className="w-full border rounded px-3 py-2"
-                type="password"
-                id="confirmPassword"
-                name="confirmPassword"
-                value={confirmPassword}
-                onChange={handleConfirmPasswordChange}
-                required
-                autoComplete="new-password"
-              />
-            </div>
-            <button
-              type="submit"
-              className="phub-action-btn w-full justify-center"
-              disabled={loading}
-            >
-              {loading ? "Resetting..." : "Set New Password"}
-            </button>
-          </form>
-        </div>
+          <label className="block mb-1 font-medium mb-4 w-full" htmlFor="password">
+            New Password
+            <input
+              className="w-full border rounded px-3 py-2 mt-1"
+              type="password"
+              id="password"
+              name="password"
+              value={password}
+              onChange={handlePasswordChange}
+              required
+              autoComplete="new-password"
+            />
+          </label>
+          <label className="block mb-1 font-medium mb-6 w-full" htmlFor="confirmPassword">
+            Confirm New Password
+            <input
+              className="w-full border rounded px-3 py-2 mt-1"
+              type="password"
+              id="confirmPassword"
+              name="confirmPassword"
+              value={confirmPassword}
+              onChange={handleConfirmPasswordChange}
+              required
+              autoComplete="new-password"
+            />
+          </label>
+          <button
+            type="submit"
+            className="phub-action-btn w-full justify-center"
+            disabled={loading}
+          >
+            {loading ? "Resetting..." : "Set New Password"}
+          </button>
+        </form>
       </main>
-    </div>
+    </>
   );
 }
