@@ -1,4 +1,4 @@
-import React from 'react';
+import { useRef, useEffect } from 'react';
 import '../styles/ConfirmDialog.css';
 
 interface ConfirmDialogProps {
@@ -25,6 +25,14 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   type = 'danger'
 }) => {
   if (!open) return null;
+
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (open && dialogRef.current) {
+      dialogRef.current.focus();
+    }
+  }, [open]);
 
   const getTypeStyles = () => {
     switch (type) {
@@ -61,7 +69,6 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
 
   const typeStyles = getTypeStyles();
 
-  // Handlers to avoid arrow functions in JSX
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) {
       onCancel();
@@ -90,8 +97,13 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
     <div
       className="phub-modal-backdrop"
       tabIndex={-1}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="phub-confirm-dialog-title"
+      aria-describedby="phub-confirm-dialog-message"
       onClick={handleBackdropClick}
       onKeyDown={handleBackdropKeyDown}
+      ref={dialogRef}
     >
       <div className="phub-form-container" style={{ maxWidth: '28rem' }}>
         {/* Floating decorative elements */}
@@ -105,7 +117,11 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           className="phub-form-header"
           style={{ background: typeStyles.headerBg }}
         >
-          <h2 className="phub-form-title" style={{ fontSize: '1.5rem' }}>
+          <h2
+            className="phub-form-title"
+            style={{ fontSize: '1.5rem' }}
+            id="phub-confirm-dialog-title"
+          >
             <span style={{ marginRight: 'var(--phub-space-sm)' }}>{typeStyles.icon}</span>
             {title}
           </h2>
@@ -113,13 +129,16 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
 
         <div className="phub-form-body">
           {/* Message */}
-          <div style={{
-            fontSize: '1rem',
-            lineHeight: '1.6',
-            color: 'var(--phub-gray-700)',
-            textAlign: 'center',
-            padding: 'var(--phub-space-md) 0'
-          }}>
+          <div
+            id="phub-confirm-dialog-message"
+            style={{
+              fontSize: '1rem',
+              lineHeight: '1.6',
+              color: 'var(--phub-gray-700)',
+              textAlign: 'center',
+              padding: 'var(--phub-space-md) 0'
+            }}
+          >
             {message}
           </div>
 
