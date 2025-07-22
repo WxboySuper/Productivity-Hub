@@ -65,7 +65,7 @@ export default function LoginPage() {
               <span className="font-semibold">{error}</span>
             </div>
           )}
-          <label className="block mb-1 font-medium mb-4" htmlFor="usernameOrEmail">
+          <label className="block font-medium mb-4" htmlFor="usernameOrEmail">
             Username or Email
             <input
               className="w-full border rounded px-4 py-3 text-base mt-1"
