@@ -479,7 +479,7 @@ const MainManagementWindow: React.FC = () => {
   let content: React.ReactNode = null;
   if (activeView === 'all') {
     // Only show top-level tasks (parent_id == null)
-    const topLevelTasks = tasks.filter((task: Task) => task.parent_id == null);
+    const topLevelTasks = tasks.filter((task: Task) => task.parent_id === null);
     // Extracted TaskCard to reduce nesting
     const TaskCard = ({ task }: { task: Task }) => (
       <div className="phub-item-card">
@@ -576,7 +576,7 @@ const MainManagementWindow: React.FC = () => {
     );
   } else if (activeView === 'quick') {
     // Only show top-level quick tasks (parent_id == null)
-    const quickTasks = tasks.filter((t: Task) => !t.projectId && t.parent_id == null);
+    const quickTasks = tasks.filter((t: Task) => !t.projectId && t.parent_id === null);
     // Extracted QuickTaskCard to reduce nesting
     const QuickTaskCard = ({ task }: { task: Task }) => (
       <div className="phub-item-card">
@@ -999,7 +999,7 @@ function ProjectTasksSection({
   setShowTaskForm,
 }: ProjectTasksSectionProps) {
   // Only show top-level project tasks (parent_id == null)
-  const projectTasks = tasks.filter((t: Task) => t.projectId === selectedProject.id && t.parent_id == null);
+  const projectTasks = tasks.filter((t: Task) => t.projectId === selectedProject.id && t.parent_id === null);
   if (!tasksLoading && !tasksError && projectTasks.length === 0) {
     return (
       <div className="phub-empty-state">
