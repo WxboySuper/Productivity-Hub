@@ -1228,8 +1228,8 @@ def delete_task(task_id):
         logger.error("Task deletion failed: %s", e)
         return error_response("Failed to delete task", 500)
 
-if __name__ == '__main__':
-    init_db()
-    logger.info("Database initialized.")
-    logger.info("Starting Flask app...")
-    app.run(debug=True)
+if __name__ == '__main__':  # pragma: no cover
+    init_db()  # pragma: no cover
+    logger.info("Database initialized.")  # pragma: no cover
+    logger.info("Starting Flask app...")  # pragma: no cover
+    app.run(debug=True)  # pragma: no cover
