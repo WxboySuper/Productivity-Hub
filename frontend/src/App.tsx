@@ -1,4 +1,3 @@
-import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
 import RegisterPage from './pages/RegisterPage';
@@ -9,7 +8,7 @@ import HomePage from './pages/HomePage';
 import MainManagementWindow from './pages/MainManagementWindow';
 import { useAuth } from './auth';
 import NotificationCenter from './components/NotificationCenter';
-import Background, { BackgroundType } from './components/Background';
+import Background from './components/Background';
 import ErrorBoundary from './components/ErrorBoundary';
 import { ToastProvider } from './components/ToastProvider';
 import { BackgroundProvider, useBackground } from './context/BackgroundContext';
@@ -52,13 +51,12 @@ function AppRoutes() {
 }
 
 function AppContent() {
-  const { backgroundType, setBackgroundType } = useBackground();
+  const { backgroundType } = useBackground();
   
   return (
     <ErrorBoundary>
       <Background 
         backgroundType={backgroundType} 
-        onBackgroundChange={setBackgroundType}
       />
       <div className="content-overlay">
         <Router>
