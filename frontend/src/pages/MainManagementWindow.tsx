@@ -1214,6 +1214,6 @@ function ProjectTasksSection({
       })}
     </div>
     );
-  };
+  }
 
 export default MainManagementWindow;
