@@ -18,7 +18,7 @@ export default defineConfig({
     reporter: 'verbose',
     logLevel: 'info',
     coverage: {
-      reporter: ['text', 'json', 'html'],
+      reporter: ['text', 'json', 'html', 'cobertura'],
       exclude: [
         'node_modules/',
         'src/setupTests.ts',
