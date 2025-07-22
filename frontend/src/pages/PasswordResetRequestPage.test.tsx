@@ -188,7 +188,7 @@ describe('PasswordResetRequestPage', () => {
       fireEvent.click(submitButton);
 
       await waitFor(() => {
-        const successMessage = screen.getByText(/If an account with that email exists, a password reset link has been sent/i).closest('div');
+        const successMessage = screen.getByText(/If an account with that email exists, a password reset link has been sent/i);
         expect(successMessage).toHaveClass('border-green-300', 'bg-green-50', 'text-green-800');
       }, { timeout: 3000 });
     });
@@ -275,7 +275,7 @@ describe('PasswordResetRequestPage', () => {
       fireEvent.click(submitButton);
 
       await waitFor(() => {
-        const errorMessage = screen.getByText(/network error/i).closest('div');
+        const errorMessage = screen.getByText(/network error/i);
         expect(errorMessage).toHaveClass('border-red-300', 'bg-red-50', 'text-red-800');
       });
     });
@@ -559,7 +559,7 @@ describe('PasswordResetRequestPage', () => {
         const errorMessage = screen.getByText(/network error/i);
         expect(errorMessage).toBeInTheDocument();
         // Error message should be visible and properly styled for accessibility
-        expect(errorMessage.closest('div')).toHaveClass('text-red-800');
+        expect(errorMessage).toHaveClass('text-red-800');
       });
     });
   });
