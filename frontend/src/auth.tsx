@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
 // Helper to read a cookie value by name
 export function getCookie(name: string): string | null {
@@ -8,7 +8,7 @@ export function getCookie(name: string): string | null {
 
 // Helper to fetch CSRF token if missing
 export async function ensureCsrfToken(): Promise<string | null> {
-  let token = getCookie('csrftoken');
+  const token = getCookie('csrftoken');
   if (token) return token;
   try {
     const res = await fetch('/api/csrf-token', { method: 'GET', credentials: 'include' });
@@ -85,7 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkAuth();
   }, []);
 
-  const login = (token: string) => {
+  const login = (token?: string) => {  // variable is unused but kept for compatibility, skipcq
     // After successful login, check auth status from server
     checkAuth();
   };
@@ -112,11 +112,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (response.ok) {        
         // Verify logout was successful
         const logoutVerified = await verifyLogoutSuccess();
-        if (logoutVerified) {
-          return true;
-        } else {
-          return false;
-        }
+        return logoutVerified;
       } else {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || `Logout failed with status ${response.status}`);
