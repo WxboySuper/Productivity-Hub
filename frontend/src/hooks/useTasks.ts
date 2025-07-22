@@ -29,7 +29,7 @@ export function useTasks() {
       const tasks = Array.isArray(data) ? data : (data.tasks || []);
       
       // Normalize task data
-      const normalizedTasks = tasks.map((task: any) => ({
+      const normalizedTasks = tasks.map((task: Task) => ({
         ...task,
         projectId: typeof task.projectId !== 'undefined' ? task.projectId : task.project_id,
       }));
