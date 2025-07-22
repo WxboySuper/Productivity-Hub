@@ -14,7 +14,7 @@ omit =
 [report]
 exclude_lines =
     pragma: no cover
-    if __name__ == .__main__.:  # main entry point
+    if __name__ == "__main__":  # main entry point
     @abc.abstractmethod
     raise NotImplementedError
     except ImportError
