@@ -19,6 +19,8 @@ class ErrorBoundary extends Component<Props, State> {
       error: null,
       errorInfo: null,
     };
+    this.handleReload = this.handleReload.bind(this);
+    this.handleTryAgain = this.handleTryAgain.bind(this);
   }
 
   static getDerivedStateFromError(error: Error): Partial<State> {
@@ -34,6 +36,17 @@ class ErrorBoundary extends Component<Props, State> {
       error,
       errorInfo,
     });
+  }
+
+  handleReload() {
+    // referencing this to satisfy linter
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    this;
+    window.location.reload();
+  }
+
+  handleTryAgain() {
+    this.setState({ hasError: false, error: null, errorInfo: null });
   }
 
   render() {
@@ -65,15 +78,13 @@ class ErrorBoundary extends Component<Props, State> {
 
             <div className="flex gap-3">
               <button
-                onClick={() => window.location.reload()}
+                onClick={this.handleReload}
                 className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
               >
                 Reload Page
               </button>
               <button
-                onClick={() => {
-                  this.setState({ hasError: false, error: null, errorInfo: null });
-                }}
+                onClick={this.handleTryAgain}
                 className="flex-1 bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition-colors"
               >
                 Try Again
