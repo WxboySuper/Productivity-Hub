@@ -51,7 +51,7 @@ function AppRoutes() {
 }
 
 function AppContent() {
-  const { backgroundType, setBackgroundType } = useBackground();
+  const { backgroundType } = useBackground();
   
   return (
     <ErrorBoundary>
