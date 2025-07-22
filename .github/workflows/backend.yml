@@ -65,6 +65,7 @@ jobs:
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           path: code-coverage-results.md
+          header: Backend Coverage
 
       - name: DeepSource Test Coverage
         uses: deepsourcelabs/test-coverage-action@master
