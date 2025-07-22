@@ -61,7 +61,7 @@ export default function RegisterPage() {
     <div className="min-h-screen flex flex-col">
       <AppHeader />
       <main className="flex-1 flex flex-col items-center justify-center relative z-10 px-4">
-        <div className="w-full max-w-lg bg-white/95 rounded-xl shadow-2xl p-10 flex flex-col items-center border border-blue-200 backdrop-blur-sm z-10 mt-10 phub-glass">
+        <section className="w-full max-w-lg bg-white/95 rounded-xl shadow-2xl p-10 border border-blue-200 backdrop-blur-sm z-10 mt-10 phub-glass flex flex-col items-center">
           <h2 className="text-2xl font-bold mb-6 text-center phub-text-gradient">Register</h2>
           {error && (
             <div className="mb-4 flex items-center gap-2 rounded border border-red-300 bg-red-50 px-4 py-3 text-red-800 shadow-sm animate-fade-in">
@@ -69,13 +69,11 @@ export default function RegisterPage() {
               <span className="font-semibold">{error}</span>
             </div>
           )}
-          <form onSubmit={handleSubmit}>
-            <div className="mb-4">
-              <label className="block mb-1 font-medium" htmlFor="username">
-                Username
-              </label>
+          <form onSubmit={handleSubmit} className="w-full">
+            <label className="block mb-1 font-medium" htmlFor="username">
+              Username
               <input
-                className="w-full border rounded px-4 py-3 text-base"
+                className="w-full border rounded px-4 py-3 text-base mt-1"
                 type="text"
                 id="username"
                 name="username"
@@ -85,13 +83,11 @@ export default function RegisterPage() {
                 autoComplete="username"
                 placeholder="Choose a username"
               />
-            </div>
-            <div className="mb-4">
-              <label className="block mb-1 font-medium" htmlFor="email">
-                Email
-              </label>
+            </label>
+            <label className="block mb-1 font-medium mt-4" htmlFor="email">
+              Email
               <input
-                className="w-full border rounded px-4 py-3 text-base"
+                className="w-full border rounded px-4 py-3 text-base mt-1"
                 type="email"
                 id="email"
                 name="email"
@@ -101,13 +97,11 @@ export default function RegisterPage() {
                 autoComplete="email"
                 placeholder="Enter your email address"
               />
-            </div>
-            <div className="mb-4">
-              <label className="block mb-1 font-medium" htmlFor="password">
-                Password
-              </label>
+            </label>
+            <label className="block mb-1 font-medium mt-4" htmlFor="password">
+              Password
               <input
-                className="w-full border rounded px-4 py-3 text-base"
+                className="w-full border rounded px-4 py-3 text-base mt-1"
                 type="password"
                 id="password"
                 name="password"
@@ -117,13 +111,11 @@ export default function RegisterPage() {
                 autoComplete="new-password"
                 placeholder="Create a secure password"
               />
-            </div>
-            <div className="mb-6">
-              <label className="block mb-1 font-medium" htmlFor="confirmPassword">
-                Confirm Password
-              </label>
+            </label>
+            <label className="block mb-1 font-medium mt-4" htmlFor="confirmPassword">
+              Confirm Password
               <input
-                className="w-full border rounded px-4 py-3 text-base"
+                className="w-full border rounded px-4 py-3 text-base mt-1"
                 type="password"
                 id="confirmPassword"
                 name="confirmPassword"
@@ -133,16 +125,16 @@ export default function RegisterPage() {
                 autoComplete="new-password"
                 placeholder="Confirm your password"
               />
-            </div>
+            </label>
             <button
               type="submit"
-              className="phub-action-btn w-full justify-center"
+              className="phub-action-btn w-full justify-center mt-6"
               disabled={loading}
             >
               {loading ? "Creating Account..." : "Create Account"}
             </button>
           </form>
-        </div>
+        </section>
       </main>
     </div>
   );
