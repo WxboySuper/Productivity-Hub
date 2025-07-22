@@ -276,7 +276,7 @@ describe('useTasks', () => {
         json: () => Promise.resolve({ message: 'Task updated' }),
       } as Response);
 
-      let updateResult: boolean = false;
+      let updateResult = false;
       await act(async () => {
         updateResult = await result.current.updateTask(1, { completed: true });
       });
@@ -312,7 +312,7 @@ describe('useTasks', () => {
           json: () => Promise.resolve({ message: 'Task updated' }),
         } as Response);
 
-      let updateResult: boolean = false;
+      let updateResult = false;
       await act(async () => {
         updateResult = await result.current.updateTask(1, { completed: true });
       });
@@ -337,7 +337,7 @@ describe('useTasks', () => {
         json: () => Promise.resolve({ error: 'Update failed' }),
       } as Response);
 
-      let updateResult: boolean = false;
+      let updateResult = false;
       await act(async () => {
         updateResult = await result.current.updateTask(1, { completed: true });
       });
@@ -356,7 +356,7 @@ describe('useTasks', () => {
 
       mockFetch.mockRejectedValueOnce(new Error('Network error'));
 
-      let updateResult: boolean = false;
+      let updateResult = false;
       await act(async () => {
         updateResult = await result.current.updateTask(1, { completed: true });
       });
@@ -436,7 +436,7 @@ describe('useTasks', () => {
         json: () => Promise.resolve({ message: 'Task deleted' }),
       } as Response);
 
-      let deleteResult: boolean = false;
+      let deleteResult = false;
       await act(async () => {
         deleteResult = await result.current.deleteTask(1);
       });
@@ -462,7 +462,7 @@ describe('useTasks', () => {
         json: () => Promise.resolve({ error: 'Delete failed' }),
       } as Response);
 
-      let deleteResult: boolean = false;
+      let deleteResult = false;
       await act(async () => {
         deleteResult = await result.current.deleteTask(1);
       });
@@ -480,7 +480,7 @@ describe('useTasks', () => {
 
       mockFetch.mockRejectedValueOnce(new Error('Network error'));
 
-      let deleteResult: boolean = false;
+      let deleteResult = false;
       await act(async () => {
         deleteResult = await result.current.deleteTask(1);
       });

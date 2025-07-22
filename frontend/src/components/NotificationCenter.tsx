@@ -101,7 +101,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ pollingInterval
     setModalNotification(null);
   };
 
-  const handleSnooze = async (id: number, minutes: number = 10) => {
+  const handleSnooze = async (id: number, minutes = 10) => {
     // Don't make API calls if not authenticated
     if (!isAuthenticated) {
       /* v8 ignore next */
