@@ -7,6 +7,8 @@ __pycache__/
 *.pyc
 instance/
 .env
+.coverage
+htmlcov/
 
 # Node/React
 node_modules/
