@@ -99,7 +99,7 @@ describe('MainManagementWindow - Absolute Coverage', () => {
     await act(() => { fireEvent.click(screen.getByText('\uff0b')); });
     fireEvent.change(screen.getByPlaceholderText(/what needs to be done/i), { target: { value: 'Valid Task' } });
     fireEvent.click(screen.getByText('Create Task'));
-    // Backend error: check that the form submission was processed 
+    // Backend error: check that the form submission was processed
     await waitFor(() => {
       // The task form modal should close after submission attempt
       expect(screen.queryByText('✨Create Task')).not.toBeInTheDocument();
