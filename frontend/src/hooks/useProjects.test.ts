@@ -184,12 +184,12 @@ describe('useProjects', () => {
     });
 
     // Setup delayed response for refetch
-    let resolveRefetch: (value: any) => void;
+    let resolveRefetch: (value: Response) => void;
     const refetchPromise = new Promise(resolve => {
       resolveRefetch = resolve;
     });
 
-    mockFetch.mockReturnValueOnce(refetchPromise as any);
+    mockFetch.mockReturnValueOnce(refetchPromise as Promise<Response>);
 
     act(() => {
       result.current.refetch();
@@ -200,10 +200,12 @@ describe('useProjects', () => {
 
     // Resolve the refetch
     act(() => {
-      resolveRefetch({
-        ok: true,
-        json: () => Promise.resolve({ projects: [] }),
-      });
+      resolveRefetch(
+        new Response(JSON.stringify({ projects: [] }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        })
+      );
     });
 
     await waitFor(() => {
