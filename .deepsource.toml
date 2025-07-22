@@ -4,10 +4,12 @@ version = 1
 
 test_patterns = [
   "**/test_*.py",
+  "**/tests/test_*.py",
   "**/__tests__/**",
   "**/*.spec.ts",
   "**/*.spec.js",
   "**/*.test.ts",
+  "**/*.test.tsx",
   "**/*.test.js"
 ]
 
