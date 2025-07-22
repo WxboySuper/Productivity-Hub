@@ -41,7 +41,7 @@ class ErrorBoundary extends Component<Props, State> {
   handleReload() {
     // referencing this to satisfy linter
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    this;
+    this;  // skipcq: JS-0093
     window.location.reload();
   }
 
@@ -52,7 +52,10 @@ class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       if (this.props.fallback && this.state.error) {
-        return this.props.fallback(this.state.error, this.state.errorInfo || null);
+        return this.props.fallback(
+          this.state.error,
+          this.state.errorInfo || { componentStack: '' }
+        );
       }
 
       return (
