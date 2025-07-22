@@ -31,9 +31,12 @@ jobs:
           pip install -r ../requirements.txt
           pip install pytest pytest-cov
 
-      - name: Copy .env to backend
-        run: cp ../.env .env
+
+      - name: Create .env from GitHub secret
+        run: echo "$BACKEND_ENV_FILE" > .env
         working-directory: ./backend
+        env:
+          BACKEND_ENV_FILE: ${{ secrets.BACKEND_ENV_FILE }}
 
       - name: Run tests with coverage (xml and text)
         run: |
