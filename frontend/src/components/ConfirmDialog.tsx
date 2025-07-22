@@ -61,8 +61,38 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
 
   const typeStyles = getTypeStyles();
 
+  // Handlers to avoid arrow functions in JSX
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) {
+      onCancel();
+    }
+  };
+
+  const handleBackdropKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Escape') {
+      onCancel();
+    }
+  };
+
+  const handleConfirmMouseEnter = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (!loading) {
+      e.currentTarget.style.background = typeStyles.confirmHoverBg;
+    }
+  };
+
+  const handleConfirmMouseLeave = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (!loading) {
+      e.currentTarget.style.background = typeStyles.confirmBg;
+    }
+  };
+
   return (
-    <div className="phub-modal-backdrop" onClick={(e) => e.target === e.currentTarget && onCancel()}>
+    <div
+      className="phub-modal-backdrop"
+      tabIndex={-1}
+      onClick={handleBackdropClick}
+      onKeyDown={handleBackdropKeyDown}
+    >
       <div className="phub-form-container" style={{ maxWidth: '28rem' }}>
         {/* Floating decorative elements */}
         <div className="phub-floating-elements">
@@ -143,16 +173,8 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
               color: 'white',
               boxShadow: 'var(--phub-shadow-md)'
             }}
-            onMouseEnter={(e) => {
-              if (!loading) {
-                e.currentTarget.style.background = typeStyles.confirmHoverBg;
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!loading) {
-                e.currentTarget.style.background = typeStyles.confirmBg;
-              }
-            }}
+            onMouseEnter={handleConfirmMouseEnter}
+            onMouseLeave={handleConfirmMouseLeave}
           >
             {loading ? (
               <>
