@@ -32,3 +32,6 @@ name = "python"
 
 [[analyzers]]
 name = "javascript"
+
+[[analyzers]]
+name = "test-coverage"
