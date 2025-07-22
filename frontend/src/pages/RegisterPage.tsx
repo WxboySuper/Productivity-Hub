@@ -58,9 +58,9 @@ export default function RegisterPage() {
   );
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <>
       <AppHeader />
-      <section className="flex-1 flex flex-col items-center justify-center relative z-10 px-4 w-full max-w-lg bg-white/95 rounded-xl shadow-2xl p-10 border border-blue-200 backdrop-blur-sm z-10 mt-10 phub-glass">
+      <section className="min-h-screen flex flex-col flex-1 items-center justify-center relative z-10 px-4 w-full max-w-lg bg-white/95 rounded-xl shadow-2xl p-10 border border-blue-200 backdrop-blur-sm z-10 mt-10 phub-glass">
         <h2 className="text-2xl font-bold mb-6 text-center phub-text-gradient">Register</h2>
         {error && (
           <div className="mb-4 flex items-center gap-2 rounded border border-red-300 bg-red-50 px-4 py-3 text-red-800 shadow-sm animate-fade-in">
@@ -142,6 +142,6 @@ export default function RegisterPage() {
           </button>
         </form>
       </section>
-    </div>
+    </>
   );
 }
