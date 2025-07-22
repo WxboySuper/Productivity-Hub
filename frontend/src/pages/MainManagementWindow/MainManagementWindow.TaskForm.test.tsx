@@ -74,7 +74,7 @@ describe('Task Form', () => {
     }, { timeout: 5000 });
   });
 
-  it('closes task form when cancel is clicked', () => {
+  it('closes task form when cancel is clicked', async () => {
     act(() => {
       render(<MainManagementWindowWrapper />);
     });

@@ -82,6 +82,7 @@ const mockReminderNotification = {
 };
 
 describe('NotificationCenter', () => {
+
   let toLocaleStringSpy: jest.SpyInstance;
 
   beforeAll(() => {
@@ -339,15 +340,21 @@ describe('NotificationCenter', () => {
 
     it('renders the correct timestamp for each notification', async () => {
       vi.useRealTimers();
+      // Restore the original toLocaleString for this test only
+      toLocaleStringSpy.mockRestore();
       render(<NotificationCenter />);
       await waitFor(() => {
         expect(screen.getByLabelText('Show notifications')).toBeInTheDocument();
       });
       fireEvent.click(screen.getByLabelText('Show notifications'));
       await waitFor(() => {
-        // All notifications should use the mocked date string
-        expect(screen.getAllByText('mocked-date').length).toBe(mockNotifications.length);
+        // Check that timestamp divs are rendered for each notification
+        // Since the dates will be formatted as actual dates, check for the presence of date strings
+        const timestampElements = screen.getAllByText(/\d{1,2}\/\d{1,2}\/\d{4}/);
+        expect(timestampElements.length).toBe(mockNotifications.length);
       });
+      // Re-mock toLocaleString for other tests
+      toLocaleStringSpy = vi.spyOn(Date.prototype, 'toLocaleString').mockReturnValue('mocked-date');
     });
 
     it('renders a timestamp div for each notification', async () => {
