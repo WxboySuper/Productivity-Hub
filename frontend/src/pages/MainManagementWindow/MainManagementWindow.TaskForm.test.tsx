@@ -358,7 +358,7 @@ describe('Task Form', () => {
 
   it('opens task details when clicking on task title', async () => {
     // Stateful mock for task details
-    let tasks = [
+    const tasks = [
       {
         id: 1,
         title: 'Test Task',
