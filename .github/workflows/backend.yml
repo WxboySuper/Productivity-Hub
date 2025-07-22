@@ -2,17 +2,9 @@ name: Backend CI
 
 on:
   push:
-    paths:
-      - 'backend/**'
-      - '.github/workflows/backend.yml'
-      - 'requirements.txt'
-      - 'pyproject.toml'
+    branches: [main]
   pull_request:
-    paths:
-      - 'backend/**'
-      - '.github/workflows/backend.yml'
-      - 'requirements.txt'
-      - 'pyproject.toml'
+    branches: [main]
 
 jobs:
   test:
@@ -35,14 +27,18 @@ jobs:
           pip install -r ../requirements.txt
           pip install pytest pytest-cov
 
-      - name: Run tests with coverage
+      - name: Copy .env to backend
+        run: cp ../.env .env
+        working-directory: ./backend
+
+      - name: Run tests with coverage (xml and text)
         run: |
-          pytest --cov --cov-report=term-missing --cov-report=xml
+          pytest --cov --cov-report=term-missing --cov-report=xml > coverage.txt
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
-          files: ./backend/coverage.xml
+          files: ./backend/coverage.txt
           flags: backend
           name: backend-coverage
           fail_ci_if_error: false
@@ -51,6 +47,6 @@ jobs:
         if: github.event_name == 'pull_request'
         uses: marocchino/sticky-pull-request-comment@v2
         with:
-          path: ./backend/coverage.xml
+          path: ./backend/coverage.txt
           header: Backend Coverage
           hide_and_recreate: true
