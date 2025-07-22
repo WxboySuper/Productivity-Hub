@@ -328,7 +328,7 @@ describe('useTasks', () => {
 
     it('should handle update failure', async () => {
   document.cookie = '_csrf_token=test_token';
-  const consoleSpy = vi.spyOn(console, 'error').mockImplementation(function noop() {});
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(vi.fn());
 
       const { result } = renderHook(() => useTasks());
 
@@ -350,7 +350,7 @@ describe('useTasks', () => {
 
     it('should handle network error during update', async () => {
   document.cookie = '_csrf_token=test_token';
-  const consoleSpy = vi.spyOn(console, 'error').mockImplementation(function noop() {});
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(vi.fn());
 
       const { result } = renderHook(() => useTasks());
 
@@ -453,7 +453,7 @@ describe('useTasks', () => {
     });
 
     it('should handle delete failure', async () => {
-  const consoleSpy = vi.spyOn(console, 'error').mockImplementation(function noop() {});
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(vi.fn());
 
       const { result } = renderHook(() => useTasks());
 
@@ -474,7 +474,7 @@ describe('useTasks', () => {
     });
 
     it('should handle network error during delete', async () => {
-  const consoleSpy = vi.spyOn(console, 'error').mockImplementation(function noop() {});
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(vi.fn());
 
       const { result } = renderHook(() => useTasks());
 
