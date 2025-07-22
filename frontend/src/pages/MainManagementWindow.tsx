@@ -554,7 +554,11 @@ function MainManagementWindow() {
     const isEdit = Boolean(editProject);
     try {
       await ensureCsrfToken();
-      const url = isEdit ? `/api/projects/${editProject!.id}` : '/api/projects';
+      const url = isEdit
+        ? editProject
+          ? `/api/projects/${editProject.id}`
+          : (() => { throw new Error('editProject is null or undefined during edit operation'); })()
+        : '/api/projects';
       const method = isEdit ? 'PUT' : 'POST';
       const response = await fetch(url, {
         method,
