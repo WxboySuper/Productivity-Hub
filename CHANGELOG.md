@@ -7,6 +7,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## API Change Summary Requirement
 - For every stable, alpha, or beta release, summarize all API changes (new endpoints, deleted endpoints, changes to endpoints, etc.) in the changelog, even if they were already documented in dev releases. This ensures the release notes provide a complete overview of API evolution for each version.
 
+## [v0.12.0-dev11] - 2025-07-22
+
+### Frontend Testing & Coverage
+- Achieved 441 passing frontend tests with 90.71% overall coverage.
+- Closed remaining single-line/component coverage gaps in `ProjectForm.tsx`, `PasswordResetConfirmPage.tsx`, `LoginPage.tsx`, and `useTasks.ts`.
+- Addressed moderate and complex coverage gaps in `NotificationCenter.tsx`, `TaskForm.tsx`, `TaskDetails.tsx`, and `MainManagementWindow.tsx` (see checklist for line details).
+- Improved test reliability and coverage reporting; all critical UI and state management paths now tested.
+- Refactored and stabilized test infrastructure for maintainability and speed.
+
+### Backend Testing
+- Began backend API and integration test planning (CRUD, authentication, error cases, CSRF, database integration).
+- Outlined backend test priorities in checklist for upcoming sprints.
+
+### CI/CD & Coverage Reporting
+- Added GitHub Actions workflow to run frontend tests and generate coverage on PRs and pushes to main.
+- Integrated automated PR coverage summary comment using `irongut/CodeCoverageSummary` for visibility.
+- Ensured coverage report uses `frontend/coverage/coverage-final.json` for compatibility.
+
+### Bug Fixes & Improvements
+- Fixed test selector logic in `PasswordResetRequestPage.test.tsx` and similar files to correctly target elements for class assertions.
+- Improved error and success message styling and testability in password reset and login flows.
+- General test cleanup: removed redundant `.closest('div')` calls, improved assertion accuracy, and updated test snapshots.
+
+### Documentation & Checklist
+- Updated `docs/temp/current-checklist.md` to reflect current test and coverage status, remaining gaps, and backend test plans.
+- Added/updated documentation for new test patterns, coverage strategies, and CI workflow usage.
+
 ## [v0.12.0-dev10] - 2025-07-15
 
 ### Test Infrastructure Improvements
