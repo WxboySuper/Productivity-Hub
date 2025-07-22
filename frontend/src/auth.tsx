@@ -85,7 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkAuth();
   }, []);
 
-  const login = () => {
+  const login = (token?: string) => {  // variable is unused but kept for compatibility
     // After successful login, check auth status from server
     checkAuth();
   };
