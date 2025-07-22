@@ -60,15 +60,18 @@ export default function RegisterPage() {
   return (
     <>
       <AppHeader />
-      <section className="min-h-screen flex flex-col flex-1 items-center justify-center relative z-10 px-4 w-full max-w-lg bg-white/95 rounded-xl shadow-2xl p-10 border border-blue-200 backdrop-blur-sm z-10 mt-10 phub-glass">
-        <h2 className="text-2xl font-bold mb-6 text-center phub-text-gradient">Register</h2>
-        {error && (
-          <div className="mb-4 flex items-center gap-2 rounded border border-red-300 bg-red-50 px-4 py-3 text-red-800 shadow-sm animate-fade-in">
-            <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12A9 9 0 1 1 3 12a9 9 0 0 1 18 0Z" /></svg>
-            <span className="font-semibold">{error}</span>
-          </div>
-        )}
-        <form onSubmit={handleSubmit} className="w-full">
+      <div className="min-h-screen flex flex-col flex-1 items-center justify-center relative z-10 px-4">
+        <form
+          onSubmit={handleSubmit}
+          className="w-full max-w-lg bg-white/95 rounded-xl shadow-2xl p-10 border border-blue-200 backdrop-blur-sm z-10 mt-10 phub-glass"
+        >
+          <h2 className="text-2xl font-bold mb-6 text-center phub-text-gradient">Register</h2>
+          {error && (
+            <div className="mb-4 flex items-center gap-2 rounded border border-red-300 bg-red-50 px-4 py-3 text-red-800 shadow-sm animate-fade-in">
+              <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12A9 9 0 1 1 3 12a9 9 0 0 1 18 0Z" /></svg>
+              <span className="font-semibold">{error}</span>
+            </div>
+          )}
           <div className="mb-4">
             <label className="block mb-1 font-medium" htmlFor="username">
               Username
@@ -141,7 +144,7 @@ export default function RegisterPage() {
             {loading ? "Creating Account..." : "Create Account"}
           </button>
         </form>
-      </section>
+      </div>
     </>
   );
 }
