@@ -1232,4 +1232,5 @@ if __name__ == '__main__':  # pragma: no cover
     init_db()  # pragma: no cover
     logger.info("Database initialized.")  # pragma: no cover
     logger.info("Starting Flask app...")  # pragma: no cover
-    app.run(debug=True)  # pragma: no cover
+    debug_mode = os.getenv("FLASK_DEBUG", "0") == "1"  # pragma: no cover
+    app.run(debug=debug_mode)  # pragma: no cover
