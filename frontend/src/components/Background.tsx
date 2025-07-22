@@ -15,10 +15,9 @@ export type BackgroundType =
 
 interface BackgroundProps {
   backgroundType?: BackgroundType;
-  onBackgroundChange?: (newType: BackgroundType) => void;
 }
 
-const backgroundOptions = [
+const backgroundOptions = [  // skipcq: JS-0356
   { 
     id: 'creative-dots' as BackgroundType, 
     name: 'Creative Dots', 
@@ -92,8 +91,7 @@ const backgroundOptions = [
 ];
 
 const Background: React.FC<BackgroundProps> = ({ 
-  backgroundType = 'creative-dots',
-  onBackgroundChange 
+  backgroundType = 'creative-dots'
 }) => {
   const [currentBackground, setCurrentBackground] = useState<BackgroundType>(backgroundType);
 
