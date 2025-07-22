@@ -428,7 +428,7 @@ interface Subtask {
   isNew?: boolean;
 }
 
-  interface TaskFormValues {
+  export interface TaskFormValues {
     id?: number;
     title: string;
     description?: string;
