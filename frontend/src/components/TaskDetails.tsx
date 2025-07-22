@@ -754,7 +754,7 @@ const TaskDetails: React.FC<TaskDetailsModalProps> = ({
           projects={projects}
           allTasks={tasks}
           initialValues={task}
-          editMode={true}
+          editMode
         />
       )}
     </>
