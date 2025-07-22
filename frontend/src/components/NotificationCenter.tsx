@@ -55,7 +55,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ pollingInterval
             let showAtRaw = n.show_at;
             // Trim to seconds precision for JS Date compatibility
             if (showAtRaw && showAtRaw.length > 19) {
-              showAtRaw = showAtRaw.slice(0, 19) + 'Z';
+              showAtRaw = `${showAtRaw.slice(0, 19)}Z`;
             }
             const showAtDate = showAtRaw ? new Date(showAtRaw) : new Date(n.created_at);
             if (n.read || n.type !== 'reminder' || shownNotificationIds.current.has(n.id)) return false;
