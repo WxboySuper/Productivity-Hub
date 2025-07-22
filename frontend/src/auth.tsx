@@ -65,7 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (response.ok) {
         const data = await response.json();
-        setIsAuthenticated(!!data.authenticated);
+        setIsAuthenticated(Boolean(data.authenticated));
         setUser(data.user || undefined);
       } else {
         // If auth check fails, clear everything
