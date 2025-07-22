@@ -79,7 +79,7 @@ export default function LoginPage() {
               placeholder="Enter your username or email"
             />
           </label>
-          <label className="block mb-1 font-medium mb-6" htmlFor="password">
+          <label className="block font-medium mb-6" htmlFor="password">
             Password
             <input
               className="w-full border rounded px-4 py-3 text-base mt-1"
