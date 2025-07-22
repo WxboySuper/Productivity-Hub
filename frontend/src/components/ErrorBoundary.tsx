@@ -59,7 +59,7 @@ class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <section className="min-h-screen flex items-center justify-center bg-gray-50 max-w-md w-full bg-white rounded-lg shadow-lg p-6 border border-red-200">
+        <section className="min-h-screen flex items-center justify-center max-w-md w-full bg-white rounded-lg shadow-lg p-6 border border-red-200">
           <header className="flex items-center mb-4">
             <span className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-3">
               <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
