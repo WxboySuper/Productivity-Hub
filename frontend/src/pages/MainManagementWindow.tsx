@@ -25,6 +25,16 @@ interface Task {
   subtasks?: Task[]; // Add subtasks for subtask count
 }
 
+type TaskFormValues = {
+  id?: number;
+  title: string;
+  completed: boolean;
+  projectId?: number;
+  project_id?: number;
+  parent_id?: number | null;
+  subtasks?: Task[];
+};
+
 // Sidebar component
 const Sidebar: React.FC<{
   collapsed: boolean;
@@ -321,7 +331,7 @@ const MainManagementWindow: React.FC = () => {
 
 
   // Pass dependencies to TaskFormModal
-  const handleCreateTask = async (task: Task) => {
+  const handleCreateTask = async (task: TaskFormValues) => {
     /* v8 ignore start */
     setTaskFormLoading(true);
     setTaskFormError(null);
@@ -354,7 +364,7 @@ const MainManagementWindow: React.FC = () => {
   /* v8 ignore stop */
 
   // After editing a task, re-open the details modal for the updated task
-  const handleUpdateTask = async (task: Task) => {
+  const handleUpdateTask = async (task: TaskFormValues) => {
     /* v8 ignore start */
     if (!editTask) return;
     setTaskFormLoading(true);
@@ -900,12 +910,48 @@ const MainManagementWindow: React.FC = () => {
               setEditTask(null);
               setTaskFormError(null);
             }}
-            onSubmit={editTask ? handleUpdateTask : handleCreateTask}
+            // Fix: wrap async handler in sync function and ensure completed is boolean
+            onSubmit={(task) => {
+              const completed = task.completed ?? false;
+              let projectId: number | undefined;
+              if (task.projectId !== undefined) {
+                if (typeof task.projectId === 'string') {
+                  const parsed = parseInt(task.projectId, 10);
+                  projectId = isNaN(parsed) ? undefined : parsed;
+                } else if (typeof task.projectId === 'number') {
+                  projectId = task.projectId;
+                }
+              } else if (task.project_id !== undefined) {
+                if (typeof task.project_id === 'string') {
+                  const parsed = parseInt(task.project_id, 10);
+                  projectId = isNaN(parsed) ? undefined : parsed;
+                } else if (typeof task.project_id === 'number') {
+                  projectId = task.project_id;
+                }
+              }
+
+              // Only include allowed fields for TaskFormValues
+
+              const safeTask: TaskFormValues = {
+                id: task.id,
+                title: task.title,
+                completed,
+                projectId,
+                // Only assign subtasks if they are of type Task[]
+                ...(Array.isArray(task.subtasks) ? { subtasks: task.subtasks as Task[] } : {})
+              };
+
+              if (editTask) {
+                handleUpdateTask(safeTask);
+              } else {
+                handleCreateTask(safeTask);
+              }
+            }}
             loading={taskFormLoading}
             error={taskFormError}
             projects={projects}
             allTasks={tasks}
-            initialValues={editTask}
+            initialValues={editTask ?? undefined}
             editMode={Boolean(editTask)}
           />
           <TaskDetails
