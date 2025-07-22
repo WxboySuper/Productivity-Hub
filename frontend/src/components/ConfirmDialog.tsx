@@ -46,7 +46,48 @@ const getTypeStyles = (type: 'danger' | 'warning' | 'info') => {
   }
 };
 
-// Extracted content component to flatten nesting
+const DangerEmphasis: React.FC = () => (
+  <div style={{
+    background: 'rgba(220, 38, 38, 0.05)',
+    border: '1px solid rgba(220, 38, 38, 0.2)',
+    borderRadius: 'var(--phub-radius-lg)',
+    padding: 'var(--phub-space-md)',
+    marginTop: 'var(--phub-space-md)',
+    textAlign: 'center'
+  }}>
+    <div style={{
+      fontSize: '0.875rem',
+      color: 'var(--phub-error)',
+      fontWeight: '600',
+      marginBottom: 'var(--phub-space-xs)'
+    }}>
+      🛑 This action cannot be undone
+    </div>
+    <div style={{
+      fontSize: '0.75rem',
+      color: 'var(--phub-gray-600)'
+    }}>
+      Please make sure you want to proceed
+    </div>
+  </div>
+);
+
+const ConfirmButtonContent: React.FC<{ loading: boolean, type: 'danger' | 'warning' | 'info', confirmLabel: string }> = ({ loading, type, confirmLabel }) => {
+  if (loading) {
+    return (
+      <>
+        <span className="animate-spin">⏳</span>
+        Processing...
+      </>
+    );
+  }
+  return (
+    <>
+      <span>{type === 'danger' ? '🗑️' : type === 'warning' ? '⚡' : '✅'}</span>
+      {confirmLabel}
+    </>
+  );
+};
 
 interface ConfirmDialogContentProps {
   title: string;
@@ -148,49 +189,6 @@ const ConfirmDialogContent: React.FC<ConfirmDialogContentProps> = ({
   );
 };
 
-const DangerEmphasis: React.FC = () => (
-  <div style={{
-    background: 'rgba(220, 38, 38, 0.05)',
-    border: '1px solid rgba(220, 38, 38, 0.2)',
-    borderRadius: 'var(--phub-radius-lg)',
-    padding: 'var(--phub-space-md)',
-    marginTop: 'var(--phub-space-md)',
-    textAlign: 'center'
-  }}>
-    <div style={{ 
-      fontSize: '0.875rem', 
-      color: 'var(--phub-error)',
-      fontWeight: '600',
-      marginBottom: 'var(--phub-space-xs)'
-    }}>
-      🛑 This action cannot be undone
-    </div>
-    <div style={{ 
-      fontSize: '0.75rem', 
-      color: 'var(--phub-gray-600)'
-    }}>
-      Please make sure you want to proceed
-    </div>
-  </div>
-);
-
-const ConfirmButtonContent: React.FC<{ loading: boolean, type: 'danger' | 'warning' | 'info', confirmLabel: string }> = ({ loading, type, confirmLabel }) => {
-  if (loading) {
-    return (
-      <>
-        <span className="animate-spin">⏳</span>
-        Processing...
-      </>
-    );
-  }
-  return (
-    <>
-      <span>{type === 'danger' ? '🗑️' : type === 'warning' ? '⚡' : '✅'}</span>
-      {confirmLabel}
-    </>
-  );
-};
-
 const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   open,
   title,
@@ -238,6 +236,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
     }
   };
 
+  // skipcq: JS-0760
   return (
     <div
       className="phub-modal-backdrop"
