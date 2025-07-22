@@ -412,7 +412,9 @@ describe('Task Form', () => {
       const taskTitleNode = taskTitles.find(el => el.textContent?.replace(/\s+/g, ' ').trim() === 'Test Task');
       expect(taskTitleNode).toBeDefined();
       act(() => {
-        fireEvent.click(taskTitleNode as HTMLElement);
+        if (taskTitleNode) {
+          fireEvent.click(taskTitleNode);
+        }
       });
     }, { timeout: 3000 });
 
