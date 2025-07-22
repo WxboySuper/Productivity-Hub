@@ -236,8 +236,8 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
     }
   };
 
-  // skipcq: JS-0760
   return (
+    // skipcq: JS-0760
     <div
       className="phub-modal-backdrop"
       tabIndex={-1}
