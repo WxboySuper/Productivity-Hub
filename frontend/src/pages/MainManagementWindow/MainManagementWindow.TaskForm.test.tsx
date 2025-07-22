@@ -292,7 +292,7 @@ describe('Task Form', () => {
           json: () => Promise.resolve({ tasks: tasks.map(t => ({ ...t, projectId: 1, parent_id: null })) }),
         } as Response);
       }
-      if (url === `/api/tasks/1` && options && options.method === 'DELETE') {
+      if (url === "/api/tasks/1" && options && options.method === 'DELETE') {
         tasks = [];
         return Promise.resolve({
           ok: true,
