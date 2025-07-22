@@ -83,12 +83,10 @@ export default function PasswordResetRequestPage() {
             <svg className="w-5 h-5 text-green-500 mb-1" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
             <span className="mb-4 block font-semibold text-green-800 bg-green-50 border border-green-300 rounded px-4 py-3 shadow-sm animate-fade-in">{success}</span>
           </>}
-          <div className="mb-6">
-            <label className="block mb-1 font-medium" htmlFor="email">
-              Email
-            </label>
+          <label className="block mb-1 font-medium mb-6" htmlFor="email">
+            Email
             <input
-              className="w-full border rounded px-3 py-2"
+              className="w-full border rounded px-3 py-2 mt-1"
               type="email"
               id="email"
               name="email"
@@ -97,7 +95,7 @@ export default function PasswordResetRequestPage() {
               required
               autoComplete="email"
             />
-          </div>
+          </label>
           <button
             type="submit"
             className="phub-action-btn w-full justify-center"
