@@ -9,6 +9,7 @@ instance/
 .env
 .coverage
 htmlcov/
+coverage.xml
 
 # Node/React
 node_modules/
