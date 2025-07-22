@@ -632,12 +632,12 @@ describe('useTasks', () => {
     it('should maintain loading state properly', async () => {
       const { result } = renderHook(() => useTasks());
 
-      let resolvePromise: (value: any) => void;
-      const delayedPromise = new Promise(resolve => {
+      let resolvePromise: (value: Response) => void;
+      const delayedPromise = new Promise<Response>(resolve => {
         resolvePromise = resolve;
       });
 
-      mockFetch.mockReturnValueOnce(delayedPromise as any);
+      mockFetch.mockReturnValueOnce(delayedPromise as unknown as Promise<Response>);
 
       act(() => {
         result.current.fetchTasks();
@@ -651,7 +651,7 @@ describe('useTasks', () => {
         resolvePromise({
           ok: true,
           json: () => Promise.resolve({ tasks: [] }),
-        });
+        } as Response);
       });
 
       await waitFor(() => {

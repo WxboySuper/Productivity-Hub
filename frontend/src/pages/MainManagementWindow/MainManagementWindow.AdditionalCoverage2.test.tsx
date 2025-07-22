@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor, act, cleanup } from '@testing-library/react';
-import { vi, beforeEach, afterEach, describe, it, expect } from 'vitest';
+import { beforeEach, afterEach, describe, it, expect, vi, Mock } from 'vitest';
 import { BrowserRouter } from 'react-router-dom';
 import MainManagementWindow from '../MainManagementWindow';
 import { AuthProvider } from '../../auth';
@@ -506,10 +506,12 @@ describe('MainManagementWindow - Additional Coverage', () => {
           // Should trigger delete API call - check if it was attempted
           await waitFor(() => {
             // Check if any DELETE call was made (the mock may handle it differently)
-            const fetchCalls = (global.fetch as any).mock.calls;
-            const deleteCalls = fetchCalls.filter(([url, options]: any) => 
-              url.includes('/api/tasks/') && options?.method === 'DELETE'
-            );
+            const fetchCalls = (global.fetch as Mock).mock.calls;
+            const deleteCalls = fetchCalls.filter(call => {
+              const url = call[0];
+              const options = call[1];
+              return typeof url === 'string' && url.includes('/api/tasks/') && options?.method === 'DELETE';
+            });
             
             if (deleteCalls.length > 0) {
               expect(global.fetch).toHaveBeenCalledWith(
