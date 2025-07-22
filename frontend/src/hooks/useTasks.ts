@@ -12,6 +12,22 @@ export interface Task {
   subtasks?: Task[];
 }
 
+// Exported helper for CSRF token, always fetches if missing (for testability)
+export async function ensureCsrfToken(): Promise<string> {
+  const getCookie = (name: string): string | null => {
+    const match = document.cookie.match(new RegExp(`(^| )${name}=([^;]+)`));
+    return match ? decodeURIComponent(match[2]) : null;
+  };
+
+  let token = getCookie('_csrf_token');
+  if (!token) {
+    const res = await fetch('/api/csrf-token', { credentials: 'include' });
+    const data = await res.json();
+    token = data.csrf_token;
+  }
+  return token || '';
+}
+
 export function useTasks() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(false);
@@ -97,21 +113,4 @@ export function useTasks() {
     updateTask,
     deleteTask
   };
-}
-
-
-// Exported helper for CSRF token, always fetches if missing (for testability)
-export async function ensureCsrfToken(): Promise<string> {
-  const getCookie = (name: string): string | null => {
-    const match = document.cookie.match(new RegExp(`(^| )${name}=([^;]+)`));
-    return match ? decodeURIComponent(match[2]) : null;
-  };
-
-  let token = getCookie('_csrf_token');
-  if (!token) {
-    const res = await fetch('/api/csrf-token', { credentials: 'include' });
-    const data = await res.json();
-    token = data.csrf_token;
-  }
-  return token || '';
 }

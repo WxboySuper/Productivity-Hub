@@ -31,85 +31,6 @@ interface ToastProviderProps {
   children: ReactNode;
 }
 
-export function ToastProvider({ children }: ToastProviderProps) {
-  const [toasts, setToasts] = useState<Toast[]>([]);
-
-  const removeToast = useCallback((id: string) => {
-    setToasts(prev => prev.filter(toast => toast.id !== id));
-  }, []);
-
-  const showToast = useCallback((toastData: Omit<Toast, 'id'>) => {
-    const id = Math.random().toString(36).substr(2, 9);
-    const toast: Toast = {
-      id,
-      duration: 5000,
-      ...toastData,
-    };
-
-    setToasts(prev => [...prev, toast]);
-
-    if (toast.duration && toast.duration > 0) {
-      setTimeout(() => {
-        removeToast(id);
-      }, toast.duration);
-    }
-  }, [removeToast]);
-
-  const showSuccess = useCallback((title: string, message?: string) => {
-    showToast({ type: 'success', title, message });
-  }, [showToast]);
-
-  const showError = useCallback((title: string, message?: string) => {
-    showToast({ type: 'error', title, message, duration: 8000 });
-  }, [showToast]);
-
-  const showWarning = useCallback((title: string, message?: string) => {
-    showToast({ type: 'warning', title, message });
-  }, [showToast]);
-
-  const showInfo = useCallback((title: string, message?: string) => {
-    showToast({ type: 'info', title, message });
-  }, [showToast]);
-
-  const contextValue: ToastContextType = {
-    showToast,
-    showSuccess,
-    showError,
-    showWarning,
-    showInfo,
-    removeToast,
-  };
-
-  return (
-    <ToastContext.Provider value={contextValue}>
-      {children}
-      <ToastContainer toasts={toasts} onRemove={removeToast} />
-    </ToastContext.Provider>
-  );
-}
-
-interface ToastContainerProps {
-  toasts: Toast[];
-  onRemove: (id: string) => void;
-}
-
-function ToastContainer({ toasts, onRemove }: ToastContainerProps) {
-  if (toasts.length === 0) return null;
-
-  return (
-    <div className="fixed top-4 right-4 z-50 space-y-2">
-      {toasts.map(toast => (
-        <ToastItem key={toast.id} toast={toast} onRemove={onRemove} />
-      ))}
-    </div>
-  );
-}
-
-interface ToastItemProps {
-  toast: Toast;
-  onRemove: (id: string) => void;
-}
-
 function ToastItem({ toast, onRemove }: ToastItemProps) {
   const getToastStyles = () => {
     const baseStyles = "min-w-80 max-w-md bg-white rounded-lg shadow-lg border p-4 transition-all duration-300 ease-in-out transform";
@@ -221,6 +142,85 @@ function ToastItem({ toast, onRemove }: ToastItemProps) {
       </div>
     </div>
   );
+}
+
+function ToastContainer({ toasts, onRemove }: ToastContainerProps) {
+  if (toasts.length === 0) return null;
+
+  return (
+    <div className="fixed top-4 right-4 z-50 space-y-2">
+      {toasts.map(toast => (
+        <ToastItem key={toast.id} toast={toast} onRemove={onRemove} />
+      ))}
+    </div>
+  );
+}
+
+export function ToastProvider({ children }: ToastProviderProps) {
+  const [toasts, setToasts] = useState<Toast[]>([]);
+
+  const removeToast = useCallback((id: string) => {
+    setToasts(prev => prev.filter(toast => toast.id !== id));
+  }, []);
+
+  const showToast = useCallback((toastData: Omit<Toast, 'id'>) => {
+    const id = Math.random().toString(36).substr(2, 9);
+    const toast: Toast = {
+      id,
+      duration: 5000,
+      ...toastData,
+    };
+
+    setToasts(prev => [...prev, toast]);
+
+    if (toast.duration && toast.duration > 0) {
+      setTimeout(() => {
+        removeToast(id);
+      }, toast.duration);
+    }
+  }, [removeToast]);
+
+  const showSuccess = useCallback((title: string, message?: string) => {
+    showToast({ type: 'success', title, message });
+  }, [showToast]);
+
+  const showError = useCallback((title: string, message?: string) => {
+    showToast({ type: 'error', title, message, duration: 8000 });
+  }, [showToast]);
+
+  const showWarning = useCallback((title: string, message?: string) => {
+    showToast({ type: 'warning', title, message });
+  }, [showToast]);
+
+  const showInfo = useCallback((title: string, message?: string) => {
+    showToast({ type: 'info', title, message });
+  }, [showToast]);
+
+  const contextValue: ToastContextType = {
+    showToast,
+    showSuccess,
+    showError,
+    showWarning,
+    showInfo,
+    removeToast,
+  };
+
+  return (
+    <ToastContext.Provider value={contextValue}>
+      {children}
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
+    </ToastContext.Provider>
+  );
+}
+
+interface ToastContainerProps {
+  toasts: Toast[];
+  onRemove: (id: string) => void;
+}
+
+interface ToastItemProps {
+  toast: Toast;
+  onRemove: (id: string) => void;
 }
 
 export default ToastProvider;
