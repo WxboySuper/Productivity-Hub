@@ -217,7 +217,7 @@ describe('Task Form', () => {
       } as Response);
     });
 
-    await act(async () => {
+    await act(() => {
       render(<MainManagementWindowWrapper />);
     });
 
@@ -311,7 +311,7 @@ describe('Task Form', () => {
       } as Response);
     });
 
-    await act(async () => {
+    await act(() => {
       render(<MainManagementWindowWrapper />);
     });
 
@@ -339,19 +339,20 @@ describe('Task Form', () => {
     const taskCard = taskCards.find(card => card.textContent?.includes('Test Task'));
     expect(taskCard).toBeTruthy();
     
-    const taskDeleteButton = Array.from(taskCard!.querySelectorAll('button')).find(
+    const taskDeleteButton = Array.from(taskCard?.querySelectorAll('button') ?? []).find(
       btn => btn.textContent?.toLowerCase().includes('delete')
     );
     expect(taskDeleteButton).toBeTruthy();
-    act(() => {
-      fireEvent.click(taskDeleteButton!);
-    });
+    if (taskDeleteButton) {
+      act(() => {
+        fireEvent.click(taskDeleteButton);
+      });
+    }
 
     // Wait for the task to be removed (tasks are refetched after deletion)
     await waitFor(() => {
       expect(screen.queryByText('Test Task')).not.toBeInTheDocument();
     }, { timeout: 3000 });
-  });
   });
 
 
@@ -390,14 +391,14 @@ describe('Task Form', () => {
       } as Response);
     });
 
-    await act(async () => {
+    await act(() => {
       render(<MainManagementWindowWrapper />);
     });
 
-  // Switch to Projects view first
-  const projectsSidebarBtn = screen.getAllByText('Projects').find(el => el.closest('button'))?.closest('button');
-  if (!projectsSidebarBtn) throw new Error('Projects sidebar button not found');
-  fireEvent.click(projectsSidebarBtn);
+    // Switch to Projects view first
+    const projectsSidebarBtn = screen.getAllByText('Projects').find(el => el.closest('button'))?.closest('button');
+    if (!projectsSidebarBtn) throw new Error('Projects sidebar button not found');
+    fireEvent.click(projectsSidebarBtn);
 
     // Now select the project so the task is rendered
     await waitFor(() => {
@@ -405,25 +406,15 @@ describe('Task Form', () => {
     }, { timeout: 5000 });
     fireEvent.click(screen.getByText('Test Project'));
 
-    // Wait for the task to appear (flexible matcher)
-    let taskTitleNode: HTMLElement | undefined;
-    try {
-      await waitFor(() => {
-        const taskTitles = Array.from(document.querySelectorAll('.phub-item-title'));
-        taskTitleNode = taskTitles.find(el => el.textContent?.replace(/\s+/g, ' ').trim() === 'Test Task');
-        expect(taskTitleNode).toBeDefined();
-      }, { timeout: 3000 });
-    } catch (e) {
-      // Print the DOM for debugging
-      // eslint-disable-next-line no-console
-      console.log(document.body.innerHTML);
-      throw e;
-    }
-
-    // Click the task title
-    act(() => {
-      fireEvent.click(taskTitleNode!);
-    });
+    // Wait for the task to appear and click the title as soon as it's found
+    await waitFor(() => {
+      const taskTitles = Array.from(document.querySelectorAll('.phub-item-title'));
+      const taskTitleNode = taskTitles.find(el => el.textContent?.replace(/\s+/g, ' ').trim() === 'Test Task');
+      expect(taskTitleNode).toBeDefined();
+      act(() => {
+        fireEvent.click(taskTitleNode as HTMLElement);
+      });
+    }, { timeout: 3000 });
 
     // Wait for the details panel
     await waitFor(() => {
@@ -511,4 +502,5 @@ describe('Task Form', () => {
           expect(errorDiv).toBeInTheDocument();
         }
     });
+  });
 });
