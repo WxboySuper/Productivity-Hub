@@ -80,7 +80,7 @@ const Sidebar: React.FC<{
 );
 
 // skipcq: JS-R1005
-const MainManagementWindow: React.FC = () => {
+function MainManagementWindow() {
   // Helper for checkbox disabled state (for TaskCard and QuickTaskCard)
   function isTaskCheckboxDisabled(task: Task): boolean {
     return Boolean(task.subtasks && task.subtasks.length > 0 && task.subtasks.some((st: Task) => !st.completed));
@@ -102,7 +102,7 @@ const MainManagementWindow: React.FC = () => {
   const [tasksError, setTasksError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [formLoading] = useState(false);
-  const [formError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
   const [editProject, setEditProject] = useState<Project | null>(null);
   const [deleteProject, setDeleteProject] = useState<Project | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -548,10 +548,43 @@ const MainManagementWindow: React.FC = () => {
   const handleProjectBackButtonClick = () => {
     setSelectedProject(null);
   };
-  const handleCreateOrUpdateProject = () => {
-    // TODO: Implement project create/update logic
-    setShowForm(false);
-    setEditProject(null);
+  // Handles both create and update for projects
+  const handleCreateOrUpdateProject = async (project: { name: string; description?: string }) => {
+    // If editing, update; else, create
+    const isEdit = Boolean(editProject);
+    try {
+      await ensureCsrfToken();
+      const url = isEdit ? `/api/projects/${editProject!.id}` : '/api/projects';
+      const method = isEdit ? 'PUT' : 'POST';
+      const response = await fetch(url, {
+        method,
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: project.name,
+          ...(project.description !== undefined ? { description: project.description } : {}),
+        }),
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || `Failed to ${isEdit ? 'update' : 'create'} project`);
+      }
+      await refetchProjects();
+      setShowForm(false);
+      setEditProject(null);
+      showSuccess(
+        isEdit ? 'Project updated' : 'Project created',
+        isEdit ? 'Project updated successfully.' : 'Project created successfully.'
+      );
+    } catch (err: unknown) {
+      setFormError(err instanceof Error ? err.message : 'Unknown error');
+      showError(
+        isEdit ? 'Failed to update project' : 'Failed to create project',
+        err instanceof Error ? err.message : 'Unknown error'
+      );
+    }
   };
 
   if (activeView === 'all') {
@@ -1180,7 +1213,7 @@ function ProjectTasksSection({
         );
       })}
     </div>
-  );
-}
+    );
+  };
 
 export default MainManagementWindow;
