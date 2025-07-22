@@ -275,7 +275,7 @@ describe('PasswordResetRequestPage', () => {
       fireEvent.click(submitButton);
 
       await waitFor(() => {
-        const errorMessage = screen.getByText(/network error/i)
+        const errorMessage = screen.getByText(/network error/i);
         expect(errorMessage).toHaveClass('border-red-300', 'bg-red-50', 'text-red-800');
       });
     });
