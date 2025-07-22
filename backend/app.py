@@ -5,9 +5,6 @@ import secrets
 import logging
 import warnings
 import smtplib
-import threading
-import calendar
-import zoneinfo
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify, session
 from flask_sqlalchemy import SQLAlchemy
@@ -18,7 +15,6 @@ from functools import wraps
 from datetime import datetime, timezone, timedelta
 from email.message import EmailMessage
 from string import Template
-from dateutil.rrule import rrule, rrulestr, DAILY, WEEKLY, MONTHLY
 
 # Explicitly check for .env file and load success
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
