@@ -38,8 +38,8 @@ class ErrorBoundary extends Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
-      if (this.props.fallback && this.state.error && this.state.errorInfo) {
-        return this.props.fallback(this.state.error, this.state.errorInfo);
+      if (this.props.fallback && this.state.error) {
+        return this.props.fallback(this.state.error, this.state.errorInfo || null);
       }
 
       return (
