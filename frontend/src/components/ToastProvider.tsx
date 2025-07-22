@@ -31,6 +31,18 @@ interface ToastProviderProps {
   children: ReactNode;
 }
 
+function ToastContainer({ toasts, onRemove }: ToastContainerProps) {
+  if (toasts.length === 0) return null;
+
+  return (
+    <div className="fixed top-4 right-4 z-50 space-y-2">
+      {toasts.map(toast => (
+        <ToastItem key={toast.id} toast={toast} onRemove={onRemove} />
+      ))}
+    </div>
+  );
+}
+
 export function ToastProvider({ children }: ToastProviderProps) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
@@ -90,23 +102,6 @@ export function ToastProvider({ children }: ToastProviderProps) {
 
 interface ToastContainerProps {
   toasts: Toast[];
-  onRemove: (id: string) => void;
-}
-
-function ToastContainer({ toasts, onRemove }: ToastContainerProps) {
-  if (toasts.length === 0) return null;
-
-  return (
-    <div className="fixed top-4 right-4 z-50 space-y-2">
-      {toasts.map(toast => (
-        <ToastItem key={toast.id} toast={toast} onRemove={onRemove} />
-      ))}
-    </div>
-  );
-}
-
-interface ToastItemProps {
-  toast: Toast;
   onRemove: (id: string) => void;
 }
 
@@ -221,6 +216,11 @@ function ToastItem({ toast, onRemove }: ToastItemProps) {
       </div>
     </div>
   );
+}
+
+interface ToastItemProps {
+  toast: Toast;
+  onRemove: (id: string) => void;
 }
 
 export default ToastProvider;
