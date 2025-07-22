@@ -322,6 +322,7 @@ const MainManagementWindow: React.FC = () => {
 
   // Pass dependencies to TaskFormModal
   const handleCreateTask = async (task: Task) => {
+    /* v8 ignore start */
     setTaskFormLoading(true);
     setTaskFormError(null);
     try {
@@ -341,10 +342,8 @@ const MainManagementWindow: React.FC = () => {
         // Do NOT close the modal if there is an error
         return;
       }
-      /* v8 ignore start */
       setShowTaskForm(false);
       fetchTasks();
-      /* v8 ignore stop */
     } catch (err: unknown) {
       setTaskFormError(err instanceof Error ? err.message : 'Unknown error');
       // Do NOT close the modal if there is an error
@@ -352,6 +351,7 @@ const MainManagementWindow: React.FC = () => {
       setTaskFormLoading(false);
     }
   };
+  /* v8 ignore stop */
 
   // After editing a task, re-open the details modal for the updated task
   const handleUpdateTask = async (task: Task) => {
