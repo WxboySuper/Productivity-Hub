@@ -35,6 +35,43 @@ def test_register_missing_fields(client):
     assert resp.status_code == 400
     assert 'error' in resp.get_json()
 
+    @pytest.mark.usefixtures('client', 'db')
+    def test_register_requires_json():
+        """Test that /api/register returns 400 and correct error if request is not JSON."""
+        from app import app as flask_app
+        with flask_app.test_client() as client:
+            # Send form data instead of JSON
+            response = client.post(REGISTER_URL, data={"username": "user", "email": "a@b.com", "password": "Password1!"})
+            assert response.status_code == 400
+            data = response.get_json()
+            assert data["error"] == "Request must be JSON"
+
+    @pytest.mark.usefixtures('client', 'db')
+    def test_register_invalid_email():
+        """Test that /api/register returns 400 and correct error for invalid email."""
+        from app import app as flask_app
+        with flask_app.test_client() as client:
+            payload = {
+                "username": "user1",
+                "email": "not-an-email",
+                "password": "Password1!"
+            }
+            response = client.post(REGISTER_URL, json=payload)
+            assert response.status_code == 400
+            data = response.get_json()
+            assert "Invalid email" in data["error"]
+
+    @pytest.mark.usefixtures('client', 'db')
+    def test_login_requires_json():
+        """Test that /api/login returns 400 and correct error if request is not JSON."""
+        from app import app as flask_app
+        with flask_app.test_client() as client:
+            # Send form data instead of JSON
+            response = client.post(LOGIN_URL, data={"username": "user", "password": "Password1!"})
+            assert response.status_code == 400
+            data = response.get_json()
+            assert data["error"] == "Request must be JSON"
+
 @pytest.mark.usefixtures('client', 'db')
 def test_register_weak_password(client):
     resp = client.post(REGISTER_URL, json={
