@@ -472,6 +472,40 @@ def get_profile():
         "email": user.email
     }), 200
 
+@app.route('/api/profile', methods=['PUT'])
+@login_required
+def update_profile():
+    """Update the current user's profile (username and/or email)."""
+    user = get_current_user()
+    data = request.get_json() or {}
+    username = data.get('username')
+    email = data.get('email')
+    errors = {}
+    if username is not None:
+        if username == "":
+            user.username = None #Clear the username field if empty string is provided
+        elif not isinstance(username, str) or len(username) < 3:
+            errors['username'] = 'Username must be at least 3 characters.'
+        elif User.query.filter_by(username=username).first() and username != user.username:
+            errors['username'] = 'Username already taken.'
+        else:
+            user.username = username
+    if email:
+        try:
+            validate_email(email)
+        except EmailNotValidError:
+            errors['email'] = 'Invalid email address.'
+        else:
+            if User.query.filter_by(email=email).first() and email != user.email:
+                errors['email'] = 'Email already in use.'
+            else:
+                user.email = email
+    if errors:
+        return jsonify({'error': errors}), 400
+    db.session.commit()
+    logger.info("Profile updated for user: %s (ID: %s)", user.username, user.id)
+    return jsonify({'message': 'Profile updated successfully.'}), 200
+
 @app.route('/api/notifications', methods=['GET'])
 @login_required
 def get_notifications():
