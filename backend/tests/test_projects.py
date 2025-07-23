@@ -62,7 +62,8 @@ def test_get_projects(auth_client):
 
 def test_get_project_by_id_success(auth_client):
     """
-    Test /api/projects/<project_id> GET returns the correct project and covers logger/return (app.py:842-843).
+    Test /api/projects/<project_id> GET returns the correct project details, including name, description, and ID.
+    Ensures proper response handling and logging for successful retrieval of a project by its ID.
     """
     # Create a project
     resp = auth_client.post(PROJECTS_URL, json={'name': 'Single Project', 'description': 'Desc'})
