@@ -60,6 +60,15 @@ jobs:
           output: file
           fail_below_min: false
 
+      - name: Make coverage summary writable
+        if: github.event_name == 'pull_request'
+        run: chmod +w code-coverage-results.md
+
+      - name: Prepend header to coverage summary
+        if: github.event_name == 'pull_request'
+        run: |
+          echo -e "# Backend Coverage\n\n$(cat code-coverage-results.md)" > code-coverage-results.md
+
       - name: Prepend header to coverage summary
         if: github.event_name == 'pull_request'
         run: |
