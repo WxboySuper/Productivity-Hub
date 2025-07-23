@@ -6,7 +6,7 @@ Covers both success and failure cases.
 
 import pytest
 import uuid
-import re as re
+import re
 import flask
 from app import get_current_user, db, User, generate_csrf_token
 
