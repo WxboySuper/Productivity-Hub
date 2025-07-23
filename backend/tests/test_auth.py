@@ -12,7 +12,7 @@ import logging
 from unittest.mock import patch, MagicMock
 from datetime import datetime, timedelta, timezone
 import builtins
-from app import get_current_user, db, User, generate_csrf_token, Notification
+from app import get_current_user, db, User, generate_csrf_token, Notification, send_email
 
 # --- API Endpoint Constants (must be defined before use) ---
 REGISTER_URL = '/api/register'
@@ -406,17 +406,11 @@ def test_notification_snooze_endpoint(client, caplog):
     finally:
         builtins.hasattr = orig_hasattr
 
-
-# --- send_email Utility Function (Covers app.py:716-732) ---
-import smtplib
-from unittest.mock import patch, MagicMock
-
 def test_send_email_success_and_failure(caplog):
     """
     Test send_email utility for both TLS and non-TLS, success and failure cases.
     Covers app.py:716-732.
     """
-    from app import send_email, EMAIL_FROM
     # Patch smtplib.SMTP
     with patch('app.smtplib.SMTP') as mock_smtp:
         # Simulate non-TLS success
