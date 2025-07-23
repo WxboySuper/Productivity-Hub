@@ -481,8 +481,10 @@ def update_profile():
     username = data.get('username')
     email = data.get('email')
     errors = {}
-    if username:
-        if not isinstance(username, str) or len(username) < 3:
+    if username is not None:
+        if username == "":
+            user.username = None #Clear the username field if empty string is provided
+        elif not isinstance(username, str) or len(username) < 3:
             errors['username'] = 'Username must be at least 3 characters.'
         elif User.query.filter_by(username=username).first() and username != user.username:
             errors['username'] = 'Username already taken.'
@@ -491,7 +493,7 @@ def update_profile():
     if email:
         try:
             validate_email(email)
-        except Exception:
+        except EmailNotValidError:
             errors['email'] = 'Invalid email address.'
         else:
             if User.query.filter_by(email=email).first() and email != user.email:

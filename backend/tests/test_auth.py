@@ -6,11 +6,10 @@ Covers both success and failure cases.
 
 import pytest
 import uuid
-import re as _re
+import re as re
 import flask
 from app import get_current_user, db, User, generate_csrf_token
 
-PROFILE_URL = '/api/profile'
 # --- API Endpoint Constants (must be defined before use) ---
 REGISTER_URL = '/api/register'
 LOGIN_URL = '/api/login'
@@ -270,7 +269,6 @@ def test_get_current_user_found_and_not_found(client):
         assert not_found_user is None
 
 
-
 # --- CSRF Token Generation Tests ---
 @pytest.mark.usefixtures('client', 'db')
 def test_generate_csrf_token_new_token(client):
@@ -280,7 +278,7 @@ def test_generate_csrf_token_new_token(client):
         # Should be a 32-character hex string
         assert isinstance(token, str)
         assert len(token) == 32
-        assert _re.fullmatch(r'[0-9a-f]{32}', token)
+        assert re.fullmatch(r'[0-9a-f]{32}', token)
 
 @pytest.mark.usefixtures('client', 'db')
 def test_generate_csrf_token_existing_cookie(client):
