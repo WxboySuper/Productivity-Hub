@@ -3,13 +3,14 @@ branch = True
 source = 
     backend
 omit = 
-    */tests/*
+    **/tests/*
     */__init__.py
     */conftest.py
     */migrations/*
     */__pycache__/*
     */*.pyc
     */alembic.ini
+    **/test_*.py
 
 [report]
 exclude_lines =
