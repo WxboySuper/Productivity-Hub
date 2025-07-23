@@ -169,6 +169,15 @@ def test_delete_project(auth_client):
     resp = auth_client.get(f'{PROJECTS_URL}/{project_id}')
     assert resp.status_code == 404
 
+def test_delete_project_not_found(auth_client):
+    """
+    Test deleting a non-existent project returns 404 (covers app.py:901-902 for DELETE endpoint).
+    """
+    resp = auth_client.delete(f'{PROJECTS_URL}/999999')
+    assert resp.status_code == 404
+    data = resp.get_json()
+    assert data['error'] == 'Project not found'
+
 @pytest.mark.usefixtures('client', 'db')
 def test_csrf_protect_enforced(client):
     # Register and login
