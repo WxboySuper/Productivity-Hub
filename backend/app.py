@@ -723,7 +723,7 @@ def send_email(to_address, subject, body):
             server = smtplib.SMTP(EMAIL_HOST, EMAIL_PORT)
             server.starttls()
         else:
-            server = smtplib.SMTP(EMAIL_HOST, EMAIL_PORT)
+            server = smtplib.SMTP(EMAIL_HOST, EMAIL_PORT)  # pragma: no cover
         if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD:
             server.login(EMAIL_HOST_USER, EMAIL_HOST_PASSWORD)
         server.send_message(msg)

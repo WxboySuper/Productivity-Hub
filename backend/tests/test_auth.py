@@ -405,6 +405,94 @@ def test_notification_snooze_endpoint(client, caplog):
     finally:
         builtins.hasattr = orig_hasattr
 
+
+# --- send_email Utility Function (Covers app.py:716-732) ---
+import smtplib
+from unittest.mock import patch, MagicMock
+
+def test_send_email_success_and_failure(caplog):
+    """
+    Test send_email utility for both TLS and non-TLS, success and failure cases.
+    Covers app.py:716-732.
+    """
+    from app import send_email, EMAIL_FROM
+    # Patch smtplib.SMTP
+    with patch('app.smtplib.SMTP') as mock_smtp:
+        # Simulate non-TLS success
+        smtp_instance = MagicMock()
+        mock_smtp.return_value = smtp_instance
+        result = send_email('to@example.com', 'Subject', 'Body')
+        assert result is True
+        smtp_instance.send_message.assert_called()
+        smtp_instance.quit.assert_called()
+        # Explicitly check SMTP called with correct host/port (covers app.py:726)
+        from app import EMAIL_HOST, EMAIL_PORT
+        mock_smtp.assert_any_call(EMAIL_HOST, EMAIL_PORT)
+        # Simulate TLS success
+        import app
+        orig_tls = app.EMAIL_USE_TLS
+        app.EMAIL_USE_TLS = True
+        smtp_instance.reset_mock()
+        result = send_email('to@example.com', 'Subject', 'Body')
+        assert result is True
+        smtp_instance.starttls.assert_called()
+        smtp_instance.send_message.assert_called()
+        smtp_instance.quit.assert_called()
+        app.EMAIL_USE_TLS = orig_tls
+        # Simulate login credentials
+        app.EMAIL_HOST_USER = 'user'
+        app.EMAIL_HOST_PASSWORD = 'pw'
+        smtp_instance.reset_mock()
+        result = send_email('to@example.com', 'Subject', 'Body')
+        smtp_instance.login.assert_called_with('user', 'pw')
+        app.EMAIL_HOST_USER = ''
+        app.EMAIL_HOST_PASSWORD = ''
+        # Simulate send failure
+        smtp_instance.send_message.side_effect = Exception('fail')
+        with caplog.at_level('ERROR'):
+            result = send_email('to@example.com', 'Subject', 'Body')
+        assert result is False
+        assert any('Failed to send email' in m for m in caplog.messages)
+
+def test_send_email_real_smtp_server():
+    """
+    Test send_email with a real debug SMTP server to ensure line 726 is executed (no patching).
+    This uses Python's built-in smtpd DebuggingServer on localhost:1025.
+    """
+    import subprocess
+    import time
+    import socket
+    import sys
+    import pytest
+    from app import send_email, EMAIL_HOST, EMAIL_PORT
+    # Only run this test if using the default debug SMTP config
+    if EMAIL_HOST != 'localhost' or EMAIL_PORT != 1025:
+        pytest.skip("Skipping real SMTP server test: EMAIL_HOST/PORT not set to localhost:1025")
+    # Start a debug SMTP server in a subprocess (Python 3.8+)
+    # Use sys.executable to ensure correct Python version
+    server_proc = subprocess.Popen([
+        sys.executable, '-m', 'smtpd', '-c', 'DebuggingServer', '-n', 'localhost:1025'
+    ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    try:
+        # Wait for the server to start
+        for _ in range(10):
+            try:
+                with socket.create_connection(("localhost", 1025), timeout=0.5):
+                    break
+            except (ConnectionRefusedError, OSError):
+                time.sleep(0.2)
+        else:
+            raise RuntimeError("SMTP debug server did not start")
+        # Call send_email (should hit line 726)
+        result = send_email('test@localhost', 'Test Subject', 'Test Body')
+        assert result is True
+    finally:
+        server_proc.terminate()
+        try:
+            server_proc.wait(timeout=2)
+        except Exception:
+            server_proc.kill()
+            server_proc.wait()
 # Additional test for CSRF protection on profile update
 @pytest.mark.usefixtures('client', 'db')
 def test_csrf_protect_profile_update(client):
