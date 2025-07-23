@@ -225,7 +225,7 @@ def test_get_tasks_subtask_due_start_fields(auth_client):
     try:
         subtask = next(st for st in parent_task['subtasks'] if st['id'] == subtask_id)
     except StopIteration:
-        pytest.fail("Subtask with id {} not found in parent's subtasks".format(subtask_id))
+        pytest.fail(f"Subtask with id {subtask_id} not found in parent's subtasks")
     assert subtask['due_date'] == '2025-08-01T10:00:00'
     assert subtask['start_date'] == '2025-07-25T09:00:00'
 
