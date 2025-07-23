@@ -114,3 +114,14 @@ def test_paginate_query_edge_cases(auth_client):
     assert resp.status_code == 200
     data = resp.get_json()
     assert data['per_page'] <= 100
+
+
+def test_get_projects_invalid_pagination_params(auth_client):
+    """
+    Test /api/projects GET with invalid (non-integer) pagination params to cover ValueError branch (app.py:759-761).
+    """
+    # Pass a non-integer page parameter
+    resp = auth_client.get('/api/projects?page=abc&per_page=2')
+    assert resp.status_code == 400
+    data = resp.get_json()
+    assert data['error'] == 'Invalid pagination parameters.'
