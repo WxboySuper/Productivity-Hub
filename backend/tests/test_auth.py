@@ -1,12 +1,17 @@
+
 """
-test_auth.py: Automated tests for user registration, login, logout, and profile endpoints.
+Automated tests for user registration, login, logout, profile, and CSRF/session logic.
 Covers both success and failure cases.
 """
+
 import pytest
 import uuid
-from app import get_current_user, db, User
+import re as _re
 import flask
+from app import get_current_user, db, User, generate_csrf_token
 
+PROFILE_URL = '/api/profile'
+# --- API Endpoint Constants (must be defined before use) ---
 REGISTER_URL = '/api/register'
 LOGIN_URL = '/api/login'
 LOGOUT_URL = '/api/logout'
@@ -111,6 +116,7 @@ def test_profile_success(client):
     assert data['username'] == username
     assert data['email'] == email
 
+
 # Additional test for CSRF protection on profile update
 @pytest.mark.usefixtures('client', 'db')
 def test_csrf_protect_profile_update(client):
@@ -131,6 +137,62 @@ def test_csrf_protect_profile_update(client):
     assert resp.status_code in (403, 400, 401)
     client.application.config['TESTING'] = True
 
+# --- CSRF Protection: Not Skipped for Other Endpoints (Covers line 277 not true) ---
+@pytest.mark.usefixtures('client', 'db')
+def test_csrf_protect_not_skipped_for_other_endpoints(client):
+    """
+    Ensure CSRF protection is NOT skipped for endpoints other than login/register (line 277 condition is false).
+    This test posts to /api/profile (requires auth) and expects CSRF check to be enforced.
+    """
+    from app import app as flask_app
+    original_testing = flask_app.config.get('TESTING', False)
+    flask_app.config['TESTING'] = False
+    # Register and login a user
+    unique = uuid.uuid4().hex[:8]
+    reg_data = {
+        'username': f'csrfnotlogin_{unique}',
+        'email': f'csrfnotlogin_{unique}@weatherboysuper.com',
+        'password': 'StrongPass1!'
+    }
+    client.post(REGISTER_URL, json=reg_data)
+    client.post(LOGIN_URL, json={'username': reg_data['username'], 'password': reg_data['password']})
+    # Attempt to update profile (PUT) without CSRF token (should hit CSRF check, not skip)
+    resp = client.put(PROFILE_URL, json={'username': 'newname'})
+    assert resp.status_code == 403
+    assert resp.get_json().get('error') == 'Invalid or missing CSRF token'
+    flask_app.config['TESTING'] = original_testing
+
+# --- CSRF Protection: Valid Token (Covers line 291 not true) ---
+@pytest.mark.usefixtures('client', 'db')
+def test_csrf_protect_valid_token_allows_request(client):
+    """
+    Ensure CSRF protection allows request when valid CSRF token is present (line 291 condition is false).
+    This test sets a valid CSRF token in both cookie and header.
+    """
+    from app import app as flask_app
+    original_testing = flask_app.config.get('TESTING', False)
+    flask_app.config['TESTING'] = False
+    # Register and login a user
+    unique = uuid.uuid4().hex[:8]
+    reg_data = {
+        'username': f'csrfvalid_{unique}',
+        'email': f'csrfvalid_{unique}@weatherboysuper.com',
+        'password': 'StrongPass1!'
+    }
+    client.post(REGISTER_URL, json=reg_data)
+    client.post(LOGIN_URL, json={'username': reg_data['username'], 'password': reg_data['password']})
+    # Get a CSRF token from the endpoint
+    resp = client.get('/api/csrf-token')
+    csrf_token = resp.get_json()['csrf_token']
+    # Use the token in both cookie and header for the PUT request
+    client.set_cookie('_csrf_token', csrf_token)
+    resp = client.put(PROFILE_URL, json={'username': 'newname'}, headers={'X-CSRF-Token': csrf_token})
+    # Should not return a CSRF error (should be 200 or 400 depending on profile update logic)
+    assert resp.status_code in (200, 400)
+    if resp.status_code == 403:
+        assert resp.get_json().get('error') != 'Invalid or missing CSRF token'
+    flask_app.config['TESTING'] = original_testing
+
 @pytest.fixture
 def auth_client(client):
     unique = uuid.uuid4().hex[:8]
@@ -145,6 +207,7 @@ def auth_client(client):
         'username': username,
         'password': 'StrongPass1!'
     })
+    # skipcq: PYL-W0212
     client._authtestuser = username
     return client
 
@@ -155,6 +218,7 @@ def test_auth_client_fixture_works(auth_client):
     resp = auth_client.get('/api/profile')
     data = resp.get_json()
     assert resp.status_code == 200
+    # skipcq: PYL-W0212
     assert data['username'] == auth_client._authtestuser
 
 @pytest.mark.usefixtures('client', 'db')
@@ -163,6 +227,7 @@ def test_get_current_user_found_and_not_found(client):
     # Register and login a user, then delete them
     username = 'ghostuser'
     email = 'ghostuser@weatherboysuper.com'
+    # skipcq: PTC-W1006
     password = 'StrongPass1!'
     client.post(REGISTER_URL, json={'username': username, 'email': email, 'password': password})
     client.post(LOGIN_URL, json={'username': username, 'password': password})
@@ -182,6 +247,7 @@ def test_get_current_user_found_and_not_found(client):
 
     username = 'getuser'
     email = 'getuser@weatherboysuper.com'  # Use a valid, non-reserved domain
+    # skipcq: PTC-W1006
     password = 'StrongPass1!'
     client.post(REGISTER_URL, json={'username': username, 'email': email, 'password': password})
     client.post(LOGIN_URL, json={'username': username, 'password': password})
@@ -202,3 +268,147 @@ def test_get_current_user_found_and_not_found(client):
         flask.session.clear()
         not_found_user = get_current_user()
         assert not_found_user is None
+
+
+
+# --- CSRF Token Generation Tests ---
+@pytest.mark.usefixtures('client', 'db')
+def test_generate_csrf_token_new_token(client):
+    """Covers the branch where no CSRF token exists in cookies (new token generated)."""
+    with client.application.test_request_context('/'):
+        token = generate_csrf_token()
+        # Should be a 32-character hex string
+        assert isinstance(token, str)
+        assert len(token) == 32
+        assert _re.fullmatch(r'[0-9a-f]{32}', token)
+
+@pytest.mark.usefixtures('client', 'db')
+def test_generate_csrf_token_existing_cookie(client):
+    """Covers the branch where an existing CSRF token is found in cookies and returned."""
+    test_token = 'testtoken1234'
+    with client.application.test_request_context('/', headers={'Cookie': f'_csrf_token={test_token}'}):
+        token = generate_csrf_token()
+        assert token == test_token
+
+# --- CSRF Protection Skipped for Login/Register Tests ---
+@pytest.mark.usefixtures('client', 'db')
+@pytest.mark.parametrize('endpoint', ['/api/login', '/api/register'])
+def test_csrf_skipped_for_login_register(client, endpoint):
+    """
+    Ensure CSRF protection is skipped for login and register endpoints (no CSRF token required).
+    This test posts to login/register without a CSRF token and expects no CSRF error.
+    """
+    # Use unique credentials to avoid conflicts
+    unique = uuid.uuid4().hex[:8]
+    if endpoint == '/api/register':
+        data = {
+            'username': f'csrfskip_{unique}',
+            'email': f'csrfskip_{unique}@weatherboysuper.com',
+            'password': 'StrongPass1!'
+        }
+    else:
+        # Register first, then login
+        reg_data = {
+            'username': f'csrfskip_{unique}',
+            'email': f'csrfskip_{unique}@weatherboysuper.com',
+            'password': 'StrongPass1!'
+        }
+        client.post('/api/register', json=reg_data)
+        data = {
+            'username': reg_data['username'],
+            'password': reg_data['password']
+        }
+    resp = client.post(endpoint, json=data)
+    # Should not return a CSRF error (403), should be 201 for register or 200/401 for login
+    assert resp.status_code in (200, 201, 400, 401)
+    if resp.status_code == 403:
+        # If 403, check that it is not a CSRF error
+        assert resp.get_json().get('error') != 'Invalid or missing CSRF token'
+
+# --- CSRF Skip Logging Test ---
+
+@pytest.mark.usefixtures('client', 'db')
+@pytest.mark.parametrize('endpoint', ['/api/login', '/api/register'])
+def test_csrf_skip_logs_debug_message(client, endpoint, caplog):
+    """
+    Ensure the logger.debug message is emitted when CSRF check is skipped for login/register endpoints.
+    Temporarily disables TESTING mode to reach the relevant code.
+    """
+    from app import app as flask_app
+    unique = uuid.uuid4().hex[:8]
+    if endpoint == '/api/register':
+        data = {
+            'username': f'csrfskiplog_{unique}',
+            'email': f'csrfskiplog_{unique}@weatherboysuper.com',
+            'password': 'StrongPass1!'
+        }
+    else:
+        reg_data = {
+            'username': f'csrfskiplog_{unique}',
+            'email': f'csrfskiplog_{unique}@weatherboysuper.com',
+            'password': 'StrongPass1!'
+        }
+        client.post('/api/register', json=reg_data)
+        data = {
+            'username': reg_data['username'],
+            'password': reg_data['password']
+        }
+    # Save and override TESTING config
+    original_testing = flask_app.config.get('TESTING', False)
+    flask_app.config['TESTING'] = False
+    try:
+        with caplog.at_level('DEBUG'):
+            client.post(endpoint, json=data)
+        assert any(
+            'CSRF check skipped for login/register endpoint.' in message
+            for message in caplog.messages
+        )
+    finally:
+        flask_app.config['TESTING'] = original_testing
+
+# --- CSRF Protection: Early Return in TESTING Mode ---
+@pytest.mark.usefixtures('client', 'db')
+def test_csrf_protect_testing_mode_skips_check(client, caplog):
+    """
+    Ensure CSRF protection exits early in TESTING mode and logs the correct message.
+    Covers the early return at line 227 in app.py.
+    """
+    from app import app as flask_app
+    # TESTING should be True by default in pytest, but ensure it
+    flask_app.config['TESTING'] = True
+    unique = uuid.uuid4().hex[:8]
+    reg_data = {
+        'username': f'csrfskiptest_{unique}',
+        'email': f'csrfskiptest_{unique}@weatherboysuper.com',
+        'password': 'StrongPass1!'
+    }
+    with caplog.at_level('DEBUG'):
+        client.post('/api/register', json=reg_data)
+    assert any('CSRF protection is disabled in TESTING mode.' in m for m in caplog.messages)
+
+# --- CSRF Protection: Invalid/Missing Token (403) ---
+@pytest.mark.usefixtures('client', 'db')
+def test_csrf_protect_invalid_token_returns_403(client):
+    """
+    Ensure CSRF protection returns 403 for missing/invalid CSRF token on a protected endpoint.
+    Covers the error response at line 291 in app.py.
+    """
+    from app import app as flask_app
+    # Temporarily disable TESTING to activate CSRF protection
+    original_testing = flask_app.config.get('TESTING', False)
+    flask_app.config['TESTING'] = False
+    # Register and login a user
+    unique = uuid.uuid4().hex[:8]
+    reg_data = {
+        'username': f'csrf403_{unique}',
+        'email': f'csrf403_{unique}@weatherboysuper.com',
+        'password': 'StrongPass1!'
+    }
+    client.post('/api/register', json=reg_data)
+    client.post('/api/login', json={'username': reg_data['username'], 'password': reg_data['password']})
+    # Attempt to update profile (PUT) without CSRF token
+    resp = client.put('/api/profile', json={'username': 'newname'})
+    assert resp.status_code == 403
+    assert resp.get_json().get('error') == 'Invalid or missing CSRF token'
+    # Restore TESTING config
+    flask_app.config['TESTING'] = original_testing
