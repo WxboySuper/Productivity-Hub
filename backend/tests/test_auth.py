@@ -4,7 +4,6 @@ Covers both success and failure cases.
 """
 import pytest
 import uuid
-import flask
 from app import get_current_user, db, User
 
 REGISTER_URL = '/api/register'
