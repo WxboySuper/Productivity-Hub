@@ -9,6 +9,7 @@ import uuid
 import re
 import flask
 from app import get_current_user, db, User, generate_csrf_token
+import logging
 
 # --- API Endpoint Constants (must be defined before use) ---
 REGISTER_URL = '/api/register'
@@ -447,3 +448,45 @@ def test_csrf_protect_invalid_token_returns_403(client):
     assert resp.get_json().get('error') == 'Invalid or missing CSRF token'
     # Restore TESTING config
     flask_app.config['TESTING'] = original_testing
+
+@pytest.mark.usefixtures('client', 'db')
+def test_auth_check_session_debug_logging(client, caplog):
+    """
+    Test that /api/auth/check emits session debug logs (covers lines 429-432 in app.py).
+    """
+    unique = uuid.uuid4().hex[:8]
+    username = f"sessionlog_{unique}"
+    email = f"sessionlog_{unique}@weatherboysuper.com"
+    # skipcq: PTC-W1006
+    password = 'StrongPass1!'
+    # Register and login
+    client.post(REGISTER_URL, json={
+        'username': username,
+        'email': email,
+        'password': password
+    })
+    client.post(LOGIN_URL, json={
+        'username': username,
+        'password': password
+    })
+    # Check /api/auth/check and capture logs
+    with caplog.at_level(logging.DEBUG):
+        resp = client.get('/api/auth/check')
+    assert resp.status_code == 200
+    # Check that session debug logs are present
+    assert any('Session contents:' in m for m in caplog.messages)
+    assert any('Session ID:' in m for m in caplog.messages)
+    assert any('User ID from session:' in m for m in caplog.messages)
+
+
+@pytest.mark.usefixtures('client', 'db')
+def test_auth_check_no_user_logs_info(client, caplog):
+    """
+    Test that /api/auth/check emits info log for no authenticated user (covers lines 450-451 in app.py).
+    """
+    # Ensure no user is logged in
+    with caplog.at_level(logging.INFO):
+        resp = client.get('/api/auth/check')
+    assert resp.status_code == 200
+    # Check that the info log for no authenticated user is present
+    assert any('Auth check: No authenticated user' in m for m in caplog.messages)
