@@ -40,6 +40,16 @@ def test_create_project_missing_name(auth_client):
     assert resp.status_code == 400
     assert 'error' in resp.get_json()
 
+def test_create_project_requires_json(auth_client):
+    """
+    Test that /api/projects POST returns 400 and correct error if request is not JSON (covers app.py:798-799).
+    """
+    # Send form data instead of JSON
+    resp = auth_client.post(PROJECTS_URL, data={'name': 'Not JSON'})
+    assert resp.status_code == 400
+    data = resp.get_json()
+    assert data['error'] == 'Request must be JSON'
+
 def test_get_projects(auth_client):
     # Create a project
     auth_client.post(PROJECTS_URL, json={'name': 'Proj 1'})
