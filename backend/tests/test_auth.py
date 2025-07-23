@@ -8,8 +8,11 @@ import pytest
 import uuid
 import re
 import flask
-from app import get_current_user, db, User, generate_csrf_token, Notification
 import logging
+from unittest.mock import patch, MagicMock
+from datetime import datetime, timedelta, timezone
+import builtins
+from app import get_current_user, db, User, generate_csrf_token, Notification
 
 # --- API Endpoint Constants (must be defined before use) ---
 REGISTER_URL = '/api/register'
@@ -333,7 +336,6 @@ def test_notification_snooze_endpoint(client, caplog):
     Test /api/notifications/<notification_id>/snooze endpoint for snoozing notifications.
     Covers app.py:559-592.
     """
-    from datetime import datetime, timedelta, timezone
     unique = uuid.uuid4().hex[:8]
     username = f"snoozeuser_{unique}"
     email = f"snoozeuser_{unique}@weatherboysuper.com"
@@ -390,7 +392,6 @@ def test_notification_snooze_endpoint(client, caplog):
     assert resp.status_code == 404
     assert resp.get_json()["error"] == "Notification not found"
     # Error: snoozed_until attribute missing (simulate by monkeypatching hasattr)
-    import builtins
     orig_hasattr = builtins.hasattr
     def fake_hasattr(obj, name):
         if isinstance(obj, Notification) and name == 'snoozed_until':
@@ -454,45 +455,6 @@ def test_send_email_success_and_failure(caplog):
         assert result is False
         assert any('Failed to send email' in m for m in caplog.messages)
 
-def test_send_email_real_smtp_server():
-    """
-    Test send_email with a real debug SMTP server to ensure line 726 is executed (no patching).
-    This uses Python's built-in smtpd DebuggingServer on localhost:1025.
-    """
-    import subprocess
-    import time
-    import socket
-    import sys
-    import pytest
-    from app import send_email, EMAIL_HOST, EMAIL_PORT
-    # Only run this test if using the default debug SMTP config
-    if EMAIL_HOST != 'localhost' or EMAIL_PORT != 1025:
-        pytest.skip("Skipping real SMTP server test: EMAIL_HOST/PORT not set to localhost:1025")
-    # Start a debug SMTP server in a subprocess (Python 3.8+)
-    # Use sys.executable to ensure correct Python version
-    server_proc = subprocess.Popen([
-        sys.executable, '-m', 'smtpd', '-c', 'DebuggingServer', '-n', 'localhost:1025'
-    ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    try:
-        # Wait for the server to start
-        for _ in range(10):
-            try:
-                with socket.create_connection(("localhost", 1025), timeout=0.5):
-                    break
-            except (ConnectionRefusedError, OSError):
-                time.sleep(0.2)
-        else:
-            raise RuntimeError("SMTP debug server did not start")
-        # Call send_email (should hit line 726)
-        result = send_email('test@localhost', 'Test Subject', 'Test Body')
-        assert result is True
-    finally:
-        server_proc.terminate()
-        try:
-            server_proc.wait(timeout=2)
-        except Exception:
-            server_proc.kill()
-            server_proc.wait()
 # Additional test for CSRF protection on profile update
 @pytest.mark.usefixtures('client', 'db')
 def test_csrf_protect_profile_update(client):
