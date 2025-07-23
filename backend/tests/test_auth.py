@@ -154,6 +154,84 @@ def test_profile_success(client):
     assert data['email'] == email
 
 
+# --- Profile Update Username Validation (Covers app.py:484-490) ---
+@pytest.mark.usefixtures('client', 'db')
+def test_profile_update_username_validation(client):
+    """
+    Test username update logic in /api/profile PUT (covers app.py:484-490):
+    - Empty string clears username
+    - Too short username returns error
+    - Already taken username returns error
+    - Valid new username updates successfully
+    """
+    unique = uuid.uuid4().hex[:8]
+    username1 = f"user1_{unique}"
+    username2 = f"user2_{unique}"
+    email1 = f"user1_{unique}@weatherboysuper.com"
+    email2 = f"user2_{unique}@weatherboysuper.com"
+    # skipcq: PTC-W1006
+    password = 'StrongPass1!'
+    # Register two users
+    client.post(REGISTER_URL, json={'username': username1, 'email': email1, 'password': password})
+    client.post(REGISTER_URL, json={'username': username2, 'email': email2, 'password': password})
+    # Login as user1
+    client.post(LOGIN_URL, json={'username': username1, 'password': password})
+    # 1. Set username to empty string (should return error, not allowed)
+    resp = client.put(PROFILE_URL, json={'username': ''})
+    assert resp.status_code == 400
+    assert 'username' in resp.get_json().get('error', {})
+    # 2. Set username to too short (should error)
+    resp = client.put(PROFILE_URL, json={'username': 'ab'})
+    assert resp.status_code == 400
+    assert 'username' in resp.get_json().get('error', {})
+    # 3. Set username to already taken (should error)
+    resp = client.put(PROFILE_URL, json={'username': username2})
+    assert resp.status_code == 400
+    assert 'username' in resp.get_json().get('error', {})
+    # 4. Set username to valid new value (should succeed)
+    new_username = f"newuser_{unique}"
+    resp = client.put(PROFILE_URL, json={'username': new_username})
+    assert resp.status_code == 200
+    profile = client.get(PROFILE_URL).get_json()
+    assert profile['username'] == new_username
+
+
+# --- Profile Update Email Validation (Covers app.py:491-500) ---
+@pytest.mark.usefixtures('client', 'db')
+def test_profile_update_email_validation(client):
+    """
+    Test email update logic in /api/profile PUT (covers app.py:491-500):
+    - Invalid email returns error
+    - Already used email returns error
+    - Valid new email updates successfully
+    """
+    unique = uuid.uuid4().hex[:8]
+    username1 = f"user1_{unique}"
+    username2 = f"user2_{unique}"
+    email1 = f"user1_{unique}@weatherboysuper.com"
+    email2 = f"user2_{unique}@weatherboysuper.com"
+    password = 'StrongPass1!'
+    # Register two users
+    client.post(REGISTER_URL, json={'username': username1, 'email': email1, 'password': password})
+    client.post(REGISTER_URL, json={'username': username2, 'email': email2, 'password': password})
+    # Login as user1
+    client.post(LOGIN_URL, json={'username': username1, 'password': password})
+    # 1. Set email to invalid format (should error)
+    resp = client.put(PROFILE_URL, json={'email': 'not-an-email'})
+    assert resp.status_code == 400
+    assert 'email' in resp.get_json().get('error', {})
+    # 2. Set email to already used by another user (should error)
+    resp = client.put(PROFILE_URL, json={'email': email2})
+    assert resp.status_code == 400
+    assert 'email' in resp.get_json().get('error', {})
+    # 3. Set email to valid new value (should succeed)
+    new_email = f"new_{unique}@weatherboysuper.com"
+    resp = client.put(PROFILE_URL, json={'email': new_email})
+    assert resp.status_code == 200
+    profile = client.get(PROFILE_URL).get_json()
+    assert profile['email'] == new_email
+
+
 # Additional test for CSRF protection on profile update
 @pytest.mark.usefixtures('client', 'db')
 def test_csrf_protect_profile_update(client):
