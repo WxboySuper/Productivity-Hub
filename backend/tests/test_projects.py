@@ -86,6 +86,77 @@ def test_update_project(auth_client):
     data = resp.get_json()
     assert data['name'] == 'Updated Project'
 
+
+def test_update_project_not_found(auth_client):
+    """
+    Test updating a non-existent project returns 404 (covers app.py:859-860).
+    """
+    resp = auth_client.put(f'{PROJECTS_URL}/999999', json={'name': 'Should Fail'})
+    assert resp.status_code == 404
+    data = resp.get_json()
+    assert data['error'] == 'Project not found'
+
+def test_update_project_requires_json(auth_client):
+    """
+    Test updating a project with non-JSON data returns 400 (covers app.py:862-863).
+    """
+    # Create a project
+    resp = auth_client.post(PROJECTS_URL, json={'name': 'Update Me'})
+    project_id = resp.get_json()['id']
+    # Try to update with form data
+    resp = auth_client.put(f'{PROJECTS_URL}/{project_id}', data={'name': 'Not JSON'})
+    assert resp.status_code == 400
+    data = resp.get_json()
+    assert data['error'] == 'Request must be JSON'
+
+def test_update_project_missing_or_blank_name(auth_client):
+    """
+    Test updating a project with missing or blank name returns 400 (covers app.py:869-870 for PUT endpoint).
+    """
+    # Create a project
+    resp = auth_client.post(PROJECTS_URL, json={'name': 'Update Name Test'})
+    project_id = resp.get_json()['id']
+    # Try to update with missing name
+    resp = auth_client.put(f'{PROJECTS_URL}/{project_id}', json={})
+    assert resp.status_code == 400
+    data = resp.get_json()
+    assert data['error'] == 'Project name is required'
+    # Try to update with no description (should not error, just for completeness)
+
+
+def test_update_project_description_variants(auth_client):
+    """
+    Test updating a project's description with various values to cover app.py:874-875.
+    """
+    # Create a project with initial description
+    resp = auth_client.post(PROJECTS_URL, json={'name': 'DescTest', 'description': 'Initial'})
+    project = resp.get_json()
+    project_id = project['id']
+
+    # Update with new description (with whitespace)
+    resp = auth_client.put(f'{PROJECTS_URL}/{project_id}', json={'name': 'DescTest', 'description': '  New Desc  '})
+    assert resp.status_code == 200
+    data = resp.get_json()
+    # Should be stripped
+    assert data['description'] == 'New Desc'
+
+    # Update with empty string (should set to empty string)
+    resp = auth_client.put(f'{PROJECTS_URL}/{project_id}', json={'name': 'DescTest', 'description': ''})
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data['description'] == ''
+
+    # Update with no description field (should leave unchanged)
+    resp = auth_client.put(f'{PROJECTS_URL}/{project_id}', json={'name': 'DescTest'})
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data['description'] == ''  # Remains as last set value
+    # Try to update with blank name
+    resp = auth_client.put(f'{PROJECTS_URL}/{project_id}', json={'name': '   '})
+    assert resp.status_code == 400
+    data = resp.get_json()
+    assert data['error'] == 'Project name is required'
+
 def test_delete_project(auth_client):
     # Create a project
     resp = auth_client.post(PROJECTS_URL, json={'name': 'To Delete'})
