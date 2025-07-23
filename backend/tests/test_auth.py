@@ -198,8 +198,7 @@ def test_get_current_user_found_and_not_found(client):
             assert found_user.username == username
 
     # Simulate a request context with no user_id in session
-    with client.application.app_context():
-        with client.application.test_request_context():
-            flask.session.clear()
-            not_found_user = get_current_user()
-            assert not_found_user is None
+    with client.application.app_context(), client.application.test_request_context():
+        flask.session.clear()
+        not_found_user = get_current_user()
+        assert not_found_user is None
