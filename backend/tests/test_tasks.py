@@ -93,6 +93,16 @@ def test_paginate_query_tasks_edge_cases(auth_client):
     data = resp.get_json()
     assert data['per_page'] <= 100
 
+def test_get_tasks_invalid_pagination_params(auth_client):
+    """
+    Test /api/tasks GET with invalid (non-integer) pagination params to cover ValueError branch (app.py:929-931).
+    """
+    # Pass a non-integer page parameter
+    resp = auth_client.get('/api/tasks?page=abc&per_page=2')
+    assert resp.status_code == 400
+    data = resp.get_json()
+    assert data['error'] == 'Invalid pagination parameters.'
+
 def test_create_task_with_start_date_and_recurrence(auth_client):
     resp = auth_client.post(TASKS_URL, json={
         'title': 'Recurring Task',
@@ -106,6 +116,118 @@ def test_create_task_with_start_date_and_recurrence(auth_client):
     assert data['start_date'] == '2025-07-01T09:00:00'
     assert data['due_date'] == '2025-07-10T17:00:00'
     assert data['recurrence'] == 'weekly'
+
+def test_get_tasks_due_start_recurrence_fields(auth_client):
+    """
+    Test GET /api/tasks returns due_date, start_date, and recurrence fields when set, and omits them when not set (covers app.py:957-962).
+    """
+    # Create a task with all fields
+    resp = auth_client.post(TASKS_URL, json={
+        'title': 'Field Test',
+        'priority': 1,
+        'start_date': '2025-07-01T09:00:00',
+        'due_date': '2025-07-10T17:00:00',
+        'recurrence': 'weekly'
+    })
+    assert resp.status_code == 201
+    # Create a task with none of those fields
+    resp2 = auth_client.post(TASKS_URL, json={
+        'title': 'No Fields',
+        'priority': 1
+    })
+    assert resp2.status_code == 201
+    # Fetch all tasks
+    resp = auth_client.get(TASKS_URL)
+    assert resp.status_code == 200
+    data = resp.get_json()['tasks']
+    # Find both tasks
+    try:
+        field_task = next(t for t in data if t['title'] == 'Field Test')
+    except StopIteration:
+        pytest.fail("Task with title 'Field Test' not found in response data")
+    try:
+        nofield_task = next(t for t in data if t['title'] == 'No Fields')
+    except StopIteration:
+        pytest.fail("Task with title 'No Fields' not found in response data")
+    # Check fields present when set
+    assert field_task['due_date'] == '2025-07-10T17:00:00'
+    assert field_task['start_date'] == '2025-07-01T09:00:00'
+    assert field_task['recurrence'] == 'weekly'
+    # Check fields absent when not set
+    assert 'due_date' not in nofield_task
+    assert 'start_date' not in nofield_task
+    assert 'recurrence' not in nofield_task
+
+def test_get_tasks_with_subtasks(auth_client):
+    """
+    Test GET /api/tasks returns subtasks in the parent task's 'subtasks' field (covers app.py:966-967).
+    """
+    # Create a parent task
+    resp = auth_client.post(TASKS_URL, json={
+        'title': 'Parent Task',
+        'priority': 1
+    })
+    assert resp.status_code == 201
+    parent_id = resp.get_json()['id']
+    # Create a subtask
+    resp2 = auth_client.post(TASKS_URL, json={
+        'title': 'Subtask',
+        'priority': 1,
+        'parent_id': parent_id
+    })
+    assert resp2.status_code == 201
+    subtask_id = resp2.get_json()['id']
+    # Fetch all tasks
+    resp = auth_client.get(TASKS_URL)
+    assert resp.status_code == 200
+    data = resp.get_json()['tasks']
+    # Find parent task
+    try:
+        parent_task = next(t for t in data if t['title'] == 'Parent Task')
+    except StopIteration:
+        pytest.fail("Parent task with title 'Parent Task' not found in response data")
+    # Check that subtasks field exists and contains the subtask
+    assert 'subtasks' in parent_task
+    assert isinstance(parent_task['subtasks'], list)
+    assert any(st['id'] == subtask_id and st['title'] == 'Subtask' for st in parent_task['subtasks'])
+
+def test_get_tasks_subtask_due_start_fields(auth_client):
+    """
+    Test GET /api/tasks returns due_date and start_date fields for subtasks when set (covers app.py:976-979).
+    """
+    # Create a parent task
+    resp = auth_client.post(TASKS_URL, json={
+        'title': 'Parent Task 2',
+        'priority': 1
+    })
+    assert resp.status_code == 201
+    parent_id = resp.get_json()['id']
+    # Create a subtask with due_date and start_date
+    resp2 = auth_client.post(TASKS_URL, json={
+        'title': 'Subtask 2',
+        'priority': 1,
+        'parent_id': parent_id,
+        'due_date': '2025-08-01T10:00:00',
+        'start_date': '2025-07-25T09:00:00'
+    })
+    assert resp2.status_code == 201
+    subtask_id = resp2.get_json()['id']
+    # Fetch all tasks
+    resp = auth_client.get(TASKS_URL)
+    assert resp.status_code == 200
+    data = resp.get_json()['tasks']
+    # Find parent task
+    try:
+        parent_task = next(t for t in data if t['title'] == 'Parent Task 2')
+    except StopIteration:
+        pytest.fail("Parent task with title 'Parent Task 2' not found in response data")
+    # Find subtask in parent's subtasks
+    try:
+        subtask = next(st for st in parent_task['subtasks'] if st['id'] == subtask_id)
+    except StopIteration:
+        pytest.fail(f"Subtask with id {subtask_id} not found in parent's subtasks")
+    assert subtask['due_date'] == '2025-08-01T10:00:00'
+    assert subtask['start_date'] == '2025-07-25T09:00:00'
 
 
 def test_update_task_start_date_and_recurrence(auth_client):
