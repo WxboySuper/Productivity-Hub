@@ -386,7 +386,7 @@ def test_notification_snooze_endpoint(client, caplog):
     assert resp.status_code == 400
     assert resp.get_json()["error"] == "Minutes must be positive"
     # Error: notification not found
-    resp = client.post(f'/api/notifications/999999/snooze', json={"minutes": 10})
+    resp = client.post('/api/notifications/999999/snooze', json={"minutes": 10})
     assert resp.status_code == 404
     assert resp.get_json()["error"] == "Notification not found"
     # Error: snoozed_until attribute missing (simulate by monkeypatching hasattr)
