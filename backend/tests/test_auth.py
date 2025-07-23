@@ -8,8 +8,11 @@ import pytest
 import uuid
 import re
 import flask
-from app import get_current_user, db, User, generate_csrf_token, Notification
 import logging
+from unittest.mock import patch, MagicMock
+from datetime import datetime, timedelta, timezone
+import builtins
+from app import get_current_user, db, User, generate_csrf_token, Notification, send_email
 
 # --- API Endpoint Constants (must be defined before use) ---
 REGISTER_URL = '/api/register'
@@ -333,7 +336,6 @@ def test_notification_snooze_endpoint(client, caplog):
     Test /api/notifications/<notification_id>/snooze endpoint for snoozing notifications.
     Covers app.py:559-592.
     """
-    from datetime import datetime, timedelta, timezone
     unique = uuid.uuid4().hex[:8]
     username = f"snoozeuser_{unique}"
     email = f"snoozeuser_{unique}@weatherboysuper.com"
@@ -390,7 +392,6 @@ def test_notification_snooze_endpoint(client, caplog):
     assert resp.status_code == 404
     assert resp.get_json()["error"] == "Notification not found"
     # Error: snoozed_until attribute missing (simulate by monkeypatching hasattr)
-    import builtins
     orig_hasattr = builtins.hasattr
     def fake_hasattr(obj, name):
         if isinstance(obj, Notification) and name == 'snoozed_until':
@@ -404,6 +405,49 @@ def test_notification_snooze_endpoint(client, caplog):
         assert resp.get_json()["error"] == "Snooze functionality not available"
     finally:
         builtins.hasattr = orig_hasattr
+
+def test_send_email_success_and_failure(caplog):
+    """
+    Test send_email utility for both TLS and non-TLS, success and failure cases.
+    Covers app.py:716-732.
+    """
+    # Patch smtplib.SMTP
+    with patch('app.smtplib.SMTP') as mock_smtp:
+        # Simulate non-TLS success
+        smtp_instance = MagicMock()
+        mock_smtp.return_value = smtp_instance
+        result = send_email('to@example.com', 'Subject', 'Body')
+        assert result is True
+        smtp_instance.send_message.assert_called()
+        smtp_instance.quit.assert_called()
+        # Explicitly check SMTP called with correct host/port (covers app.py:726)
+        from app import EMAIL_HOST, EMAIL_PORT
+        mock_smtp.assert_any_call(EMAIL_HOST, EMAIL_PORT)
+        # Simulate TLS success
+        import app
+        orig_tls = app.EMAIL_USE_TLS
+        app.EMAIL_USE_TLS = True
+        smtp_instance.reset_mock()
+        result = send_email('to@example.com', 'Subject', 'Body')
+        assert result is True
+        smtp_instance.starttls.assert_called()
+        smtp_instance.send_message.assert_called()
+        smtp_instance.quit.assert_called()
+        app.EMAIL_USE_TLS = orig_tls
+        # Simulate login credentials
+        app.EMAIL_HOST_USER = 'user'
+        app.EMAIL_HOST_PASSWORD = 'pw'
+        smtp_instance.reset_mock()
+        result = send_email('to@example.com', 'Subject', 'Body')
+        smtp_instance.login.assert_called_with('user', 'pw')
+        app.EMAIL_HOST_USER = ''
+        app.EMAIL_HOST_PASSWORD = ''
+        # Simulate send failure
+        smtp_instance.send_message.side_effect = Exception('fail')
+        with caplog.at_level('ERROR'):
+            result = send_email('to@example.com', 'Subject', 'Body')
+        assert result is False
+        assert any('Failed to send email' in m for m in caplog.messages)
 
 # Additional test for CSRF protection on profile update
 @pytest.mark.usefixtures('client', 'db')
