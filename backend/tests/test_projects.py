@@ -59,6 +59,23 @@ def test_get_projects(auth_client):
     assert 'projects' in data
     assert len(data['projects']) >= 1
 
+def test_get_project_by_id_success(auth_client):
+    """
+    Test /api/projects/<project_id> GET returns the correct project and covers logger/return (app.py:842-843).
+    """
+    # Create a project
+    resp = auth_client.post(PROJECTS_URL, json={'name': 'Single Project', 'description': 'Desc'})
+    assert resp.status_code == 201
+    project = resp.get_json()
+    project_id = project['id']
+    # Fetch the project by ID
+    resp = auth_client.get(f'{PROJECTS_URL}/{project_id}')
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data['id'] == project_id
+    assert data['name'] == 'Single Project'
+    assert data['description'] == 'Desc'
+
 def test_update_project(auth_client):
     # Create a project
     resp = auth_client.post(PROJECTS_URL, json={'name': 'To Update'})
