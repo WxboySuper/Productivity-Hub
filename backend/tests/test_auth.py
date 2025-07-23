@@ -8,7 +8,7 @@ import pytest
 import uuid
 import re
 import flask
-from app import get_current_user, db, User, generate_csrf_token
+from app import get_current_user, db, User, generate_csrf_token, Notification
 import logging
 
 # --- API Endpoint Constants (must be defined before use) ---
@@ -210,6 +210,7 @@ def test_profile_update_email_validation(client):
     username2 = f"user2_{unique}"
     email1 = f"user1_{unique}@weatherboysuper.com"
     email2 = f"user2_{unique}@weatherboysuper.com"
+    # skipcq: PTC-W1006
     password = 'StrongPass1!'
     # Register two users
     client.post(REGISTER_URL, json={'username': username1, 'email': email1, 'password': password})
@@ -230,6 +231,56 @@ def test_profile_update_email_validation(client):
     assert resp.status_code == 200
     profile = client.get(PROFILE_URL).get_json()
     assert profile['email'] == new_email
+
+
+# --- Notifications GET Endpoint (Covers app.py:511-535) ---
+@pytest.mark.usefixtures('client', 'db')
+def test_get_notifications_endpoint(client, caplog):
+    """
+    Test /api/notifications GET returns all notifications for the current user with correct fields and logging.
+    Covers app.py:511-535.
+    """
+    unique = uuid.uuid4().hex[:8]
+    username = f"notifuser_{unique}"
+    email = f"notifuser_{unique}@weatherboysuper.com"
+    # skipcq: PTC-W1006
+    password = 'StrongPass1!'
+    # Register and login
+    client.post(REGISTER_URL, json={'username': username, 'email': email, 'password': password})
+    client.post(LOGIN_URL, json={'username': username, 'password': password})
+    # Add notifications for this user
+    with client.application.app_context():
+        user = User.query.filter_by(username=username).first()
+        n1 = Notification(user_id=user.id, message="Test notification 1", read=False)
+        n2 = Notification(user_id=user.id, message="Test notification 2", read=True, show_at=None)
+        n3 = Notification(user_id=user.id, message="Test notification 3", read=False)
+        db.session.add_all([n1, n2, n3])
+        db.session.commit()
+        # Add snoozed_until and show_at to n2
+        n2.show_at = n2.created_at
+        n2.snoozed_until = n2.created_at
+        db.session.commit()
+        n2_id = n2.id
+    # Call the endpoint and check response
+    with caplog.at_level(logging.INFO):
+        resp = client.get('/api/notifications')
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert isinstance(data, list)
+    assert len(data) >= 3
+    # Check required fields in each notification
+    for notif in data:
+        assert 'id' in notif
+        assert 'message' in notif
+        assert 'read' in notif
+        assert 'created_at' in notif
+        assert 'task_id' in notif
+        # Optionally present fields
+        if 'n2_id' in locals() and notif['id'] == n2_id:
+            assert 'show_at' in notif
+            assert 'snoozed_until' in notif
+    # Check log message for number of notifications
+    assert any('Returning' in m and 'notifications for user' in m for m in caplog.messages)
 
 
 # Additional test for CSRF protection on profile update
