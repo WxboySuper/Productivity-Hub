@@ -325,6 +325,86 @@ def test_notification_dismiss_endpoint(client, caplog):
     assert data == {"error": "Notification not found"}
     assert any('Notification not found or doesn' in m for m in caplog.messages)
 
+
+# --- Notification Snooze Endpoint (Covers app.py:559-592) ---
+@pytest.mark.usefixtures('client', 'db')
+def test_notification_snooze_endpoint(client, caplog):
+    """
+    Test /api/notifications/<notification_id>/snooze endpoint for snoozing notifications.
+    Covers app.py:559-592.
+    """
+    from datetime import datetime, timedelta, timezone
+    unique = uuid.uuid4().hex[:8]
+    username = f"snoozeuser_{unique}"
+    email = f"snoozeuser_{unique}@weatherboysuper.com"
+    password = 'StrongPass1!'
+    # Register and login
+    client.post(REGISTER_URL, json={'username': username, 'email': email, 'password': password})
+    client.post(LOGIN_URL, json={'username': username, 'password': password})
+    # Add a notification for this user
+    with client.application.app_context():
+        user = User.query.filter_by(username=username).first()
+        notif = Notification(user_id=user.id, message="Snooze me", read=False)
+        db.session.add(notif)
+        db.session.commit()
+        notif_id = notif.id
+    # Snooze the notification for 10 minutes
+    with caplog.at_level(logging.INFO):
+        resp = client.post(f'/api/notifications/{notif_id}/snooze', json={"minutes": 10})
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["success"] is True
+    assert "snoozed_until" in data
+    # Confirm snoozed_until is set and in the future
+    with client.application.app_context():
+        n = db.session.get(Notification, notif_id)
+        assert n.snoozed_until is not None
+        # Ensure both are aware datetimes for comparison
+        snoozed_until = n.snoozed_until
+        if snoozed_until.tzinfo is None:
+            # Assume UTC if naive
+            snoozed_until = snoozed_until.replace(tzinfo=timezone.utc)
+        now_utc = datetime.now(timezone.utc)
+        assert snoozed_until > now_utc - timedelta(minutes=1)
+    # Check log messages
+    assert any('Notification snooze endpoint accessed' in m for m in caplog.messages)
+    assert any('snoozed for' in m and 'by user' in m for m in caplog.messages)
+    # Error: missing minutes
+    resp = client.post(f'/api/notifications/{notif_id}/snooze', json={})
+    assert resp.status_code == 400
+    assert resp.get_json()["error"] == "Minutes parameter is required"
+    # Error: invalid minutes (non-integer)
+    resp = client.post(f'/api/notifications/{notif_id}/snooze', json={"minutes": "bad"})
+    assert resp.status_code == 400
+    assert resp.get_json()["error"] == "Invalid minutes value"
+    # Error: negative minutes
+    resp = client.post(f'/api/notifications/{notif_id}/snooze', json={"minutes": -5})
+    assert resp.status_code == 400
+    assert resp.get_json()["error"] == "Minutes must be positive"
+    # Error: zero minutes
+    resp = client.post(f'/api/notifications/{notif_id}/snooze', json={"minutes": 0})
+    assert resp.status_code == 400
+    assert resp.get_json()["error"] == "Minutes must be positive"
+    # Error: notification not found
+    resp = client.post(f'/api/notifications/999999/snooze', json={"minutes": 10})
+    assert resp.status_code == 404
+    assert resp.get_json()["error"] == "Notification not found"
+    # Error: snoozed_until attribute missing (simulate by monkeypatching hasattr)
+    import builtins
+    orig_hasattr = builtins.hasattr
+    def fake_hasattr(obj, name):
+        if isinstance(obj, Notification) and name == 'snoozed_until':
+            return False
+        return orig_hasattr(obj, name)
+    builtins.hasattr = fake_hasattr
+    try:
+        resp = client.post(f'/api/notifications/{notif_id}/snooze', json={"minutes": 10})
+        # Should return 500 and error about missing snoozed_until
+        assert resp.status_code == 500
+        assert resp.get_json()["error"] == "Snooze functionality not available"
+    finally:
+        builtins.hasattr = orig_hasattr
+
 # Additional test for CSRF protection on profile update
 @pytest.mark.usefixtures('client', 'db')
 def test_csrf_protect_profile_update(client):
