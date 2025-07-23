@@ -319,7 +319,7 @@ def test_notification_dismiss_endpoint(client, caplog):
     assert any('dismissed by user' in m for m in caplog.messages)
     # Try dismissing a non-existent notification
     with caplog.at_level(logging.WARNING):
-        resp = client.post(f'/api/notifications/999999/dismiss')
+        resp = client.post('/api/notifications/999999/dismiss')
     assert resp.status_code == 404
     data = resp.get_json()
     assert data == {"error": "Notification not found"}
