@@ -130,7 +130,6 @@ def test_get_tasks_due_start_recurrence_fields(auth_client):
         'recurrence': 'weekly'
     })
     assert resp.status_code == 201
-    task_id = resp.get_json()['id']
     # Create a task with none of those fields
     resp2 = auth_client.post(TASKS_URL, json={
         'title': 'No Fields',
@@ -142,8 +141,14 @@ def test_get_tasks_due_start_recurrence_fields(auth_client):
     assert resp.status_code == 200
     data = resp.get_json()['tasks']
     # Find both tasks
-    field_task = next(t for t in data if t['title'] == 'Field Test')
-    nofield_task = next(t for t in data if t['title'] == 'No Fields')
+    try:
+        field_task = next(t for t in data if t['title'] == 'Field Test')
+    except StopIteration:
+        pytest.fail("Task with title 'Field Test' not found in response data")
+    try:
+        nofield_task = next(t for t in data if t['title'] == 'No Fields')
+    except StopIteration:
+        pytest.fail("Task with title 'No Fields' not found in response data")
     # Check fields present when set
     assert field_task['due_date'] == '2025-07-10T17:00:00'
     assert field_task['start_date'] == '2025-07-01T09:00:00'
@@ -177,7 +182,10 @@ def test_get_tasks_with_subtasks(auth_client):
     assert resp.status_code == 200
     data = resp.get_json()['tasks']
     # Find parent task
-    parent_task = next(t for t in data if t['title'] == 'Parent Task')
+    try:
+        parent_task = next(t for t in data if t['title'] == 'Parent Task')
+    except StopIteration:
+        pytest.fail("Parent task with title 'Parent Task' not found in response data")
     # Check that subtasks field exists and contains the subtask
     assert 'subtasks' in parent_task
     assert isinstance(parent_task['subtasks'], list)
@@ -209,9 +217,15 @@ def test_get_tasks_subtask_due_start_fields(auth_client):
     assert resp.status_code == 200
     data = resp.get_json()['tasks']
     # Find parent task
-    parent_task = next(t for t in data if t['title'] == 'Parent Task 2')
+    try:
+        parent_task = next(t for t in data if t['title'] == 'Parent Task 2')
+    except StopIteration:
+        pytest.fail("Parent task with title 'Parent Task 2' not found in response data")
     # Find subtask in parent's subtasks
-    subtask = next(st for st in parent_task['subtasks'] if st['id'] == subtask_id)
+    try:
+        subtask = next(st for st in parent_task['subtasks'] if st['id'] == subtask_id)
+    except StopIteration:
+        pytest.fail("Subtask with id {} not found in parent's subtasks".format(subtask_id))
     assert subtask['due_date'] == '2025-08-01T10:00:00'
     assert subtask['start_date'] == '2025-07-25T09:00:00'
 
