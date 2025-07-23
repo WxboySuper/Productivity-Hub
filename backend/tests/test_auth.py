@@ -283,6 +283,48 @@ def test_get_notifications_endpoint(client, caplog):
     assert any('Returning' in m and 'notifications for user' in m for m in caplog.messages)
 
 
+@pytest.mark.usefixtures('client', 'db')
+def test_notification_dismiss_endpoint(client, caplog):
+    """
+    Test /api/notifications/<notification_id>/dismiss marks notification as read, returns correct response, and logs events.
+    Covers app.py:541-553.
+    """
+    unique = uuid.uuid4().hex[:8]
+    username = f"dismissuser_{unique}"
+    email = f"dismissuser_{unique}@weatherboysuper.com"
+    # skipcq: PTC-W1006
+    password = 'StrongPass1!'
+    # Register and login
+    client.post(REGISTER_URL, json={'username': username, 'email': email, 'password': password})
+    client.post(LOGIN_URL, json={'username': username, 'password': password})
+    # Add a notification for this user
+    with client.application.app_context():
+        user = User.query.filter_by(username=username).first()
+        notif = Notification(user_id=user.id, message="Dismiss me", read=False)
+        db.session.add(notif)
+        db.session.commit()
+        notif_id = notif.id
+    # Dismiss the notification
+    with caplog.at_level(logging.INFO):
+        resp = client.post(f'/api/notifications/{notif_id}/dismiss')
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data == {"success": True}
+    # Confirm notification is marked as read
+    with client.application.app_context():
+        n = db.session.get(Notification, notif_id)
+        assert n.read is True
+    # Check log messages
+    assert any('Notification dismiss endpoint accessed' in m for m in caplog.messages)
+    assert any('dismissed by user' in m for m in caplog.messages)
+    # Try dismissing a non-existent notification
+    with caplog.at_level(logging.WARNING):
+        resp = client.post('/api/notifications/999999/dismiss')
+    assert resp.status_code == 404
+    data = resp.get_json()
+    assert data == {"error": "Notification not found"}
+    assert any('Notification not found or doesn' in m for m in caplog.messages)
+
 # Additional test for CSRF protection on profile update
 @pytest.mark.usefixtures('client', 'db')
 def test_csrf_protect_profile_update(client):
