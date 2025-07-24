@@ -1,3 +1,8 @@
+
+# =========================
+# Imports
+# =========================
+
 import os
 import sys
 import re
@@ -16,7 +21,12 @@ from datetime import datetime, timezone, timedelta
 from email.message import EmailMessage
 from string import Template
 
-# Explicitly check for .env file and load success
+
+# =========================
+# Configuration & App Setup
+# =========================
+
+# --- Environment Loading ---
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 DOTENV_PATH = os.path.join(BASE_DIR, '.env')
 if not os.path.exists(DOTENV_PATH):
@@ -26,7 +36,7 @@ if not load_dotenv(DOTENV_PATH):
     print(f"ERROR: Failed to load .env file at {DOTENV_PATH}. Application will exit.")
     sys.exit(1)
 
-# Logging Configuration
+# --- Logging Configuration ---
 LOG_LEVEL = os.environ.get('LOG_LEVEL', 'INFO').upper()
 logging.basicConfig(
     level=getattr(logging, LOG_LEVEL, logging.INFO),
@@ -34,46 +44,50 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 logger.info("Logging configured at level: %s", LOG_LEVEL)
-
 logger.info("Starting Productivity Hub Backend...")
 logger.info("Logging is configured.")
 
-# Flask Application Setup
+# --- Flask App & Database Setup ---
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
-# Set database path to be in the same directory as this file
 db_path = os.path.join(BASE_DIR, 'productivity_hub.db')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', f'sqlite:///{db_path}')
 app.config['SESSION_COOKIE_SECURE'] = False  # Set to True in production with HTTPS
 app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevent JavaScript access to session cookies
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Set SameSite policy for session cookies
 
-# Production warning if running in production environment
+# --- Production Warning ---
 if os.environ.get("FLASK_ENV") == "production" or os.environ.get("ENVIRONMENT") == "production":
     warnings.warn("WARNING: This app is running in production mode! Ensure all security settings are properly configured, including CSRF protection.", RuntimeWarning)
 
 logger.info("Flask app configuration is set up.")
-
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
-
 logger.info("SQLAlchemy is set up.")
 
-# Association table for task dependencies (blocked by/blocking)
+
+# =========================
+# Association Tables
+# =========================
+
+# --- Task Dependencies (blocked by/blocking) ---
 task_dependencies = db.Table(
     'task_dependencies',
     db.Column('blocker_id', db.Integer, db.ForeignKey('task.id', ondelete='CASCADE'), primary_key=True),
     db.Column('blocked_id', db.Integer, db.ForeignKey('task.id', ondelete='CASCADE'), primary_key=True)
 )
 
-# Association table for linked/related tasks (non-blocking relationships)
+# --- Linked/Related Tasks (non-blocking relationships) ---
 task_links = db.Table(
     'task_links',
     db.Column('task_a_id', db.Integer, db.ForeignKey('task.id', ondelete='CASCADE'), primary_key=True),
     db.Column('task_b_id', db.Integer, db.ForeignKey('task.id', ondelete='CASCADE'), primary_key=True)
 )
 
+#########################
 # Model Definitions
+#########################
+## --- User Model ---
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
@@ -89,6 +103,7 @@ class User(db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
+## --- Task Model ---
 class Task(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(120), nullable=False)
@@ -130,6 +145,7 @@ class Task(db.Model):
     reminder_snoozed_until = db.Column(db.DateTime, nullable=True)
     reminder_enabled = db.Column(db.Boolean, default=True, nullable=False)
 
+## --- Project Model ---
 class Project(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), nullable=False)
@@ -140,6 +156,7 @@ class Project(db.Model):
 
     tasks = db.relationship('Task', backref='project', lazy=True, cascade='all, delete-orphan')
 
+## --- PasswordResetToken Model ---
 class PasswordResetToken(db.Model):
     __tablename__ = 'password_reset_tokens'
     id = db.Column(db.Integer, primary_key=True)
@@ -151,6 +168,7 @@ class PasswordResetToken(db.Model):
 
     user = db.relationship('User', backref=db.backref('password_reset_tokens', lazy=True))
 
+## --- Notification Model ---
 class Notification(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -166,7 +184,11 @@ class Notification(db.Model):
     user = db.relationship('User', backref=db.backref('notifications', lazy=True))
     task = db.relationship('Task', backref=db.backref('notifications', lazy=True))
 
+
+#########################
 # Helper Functions
+#########################
+## --- Database Initialization ---
 def init_db():
     """
     Initialize the database tables for the Flask app.
@@ -177,6 +199,7 @@ def init_db():
         db.create_all()
     logger.info("Database tables created.")
 
+## --- Password Strength Validation ---
 def is_strong_password(password):
     """
     Check if the provided password meets strength requirements.
@@ -207,6 +230,7 @@ def is_strong_password(password):
     logger.debug("Password is strong.")
     return True
 
+## --- Get Current User from Session ---
 def get_current_user():
     """
     Retrieve the current user from the session.
@@ -224,6 +248,7 @@ def get_current_user():
     logger.info("No user_id in session.")
     return None
 
+## --- Error Response Helper ---
 def error_response(message, code):
     """
     Return a JSON error response with logging.
@@ -233,6 +258,7 @@ def error_response(message, code):
     logger.error(message)
     return jsonify({"error": message}), code
 
+## --- Login Required Decorator ---
 def login_required(f):
     """
     Decorator to ensure the user is logged in before accessing the endpoint.
@@ -248,6 +274,7 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+## --- CSRF Token Generation ---
 def generate_csrf_token():
     """
     Generate a CSRF token and return it. 
@@ -264,6 +291,7 @@ def generate_csrf_token():
     logger.info("Generating new CSRF token.")
     return secrets.token_hex(16)
 
+## --- CSRF Protection Handler ---
 def csrf_protect():
     """
     Flask before_request handler to enforce CSRF protection on state-changing requests.
@@ -292,9 +320,41 @@ def csrf_protect():
             logger.warning("CSRF token missing or invalid. Cookie: %s, Header: %s", token, header_token)
             return error_response("Invalid or missing CSRF token", 403)
 
-app.before_request(csrf_protect)
 
+## --- Task Validation/Parsing Helpers ---
+def validate_title(data):
+    title = data.get('title')
+    if not title or not title.strip():
+        return None, "Task title is required"
+    return title.strip(), None
+
+def validate_project_id(data, user):
+    project_id = data.get('project_id')
+    if project_id:
+        project = Project.query.filter_by(id=project_id, user_id=user.id).first()
+        if not project:
+            return None, "Invalid project ID"
+    return project_id, None
+
+def validate_parent_id(data, user):
+    parent_id = data.get('parent_id')
+    if parent_id:
+        parent_task = Task.query.filter_by(id=parent_id, user_id=user.id).first()
+        if not parent_task:
+            return None, "Invalid parent task ID"
+    return parent_id, None
+
+def parse_date(date_str, field_name):
+    if date_str:
+        try:
+            return datetime.fromisoformat(date_str.replace('Z', '+00:00')), None
+        except ValueError:
+            return None, f"Invalid {field_name} format"
+    return None, None
+
+#########################
 # Route Definitions
+#########################
 @app.route('/')
 def home():
     """Home route."""
@@ -302,6 +362,10 @@ def home():
     return "Welcome to the Productivity Hub Backend!"
 
 # User Endpoints (Registration, Login, Logout, Profile)
+# =========================
+# User Endpoints (Registration, Login, Logout, Profile)
+# =========================
+
 @app.route('/api/register', methods=['POST'])
 def register():
     """User registration endpoint."""
@@ -351,6 +415,8 @@ def register():
 
     logger.info("User %s registered successfully.", username)
     return jsonify({"message": "User registered successfully"}), 201
+
+# --- User Login ---
 
 @app.route('/api/login', methods=['POST'])
 def login():
@@ -409,6 +475,8 @@ def login():
         }
     }), 200
 
+# --- User Logout ---
+
 @app.route('/api/logout', methods=['POST'])
 def logout():
     """
@@ -419,6 +487,8 @@ def logout():
     session.clear()  # Clear the entire session
     logger.info("User logged out successfully.")
     return jsonify({"message": "Logout successful"}), 200
+
+# --- Check Authentication ---
 
 @app.route('/api/auth/check', methods=['GET'])
 def check_auth():
@@ -459,6 +529,8 @@ def check_auth():
             }
         }), 200
 
+# --- Get User Profile ---
+
 @app.route('/api/profile', methods=['GET'])
 @login_required
 def get_profile():
@@ -471,6 +543,8 @@ def get_profile():
         "username": user.username,
         "email": user.email
     }), 200
+
+# --- Update User Profile ---
 
 @app.route('/api/profile', methods=['PUT'])
 @login_required
@@ -504,6 +578,10 @@ def update_profile():
     logger.info("Profile updated for user: %s (ID: %s)", user.username, user.id)
     return jsonify({'message': 'Profile updated successfully.'}), 200
 
+# =========================
+# Notification Endpoints
+# =========================
+
 @app.route('/api/notifications', methods=['GET'])
 @login_required
 def get_notifications():
@@ -534,6 +612,8 @@ def get_notifications():
     logger.info("Returning %d notifications for user: %s", len(notifications_data), user.username)
     return jsonify(notifications_data), 200
 
+# --- Dismiss Notification ---
+
 @app.route('/api/notifications/<int:notification_id>/dismiss', methods=['POST'])
 @login_required
 def dismiss_notification(notification_id):
@@ -551,6 +631,8 @@ def dismiss_notification(notification_id):
     
     logger.info("Notification %s dismissed by user: %s", notification_id, user.username)
     return jsonify({"success": True}), 200
+
+# --- Snooze Notification ---
 
 @app.route('/api/notifications/<int:notification_id>/snooze', methods=['POST'])
 @login_required
@@ -605,7 +687,11 @@ def get_csrf_token():
     response.set_cookie('_csrf_token', token, httponly=False, samesite='Lax')
     return response
 
-# Password Reset Routes
+# =========================
+# Password Reset Endpoints
+# =========================
+# --- Password Reset Request ---
+
 @app.route('/api/password-reset/request', methods=['POST'])
 def password_reset_request():
     """Request a password reset: accepts email, generates token, stores it, sends email (timing-equalized)."""
@@ -651,6 +737,8 @@ def password_reset_request():
             "token": token if user else None  # Include token in test/debug mode
         }), 200
     return jsonify({"message": "If the email exists, a password reset link will be sent."}), 200
+
+# --- Password Reset Confirm ---
 
 @app.route('/api/password-reset/confirm', methods=['POST'])
 def password_reset_confirm():
@@ -745,6 +833,8 @@ def render_password_reset_email(reset_link, expiration_minutes=60):
     return template.substitute(reset_link=reset_link, expiration_minutes=expiration_minutes)
 
 # Project Endpoints
+# --- Get All Projects ---
+
 @app.route('/api/projects', methods=['GET'])
 @login_required
 def get_projects():
@@ -788,6 +878,8 @@ def get_projects():
         "per_page": pagination.per_page
     }), 200
 
+# --- Create Project ---
+
 @app.route('/api/projects', methods=['POST'])
 @login_required
 def create_project():
@@ -828,6 +920,8 @@ def create_project():
         logger.error("Project creation failed: %s", e)
         return error_response("Failed to create project", 500)
 
+# --- Get Project by ID ---
+
 @app.route('/api/projects/<int:project_id>', methods=['GET'])
 @login_required
 def get_project(project_id):
@@ -847,6 +941,8 @@ def get_project(project_id):
         "created_at": project.created_at.isoformat(),
         "updated_at": project.updated_at.isoformat()
     }), 200
+
+# --- Update Project ---
 
 @app.route('/api/projects/<int:project_id>', methods=['PUT'])
 @login_required
@@ -890,6 +986,8 @@ def update_project(project_id):
         logger.error("Project update failed: %s", e)
         return error_response("Failed to update project", 500)
 
+# --- Delete Project ---
+
 @app.route('/api/projects/<int:project_id>', methods=['DELETE'])
 @login_required
 def delete_project(project_id):
@@ -914,122 +1012,7 @@ def delete_project(project_id):
         logger.error("Project deletion failed: %s", e)
         return error_response("Failed to delete project", 500)
 
-# Task Endpoints
-@app.route('/api/tasks', methods=['GET'])
-@login_required
-def get_tasks():
-    """Get all tasks for the current user, paginated."""
-    logger.info("Tasks GET endpoint accessed.")
-    user = get_current_user()
-    
-    # Parse pagination parameters
-    try:
-        page = int(request.args.get('page', 1))
-        per_page = int(request.args.get('per_page', 20))
-    except ValueError:
-        logger.warning("Invalid pagination parameters for tasks GET.")
-        return error_response("Invalid pagination parameters.", 400)
-    
-    per_page = max(1, min(per_page, 100))  # Limit per_page to reasonable range
-    logger.debug("Paginating tasks: page=%s, per_page=%s", page, per_page)
-    
-    # Build query
-    query = Task.query.filter_by(user_id=user.id).order_by(Task.created_at.desc())
-    
-    # Paginate
-    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
-    
-    tasks_data = []
-    for task in pagination.items:
-        task_dict = {
-            "id": task.id,
-            "title": task.title,
-            "description": task.description,
-            "completed": task.completed,
-            "priority": task.priority,
-            "project_id": task.project_id,
-            "parent_id": task.parent_id,
-            "created_at": task.created_at.isoformat(),
-            "updated_at": task.updated_at.isoformat()
-        }
-        
-        # Include optional fields if they exist
-        if task.due_date:
-            task_dict["due_date"] = task.due_date.isoformat()
-        if task.start_date:
-            task_dict["start_date"] = task.start_date.isoformat()
-        if task.recurrence:
-            task_dict["recurrence"] = task.recurrence
-            
-        # Add subtasks
-        subtasks = []
-        for subtask in task.subtasks:
-            subtask_dict = {
-                "id": subtask.id,
-                "title": subtask.title,
-                "description": subtask.description,
-                "completed": subtask.completed,
-                "priority": subtask.priority,
-                "created_at": subtask.created_at.isoformat(),
-                "updated_at": subtask.updated_at.isoformat()
-            }
-            if subtask.due_date:
-                subtask_dict["due_date"] = subtask.due_date.isoformat()
-            if subtask.start_date:
-                subtask_dict["start_date"] = subtask.start_date.isoformat()
-            subtasks.append(subtask_dict)
-        
-        task_dict["subtasks"] = subtasks
-        tasks_data.append(task_dict)
-    
-    logger.info("Returning %d tasks for user: %s", len(tasks_data), user.username)
-    return jsonify({
-        "tasks": tasks_data,
-        "total": pagination.total,
-        "pages": pagination.pages,
-        "current_page": pagination.page,
-        "per_page": pagination.per_page
-    }), 200
 
-@app.route('/api/tasks', methods=['POST'])
-@login_required
-def create_task():
-    """Create a new task for the current user."""
-    logger.info("Tasks POST endpoint accessed.")
-    user = get_current_user()
-    if not request.is_json:
-        return error_response("Request must be JSON", 400)
-    data = request.get_json()
-
-    def validate_title(data):
-        title = data.get('title')
-        if not title or not title.strip():
-            return None, "Task title is required"
-        return title.strip(), None
-
-    def validate_project_id(data, user):
-        project_id = data.get('project_id')
-        if project_id:
-            project = Project.query.filter_by(id=project_id, user_id=user.id).first()
-            if not project:
-                return None, "Invalid project ID"
-        return project_id, None
-
-    def validate_parent_id(data, user):
-        parent_id = data.get('parent_id')
-        if parent_id:
-            parent_task = Task.query.filter_by(id=parent_id, user_id=user.id).first()
-            if not parent_task:
-                return None, "Invalid parent task ID"
-        return parent_id, None
-
-    def parse_date(date_str, field_name):
-        if date_str:
-            try:
-                return datetime.fromisoformat(date_str.replace('Z', '+00:00')), None
-            except ValueError:
-                return None, f"Invalid {field_name} format"
-        return None, None
 
     try:
         title, err = validate_title(data)
@@ -1046,18 +1029,15 @@ def create_task():
         due_date_str = data.get('due_date')
         start_date_str = data.get('start_date')
         recurrence = data.get('recurrence')
-
         due_date, err = parse_date(due_date_str, 'due_date')
         if err:
             return error_response(err, 400)
         start_date, err = parse_date(start_date_str, 'start_date')
         if err:
             return error_response(err, 400)
-
         # Validate that start_date is not after due_date
         if start_date and due_date and start_date > due_date:
             return error_response("start_date cannot be after due_date", 400)
-
         task = Task(
             title=title,
             description=description.strip() if description else '',
@@ -1072,7 +1052,6 @@ def create_task():
             task.start_date = start_date
         if recurrence:
             task.recurrence = recurrence
-
         db.session.add(task)
         db.session.commit()
         logger.info("Task '%s' created successfully for user: %s", task.title, user.username)
@@ -1166,91 +1145,45 @@ def update_task(task_id):
         return error_response("Request must be JSON", 400)
     data = request.get_json()
 
-    def validate_and_set_title(task, data):
+    try:
+        # Update fields if provided
         if 'title' in data:
             if not data['title'] or not data['title'].strip():
-                return "Task title is required"
+                return error_response("Task title is required", 400)
             task.title = data['title'].strip()
-        return None
-
-    def set_description(task, data):
         if 'description' in data:
             task.description = data['description'].strip() if data['description'] else ''
-
-    def set_completed(task, data):
         if 'completed' in data:
             task.completed = bool(data['completed'])
-
-    def set_priority(task, data):
         if 'priority' in data:
             task.priority = data['priority']
-
-    def validate_and_set_project(task, data, user):
         if 'project_id' in data:
             if data['project_id']:
                 project = Project.query.filter_by(id=data['project_id'], user_id=user.id).first()
                 if not project:
-                    return "Invalid project ID"
+                    return error_response("Invalid project ID", 400)
             task.project_id = data['project_id']
-        return None
-
-    def parse_date(date_str, field_name):
-        if date_str:
-            try:
-                return datetime.fromisoformat(date_str.replace('Z', '+00:00')), None
-            except ValueError:
-                return None, f"Invalid {field_name} format"
-        return None, None
-
-    def set_due_date(task, data):
         if 'due_date' in data:
             if data['due_date']:
                 due_date, err = parse_date(data['due_date'], 'due_date')
                 if err:
-                    return err
+                    return error_response(err, 400)
                 task.due_date = due_date
             else:
                 task.due_date = None
-        return None
-
-    def set_start_date(task, data):
         if 'start_date' in data:
             if data['start_date']:
                 start_date, err = parse_date(data['start_date'], 'start_date')
                 if err:
-                    return err
+                    return error_response(err, 400)
                 task.start_date = start_date
             else:
                 task.start_date = None
-        return None
-
-    def set_recurrence(task, data):
         if 'recurrence' in data:
             task.recurrence = data['recurrence']
-
-    try:
-        # Validate and set fields
-        err = validate_and_set_title(task, data)
-        if err:
-            return error_response(err, 400)
-        set_description(task, data)
-        set_completed(task, data)
-        set_priority(task, data)
-        err = validate_and_set_project(task, data, user)
-        if err:
-            return error_response(err, 400)
-        err = set_due_date(task, data)
-        if err:
-            return error_response(err, 400)
-        err = set_start_date(task, data)
-        if err:
-            return error_response(err, 400)
-        set_recurrence(task, data)
-
         # Validate that start_date is not after due_date
         if task.start_date and task.due_date and task.start_date > task.due_date:
             return error_response("start_date cannot be after due_date", 400)
-
         db.session.commit()
         logger.info("Task '%s' updated successfully for user: %s", task.title, user.username)
         task_dict = {
