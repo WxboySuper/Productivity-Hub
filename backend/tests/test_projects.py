@@ -50,6 +50,22 @@ def test_create_project_requires_json(auth_client):
     data = resp.get_json()
     assert data['error'] == 'Request must be JSON'
 
+def test_create_project_requires_json_variants(auth_client):
+    """
+    Test that /api/projects POST returns 400 and correct error if request is not JSON (explicitly covers app.py:1001-1002).
+    """
+    # Send no data, no content type
+    resp = auth_client.post(PROJECTS_URL)
+    assert resp.status_code == 400
+    data = resp.get_json()
+    assert data['error'] == 'Request must be JSON'
+
+    # Send with explicit non-JSON content type
+    resp = auth_client.post(PROJECTS_URL, data='not json', content_type='text/plain')
+    assert resp.status_code == 400
+    data = resp.get_json()
+    assert data['error'] == 'Request must be JSON'
+
 def test_get_projects(auth_client):
     # Create a project
     auth_client.post(PROJECTS_URL, json={'name': 'Proj 1'})

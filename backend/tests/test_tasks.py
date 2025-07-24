@@ -36,9 +36,66 @@ def test_create_task_success(auth_client):
     assert data['priority'] == 2
 
 def test_create_task_missing_title(auth_client):
+
     resp = auth_client.post(TASKS_URL, json={})
     assert resp.status_code == 400
     assert 'error' in resp.get_json()
+
+def test_create_task_invalid_project_id(auth_client):
+
+    """
+    Test /api/tasks POST with an invalid project_id returns 400 and correct error (covers app.py:1018-1021).
+    """
+    # Use a project_id that does not exist for this user
+    resp = auth_client.post(TASKS_URL, json={
+        'title': 'Task with Invalid Project',
+        'priority': 1,
+        'project_id': 99999999
+    })
+    assert resp.status_code == 400
+    data = resp.get_json()
+    assert data['error'] == 'Invalid project ID'
+
+def test_create_task_invalid_parent_id(auth_client):
+
+    """
+    Test /api/tasks POST with an invalid parent_id returns 400 and correct error (covers app.py:1026-1027).
+    """
+    # Use a parent_id that does not exist for this user
+    resp = auth_client.post(TASKS_URL, json={
+        'title': 'Task with Invalid Parent',
+        'priority': 1,
+        'parent_id': 99999999
+    })
+    assert resp.status_code == 400
+    data = resp.get_json()
+    assert data['error'] == 'Invalid parent task ID'
+
+def test_create_task_invalid_due_date_format(auth_client):
+    """
+    Test /api/tasks POST with an invalid due_date format returns 400 and correct error (covers app.py:1043-1044).
+    """
+    resp = auth_client.post(TASKS_URL, json={
+        'title': 'Task with Bad Due Date',
+        'priority': 1,
+        'due_date': 'not-a-date'
+    })
+    assert resp.status_code == 400
+    data = resp.get_json()
+    assert data['error'] == 'Invalid due_date format'
+
+def test_create_task_invalid_start_date_format(auth_client):
+    """
+    Test /api/tasks POST with an invalid start_date format returns 400 and correct error (covers app.py:1049-1050).
+    """
+    resp = auth_client.post(TASKS_URL, json={
+        'title': 'Task with Bad Start Date',
+        'priority': 1,
+        'start_date': 'not-a-date'
+    })
+    assert resp.status_code == 400
+    data = resp.get_json()
+    assert data['error'] == 'Invalid start_date format'
 
 def test_get_tasks(auth_client):
     # Create a task
