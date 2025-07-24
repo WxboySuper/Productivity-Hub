@@ -14,7 +14,7 @@ vi.mock('../hooks/useTasks', () => ({
 vi.mock('../context/BackgroundContext', () => ({
   useBackground: () => ({ backgroundType: 'default', setBackgroundType: vi.fn() })
 }));
-vi.mock('../context/ToastProvider', () => ({
+vi.mock('../../components/ToastProvider', () => ({
   useToast: () => ({ showSuccess: vi.fn(), showError: vi.fn(), showWarning: vi.fn(), showInfo: vi.fn() })
 }));
 vi.mock('react-router-dom', () => ({
