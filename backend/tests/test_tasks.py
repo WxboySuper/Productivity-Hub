@@ -308,6 +308,101 @@ def test_get_tasks_subtask_due_start_fields(auth_client):
     assert subtask['due_date'] == '2025-08-01T10:00:00'
     assert subtask['start_date'] == '2025-07-25T09:00:00'
 
+def test_get_task_by_id_minimal_fields(auth_client):
+    """
+    Test GET /api/tasks/<task_id> omits due_date, start_date, and recurrence when not set (covers app.py:1114-1136, 'if' statements not taken).
+    """
+    # Create a parent task with only required fields
+    resp = auth_client.post(TASKS_URL, json={
+        'title': 'Parent Minimal',
+        'priority': 1
+    })
+    assert resp.status_code == 201
+    parent = resp.get_json()
+    parent_id = parent['id']
+    # Create a subtask with only required fields
+    resp2 = auth_client.post(TASKS_URL, json={
+        'title': 'Sub Minimal',
+        'priority': 1,
+        'parent_id': parent_id
+    })
+    assert resp2.status_code == 201
+    subtask = resp2.get_json()
+    subtask_id = subtask['id']
+    # Fetch the parent task by ID
+    resp = auth_client.get(f'{TASKS_URL}/{parent_id}')
+    assert resp.status_code == 200
+    data = resp.get_json()
+    # Parent task: fields should be omitted
+    assert data['id'] == parent_id
+    assert data['title'] == 'Parent Minimal'
+    assert data['priority'] == 1
+    assert 'due_date' not in data
+    assert 'start_date' not in data
+    assert 'recurrence' not in data
+    # Subtasks: fields should be omitted
+    assert isinstance(data['subtasks'], list)
+    try:
+        st = next(st for st in data['subtasks'] if st['id'] == subtask_id)
+    except StopIteration:
+        pytest.fail(f"Subtask with id {subtask_id} not found in parent's subtasks")
+    assert st['title'] == 'Sub Minimal'
+    assert st['priority'] == 1
+    assert 'due_date' not in st
+    assert 'start_date' not in st
+
+def test_get_task_by_id_full_serialization(auth_client):
+    """
+    Test GET /api/tasks/<task_id> returns all fields and subtasks correctly (covers app.py:1102-1142).
+    """
+    # Create a parent task with all optional fields
+    resp = auth_client.post(TASKS_URL, json={
+        'title': 'Parent Full',
+        'priority': 2,
+        'description': 'Parent Desc',
+        'due_date': '2025-09-01T10:00:00',
+        'start_date': '2025-08-01T09:00:00',
+        'recurrence': 'monthly'
+    })
+    assert resp.status_code == 201
+    parent = resp.get_json()
+    parent_id = parent['id']
+    # Create a subtask with all optional fields
+    resp2 = auth_client.post(TASKS_URL, json={
+        'title': 'Sub Full',
+        'priority': 3,
+        'description': 'Sub Desc',
+        'parent_id': parent_id,
+        'due_date': '2025-09-10T10:00:00',
+        'start_date': '2025-08-10T09:00:00'
+    })
+    assert resp2.status_code == 201
+    subtask = resp2.get_json()
+    subtask_id = subtask['id']
+    # Fetch the parent task by ID
+    resp = auth_client.get(f'{TASKS_URL}/{parent_id}')
+    assert resp.status_code == 200
+    data = resp.get_json()
+    # Check all main fields
+    assert data['id'] == parent_id
+    assert data['title'] == 'Parent Full'
+    assert data['description'] == 'Parent Desc'
+    assert data['priority'] == 2
+    assert data['due_date'] == '2025-09-01T10:00:00'
+    assert data['start_date'] == '2025-08-01T09:00:00'
+    assert data['recurrence'] == 'monthly'
+    assert isinstance(data['subtasks'], list)
+    # Find the subtask in the subtasks list
+    try:
+        st = next(st for st in data['subtasks'] if st['id'] == subtask_id)
+    except StopIteration:
+        pytest.fail(f"Subtask with id {subtask_id} not found in parent's subtasks")
+    assert st['title'] == 'Sub Full'
+    assert st['description'] == 'Sub Desc'
+    assert st['priority'] == 3
+    assert st['due_date'] == '2025-09-10T10:00:00'
+    assert st['start_date'] == '2025-08-10T09:00:00'
+
 
 def test_update_task_start_date_and_recurrence(auth_client):
     # Create a task
