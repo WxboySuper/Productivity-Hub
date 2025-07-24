@@ -11,7 +11,7 @@ vi.mock('../hooks/useProjects', () => ({
 vi.mock('../hooks/useTasks', () => ({
   default: () => ({ tasks: [], loading: false, error: null, refetch: vi.fn() })
 }));
-vi.mock('../context/BackgroundContext', () => ({
+vi.mock('../../context/BackgroundContext', () => ({
   useBackground: () => ({ backgroundType: 'default', setBackgroundType: vi.fn() })
 }));
 vi.mock('../../components/ToastProvider', () => ({
