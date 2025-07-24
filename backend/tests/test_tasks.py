@@ -128,6 +128,19 @@ def test_get_tasks(auth_client):
     assert 'tasks' in data
     assert len(data['tasks']) >= 1
 
+def test_update_task_requires_json(auth_client):
+    """
+    Test PUT /api/tasks/<task_id> with non-JSON data returns 400 and correct error (covers app.py:1155-1156).
+    """
+    # Create a task
+    resp = auth_client.post(TASKS_URL, json={'title': 'Update JSON Required', 'priority': 1})
+    task_id = resp.get_json()['id']
+    # Try to update with form data (not JSON)
+    resp = auth_client.put(f'{TASKS_URL}/{task_id}', data='title=NoJSON', content_type='application/x-www-form-urlencoded')
+    assert resp.status_code == 400
+    data = resp.get_json()
+    assert 'Request must be JSON' in data.get('error', '')
+
 def test_update_task(auth_client):
     # Create a task
     resp = auth_client.post(TASKS_URL, json={'title': 'To Update', 'priority': 1})
@@ -150,6 +163,26 @@ def test_delete_task(auth_client):
     # Confirm deletion
     resp = auth_client.get(f'{TASKS_URL}/{task_id}')
     assert resp.status_code == 404
+
+def test_update_task_404(auth_client):
+    """
+    Test PUT /api/tasks/<task_id> with a non-existent task returns 404 (covers app.py:1153).
+    """
+    # Use a task_id that does not exist
+    resp = auth_client.put(f'{TASKS_URL}/99999999', json={'title': 'Should Fail'})
+    assert resp.status_code == 404
+    data = resp.get_json()
+    assert 'error' in data and 'not found' in data['error'].lower()
+
+def test_delete_task_404(auth_client):
+    """
+    Test DELETE /api/tasks/<task_id> with a non-existent task returns 404 (covers app.py:1248).
+    """
+    # Use a task_id that does not exist
+    resp = auth_client.delete(f'{TASKS_URL}/99999999')
+    assert resp.status_code == 404
+    data = resp.get_json()
+    assert 'error' in data and 'not found' in data['error'].lower()
 
 @pytest.mark.usefixtures('auth_client')
 def test_get_object_or_404_task_404(auth_client):
@@ -248,14 +281,16 @@ def test_get_tasks_with_subtasks(auth_client):
     })
     assert resp.status_code == 201
     parent_id = resp.get_json()['id']
+
     # Create a subtask
-    resp2 = auth_client.post(TASKS_URL, json={
+    resp = auth_client.post(TASKS_URL, json={
         'title': 'Subtask',
         'priority': 1,
         'parent_id': parent_id
     })
-    assert resp2.status_code == 201
-    subtask_id = resp2.get_json()['id']
+    assert resp.status_code == 201
+    subtask_id = resp.get_json()['id']
+
     # Fetch all tasks
     resp = auth_client.get(TASKS_URL)
     assert resp.status_code == 200
@@ -444,3 +479,155 @@ def test_update_task_start_date_after_due_date(auth_client):
     })
     assert resp.status_code == 400
     assert 'start_date cannot be after due_date' in resp.get_json().get('error', '')
+
+
+def test_update_task_empty_or_whitespace_title(auth_client):
+    """
+    Test PUT /api/tasks/<task_id> with empty or whitespace-only title returns 400 and correct error (covers app.py:1163-1164).
+    """
+    # Create a valid task
+    resp = auth_client.post(TASKS_URL, json={'title': 'Valid Task', 'priority': 1})
+    assert resp.status_code == 201
+    task_id = resp.get_json()['id']
+
+    # Try to update with empty title
+    resp = auth_client.put(f'{TASKS_URL}/{task_id}', json={'title': ''})
+    assert resp.status_code == 400
+    data = resp.get_json()
+    assert data['error'] == 'Task title is required'
+
+    # Try to update with whitespace-only title
+    resp = auth_client.put(f'{TASKS_URL}/{task_id}', json={'title': '   '})
+    assert resp.status_code == 400
+    data = resp.get_json()
+    assert data['error'] == 'Task title is required'
+
+def test_update_task_description_and_completed_fields(auth_client):
+    """
+    Test PUT /api/tasks/<task_id> updates description to empty/whitespace and toggles completed (covers app.py:1167-1171).
+    """
+    # Create a valid task with a description and completed False
+    resp = auth_client.post(TASKS_URL, json={'title': 'Desc Test', 'priority': 1, 'description': 'Initial desc', 'completed': False})
+    assert resp.status_code == 201
+    task = resp.get_json()
+    task_id = task['id']
+    # Update description to empty string
+    resp = auth_client.put(f'{TASKS_URL}/{task_id}', json={'description': ''})
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data['description'] == ''
+    # Update description to whitespace only
+    resp = auth_client.put(f'{TASKS_URL}/{task_id}', json={'description': '   '})
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data['description'] == ''
+    # Update completed to True
+    resp = auth_client.put(f'{TASKS_URL}/{task_id}', json={'completed': True})
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data['completed'] is True
+    # Update completed to False
+    resp = auth_client.put(f'{TASKS_URL}/{task_id}', json={'completed': False})
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data['completed'] is False
+
+def test_update_task_remove_project_id(auth_client):
+    """
+    Test PUT /api/tasks/<task_id> with project_id set to None (removes project association, covers branch where data['project_id'] is falsy).
+    """
+    # Create a valid project
+    resp = auth_client.post('/api/projects', json={'name': 'Project To Remove', 'description': 'For remove project_id test'})
+    assert resp.status_code == 201
+    project_id = resp.get_json()['id']
+
+    # Create a task with that project_id
+    resp = auth_client.post(TASKS_URL, json={'title': 'Task With Project', 'priority': 1, 'project_id': project_id})
+    assert resp.status_code == 201
+    task_id = resp.get_json()['id']
+    # Confirm project_id is set
+    resp = auth_client.get(f'{TASKS_URL}/{task_id}')
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data['project_id'] == project_id
+
+    # Update with project_id set to None (should remove association)
+    resp = auth_client.put(f'{TASKS_URL}/{task_id}', json={'project_id': None})
+    assert resp.status_code == 200
+    data = resp.get_json()
+    # project_id should now be None or not present
+    assert 'project_id' not in data or data['project_id'] is None
+
+def test_update_task_project_id_and_due_date(auth_client):
+    """
+    Test PUT /api/tasks/<task_id> for project_id and due_date update logic (covers app.py:1176-1190).
+    """
+    # Create a valid task
+    resp = auth_client.post(TASKS_URL, json={'title': 'Proj/Due Update', 'priority': 1})
+    assert resp.status_code == 201
+    task_id = resp.get_json()['id']
+
+    # Try to update with invalid project_id
+    resp = auth_client.put(f'{TASKS_URL}/{task_id}', json={'project_id': 99999999})
+    assert resp.status_code == 400
+    data = resp.get_json()
+    assert data['error'] == 'Invalid project ID'
+
+    # Create a valid project
+    resp = auth_client.post('/api/projects', json={'name': 'Valid Project', 'description': 'For update test'})
+    assert resp.status_code == 201
+    project_id = resp.get_json()['id']
+
+    # Update with valid project_id
+    resp = auth_client.put(f'{TASKS_URL}/{task_id}', json={'project_id': project_id})
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data['project_id'] == project_id
+
+    # Try to update with invalid due_date
+    resp = auth_client.put(f'{TASKS_URL}/{task_id}', json={'due_date': 'not-a-date'})
+    assert resp.status_code == 400
+    data = resp.get_json()
+    assert data['error'] == 'Invalid due_date format'
+
+    # Update with valid due_date
+    valid_due = '2025-12-31T23:59:00'
+    resp = auth_client.put(f'{TASKS_URL}/{task_id}', json={'due_date': valid_due})
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data['due_date'] == valid_due
+
+    # Update with due_date set to None (should clear the due date)
+    resp = auth_client.put(f'{TASKS_URL}/{task_id}', json={'due_date': None})
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert 'due_date' not in data or data['due_date'] is None
+
+
+def test_update_task_start_date_field(auth_client):
+    """
+    Test PUT /api/tasks/<task_id> for start_date update logic (covers app.py:1196-1199).
+    """
+    # Create a valid task
+    resp = auth_client.post(TASKS_URL, json={'title': 'StartDate Update', 'priority': 1})
+    assert resp.status_code == 201
+    task_id = resp.get_json()['id']
+
+    # Try to update with invalid start_date
+    resp = auth_client.put(f'{TASKS_URL}/{task_id}', json={'start_date': 'not-a-date'})
+    assert resp.status_code == 400
+    data = resp.get_json()
+    assert data['error'] == 'Invalid start_date format'
+
+    # Update with valid start_date
+    valid_start = '2025-11-30T08:00:00'
+    resp = auth_client.put(f'{TASKS_URL}/{task_id}', json={'start_date': valid_start})
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data['start_date'] == valid_start
+
+    # Update with start_date set to None (should clear the start_date)
+    resp = auth_client.put(f'{TASKS_URL}/{task_id}', json={'start_date': None})
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert 'start_date' not in data or data['start_date'] is None
