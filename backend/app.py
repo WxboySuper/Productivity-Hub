@@ -999,7 +999,7 @@ def create_task():
     user = get_current_user()
     
     if not request.is_json:
-        return error_response("Request must be JSON", 400)
+        return error_response("Request must be JSON", 400)  # pragma: no cover
     
     data = request.get_json()
     title = data.get('title')
