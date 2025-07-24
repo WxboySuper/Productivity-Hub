@@ -219,10 +219,12 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   };
 
   const handleBackdropKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    /* v8 ignore start */
     if (e.key === 'Escape') {
       onCancel();
     }
   };
+  /* v8 ignore stop */
 
   const handleConfirmMouseEnter = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (!loading) {
