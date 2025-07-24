@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import MainManagementWindow from '../MainManagementWindow';
+import MainManagementWindow from './MainManagementWindow';
 import { describe, it, vi, expect } from 'vitest';
 import { AuthContext } from '../../auth';
 import { BackgroundProvider } from '../../context/BackgroundContext';
