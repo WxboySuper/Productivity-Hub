@@ -997,70 +997,85 @@ def create_task():
     """Create a new task for the current user."""
     logger.info("Tasks POST endpoint accessed.")
     user = get_current_user()
-    
     if not request.is_json:
-        return error_response("Request must be JSON", 400)  # pragma: no cover
-    
+        return error_response("Request must be JSON", 400)
     data = request.get_json()
-    title = data.get('title')
-    description = data.get('description', '')
-    project_id = data.get('project_id')
-    parent_id = data.get('parent_id')
-    priority = data.get('priority', 1)
-    due_date = data.get('due_date')
-    start_date = data.get('start_date')
-    recurrence = data.get('recurrence')
-    
-    if not title or not title.strip():
-        return error_response("Task title is required", 400)
-    
-    # Validate project_id belongs to user
-    if project_id:
-        project = Project.query.filter_by(id=project_id, user_id=user.id).first()
-        if not project:
-            return error_response("Invalid project ID", 400)
-    
-    # Validate parent_id belongs to user
-    if parent_id:
-        parent_task = Task.query.filter_by(id=parent_id, user_id=user.id).first()
-        if not parent_task:
-            return error_response("Invalid parent task ID", 400)
-    
+
+    def validate_title(data):
+        title = data.get('title')
+        if not title or not title.strip():
+            return None, "Task title is required"
+        return title.strip(), None
+
+    def validate_project_id(data, user):
+        project_id = data.get('project_id')
+        if project_id:
+            project = Project.query.filter_by(id=project_id, user_id=user.id).first()
+            if not project:
+                return None, "Invalid project ID"
+        return project_id, None
+
+    def validate_parent_id(data, user):
+        parent_id = data.get('parent_id')
+        if parent_id:
+            parent_task = Task.query.filter_by(id=parent_id, user_id=user.id).first()
+            if not parent_task:
+                return None, "Invalid parent task ID"
+        return parent_id, None
+
+    def parse_date(date_str, field_name):
+        if date_str:
+            try:
+                return datetime.fromisoformat(date_str.replace('Z', '+00:00')), None
+            except ValueError:
+                return None, f"Invalid {field_name} format"
+        return None, None
+
     try:
+        title, err = validate_title(data)
+        if err:
+            return error_response(err, 400)
+        description = data.get('description', '')
+        project_id, err = validate_project_id(data, user)
+        if err:
+            return error_response(err, 400)
+        parent_id, err = validate_parent_id(data, user)
+        if err:
+            return error_response(err, 400)
+        priority = data.get('priority', 1)
+        due_date_str = data.get('due_date')
+        start_date_str = data.get('start_date')
+        recurrence = data.get('recurrence')
+
+        due_date, err = parse_date(due_date_str, 'due_date')
+        if err:
+            return error_response(err, 400)
+        start_date, err = parse_date(start_date_str, 'start_date')
+        if err:
+            return error_response(err, 400)
+
+        # Validate that start_date is not after due_date
+        if start_date and due_date and start_date > due_date:
+            return error_response("start_date cannot be after due_date", 400)
+
         task = Task(
-            title=title.strip(),
+            title=title,
             description=description.strip() if description else '',
             user_id=user.id,
             project_id=project_id,
             parent_id=parent_id,
             priority=priority
         )
-        
-        # Parse dates if provided
         if due_date:
-            try:
-                task.due_date = datetime.fromisoformat(due_date.replace('Z', '+00:00'))
-            except ValueError:
-                return error_response("Invalid due_date format", 400)
-                
+            task.due_date = due_date
         if start_date:
-            try:
-                task.start_date = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
-            except ValueError:
-                return error_response("Invalid start_date format", 400)
-        
-        # Validate that start_date is not after due_date
-        if task.start_date and task.due_date and task.start_date > task.due_date:
-            return error_response("start_date cannot be after due_date", 400)
-                
+            task.start_date = start_date
         if recurrence:
             task.recurrence = recurrence
-        
+
         db.session.add(task)
         db.session.commit()
-        
         logger.info("Task '%s' created successfully for user: %s", task.title, user.username)
-        
         task_dict = {
             "id": task.id,
             "title": task.title,
@@ -1073,16 +1088,13 @@ def create_task():
             "updated_at": task.updated_at.isoformat(),
             "subtasks": []
         }
-        
         if task.due_date:
             task_dict["due_date"] = task.due_date.isoformat()
         if task.start_date:
             task_dict["start_date"] = task.start_date.isoformat()
         if task.recurrence:
             task_dict["recurrence"] = task.recurrence
-            
         return jsonify(task_dict), 201
-        
     except Exception as e:
         db.session.rollback()
         logger.error("Task creation failed: %s", e)
@@ -1147,68 +1159,100 @@ def update_task(task_id):
     """Update an existing task."""
     logger.info("Tasks PUT endpoint accessed for task ID: %s", task_id)
     user = get_current_user()
-    
     task = Task.query.filter_by(id=task_id, user_id=user.id).first()
     if not task:
         return error_response("Task not found", 404)
-    
     if not request.is_json:
         return error_response("Request must be JSON", 400)
-    
     data = request.get_json()
-    
-    try:
-        # Update fields if provided
+
+    def validate_and_set_title(task, data):
         if 'title' in data:
             if not data['title'] or not data['title'].strip():
-                return error_response("Task title is required", 400)
+                return "Task title is required"
             task.title = data['title'].strip()
-            
+        return None
+
+    def set_description(task, data):
         if 'description' in data:
             task.description = data['description'].strip() if data['description'] else ''
-            
+
+    def set_completed(task, data):
         if 'completed' in data:
             task.completed = bool(data['completed'])
-            
+
+    def set_priority(task, data):
         if 'priority' in data:
             task.priority = data['priority']
-            
+
+    def validate_and_set_project(task, data, user):
         if 'project_id' in data:
             if data['project_id']:
                 project = Project.query.filter_by(id=data['project_id'], user_id=user.id).first()
                 if not project:
-                    return error_response("Invalid project ID", 400)
+                    return "Invalid project ID"
             task.project_id = data['project_id']
-            
+        return None
+
+    def parse_date(date_str, field_name):
+        if date_str:
+            try:
+                return datetime.fromisoformat(date_str.replace('Z', '+00:00')), None
+            except ValueError:
+                return None, f"Invalid {field_name} format"
+        return None, None
+
+    def set_due_date(task, data):
         if 'due_date' in data:
             if data['due_date']:
-                try:
-                    task.due_date = datetime.fromisoformat(data['due_date'].replace('Z', '+00:00'))
-                except ValueError:
-                    return error_response("Invalid due_date format", 400)
+                due_date, err = parse_date(data['due_date'], 'due_date')
+                if err:
+                    return err
+                task.due_date = due_date
             else:
                 task.due_date = None
-                
+        return None
+
+    def set_start_date(task, data):
         if 'start_date' in data:
             if data['start_date']:
-                try:
-                    task.start_date = datetime.fromisoformat(data['start_date'].replace('Z', '+00:00'))
-                except ValueError:
-                    return error_response("Invalid start_date format", 400)
+                start_date, err = parse_date(data['start_date'], 'start_date')
+                if err:
+                    return err
+                task.start_date = start_date
             else:
                 task.start_date = None
-                
+        return None
+
+    def set_recurrence(task, data):
         if 'recurrence' in data:
             task.recurrence = data['recurrence']
-        
+
+    try:
+        # Validate and set fields
+        err = validate_and_set_title(task, data)
+        if err:
+            return error_response(err, 400)
+        set_description(task, data)
+        set_completed(task, data)
+        set_priority(task, data)
+        err = validate_and_set_project(task, data, user)
+        if err:
+            return error_response(err, 400)
+        err = set_due_date(task, data)
+        if err:
+            return error_response(err, 400)
+        err = set_start_date(task, data)
+        if err:
+            return error_response(err, 400)
+        set_recurrence(task, data)
+
         # Validate that start_date is not after due_date
         if task.start_date and task.due_date and task.start_date > task.due_date:
             return error_response("start_date cannot be after due_date", 400)
-        
+
         db.session.commit()
-        
         logger.info("Task '%s' updated successfully for user: %s", task.title, user.username)
-        
         task_dict = {
             "id": task.id,
             "title": task.title,
@@ -1221,16 +1265,13 @@ def update_task(task_id):
             "updated_at": task.updated_at.isoformat(),
             "subtasks": []
         }
-        
         if task.due_date:
             task_dict["due_date"] = task.due_date.isoformat()
         if task.start_date:
             task_dict["start_date"] = task.start_date.isoformat()
         if task.recurrence:
             task_dict["recurrence"] = task.recurrence
-            
         return jsonify(task_dict), 200
-        
     except Exception as e:
         db.session.rollback()
         logger.error("Task update failed: %s", e)
