@@ -97,6 +97,28 @@ def test_create_task_invalid_start_date_format(auth_client):
     data = resp.get_json()
     assert data['error'] == 'Invalid start_date format'
 
+def test_create_task_with_valid_project_id(auth_client):
+    """
+    Test /api/tasks POST with a valid project_id (covers the success path through app.py:1020).
+    """
+    # First, create a project for this user
+    resp = auth_client.post('/api/projects', json={
+        'name': 'Project For Task',
+        'description': 'Project to test valid project_id on task creation.'
+    })
+    assert resp.status_code == 201
+    project_id = resp.get_json()['id']
+    # Now, create a task with that project_id
+    resp = auth_client.post(TASKS_URL, json={
+        'title': 'Task With Valid Project',
+        'priority': 1,
+        'project_id': project_id
+    })
+    assert resp.status_code == 201
+    data = resp.get_json()
+    assert data['title'] == 'Task With Valid Project'
+    assert data['project_id'] == project_id
+
 def test_get_tasks(auth_client):
     # Create a task
     auth_client.post(TASKS_URL, json={'title': 'Task 1', 'priority': 1})
