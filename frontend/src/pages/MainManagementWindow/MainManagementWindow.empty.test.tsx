@@ -19,7 +19,7 @@ vi.mock('../context/ToastProvider', () => ({
 }));
 vi.mock('react-router-dom', () => ({
   useNavigate: () => vi.fn(),
-  Link: ({ children, ...props }: any) => <a {...props}>{children}</a>,
+  Link: (({ children, ...props }: any) => <a {...props}>{children}</a>) as React.FC<any>,
 }));
 vi.mock('../hooks/useAuth', () => ({
   default: () => ({ logout: vi.fn() })
