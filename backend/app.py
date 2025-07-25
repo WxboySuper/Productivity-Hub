@@ -1136,7 +1136,7 @@ def password_reset_request():
         )
     return (
         jsonify(
-            {"message": ("If the email exists, a password reset link will be " "sent.")}
+            {"message": "If the email exists, a password reset link will be sent."}
         ),
         200,
     )
