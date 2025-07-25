@@ -631,3 +631,13 @@ def test_update_task_start_date_field(auth_client):
     assert resp.status_code == 200
     data = resp.get_json()
     assert 'start_date' not in data or data['start_date'] is None
+
+def test_create_task_requires_json(auth_client):
+    """
+    Test POST /api/tasks with non-JSON data returns 400 and correct error (covers app.py:1147-1148).
+    """
+    # Try to create a task with form data (not JSON)
+    resp = auth_client.post('/api/tasks', data='title=NoJSON', content_type='application/x-www-form-urlencoded')
+    assert resp.status_code == 400
+    data = resp.get_json()
+    assert 'Request must be JSON' in data.get('error', '')

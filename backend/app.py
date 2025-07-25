@@ -350,7 +350,66 @@ def parse_date(date_str, field_name):
             return datetime.fromisoformat(date_str.replace('Z', '+00:00')), None
         except ValueError:
             return None, f"Invalid {field_name} format"
+
     return None, None
+
+# --- Task Creation/Serialization Helpers ---
+def _extract_task_fields(data, user):
+    """Helper to extract and validate all fields for task creation."""
+    title, err = validate_title(data)
+    if err:
+        return None, err
+    description = data.get('description', '')
+    project_id, err = validate_project_id(data, user)
+    if err:
+        return None, err
+    parent_id, err = validate_parent_id(data, user)
+    if err:
+        return None, err
+    priority = data.get('priority', 1)
+    due_date_str = data.get('due_date')
+    start_date_str = data.get('start_date')
+    recurrence = data.get('recurrence')
+    due_date, err = parse_date(due_date_str, 'due_date')
+    if err:
+        return None, err
+    start_date, err = parse_date(start_date_str, 'start_date')
+    if err:
+        return None, err
+    if start_date and due_date and start_date > due_date:
+        return None, "start_date cannot be after due_date"
+    return {
+        "title": title,
+        "description": description.strip() if description else '',
+        "project_id": project_id,
+        "parent_id": parent_id,
+        "priority": priority,
+        "due_date": due_date,
+        "start_date": start_date,
+        "recurrence": recurrence
+    }, None
+
+def _serialize_task(task):
+    """Helper to serialize a Task object to dict."""
+    d = {
+        "id": task.id,
+        "title": task.title,
+        "description": task.description,
+        "completed": task.completed,
+        "priority": task.priority,
+        "project_id": task.project_id,
+        "parent_id": task.parent_id,
+        "created_at": task.created_at.isoformat(),
+        "updated_at": task.updated_at.isoformat(),
+        "subtasks": []
+    }
+    if task.due_date:
+        d["due_date"] = task.due_date.isoformat()
+    if task.start_date:
+        d["start_date"] = task.start_date.isoformat()
+    if task.recurrence:
+        d["recurrence"] = task.recurrence
+    return d
 
 #########################
 # Route Definitions
@@ -1077,7 +1136,8 @@ def list_tasks():
         "per_page": pagination.per_page
     }), 200
 
-# --- Create Task ---
+
+
 @app.route('/api/tasks', methods=['POST'])
 @login_required
 def create_task():
@@ -1087,66 +1147,28 @@ def create_task():
     if not request.is_json:
         return error_response("Request must be JSON", 400)
     data = request.get_json()
+    fields, err = _extract_task_fields(data, user)
+    if err:
+        return error_response(err, 400)
     try:
-        title, err = validate_title(data)
-        if err:
-            return error_response(err, 400)
-        description = data.get('description', '')
-        project_id, err = validate_project_id(data, user)
-        if err:
-            return error_response(err, 400)
-        parent_id, err = validate_parent_id(data, user)
-        if err:
-            return error_response(err, 400)
-        priority = data.get('priority', 1)
-        due_date_str = data.get('due_date')
-        start_date_str = data.get('start_date')
-        recurrence = data.get('recurrence')
-        due_date, err = parse_date(due_date_str, 'due_date')
-        if err:
-            return error_response(err, 400)
-        start_date, err = parse_date(start_date_str, 'start_date')
-        if err:
-            return error_response(err, 400)
-        # Validate that start_date is not after due_date
-        if start_date and due_date and start_date > due_date:
-            return error_response("start_date cannot be after due_date", 400)
         task = Task(
-            title=title,
-            description=description.strip() if description else '',
+            title=fields["title"],
+            description=fields["description"],
             user_id=user.id,
-            project_id=project_id,
-            parent_id=parent_id,
-            priority=priority
+            project_id=fields["project_id"],
+            parent_id=fields["parent_id"],
+            priority=fields["priority"]
         )
-        if due_date:
-            task.due_date = due_date
-        if start_date:
-            task.start_date = start_date
-        if recurrence:
-            task.recurrence = recurrence
+        if fields["due_date"]:
+            task.due_date = fields["due_date"]
+        if fields["start_date"]:
+            task.start_date = fields["start_date"]
+        if fields["recurrence"]:
+            task.recurrence = fields["recurrence"]
         db.session.add(task)
         db.session.commit()
         logger.info("Task '%s' created successfully for user: %s", task.title, user.username)
-        task_dict = {
-            "id": task.id,
-            "title": task.title,
-            "description": task.description,
-            "completed": task.completed,
-            "priority": task.priority,
-            "project_id": task.project_id,
-            "parent_id": task.parent_id,
-            "created_at": task.created_at.isoformat(),
-            "updated_at": task.updated_at.isoformat(),
-            "subtasks": []
-        }
-        if task.due_date:
-            task_dict["due_date"] = task.due_date.isoformat()
-        if task.start_date:
-            task_dict["start_date"] = task.start_date.isoformat()
-        if task.recurrence:
-            task_dict["recurrence"] = task.recurrence
-        return jsonify(task_dict), 201
+        return jsonify(_serialize_task(task)), 201
     except Exception as e:
         db.session.rollback()
         logger.error("Task creation failed: %s", e)
