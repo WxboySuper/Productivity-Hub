@@ -54,7 +54,8 @@ def test_register_missing_fields(client):
 @pytest.mark.usefixtures("client", "db")
 def test_register_requires_json():
     """
-    Test that /api/register returns 400 and correct error if request is not JSON.
+    Test that /api/register returns 400 and correct error if request
+    is not JSON.
     """
     from app import app as flask_app
 
@@ -298,7 +299,8 @@ def test_profile_update_email_validation(client):
 @pytest.mark.usefixtures("client", "db")
 def test_get_notifications_endpoint(client, caplog):
     """
-    Test /api/notifications GET returns all notifications for the current user with correct fields and logging.
+    Test /api/notifications GET returns all notifications for the
+    current user with correct fields and logging.
     Covers app.py:511-535.
     """
     unique = uuid.uuid4().hex[:8]
@@ -362,7 +364,8 @@ def test_get_notifications_endpoint(client, caplog):
 @pytest.mark.usefixtures("client", "db")
 def test_notification_dismiss_endpoint(client, caplog):
     """
-    Test /api/notifications/<notification_id>/dismiss marks notification as read, returns correct response, and logs events.
+    Test /api/notifications/<notification_id>/dismiss marks notification
+    as read, returns correct response, and logs events.
     Covers app.py:541-553.
     """
     unique = uuid.uuid4().hex[:8]
@@ -411,7 +414,8 @@ def test_notification_dismiss_endpoint(client, caplog):
 @pytest.mark.usefixtures("client", "db")
 def test_notification_snooze_endpoint(client, caplog):
     """
-    Test /api/notifications/<notification_id>/snooze endpoint for snoozing notifications.
+    Test /api/notifications/<notification_id>/snooze endpoint for
+    snoozing notifications.
     Covers app.py:559-592.
     """
     unique = uuid.uuid4().hex[:8]
@@ -484,7 +488,8 @@ def test_notification_snooze_endpoint(client, caplog):
     )
     assert resp.status_code == 404
     assert resp.get_json()["error"] == "Notification not found"
-    # Error: snoozed_until attribute missing (simulate by monkeypatching hasattr)
+    # Error: snoozed_until attribute missing (simulate by monkeypatching
+    # hasattr)
     orig_hasattr = builtins.hasattr
 
     def fake_hasattr(obj, name):
@@ -506,8 +511,8 @@ def test_notification_snooze_endpoint(client, caplog):
 
 def test_send_email_success_and_failure(caplog):
     """
-    Test send_email utility for both TLS and non-TLS, success and failure cases.
-    Covers app.py:716-732.
+    Test send_email utility for both TLS and non-TLS, success and failure
+    cases. Covers app.py:716-732.
     """
     # Patch smtplib.SMTP
     with patch("app.smtplib.SMTP") as mock_smtp:
@@ -518,7 +523,8 @@ def test_send_email_success_and_failure(caplog):
         assert result is True
         smtp_instance.send_message.assert_called()
         smtp_instance.quit.assert_called()
-        # Explicitly check SMTP called with correct host/port (covers app.py:726)
+    # Explicitly check SMTP called with correct host/port
+    # (covers app.py:726)
         from app import EMAIL_HOST, EMAIL_PORT
 
         mock_smtp.assert_any_call(EMAIL_HOST, EMAIL_PORT)
@@ -573,12 +579,14 @@ def test_csrf_protect_profile_update(client):
     client.application.config["TESTING"] = True
 
 
-# --- CSRF Protection: Not Skipped for Other Endpoints (Covers line 277 not true) ---
+# --- CSRF Protection: Not Skipped for Other Endpoints ---
 @pytest.mark.usefixtures("client", "db")
 def test_csrf_protect_not_skipped_for_other_endpoints(client):
     """
-    Ensure CSRF protection is NOT skipped for endpoints other than login/register (line 277 condition is false).
-    This test posts to /api/profile (requires auth) and expects CSRF check to be enforced.
+    Ensure CSRF protection is NOT skipped for endpoints other than
+    login/register (line 277 condition is false).
+    This test posts to /api/profile (requires auth) and expects CSRF
+    check to be enforced.
     """
     from app import app as flask_app
 
@@ -599,7 +607,8 @@ def test_csrf_protect_not_skipped_for_other_endpoints(client):
             "password": reg_data["password"],
         },
     )
-    # Attempt to update profile (PUT) without CSRF token (should hit CSRF check, not skip)
+    # Attempt to update profile (PUT) without CSRF token (should hit CSRF
+    # check, not skip)
     resp = client.put(PROFILE_URL, json={"username": "newname"})
     assert resp.status_code == 403
     assert resp.get_json().get("error") == "Invalid or missing CSRF token"
@@ -610,8 +619,9 @@ def test_csrf_protect_not_skipped_for_other_endpoints(client):
 @pytest.mark.usefixtures("client", "db")
 def test_csrf_protect_valid_token_allows_request(client):
     """
-    Ensure CSRF protection allows request when valid CSRF token is present (line 291 condition is false).
-    This test sets a valid CSRF token in both cookie and header.
+    Ensure CSRF protection allows request when valid CSRF token is present
+    (line 291 condition is false). This test sets a valid CSRF token in both
+    cookie and header.
     """
     from app import app as flask_app
 
@@ -642,7 +652,8 @@ def test_csrf_protect_valid_token_allows_request(client):
         json={"username": "newname"},
         headers={"X-CSRF-Token": csrf_token},
     )
-    # Should not return a CSRF error (should be 200 or 400 depending on profile update logic)
+    # Should not return a CSRF error (should be 200 or 400 depending on
+    # profile update logic)
     assert resp.status_code in (200, 400)
     if resp.status_code == 403:
         assert resp.get_json().get("error") != "Invalid or missing CSRF token"
@@ -672,7 +683,8 @@ def auth_client(client):
 
 def test_auth_client_fixture_works(auth_client):
     """
-    Test that the auth_client fixture provides a valid authenticated session and can access the profile endpoint.
+    Test that the auth_client fixture provides a valid authenticated
+    session and can access the profile endpoint.
     """
     resp = auth_client.get("/api/profile")
     data = resp.get_json()
@@ -683,7 +695,8 @@ def test_auth_client_fixture_works(auth_client):
 
 @pytest.mark.usefixtures("client", "db")
 def test_get_current_user_found_and_not_found(client):
-    # Simulate a request context with a user_id that does not exist in the database
+    # Simulate a request context with a user_id that does not exist in the
+    # database
     # Register and login a user, then delete them
     username = "ghostuser"
     email = "ghostuser@weatherboysuper.com"
@@ -739,7 +752,10 @@ def test_get_current_user_found_and_not_found(client):
 # --- CSRF Token Generation Tests ---
 @pytest.mark.usefixtures("client", "db")
 def test_generate_csrf_token_new_token(client):
-    """Covers the branch where no CSRF token exists in cookies (new token generated)."""
+    """
+    Covers the branch where no CSRF token exists in cookies
+    (new token generated).
+    """
     with client.application.test_request_context("/"):
         token = generate_csrf_token()
         # Should be a 32-character hex string
@@ -750,7 +766,10 @@ def test_generate_csrf_token_new_token(client):
 
 @pytest.mark.usefixtures("client", "db")
 def test_generate_csrf_token_existing_cookie(client):
-    """Covers the branch where an existing CSRF token is found in cookies and returned."""
+    """
+    Covers the branch where an existing CSRF token is found in cookies
+    and returned.
+    """
     test_token = "7a3a01c066082e712fa8dd9b4aeccb0c"  # valid 32-char hex string
     with client.application.test_request_context(
         "/", headers={"Cookie": f"_csrf_token={test_token}"}
@@ -764,8 +783,9 @@ def test_generate_csrf_token_existing_cookie(client):
 @pytest.mark.parametrize("endpoint", ["/api/login", "/api/register"])
 def test_csrf_skipped_for_login_register(client, endpoint):
     """
-    Ensure CSRF protection is skipped for login and register endpoints (no CSRF token required).
-    This test posts to login/register without a CSRF token and expects no CSRF error.
+    Ensure CSRF protection is skipped for login and register endpoints
+    (no CSRF token required). This test posts to login/register without a
+    CSRF token and expects no CSRF error.
     """
     # Use unique credentials to avoid conflicts
     unique = uuid.uuid4().hex[:8]
@@ -788,7 +808,8 @@ def test_csrf_skipped_for_login_register(client, endpoint):
             "password": reg_data["password"],
         }
     resp = client.post(endpoint, json=data)
-    # Should not return a CSRF error (403), should be 201 for register or 200/401 for login
+    # Should not return a CSRF error (403), should be 201 for register or
+    # 200/401 for login
     assert resp.status_code in (200, 201, 400, 401)
     if resp.status_code == 403:
         # If 403, check that it is not a CSRF error
@@ -802,8 +823,9 @@ def test_csrf_skipped_for_login_register(client, endpoint):
 @pytest.mark.parametrize("endpoint", ["/api/login", "/api/register"])
 def test_csrf_skip_logs_debug_message(client, endpoint, caplog):
     """
-    Ensure the logger.debug message is emitted when CSRF check is skipped for login/register endpoints.
-    Temporarily disables TESTING mode to reach the relevant code.
+    Ensure the logger.debug message is emitted when CSRF check is skipped
+    for login/register endpoints. Temporarily disables TESTING mode to reach
+    the relevant code.
     """
     from app import app as flask_app
 
@@ -843,8 +865,8 @@ def test_csrf_skip_logs_debug_message(client, endpoint, caplog):
 @pytest.mark.usefixtures("client", "db")
 def test_csrf_protect_testing_mode_skips_check(client, caplog):
     """
-    Ensure CSRF protection exits early in TESTING mode and logs the correct message.
-    Covers the early return at line 227 in app.py.
+    Ensure CSRF protection exits early in TESTING mode and logs the correct
+    message. Covers the early return at line 227 in app.py.
     """
     from app import app as flask_app
 
@@ -868,8 +890,8 @@ def test_csrf_protect_testing_mode_skips_check(client, caplog):
 @pytest.mark.usefixtures("client", "db")
 def test_csrf_protect_invalid_token_returns_403(client):
     """
-    Ensure CSRF protection returns 403 for missing/invalid CSRF token on a protected endpoint.
-    Covers the error response at line 291 in app.py.
+    Ensure CSRF protection returns 403 for missing/invalid CSRF token on a
+    protected endpoint. Covers the error response at line 291 in app.py.
     """
     from app import app as flask_app
 
@@ -902,7 +924,8 @@ def test_csrf_protect_invalid_token_returns_403(client):
 @pytest.mark.usefixtures("client", "db")
 def test_auth_check_session_debug_logging(client, caplog):
     """
-    Test that /api/auth/check emits session debug logs (covers lines 429-432 in app.py).
+    Test that /api/auth/check emits session debug logs (covers lines
+    429-432 in app.py).
     """
     unique = uuid.uuid4().hex[:8]
     username = f"sessionlog_{unique}"
@@ -928,7 +951,8 @@ def test_auth_check_session_debug_logging(client, caplog):
 @pytest.mark.usefixtures("client", "db")
 def test_auth_check_no_user_logs_info(client, caplog):
     """
-    Test that /api/auth/check emits info log for no authenticated user (covers lines 450-451 in app.py).
+    Test that /api/auth/check emits info log for no authenticated user
+    (covers lines 450-451 in app.py).
     """
     # Ensure no user is logged in
     with caplog.at_level(logging.INFO):
