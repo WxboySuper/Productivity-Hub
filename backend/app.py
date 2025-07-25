@@ -379,11 +379,6 @@ def generate_csrf_token():
     The token should be set as a cookie by the caller.
     Returns the CSRF token string.
     """
-    existing_token = request.cookies.get("_csrf_token")
-    # Only accept existing token if it matches secure server-generated format
-    if existing_token and re.fullmatch(r"[a-f0-9]{32}", existing_token):
-        logger.debug("Using existing CSRF token from cookie.")
-        return existing_token
     logger.info("Generating new CSRF token.")
     return secrets.token_hex(16)
 
@@ -1108,11 +1103,11 @@ def get_csrf_token():
         "CSRF token endpoint accessed."
     )
     token = generate_csrf_token()
-    response = jsonify({"csrf_token": token if token else ""})
+    response = jsonify({"csrf_token": token})
     # Set cookie for frontend JS with a secure, server-generated token
     response.set_cookie(
         "_csrf_token",
-        token if token else "",
+        token,
         secure=True,
         httponly=True,
         samesite="Lax"
