@@ -1,50 +1,62 @@
-import { render, screen, fireEvent, act, cleanup } from '@testing-library/react';
-import { vi, beforeEach, afterEach, describe, it, expect } from 'vitest';
-import { BrowserRouter } from 'react-router-dom';
-import MainManagementWindow from '../MainManagementWindow';
-import { AuthProvider } from '../../auth';
-import { BackgroundProvider } from '../../context/BackgroundContext';
-import { ToastProvider } from '../../components/ToastProvider';
+import {
+  render,
+  screen,
+  fireEvent,
+  act,
+  cleanup,
+} from "@testing-library/react";
+import { vi, beforeEach, afterEach, describe, it, expect } from "vitest";
+import { BrowserRouter } from "react-router-dom";
+import MainManagementWindow from "../MainManagementWindow";
+import { AuthProvider } from "../../auth";
+import { BackgroundProvider } from "../../context/BackgroundContext";
+import { ToastProvider } from "../../components/ToastProvider";
 
 // Setup global fetch mock properly
 global.fetch = vi.fn().mockImplementation((url: string) => {
-  if (url === '/api/csrf-token') {
+  if (url === "/api/csrf-token") {
     return Promise.resolve({
       ok: true,
-      json: () => Promise.resolve({ csrf_token: 'mock-token' }),
+      json: () => Promise.resolve({ csrf_token: "mock-token" }),
     } as Response);
   }
-  if (url === '/api/projects') {
+  if (url === "/api/projects") {
     return Promise.resolve({
       ok: true,
-      json: () => Promise.resolve({ 
-        projects: [
-          { id: 1, name: 'Test Project', description: 'Test project description' }
-        ] 
-      }),
+      json: () =>
+        Promise.resolve({
+          projects: [
+            {
+              id: 1,
+              name: "Test Project",
+              description: "Test project description",
+            },
+          ],
+        }),
     } as Response);
   }
-  if (url === '/api/tasks') {
+  if (url === "/api/tasks") {
     return Promise.resolve({
       ok: true,
-      json: () => Promise.resolve({ 
-        tasks: [
-          { 
-            id: 1, 
-            title: 'Test Task', 
-            description: 'Test task description', 
-            projectId: 1,
-            parent_id: null,
-            completed: false 
-          }
-        ] 
-      }),
+      json: () =>
+        Promise.resolve({
+          tasks: [
+            {
+              id: 1,
+              title: "Test Task",
+              description: "Test task description",
+              projectId: 1,
+              parent_id: null,
+              completed: false,
+            },
+          ],
+        }),
     } as Response);
   }
   // Default fallback
   return Promise.resolve({
     ok: false,
-    json: () => Promise.resolve({ error: 'Not found' }),
+    json: () => Promise.resolve({ error: "Not found" }),
   } as Response);
 });
 
@@ -55,26 +67,30 @@ const mockFetch = global.fetch as ReturnType<typeof vi.fn>;
 const mockAuth = {
   isAuthenticated: true,
   isLoading: false,
-  user: { id: 1, username: 'testuser', email: 'test@example.com' },
+  user: { id: 1, username: "testuser", email: "test@example.com" },
   login: vi.fn(),
   logout: vi.fn().mockResolvedValue(true),
   checkAuth: vi.fn(),
 };
 
-vi.mock('../../auth', () => ({
+vi.mock("../../auth", () => ({
   useAuth: () => mockAuth,
-  AuthProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  AuthProvider: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
 }));
 
 // Mock the background context
 const mockBackground = {
-  backgroundType: 'creative-dots' as const,
+  backgroundType: "creative-dots" as const,
   setBackgroundType: vi.fn(),
 };
 
-vi.mock('../../context/BackgroundContext', () => ({
+vi.mock("../../context/BackgroundContext", () => ({
   useBackground: () => mockBackground,
-  BackgroundProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  BackgroundProvider: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
 }));
 
 // Mock the toast context
@@ -87,15 +103,19 @@ const mockToast = {
   removeToast: vi.fn(),
 };
 
-vi.mock('../../components/ToastProvider', () => ({
+vi.mock("../../components/ToastProvider", () => ({
   useToast: () => mockToast,
-  ToastProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  ToastProvider: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
 }));
 
 // Mock hooks
-vi.mock('../../hooks/useProjects', () => ({
+vi.mock("../../hooks/useProjects", () => ({
   useProjects: () => ({
-    projects: [{ id: 1, name: 'Test Project', description: 'Test project description' }],
+    projects: [
+      { id: 1, name: "Test Project", description: "Test project description" },
+    ],
     loading: false,
     error: null,
     createProject: vi.fn(),
@@ -105,18 +125,18 @@ vi.mock('../../hooks/useProjects', () => ({
   }),
 }));
 
-vi.mock('../../hooks/useTasks', () => ({
+vi.mock("../../hooks/useTasks", () => ({
   useTasks: () => ({
-    ensureCsrfToken: vi.fn(() => Promise.resolve('mocked_csrf_token')),
+    ensureCsrfToken: vi.fn(() => Promise.resolve("mocked_csrf_token")),
     tasks: [
       {
         id: 1,
-        title: 'Test Task',
-        description: 'Test task description',
+        title: "Test Task",
+        description: "Test task description",
         projectId: 1,
         parent_id: null,
-        completed: false
-      }
+        completed: false,
+      },
     ],
     loading: false,
     error: null,
@@ -128,7 +148,7 @@ vi.mock('../../hooks/useTasks', () => ({
 }));
 
 // Mock the BackgroundSwitcher component
-vi.mock('../../components/BackgroundSwitcher', () => ({
+vi.mock("../../components/BackgroundSwitcher", () => ({
   default: ({
     currentBackground,
     onBackgroundChange,
@@ -138,7 +158,7 @@ vi.mock('../../components/BackgroundSwitcher', () => ({
   }) => (
     <button
       data-testid="background-switcher"
-      onClick={() => onBackgroundChange('neural-network')}
+      onClick={() => onBackgroundChange("neural-network")}
     >
       Background: {currentBackground}
     </button>
@@ -159,9 +179,23 @@ interface ProjectFormProps {
 }
 interface TaskDetailsProps {
   open: boolean;
-  task: { id: number; title: string; description: string; completed: boolean; projectId: number | null; parent_id: number | null };
+  task: {
+    id: number;
+    title: string;
+    description: string;
+    completed: boolean;
+    projectId: number | null;
+    parent_id: number | null;
+  };
   onClose: () => void;
-  onUpdate: (task: { id: number; title: string; description: string; completed: boolean; projectId: number | null; parent_id: number | null }) => void;
+  onUpdate: (task: {
+    id: number;
+    title: string;
+    description: string;
+    completed: boolean;
+    projectId: number | null;
+    parent_id: number | null;
+  }) => void;
   onDelete: (id: number) => void;
 }
 interface ConfirmDialogProps {
@@ -170,16 +204,15 @@ interface ConfirmDialogProps {
   onCancel: () => void;
 }
 
-vi.mock('../../components/TaskForm', () => ({
+vi.mock("../../components/TaskForm", () => ({
   default: ({ open, onSubmit, onClose, error }: TaskFormProps) => {
     if (!open) return null;
-    const handleSubmit = () => onSubmit({ title: 'Test Task', description: 'Test Description' });
+    const handleSubmit = () =>
+      onSubmit({ title: "Test Task", description: "Test Description" });
     return (
       <div data-testid="task-form">
         <h2>Task Form</h2>
-        <button onClick={handleSubmit}>
-          Submit
-        </button>
+        <button onClick={handleSubmit}>Submit</button>
         <button onClick={onClose}>Cancel</button>
         {error && <div data-testid="task-form-error">{error}</div>}
       </div>
@@ -188,16 +221,15 @@ vi.mock('../../components/TaskForm', () => ({
 }));
 
 // Mock the ProjectForm component
-vi.mock('../../components/ProjectForm', () => ({
+vi.mock("../../components/ProjectForm", () => ({
   default: ({ open, onSubmit, onClose, error }: ProjectFormProps) => {
     if (!open) return null;
-    const handleSubmit = () => onSubmit({ name: 'Test Project', description: 'Test Description' });
+    const handleSubmit = () =>
+      onSubmit({ name: "Test Project", description: "Test Description" });
     return (
       <div data-testid="project-form">
         <h2>Project Form</h2>
-        <button onClick={handleSubmit}>
-          Submit
-        </button>
+        <button onClick={handleSubmit}>Submit</button>
         <button onClick={onClose}>Cancel</button>
         {error && <div data-testid="project-form-error">{error}</div>}
       </div>
@@ -206,19 +238,18 @@ vi.mock('../../components/ProjectForm', () => ({
 }));
 
 // Mock the TaskDetails component
-vi.mock('../../components/TaskDetails', () => ({
+vi.mock("../../components/TaskDetails", () => ({
   default: (props: TaskDetailsProps) => {
     const { open, task, onClose, onUpdate, onDelete } = props;
     if (!open) return null;
-    const handleToggleComplete = () => onUpdate({ ...task, completed: !task.completed });
+    const handleToggleComplete = () =>
+      onUpdate({ ...task, completed: !task.completed });
     const handleDelete = () => onDelete(task.id);
     return (
       <div data-testid="task-details">
         <h2>Task Details</h2>
         <div>{task?.title}</div>
-        <button onClick={handleToggleComplete}>
-          Toggle Complete
-        </button>
+        <button onClick={handleToggleComplete}>Toggle Complete</button>
         <button onClick={handleDelete}>Delete</button>
         <button onClick={onClose}>Close</button>
       </div>
@@ -227,7 +258,7 @@ vi.mock('../../components/TaskDetails', () => ({
 }));
 
 // Mock ConfirmDialog
-vi.mock('../../components/ConfirmDialog', () => ({
+vi.mock("../../components/ConfirmDialog", () => ({
   default: ({ open, onConfirm, onCancel }: ConfirmDialogProps) => {
     if (!open) return null;
     return (
@@ -251,7 +282,7 @@ const MainManagementWindowWrapper = () => (
   </BrowserRouter>
 );
 
-describe('MainManagementWindow - Background & Toast Providers', () => {
+describe("MainManagementWindow - Background & Toast Providers", () => {
   beforeEach(() => {
     // Reset all mocks before each test
     vi.clearAllMocks();
@@ -262,39 +293,41 @@ describe('MainManagementWindow - Background & Toast Providers', () => {
     cleanup();
   });
 
-  describe('Background Management', () => {
-    it('changes background when background switcher is used', () => {
+  describe("Background Management", () => {
+    it("changes background when background switcher is used", () => {
       act(() => {
         render(<MainManagementWindowWrapper />);
       });
-      
-      const backgroundSwitcher = screen.getByTestId('background-switcher');
+
+      const backgroundSwitcher = screen.getByTestId("background-switcher");
       act(() => {
         fireEvent.click(backgroundSwitcher);
       });
-      
-      expect(mockBackground.setBackgroundType).toHaveBeenCalledWith('neural-network');
+
+      expect(mockBackground.setBackgroundType).toHaveBeenCalledWith(
+        "neural-network",
+      );
     });
   });
 
-  describe('Component Integration', () => {
-    it('integrates with all required context providers', () => {
+  describe("Component Integration", () => {
+    it("integrates with all required context providers", () => {
       render(<MainManagementWindowWrapper />);
-      
+
       // Check that main component renders successfully with all providers
-      expect(screen.getByTestId('main-management-window')).toBeInTheDocument();
+      expect(screen.getByTestId("main-management-window")).toBeInTheDocument();
 
       // Check background switcher is present and working
-      expect(screen.getByTestId('background-switcher')).toBeInTheDocument();
+      expect(screen.getByTestId("background-switcher")).toBeInTheDocument();
     });
 
-    it('handles form dialogs properly', () => {
+    it("handles form dialogs properly", () => {
       render(<MainManagementWindowWrapper />);
-      
+
       // Check that forms don't render initially (they should be closed)
-      expect(screen.queryByTestId('task-form')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('project-form')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('task-details')).not.toBeInTheDocument();
+      expect(screen.queryByTestId("task-form")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("project-form")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("task-details")).not.toBeInTheDocument();
     });
   });
 });

@@ -1,5 +1,5 @@
 // Example of how to refactor for better testability
-import { useState, useCallback } from 'react';
+import { useState, useCallback } from "react";
 
 export interface Task {
   id: number;
@@ -19,13 +19,13 @@ export async function ensureCsrfToken(): Promise<string> {
     return match ? decodeURIComponent(match[2]) : null;
   };
 
-  let token = getCookie('_csrf_token');
+  let token = getCookie("_csrf_token");
   if (!token) {
-    const res = await fetch('/api/csrf-token', { credentials: 'include' });
+    const res = await fetch("/api/csrf-token", { credentials: "include" });
     const data = await res.json();
     token = data.csrf_token;
   }
-  return token || '';
+  return token || "";
 }
 
 export function useTasks() {
@@ -36,71 +36,81 @@ export function useTasks() {
   const fetchTasks = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
-      const response = await fetch('/api/tasks', { credentials: 'include' });
-      if (!response.ok) throw new Error('Failed to fetch tasks');
-      
+      const response = await fetch("/api/tasks", { credentials: "include" });
+      if (!response.ok) throw new Error("Failed to fetch tasks");
+
       const data = await response.json();
-      const tasks = Array.isArray(data) ? data : (data.tasks || []);
-      
+      const tasks = Array.isArray(data) ? data : data.tasks || [];
+
       // Normalize task data
-      const normalizedTasks = tasks.map((task: Partial<Task> & { project_id?: number }) => ({
-        ...task,
-        projectId: typeof task.projectId !== 'undefined' ? task.projectId : task.project_id,
-      }));
-      
+      const normalizedTasks = tasks.map(
+        (task: Partial<Task> & { project_id?: number }) => ({
+          ...task,
+          projectId:
+            typeof task.projectId !== "undefined"
+              ? task.projectId
+              : task.project_id,
+        }),
+      );
+
       setTasks(normalizedTasks);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
       setError(errorMessage);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  const updateTask = useCallback(async (taskId: number, updates: Partial<Task>) => {
-    try {
-      const token = await ensureCsrfToken();
-      const response = await fetch(`/api/tasks/${taskId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': token,
-        },
-        credentials: 'include',
-        body: JSON.stringify(updates),
-      });
+  const updateTask = useCallback(
+    async (taskId: number, updates: Partial<Task>) => {
+      try {
+        const token = await ensureCsrfToken();
+        const response = await fetch(`/api/tasks/${taskId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": token,
+          },
+          credentials: "include",
+          body: JSON.stringify(updates),
+        });
 
-      if (!response.ok) throw new Error('Failed to update task');
-      
-      // Optimistically update local state
-      setTasks(prev => prev.map(task => 
-        task.id === taskId ? { ...task, ...updates } : task
-      ));
-      
-      return true;
-    } catch (err) {
-      console.error('Error updating task:', err);
-      return false;
-    }
-  }, []);
+        if (!response.ok) throw new Error("Failed to update task");
+
+        // Optimistically update local state
+        setTasks((prev) =>
+          prev.map((task) =>
+            task.id === taskId ? { ...task, ...updates } : task,
+          ),
+        );
+
+        return true;
+      } catch (err) {
+        console.error("Error updating task:", err);
+        return false;
+      }
+    },
+    [],
+  );
 
   const deleteTask = useCallback(async (taskId: number) => {
     try {
       const response = await fetch(`/api/tasks/${taskId}`, {
-        method: 'DELETE',
-        credentials: 'include',
+        method: "DELETE",
+        credentials: "include",
       });
 
-      if (!response.ok) throw new Error('Failed to delete task');
-      
+      if (!response.ok) throw new Error("Failed to delete task");
+
       // Remove from local state
-      setTasks(prev => prev.filter(task => task.id !== taskId));
-      
+      setTasks((prev) => prev.filter((task) => task.id !== taskId));
+
       return true;
     } catch (err) {
-      console.error('Error deleting task:', err);
+      console.error("Error deleting task:", err);
       return false;
     }
   }, []);
@@ -111,6 +121,6 @@ export function useTasks() {
     error,
     fetchTasks,
     updateTask,
-    deleteTask
+    deleteTask,
   };
 }

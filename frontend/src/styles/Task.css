@@ -11,7 +11,7 @@
   --modern-success: #10b981;
   --modern-warning: #f59e0b;
   --modern-error: #ef4444;
-  
+
   /* Grays */
   --modern-gray-50: #f8fafc;
   --modern-gray-100: #f1f5f9;
@@ -23,13 +23,13 @@
   --modern-gray-700: #334155;
   --modern-gray-800: #1e293b;
   --modern-gray-900: #0f172a;
-  
+
   /* Text */
   --modern-text-primary: #0f172a;
   --modern-text-secondary: #1e293b;
   --modern-text-muted: #64748b;
   --modern-text-placeholder: #94a3b8;
-  
+
   /* Spacing */
   --modern-space-xs: 0.25rem;
   --modern-space-sm: 0.5rem;
@@ -37,14 +37,16 @@
   --modern-space-lg: 1rem;
   --modern-space-xl: 1.5rem;
   --modern-space-2xl: 2rem;
-  
+
   /* Other */
   --modern-radius: 0.5rem;
   --modern-radius-lg: 0.75rem;
   --modern-radius-xl: 1rem;
   --modern-transition: all 0.2s ease;
-  --modern-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --modern-shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --modern-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --modern-shadow-lg:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
 /* === MODAL SYSTEM === */
@@ -54,7 +56,12 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(15, 23, 42, 0.7); /* More transparent to show site background */
+  background: rgba(
+    15,
+    23,
+    42,
+    0.7
+  ); /* More transparent to show site background */
   backdrop-filter: blur(8px);
   display: flex;
   align-items: center; /* Center vertically in viewport */
@@ -73,15 +80,18 @@
 /* Remove old modal backdrop animation - using site-wide background instead */
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .modern-form-container {
-  background: 
-    linear-gradient(135deg, #ffffff 0%, #f8fafc 30%, #e2e8f0 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 30%, #e2e8f0 100%);
   border-radius: var(--modern-radius-xl);
-  box-shadow: 
+  box-shadow:
     0 25px 50px -12px rgba(0, 0, 0, 0.25),
     0 0 0 1px rgba(255, 255, 255, 0.8),
     inset 0 1px 0 rgba(255, 255, 255, 0.9);
@@ -107,31 +117,39 @@
 
 /* Subtle inner glow */
 .modern-form-container::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.03) 0%, transparent 50%);
+  background: linear-gradient(
+    135deg,
+    rgba(37, 99, 235, 0.03) 0%,
+    transparent 50%
+  );
   border-radius: var(--modern-radius-xl);
   pointer-events: none; /* Make sure this doesn't block clicks */
   z-index: -1; /* Behind content */
 }
 
 @keyframes slideIn {
-  from { 
-    opacity: 0; 
-    transform: scale(0.95) translateY(20px); 
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(20px);
   }
-  to { 
-    opacity: 1; 
-    transform: scale(1) translateY(0); 
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
   }
 }
 
 /* === HEADER === */
 .modern-form-header {
   padding: var(--modern-space-xl);
-  background: 
-    linear-gradient(135deg, var(--modern-primary) 0%, #6366f1 50%, var(--modern-secondary) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--modern-primary) 0%,
+    #6366f1 50%,
+    var(--modern-secondary) 100%
+  );
   color: white;
   position: relative;
   text-align: center;
@@ -140,22 +158,29 @@
 
 /* Animated header background */
 .modern-form-header::before {
-  content: '';
+  content: "";
   position: absolute;
   top: -50%;
   left: -50%;
   width: 200%;
   height: 200%;
-  background: 
-    radial-gradient(circle, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.1) 1px,
+    transparent 1px
+  );
   background-size: 30px 30px;
   animation: headerFloat 15s linear infinite;
   pointer-events: none;
 }
 
 @keyframes headerFloat {
-  0% { transform: translate(0, 0) rotate(0deg); }
-  100% { transform: translate(-30px, -30px) rotate(360deg); }
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  100% {
+    transform: translate(-30px, -30px) rotate(360deg);
+  }
 }
 
 .modern-form-title {
@@ -203,18 +228,17 @@
 /* === HERO SECTION === */
 .modern-hero-section {
   padding: var(--modern-space-xl);
-  background: 
-    linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 50%, #cbd5e1 100%);
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 50%, #cbd5e1 100%);
   position: relative;
   overflow: hidden;
 }
 
 /* Subtle pattern overlay */
 .modern-hero-section::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
-  background-image: 
+  background-image:
     linear-gradient(45deg, rgba(37, 99, 235, 0.03) 25%, transparent 25%),
     linear-gradient(-45deg, rgba(139, 92, 246, 0.03) 25%, transparent 25%);
   background-size: 20px 20px;
@@ -231,7 +255,7 @@
   border-radius: var(--modern-radius);
   padding: var(--modern-space-lg);
   color: var(--modern-text-primary);
-  box-shadow: 
+  box-shadow:
     0 4px 6px -1px rgba(0, 0, 0, 0.1),
     0 0 0 1px rgba(37, 99, 235, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.9);
@@ -244,7 +268,7 @@
 .modern-hero-input:focus {
   outline: none;
   border-color: var(--modern-primary);
-  box-shadow: 
+  box-shadow:
     var(--modern-shadow),
     0 0 0 3px rgba(37, 99, 235, 0.1);
 }
@@ -256,7 +280,7 @@
 
 .modern-hero-input.error {
   border-color: var(--modern-error);
-  box-shadow: 
+  box-shadow:
     var(--modern-shadow),
     0 0 0 3px rgba(239, 68, 68, 0.1);
 }
@@ -297,7 +321,7 @@
 
 .modern-inline-field:hover {
   border-color: var(--modern-primary);
-  box-shadow: 
+  box-shadow:
     0 4px 6px -1px rgba(0, 0, 0, 0.1),
     0 0 0 3px rgba(37, 99, 235, 0.1);
   transform: translateY(-1px);
@@ -307,7 +331,7 @@
 .modern-inline-field.active {
   border-color: var(--modern-primary);
   background: rgba(37, 99, 235, 0.05);
-  box-shadow: 
+  box-shadow:
     0 4px 6px -1px rgba(0, 0, 0, 0.1),
     0 0 0 3px rgba(37, 99, 235, 0.1);
 }
@@ -395,7 +419,8 @@
   height: 12px;
   transition: var(--modern-transition);
   background: currentColor;
-  mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor'%3e%3cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M9 5l7 7-7 7'/%3e%3c/svg%3e") no-repeat center;
+  mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor'%3e%3cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M9 5l7 7-7 7'/%3e%3c/svg%3e")
+    no-repeat center;
   mask-size: contain;
 }
 
@@ -637,8 +662,12 @@
 
 /* === ANIMATIONS === */
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* === TASK DETAILS MODAL === */
@@ -697,7 +726,11 @@
 
 .modern-progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--modern-success), var(--modern-primary));
+  background: linear-gradient(
+    90deg,
+    var(--modern-success),
+    var(--modern-primary)
+  );
   border-radius: var(--modern-radius);
   transition: width 0.3s ease;
 }
@@ -903,20 +936,20 @@
     border-radius: 0;
     max-height: 100vh;
   }
-  
+
   .modern-modal-backdrop {
     padding: 0;
     align-items: stretch;
   }
-  
+
   .modern-quick-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .modern-priority-selector {
     justify-content: center;
   }
-  
+
   .modern-hero-section,
   .modern-expandable-header,
   .modern-expandable-content,
@@ -924,7 +957,7 @@
     padding-left: var(--modern-space-lg);
     padding-right: var(--modern-space-lg);
   }
-  
+
   .modern-quick-grid {
     padding-left: var(--modern-space-lg);
     padding-right: var(--modern-space-lg);
@@ -1069,7 +1102,9 @@
   max-width: 480px;
   max-height: 80vh;
   overflow: hidden;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
   display: flex;
   flex-direction: column;
 }
@@ -1160,15 +1195,15 @@
   .modern-relationship-buttons {
     flex-direction: column;
   }
-  
+
   .modern-relationship-btn {
     justify-content: center;
   }
-  
+
   .modern-popup-overlay {
     padding: var(--modern-space-md);
   }
-  
+
   .modern-popup-content {
     max-height: 90vh;
   }

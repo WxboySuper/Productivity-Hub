@@ -1,21 +1,30 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import './App.css';
-import RegisterPage from './pages/RegisterPage';
-import LoginPage from './pages/LoginPage';
-import PasswordResetRequestPage from './pages/PasswordResetRequestPage';
-import PasswordResetConfirmPage from './pages/PasswordResetConfirmPage';
-import HomePage from './pages/HomePage';
-import MainManagementWindow from './pages/MainManagementWindow';
-import { useAuth } from './auth';
-import NotificationCenter from './components/NotificationCenter';
-import Background from './components/Background';
-import ErrorBoundary from './components/ErrorBoundary';
-import { ToastProvider } from './components/ToastProvider';
-import { BackgroundProvider, useBackground } from './context/BackgroundContext';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import "./App.css";
+import RegisterPage from "./pages/RegisterPage";
+import LoginPage from "./pages/LoginPage";
+import PasswordResetRequestPage from "./pages/PasswordResetRequestPage";
+import PasswordResetConfirmPage from "./pages/PasswordResetConfirmPage";
+import HomePage from "./pages/HomePage";
+import MainManagementWindow from "./pages/MainManagementWindow";
+import { useAuth } from "./auth";
+import NotificationCenter from "./components/NotificationCenter";
+import Background from "./components/Background";
+import ErrorBoundary from "./components/ErrorBoundary";
+import { ToastProvider } from "./components/ToastProvider";
+import { BackgroundProvider, useBackground } from "./context/BackgroundContext";
 
 // Simple placeholder components
 function NotFound() {
-  return <div className="text-2xl font-bold text-center mt-10 text-red-600">404 - Page Not Found</div>;
+  return (
+    <div className="text-2xl font-bold text-center mt-10 text-red-600">
+      404 - Page Not Found
+    </div>
+  );
 }
 
 function PublicRoute({ children }: { children: React.ReactElement }) {
@@ -25,7 +34,7 @@ function PublicRoute({ children }: { children: React.ReactElement }) {
 
 function AppRoutes() {
   const { isAuthenticated, isLoading } = useAuth();
-  
+
   // Show loading spinner while checking authentication
   if (isLoading) {
     return (
@@ -37,14 +46,45 @@ function AppRoutes() {
       </div>
     );
   }
-  
+
   return (
     <Routes>
-      <Route path="/" element={isAuthenticated ? <MainManagementWindow /> : <HomePage />} />
-      <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
-      <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
-      <Route path="/password-reset/request" element={<PublicRoute><PasswordResetRequestPage /></PublicRoute>} />
-      <Route path="/password-reset/confirm" element={<PublicRoute><PasswordResetConfirmPage /></PublicRoute>} />
+      <Route
+        path="/"
+        element={isAuthenticated ? <MainManagementWindow /> : <HomePage />}
+      />
+      <Route
+        path="/login"
+        element={
+          <PublicRoute>
+            <LoginPage />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/register"
+        element={
+          <PublicRoute>
+            <RegisterPage />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/password-reset/request"
+        element={
+          <PublicRoute>
+            <PasswordResetRequestPage />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/password-reset/confirm"
+        element={
+          <PublicRoute>
+            <PasswordResetConfirmPage />
+          </PublicRoute>
+        }
+      />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
@@ -52,12 +92,10 @@ function AppRoutes() {
 
 function AppContent() {
   const { backgroundType } = useBackground();
-  
+
   return (
     <ErrorBoundary>
-      <Background 
-        backgroundType={backgroundType} 
-      />
+      <Background backgroundType={backgroundType} />
       <div className="content-overlay">
         <Router>
           <NotificationCenter />

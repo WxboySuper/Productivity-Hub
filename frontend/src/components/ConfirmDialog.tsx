@@ -1,5 +1,5 @@
-import { useRef, useEffect } from 'react';
-import '../styles/ConfirmDialog.css';
+import { useRef, useEffect } from "react";
+import "../styles/ConfirmDialog.css";
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -10,69 +10,80 @@ interface ConfirmDialogProps {
   onConfirm: () => void;
   onCancel: () => void;
   loading?: boolean;
-  type?: 'danger' | 'warning' | 'info';
+  type?: "danger" | "warning" | "info";
 }
 
-const getTypeStyles = (type: 'danger' | 'warning' | 'info') => {
+const getTypeStyles = (type: "danger" | "warning" | "info") => {
   switch (type) {
-    case 'danger':
+    case "danger":
       return {
-        headerBg: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
-        icon: '⚠️',
-        confirmBg: 'var(--phub-error)',
-        confirmHoverBg: '#b91c1c'
+        headerBg: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)",
+        icon: "⚠️",
+        confirmBg: "var(--phub-error)",
+        confirmHoverBg: "#b91c1c",
       };
-    case 'warning':
+    case "warning":
       return {
-        headerBg: 'linear-gradient(135deg, #d97706 0%, #b45309 100%)',
-        icon: '⚡',
-        confirmBg: 'var(--phub-warning)',
-        confirmHoverBg: '#b45309'
+        headerBg: "linear-gradient(135deg, #d97706 0%, #b45309 100%)",
+        icon: "⚡",
+        confirmBg: "var(--phub-warning)",
+        confirmHoverBg: "#b45309",
       };
-    case 'info':
+    case "info":
       return {
-        headerBg: 'linear-gradient(135deg, var(--phub-primary) 0%, var(--phub-secondary) 100%)',
-        icon: 'ℹ️',
-        confirmBg: 'var(--phub-primary)',
-        confirmHoverBg: 'var(--phub-primary-dark)'
+        headerBg:
+          "linear-gradient(135deg, var(--phub-primary) 0%, var(--phub-secondary) 100%)",
+        icon: "ℹ️",
+        confirmBg: "var(--phub-primary)",
+        confirmHoverBg: "var(--phub-primary-dark)",
       };
     default:
       return {
-        headerBg: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
-        icon: '⚠️',
-        confirmBg: 'var(--phub-error)',
-        confirmHoverBg: '#b91c1c'
+        headerBg: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)",
+        icon: "⚠️",
+        confirmBg: "var(--phub-error)",
+        confirmHoverBg: "#b91c1c",
       };
   }
 };
 
 const DangerEmphasis: React.FC = () => (
-  <div style={{
-    background: 'rgba(220, 38, 38, 0.05)',
-    border: '1px solid rgba(220, 38, 38, 0.2)',
-    borderRadius: 'var(--phub-radius-lg)',
-    padding: 'var(--phub-space-md)',
-    marginTop: 'var(--phub-space-md)',
-    textAlign: 'center'
-  }}>
-    <div style={{
-      fontSize: '0.875rem',
-      color: 'var(--phub-error)',
-      fontWeight: '600',
-      marginBottom: 'var(--phub-space-xs)'
-    }}>
+  <div
+    style={{
+      background: "rgba(220, 38, 38, 0.05)",
+      border: "1px solid rgba(220, 38, 38, 0.2)",
+      borderRadius: "var(--phub-radius-lg)",
+      padding: "var(--phub-space-md)",
+      marginTop: "var(--phub-space-md)",
+      textAlign: "center",
+    }}
+  >
+    <div
+      style={{
+        fontSize: "0.875rem",
+        color: "var(--phub-error)",
+        fontWeight: "600",
+        marginBottom: "var(--phub-space-xs)",
+      }}
+    >
       🛑 This action cannot be undone
     </div>
-    <div style={{
-      fontSize: '0.75rem',
-      color: 'var(--phub-gray-600)'
-    }}>
+    <div
+      style={{
+        fontSize: "0.75rem",
+        color: "var(--phub-gray-600)",
+      }}
+    >
       Please make sure you want to proceed
     </div>
   </div>
 );
 
-const ConfirmButtonContent: React.FC<{ loading: boolean, type: 'danger' | 'warning' | 'info', confirmLabel: string }> = ({ loading, type, confirmLabel }) => {
+const ConfirmButtonContent: React.FC<{
+  loading: boolean;
+  type: "danger" | "warning" | "info";
+  confirmLabel: string;
+}> = ({ loading, type, confirmLabel }) => {
   if (loading) {
     return (
       <>
@@ -83,7 +94,7 @@ const ConfirmButtonContent: React.FC<{ loading: boolean, type: 'danger' | 'warni
   }
   return (
     <>
-      <span>{type === 'danger' ? '🗑️' : type === 'warning' ? '⚡' : '✅'}</span>
+      <span>{type === "danger" ? "🗑️" : type === "warning" ? "⚡" : "✅"}</span>
       {confirmLabel}
     </>
   );
@@ -92,7 +103,7 @@ const ConfirmButtonContent: React.FC<{ loading: boolean, type: 'danger' | 'warni
 interface ConfirmDialogContentProps {
   title: string;
   message: string;
-  type: 'danger' | 'warning' | 'info';
+  type: "danger" | "warning" | "info";
   loading: boolean;
   confirmLabel: string;
   cancelLabel: string;
@@ -112,11 +123,11 @@ const ConfirmDialogContent: React.FC<ConfirmDialogContentProps> = ({
   onCancel,
   onConfirm,
   handleConfirmMouseEnter,
-  handleConfirmMouseLeave
+  handleConfirmMouseLeave,
 }) => {
   const typeStyles = getTypeStyles(type);
   return (
-    <div className="phub-form-container" style={{ maxWidth: '28rem' }}>
+    <div className="phub-form-container" style={{ maxWidth: "28rem" }}>
       {/* Floating decorative elements */}
       <div className="phub-floating-elements">
         <div className="phub-floating-circle"></div>
@@ -124,16 +135,18 @@ const ConfirmDialogContent: React.FC<ConfirmDialogContentProps> = ({
       </div>
 
       {/* Header */}
-      <div 
+      <div
         className="phub-form-header"
         style={{ background: typeStyles.headerBg }}
       >
         <h2
           className="phub-form-title"
-          style={{ fontSize: '1.5rem' }}
+          style={{ fontSize: "1.5rem" }}
           id="phub-confirm-dialog-title"
         >
-          <span style={{ marginRight: 'var(--phub-space-sm)' }}>{typeStyles.icon}</span>
+          <span style={{ marginRight: "var(--phub-space-sm)" }}>
+            {typeStyles.icon}
+          </span>
           {title}
         </h2>
       </div>
@@ -143,18 +156,20 @@ const ConfirmDialogContent: React.FC<ConfirmDialogContentProps> = ({
         <div
           id="phub-confirm-dialog-message"
           style={{
-            fontSize: '1rem',
-            lineHeight: '1.6',
-            color: 'var(--phub-gray-700)',
-            textAlign: 'center',
-            padding: 'var(--phub-space-md) 0'
+            fontSize: "1rem",
+            lineHeight: "1.6",
+            color: "var(--phub-gray-700)",
+            textAlign: "center",
+            padding: "var(--phub-space-md) 0",
           }}
         >
           {message}
         </div>
 
         {/* Visual emphasis for danger actions */}
-        {(type === 'danger' || !['warning', 'info'].includes(type)) && <DangerEmphasis />}
+        {(type === "danger" || !["warning", "info"].includes(type)) && (
+          <DangerEmphasis />
+        )}
       </div>
 
       {/* Actions */}
@@ -170,19 +185,23 @@ const ConfirmDialogContent: React.FC<ConfirmDialogContentProps> = ({
         </button>
         <button
           type="button"
-          className={`phub-btn ${loading ? 'phub-loading' : ''}`}
+          className={`phub-btn ${loading ? "phub-loading" : ""}`}
           onClick={onConfirm}
           disabled={loading}
-          style={{ 
+          style={{
             flex: 1,
             background: typeStyles.confirmBg,
-            color: 'white',
-            boxShadow: 'var(--phub-shadow-md)'
+            color: "white",
+            boxShadow: "var(--phub-shadow-md)",
           }}
           onMouseEnter={handleConfirmMouseEnter}
           onMouseLeave={handleConfirmMouseLeave}
         >
-          <ConfirmButtonContent loading={loading} type={type} confirmLabel={confirmLabel} />
+          <ConfirmButtonContent
+            loading={loading}
+            type={type}
+            confirmLabel={confirmLabel}
+          />
         </button>
       </div>
     </div>
@@ -193,12 +212,12 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   open,
   title,
   message,
-  confirmLabel = 'Confirm',
-  cancelLabel = 'Cancel',
+  confirmLabel = "Confirm",
+  cancelLabel = "Cancel",
   onConfirm,
   onCancel,
   loading = false,
-  type = 'danger'
+  type = "danger",
 }) => {
   if (!open) return null;
 
@@ -220,7 +239,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
 
   const handleBackdropKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     /* v8 ignore start */
-    if (e.key === 'Escape') {
+    if (e.key === "Escape") {
       onCancel();
     }
   };
