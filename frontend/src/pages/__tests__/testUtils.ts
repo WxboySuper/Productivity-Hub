@@ -1,45 +1,45 @@
-import { vi } from 'vitest';
+import { vi } from "vitest";
 
 // Common mock data
 export const mockProjectData = [
-  { id: 1, name: 'Test Project', description: 'Test project description' }
+  { id: 1, name: "Test Project", description: "Test project description" },
 ];
 
 export const mockTaskData = [
-  { 
-    id: 1, 
-    title: 'Test Task', 
-    description: 'Test task description', 
+  {
+    id: 1,
+    title: "Test Task",
+    description: "Test task description",
     projectId: 1,
     parent_id: null,
-    completed: false 
+    completed: false,
   },
-  { 
-    id: 2, 
-    title: 'Quick Task', 
-    description: 'A quick task', 
+  {
+    id: 2,
+    title: "Quick Task",
+    description: "A quick task",
     projectId: null,
     parent_id: null,
-    completed: false 
-  }
+    completed: false,
+  },
 ];
 
 // Setup global fetch mock
 export const setupFetchMock = () => {
   global.fetch = vi.fn().mockImplementation((url: string) => {
-    if (url === '/api/csrf-token') {
+    if (url === "/api/csrf-token") {
       return Promise.resolve({
         ok: true,
-        json: () => Promise.resolve({ csrf_token: 'mock-token' }),
+        json: () => Promise.resolve({ csrf_token: "mock-token" }),
       } as Response);
     }
-    if (url === '/api/projects') {
+    if (url === "/api/projects") {
       return Promise.resolve({
         ok: true,
         json: () => Promise.resolve({ projects: mockProjectData }),
       } as Response);
     }
-    if (url === '/api/tasks') {
+    if (url === "/api/tasks") {
       return Promise.resolve({
         ok: true,
         json: () => Promise.resolve({ tasks: mockTaskData }),
@@ -48,7 +48,7 @@ export const setupFetchMock = () => {
     // Default fallback
     return Promise.resolve({
       ok: false,
-      json: () => Promise.resolve({ error: 'Not found' }),
+      json: () => Promise.resolve({ error: "Not found" }),
     } as Response);
   });
 };
@@ -57,7 +57,7 @@ export const setupFetchMock = () => {
 export const mockAuth = {
   isAuthenticated: true,
   isLoading: false,
-  user: { id: 1, username: 'testuser', email: 'test@example.com' },
+  user: { id: 1, username: "testuser", email: "test@example.com" },
   login: vi.fn(),
   logout: vi.fn().mockResolvedValue(true),
   checkAuth: vi.fn(),
@@ -65,7 +65,7 @@ export const mockAuth = {
 
 // Mock background context
 export const mockBackgroundContext = {
-  backgroundType: 'creative-dots',
+  backgroundType: "creative-dots",
   setBackgroundType: vi.fn(),
 };
 

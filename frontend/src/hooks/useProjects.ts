@@ -1,5 +1,5 @@
 // Example of how to refactor for better testability
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from "react";
 
 export interface Project {
   id: number;
@@ -15,15 +15,15 @@ export function useProjects() {
   const fetchProjects = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
-      const response = await fetch('/api/projects', { credentials: 'include' });
-      if (!response.ok) throw new Error('Failed to fetch projects');
-      
+      const response = await fetch("/api/projects", { credentials: "include" });
+      if (!response.ok) throw new Error("Failed to fetch projects");
+
       const data = await response.json();
       setProjects(data.projects || []);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -38,6 +38,6 @@ export function useProjects() {
     projects,
     loading,
     error,
-    refetch: fetchProjects
+    refetch: fetchProjects,
   };
 }

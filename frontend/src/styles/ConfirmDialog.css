@@ -11,7 +11,7 @@
   --phub-primary-dark: #1e3a8a;
   --phub-secondary: #7c3aed;
   --phub-secondary-light: #a855f7;
-  
+
   /* Sophisticated Grays */
   --phub-gray-50: #f8fafc;
   --phub-gray-100: #f1f5f9;
@@ -23,7 +23,7 @@
   --phub-gray-700: #334155;
   --phub-gray-800: #1e293b;
   --phub-gray-900: #0f172a;
-  
+
   /* Success/Error Colors */
   --phub-success: #059669;
   --phub-success-light: #10b981;
@@ -31,13 +31,13 @@
   --phub-error-light: #ef4444;
   --phub-warning: #d97706;
   --phub-warning-light: #f59e0b;
-  
+
   /* Creative Accent Colors */
   --phub-accent-purple: #8b5cf6;
   --phub-accent-pink: #ec4899;
   --phub-accent-cyan: #06b6d4;
   --phub-accent-emerald: #10b981;
-  
+
   /* Form Specific Colors */
   --phub-form-bg: #ffffff;
   --phub-form-border: var(--phub-gray-200);
@@ -45,11 +45,13 @@
   --phub-input-bg: var(--phub-gray-50);
   --phub-input-border: var(--phub-gray-300);
   --phub-input-focus: var(--phub-primary);
-  
+
   /* Typography */
-  --phub-font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --phub-font-mono: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
-  
+  --phub-font-primary:
+    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --phub-font-mono:
+    "SF Mono", "Monaco", "Inconsolata", "Roboto Mono", monospace;
+
   /* Spacing */
   --phub-space-xs: 0.25rem;
   --phub-space-sm: 0.5rem;
@@ -57,20 +59,25 @@
   --phub-space-lg: 1.5rem;
   --phub-space-xl: 2rem;
   --phub-space-2xl: 3rem;
-  
+
   /* Border Radius */
   --phub-radius-sm: 0.375rem;
   --phub-radius-md: 0.5rem;
   --phub-radius-lg: 0.75rem;
   --phub-radius-xl: 1rem;
   --phub-radius-2xl: 1.5rem;
-  
+
   /* Shadows */
   --phub-shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
-  --phub-shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.1), 0 2px 4px -1px rgba(15, 23, 42, 0.06);
-  --phub-shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.1), 0 4px 6px -2px rgba(15, 23, 42, 0.05);
-  --phub-shadow-xl: 0 20px 25px -5px rgba(15, 23, 42, 0.1), 0 10px 10px -5px rgba(15, 23, 42, 0.04);
-  
+  --phub-shadow-md:
+    0 4px 6px -1px rgba(15, 23, 42, 0.1), 0 2px 4px -1px rgba(15, 23, 42, 0.06);
+  --phub-shadow-lg:
+    0 10px 15px -3px rgba(15, 23, 42, 0.1),
+    0 4px 6px -2px rgba(15, 23, 42, 0.05);
+  --phub-shadow-xl:
+    0 20px 25px -5px rgba(15, 23, 42, 0.1),
+    0 10px 10px -5px rgba(15, 23, 42, 0.04);
+
   /* Transitions */
   --phub-transition-fast: 0.15s ease-out;
   --phub-transition-normal: 0.25s ease-out;
@@ -81,11 +88,13 @@
 .phub-modal-backdrop {
   position: fixed;
   inset: 0;
-  background: linear-gradient(135deg, 
-    rgba(15, 23, 42, 0.4) 0%, 
-    rgba(30, 64, 175, 0.3) 35%, 
-    rgba(124, 58, 237, 0.25) 70%, 
-    rgba(15, 23, 42, 0.4) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(15, 23, 42, 0.4) 0%,
+    rgba(30, 64, 175, 0.3) 35%,
+    rgba(124, 58, 237, 0.25) 70%,
+    rgba(15, 23, 42, 0.4) 100%
+  );
   backdrop-filter: blur(8px);
   display: flex;
   align-items: center; /* Center vertically in viewport */
@@ -111,13 +120,15 @@
 
 /* === CREATIVE FORM CONTAINER === */
 .phub-form-container {
-  background: linear-gradient(145deg, 
-    rgba(255, 255, 255, 0.95) 0%, 
-    rgba(248, 250, 252, 0.98) 50%, 
-    rgba(241, 245, 249, 0.95) 100%);
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(248, 250, 252, 0.98) 50%,
+    rgba(241, 245, 249, 0.95) 100%
+  );
   border: 1px solid var(--phub-gray-200);
   border-radius: var(--phub-radius-2xl);
-  box-shadow: 
+  box-shadow:
     var(--phub-shadow-xl),
     0 0 0 1px rgba(255, 255, 255, 0.1) inset,
     0 1px 0 rgba(255, 255, 255, 0.6) inset;
@@ -126,7 +137,8 @@
   max-width: 42rem;
   max-height: 90vh;
   overflow: hidden;
-  animation: phub-form-appear var(--phub-transition-slow) cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: phub-form-appear var(--phub-transition-slow)
+    cubic-bezier(0.34, 1.56, 0.64, 1);
   position: relative;
 }
 
@@ -143,9 +155,11 @@
 
 /* === FORM HEADER === */
 .phub-form-header {
-  background: linear-gradient(135deg, 
-    var(--phub-primary) 0%, 
-    var(--phub-secondary) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--phub-primary) 0%,
+    var(--phub-secondary) 100%
+  );
   color: white;
   padding: var(--phub-space-xl) var(--phub-space-xl) var(--phub-space-lg);
   border-radius: var(--phub-radius-2xl) var(--phub-radius-2xl) 0 0;
@@ -154,16 +168,18 @@
 }
 
 .phub-form-header::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg, 
-    rgba(255, 255, 255, 0.1) 0%, 
-    transparent 50%, 
-    rgba(255, 255, 255, 0.05) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
   pointer-events: none;
 }
 
@@ -252,7 +268,7 @@
 .phub-input:focus {
   background: white;
   border-color: var(--phub-input-focus);
-  box-shadow: 
+  box-shadow:
     var(--phub-shadow-md),
     0 0 0 3px rgba(30, 64, 175, 0.1);
   transform: translateY(-1px);
@@ -460,7 +476,7 @@
 }
 
 .phub-subtask-checkbox:checked::after {
-  content: '✓';
+  content: "✓";
   position: absolute;
   top: 50%;
   left: 50%;
@@ -546,7 +562,11 @@
 }
 
 .phub-btn.primary {
-  background: linear-gradient(135deg, var(--phub-primary) 0%, var(--phub-secondary) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--phub-primary) 0%,
+    var(--phub-secondary) 100%
+  );
   color: white;
   box-shadow: var(--phub-shadow-md);
 }
@@ -604,16 +624,18 @@
 }
 
 .phub-loading::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, 
-    transparent 0%, 
-    rgba(255, 255, 255, 0.4) 50%, 
-    transparent 100%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.4) 50%,
+    transparent 100%
+  );
   animation: phub-loading-shimmer 1.5s infinite;
 }
 
@@ -632,23 +654,23 @@
     margin: var(--phub-space-md);
     max-width: calc(100vw - 2rem);
   }
-  
+
   .phub-datetime-group {
     grid-template-columns: 1fr;
   }
-  
+
   .phub-priority-group {
     flex-wrap: wrap;
   }
-  
+
   .phub-priority-option {
     min-width: calc(50% - 0.25rem);
   }
-  
+
   .phub-form-actions {
     flex-direction: column-reverse;
   }
-  
+
   .phub-btn {
     width: 100%;
   }
@@ -724,7 +746,8 @@
 }
 
 @keyframes phub-float {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0px) rotate(0deg);
     opacity: 0.3;
   }

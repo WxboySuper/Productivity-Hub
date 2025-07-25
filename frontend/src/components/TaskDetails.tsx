@@ -1,9 +1,15 @@
-import { useState, useEffect } from 'react';
-import TaskForm from './TaskForm';
-import '../styles/Task.css';
+import { useState, useEffect } from "react";
+import TaskForm from "./TaskForm";
+import "../styles/Task.css";
 
 // ModalBackdrop: handles backdrop click, keyboard accessibility, and wraps children
-function ModalBackdrop({ onClose, children }: { onClose: () => void; children: React.ReactNode }) {
+function ModalBackdrop({
+  onClose,
+  children,
+}: {
+  onClose: () => void;
+  children: React.ReactNode;
+}) {
   return (
     <div
       className="modern-modal-backdrop"
@@ -16,12 +22,15 @@ function ModalBackdrop({ onClose, children }: { onClose: () => void; children: R
       }}
       onKeyDown={(e) => {
         /* v8 ignore next */
-        if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) {
+        if (
+          (e.key === "Enter" || e.key === " ") &&
+          e.target === e.currentTarget
+        ) {
           /* v8 ignore next */
           onClose();
-        /* v8 ignore next */
+          /* v8 ignore next */
         }
-      /* v8 ignore next */
+        /* v8 ignore next */
       }}
     >
       {children}
@@ -31,7 +40,12 @@ function ModalBackdrop({ onClose, children }: { onClose: () => void; children: R
 
 // TaskDetailsModalContent: receives all props and renders the modal content
 // TaskDetailsHeader: displays the modal header
-function TaskDetailsHeader({ task, parentTask, setShowEditForm, onClose }: {
+function TaskDetailsHeader({
+  task,
+  parentTask,
+  setShowEditForm,
+  onClose,
+}: {
   task: Task;
   parentTask: { id: number; title: string } | null;
   setShowEditForm: (open: boolean) => void;
@@ -44,17 +58,25 @@ function TaskDetailsHeader({ task, parentTask, setShowEditForm, onClose }: {
   /* v8 ignore stop */
   return (
     <div className="modern-form-header">
-      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--modern-space-md)' }}>
-        <span style={{ fontSize: '1.5rem' }}>{task.completed ? '✅' : '📝'}</span>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "var(--modern-space-md)",
+        }}
+      >
+        <span style={{ fontSize: "1.5rem" }}>
+          {task.completed ? "✅" : "📝"}
+        </span>
         <div>
           <h2 className="modern-form-title">{task.title}</h2>
           <p className="modern-form-subtitle">
-            {task.projectName ? `📁 ${task.projectName}` : '⚡ Quick Task'}
+            {task.projectName ? `📁 ${task.projectName}` : "⚡ Quick Task"}
             {parentTask && ` • Subtask of "${parentTask.title}"`}
           </p>
         </div>
       </div>
-      <div style={{ display: 'flex', gap: 'var(--modern-space-sm)' }}>
+      <div style={{ display: "flex", gap: "var(--modern-space-sm)" }}>
         <button
           className="modern-btn modern-btn-secondary"
           onClick={handleEditClick}
@@ -76,7 +98,10 @@ function TaskDetailsHeader({ task, parentTask, setShowEditForm, onClose }: {
 }
 
 // TaskDetailsActions: displays the modal actions
-function TaskDetailsActions({ onClose, setShowEditForm }: {
+function TaskDetailsActions({
+  onClose,
+  setShowEditForm,
+}: {
   onClose: () => void;
   setShowEditForm: (open: boolean) => void;
 }) {
@@ -105,7 +130,12 @@ function TaskDetailsActions({ onClose, setShowEditForm }: {
   );
 }
 // TaskRemindersSection: displays reminders in an expandable section
-function TaskRemindersSection({ reminder_enabled, reminder_time, expanded, toggle }: {
+function TaskRemindersSection({
+  reminder_enabled,
+  reminder_time,
+  expanded,
+  toggle,
+}: {
   reminder_enabled?: boolean;
   reminder_time?: string;
   expanded: boolean;
@@ -119,14 +149,16 @@ function TaskRemindersSection({ reminder_enabled, reminder_time, expanded, toggl
     <div className="modern-expandable">
       <button
         type="button"
-        className={`modern-expandable-header ${expanded ? 'expanded' : ''}`}
+        className={`modern-expandable-header ${expanded ? "expanded" : ""}`}
         onClick={handleToggle}
       >
         <span className="modern-expandable-icon">▶️</span>
         <h3 className="modern-expandable-title">Reminders</h3>
         <span className="modern-expandable-count">(Enabled)</span>
       </button>
-      <div className={`modern-expandable-content ${expanded ? 'expanded' : ''}`}>
+      <div
+        className={`modern-expandable-content ${expanded ? "expanded" : ""}`}
+      >
         <div className="modern-reminder-info">
           {reminder_time && (
             <div className="modern-reminder-item">
@@ -142,7 +174,12 @@ function TaskRemindersSection({ reminder_enabled, reminder_time, expanded, toggl
   );
 }
 // TaskDependenciesSection: displays dependencies in an expandable section
-function TaskDependenciesSection({ blockedByTasks, blockingTasks, expanded, toggle }: {
+function TaskDependenciesSection({
+  blockedByTasks,
+  blockingTasks,
+  expanded,
+  toggle,
+}: {
   blockedByTasks: string[];
   blockingTasks: string[];
   expanded: boolean;
@@ -157,21 +194,26 @@ function TaskDependenciesSection({ blockedByTasks, blockingTasks, expanded, togg
     <div className="modern-expandable">
       <button
         type="button"
-        className={`modern-expandable-header ${expanded ? 'expanded' : ''}`}
+        className={`modern-expandable-header ${expanded ? "expanded" : ""}`}
         onClick={handleToggle}
       >
         <span className="modern-expandable-icon">▶️</span>
         <h3 className="modern-expandable-title">Dependencies</h3>
         <span className="modern-expandable-count">({total} items)</span>
       </button>
-      <div className={`modern-expandable-content ${expanded ? 'expanded' : ''}`}>
+      <div
+        className={`modern-expandable-content ${expanded ? "expanded" : ""}`}
+      >
         <div className="modern-dependencies-grid">
           {blockedByTasks.length > 0 && (
             <div className="modern-dependency-section">
               <span className="modern-dependency-label">🚫 Blocked By</span>
               <div className="modern-dependency-list">
                 {blockedByTasks.map((taskName) => (
-                  <span key={taskName} className="modern-dependency-chip blocked-by">
+                  <span
+                    key={taskName}
+                    className="modern-dependency-chip blocked-by"
+                  >
                     {taskName}
                   </span>
                 ))}
@@ -183,7 +225,10 @@ function TaskDependenciesSection({ blockedByTasks, blockingTasks, expanded, togg
               <span className="modern-dependency-label">⛔ Blocking</span>
               <div className="modern-dependency-list">
                 {blockingTasks.map((taskName) => (
-                  <span key={taskName} className="modern-dependency-chip blocking">
+                  <span
+                    key={taskName}
+                    className="modern-dependency-chip blocking"
+                  >
                     {taskName}
                   </span>
                 ))}
@@ -196,7 +241,14 @@ function TaskDependenciesSection({ blockedByTasks, blockingTasks, expanded, togg
   );
 }
 // TaskScheduleSection: displays schedule info in an expandable section
-function TaskScheduleSection({ start_date, due_date, recurrence, next_occurrence, expanded, toggle }: {
+function TaskScheduleSection({
+  start_date,
+  due_date,
+  recurrence,
+  next_occurrence,
+  expanded,
+  toggle,
+}: {
   start_date?: string;
   due_date?: string;
   recurrence?: string;
@@ -212,24 +264,30 @@ function TaskScheduleSection({ start_date, due_date, recurrence, next_occurrence
     <div className="modern-expandable">
       <button
         type="button"
-        className={`modern-expandable-header ${expanded ? 'expanded' : ''}`}
+        className={`modern-expandable-header ${expanded ? "expanded" : ""}`}
         onClick={handleToggle}
       >
         <span className="modern-expandable-icon">▶️</span>
         <h3 className="modern-expandable-title">Schedule</h3>
       </button>
-      <div className={`modern-expandable-content ${expanded ? 'expanded' : ''}`}>
+      <div
+        className={`modern-expandable-content ${expanded ? "expanded" : ""}`}
+      >
         <div className="modern-schedule-grid">
           {start_date && (
             <div className="modern-schedule-item">
               <span className="modern-schedule-label">📅 Start Date</span>
-              <span className="modern-schedule-value">{new Date(start_date).toLocaleString()}</span>
+              <span className="modern-schedule-value">
+                {new Date(start_date).toLocaleString()}
+              </span>
             </div>
           )}
           {due_date && (
             <div className="modern-schedule-item">
               <span className="modern-schedule-label">🎯 Due Date</span>
-              <span className="modern-schedule-value">{new Date(due_date).toLocaleString()}</span>
+              <span className="modern-schedule-value">
+                {new Date(due_date).toLocaleString()}
+              </span>
             </div>
           )}
           {recurrence && (
@@ -241,7 +299,9 @@ function TaskScheduleSection({ start_date, due_date, recurrence, next_occurrence
           {next_occurrence && (
             <div className="modern-schedule-item">
               <span className="modern-schedule-label">⏭️ Next Occurrence</span>
-              <span className="modern-schedule-value">{new Date(next_occurrence).toLocaleString()}</span>
+              <span className="modern-schedule-value">
+                {new Date(next_occurrence).toLocaleString()}
+              </span>
             </div>
           )}
         </div>
@@ -250,7 +310,13 @@ function TaskScheduleSection({ start_date, due_date, recurrence, next_occurrence
   );
 }
 // TaskSubtasksSection: displays subtasks in an expandable section
-function TaskSubtasksSection({ subtasks, completedSubtasks, totalSubtasks, expanded, toggle }: {
+function TaskSubtasksSection({
+  subtasks,
+  completedSubtasks,
+  totalSubtasks,
+  expanded,
+  toggle,
+}: {
   subtasks: Subtask[];
   completedSubtasks: number;
   totalSubtasks: number;
@@ -265,14 +331,18 @@ function TaskSubtasksSection({ subtasks, completedSubtasks, totalSubtasks, expan
     <div className="modern-expandable">
       <button
         type="button"
-        className={`modern-expandable-header ${expanded ? 'expanded' : ''}`}
+        className={`modern-expandable-header ${expanded ? "expanded" : ""}`}
         onClick={handleToggle}
       >
         <span className="modern-expandable-icon">▶️</span>
         <h3 className="modern-expandable-title">Subtasks</h3>
-        <span className="modern-expandable-count">({completedSubtasks}/{totalSubtasks} completed)</span>
+        <span className="modern-expandable-count">
+          ({completedSubtasks}/{totalSubtasks} completed)
+        </span>
       </button>
-      <div className={`modern-expandable-content ${expanded ? 'expanded' : ''}`}>
+      <div
+        className={`modern-expandable-content ${expanded ? "expanded" : ""}`}
+      >
         <div className="modern-subtasks-list">
           {subtasks.map((subtask) => (
             <div key={subtask.id} className="modern-subtask-detail-item">
@@ -282,10 +352,14 @@ function TaskSubtasksSection({ subtasks, completedSubtasks, totalSubtasks, expan
                 checked={subtask.completed}
                 readOnly
               />
-              <span className={`modern-subtask-text ${subtask.completed ? 'completed' : ''}`}>
+              <span
+                className={`modern-subtask-text ${subtask.completed ? "completed" : ""}`}
+              >
                 {subtask.title}
               </span>
-              {subtask.completed && <span className="modern-subtask-badge">✓</span>}
+              {subtask.completed && (
+                <span className="modern-subtask-badge">✓</span>
+              )}
             </div>
           ))}
         </div>
@@ -294,7 +368,11 @@ function TaskSubtasksSection({ subtasks, completedSubtasks, totalSubtasks, expan
   );
 }
 // TaskDescriptionSection: displays the description in an expandable section
-function TaskDescriptionSection({ description, expanded, toggle }: {
+function TaskDescriptionSection({
+  description,
+  expanded,
+  toggle,
+}: {
   description: string;
   expanded: boolean;
   toggle: () => void;
@@ -307,16 +385,16 @@ function TaskDescriptionSection({ description, expanded, toggle }: {
     <div className="modern-expandable">
       <button
         type="button"
-        className={`modern-expandable-header ${expanded ? 'expanded' : ''}`}
+        className={`modern-expandable-header ${expanded ? "expanded" : ""}`}
         onClick={handleToggle}
       >
         <span className="modern-expandable-icon">▶️</span>
         <h3 className="modern-expandable-title">Description</h3>
       </button>
-      <div className={`modern-expandable-content ${expanded ? 'expanded' : ''}`}>
-        <div className="modern-description-content">
-          {description}
-        </div>
+      <div
+        className={`modern-expandable-content ${expanded ? "expanded" : ""}`}
+      >
+        <div className="modern-description-content">{description}</div>
       </div>
     </div>
   );
@@ -326,10 +404,12 @@ function TaskDescriptionSection({ description, expanded, toggle }: {
 function StatusChip({ completed }: { completed: boolean }) {
   return (
     <div className="modern-detail-chip">
-      <div className="modern-detail-chip-icon">{completed ? '✅' : '⭕'}</div>
+      <div className="modern-detail-chip-icon">{completed ? "✅" : "⭕"}</div>
       <div className="modern-detail-chip-content">
         <div className="modern-detail-chip-label">Status</div>
-        <div className="modern-detail-chip-value">{completed ? 'Completed' : 'In Progress'}</div>
+        <div className="modern-detail-chip-value">
+          {completed ? "Completed" : "In Progress"}
+        </div>
       </div>
     </div>
   );
@@ -347,13 +427,21 @@ function PriorityChip({ icon, label }: { icon: string; label: string }) {
   );
 }
 
-function ProgressChip({ completedSubtasks, totalSubtasks }: { completedSubtasks: number; totalSubtasks: number }) {
+function ProgressChip({
+  completedSubtasks,
+  totalSubtasks,
+}: {
+  completedSubtasks: number;
+  totalSubtasks: number;
+}) {
   return (
     <div className="modern-detail-chip">
       <div className="modern-detail-chip-icon">📊</div>
       <div className="modern-detail-chip-content">
         <div className="modern-detail-chip-label">Progress</div>
-        <div className="modern-detail-chip-value">{completedSubtasks}/{totalSubtasks}</div>
+        <div className="modern-detail-chip-value">
+          {completedSubtasks}/{totalSubtasks}
+        </div>
       </div>
     </div>
   );
@@ -365,29 +453,53 @@ function DueDateChip({ due_date }: { due_date: string }) {
       <div className="modern-detail-chip-icon">🎯</div>
       <div className="modern-detail-chip-content">
         <div className="modern-detail-chip-label">Due Date</div>
-        <div className="modern-detail-chip-value">{new Date(due_date).toLocaleDateString()}</div>
+        <div className="modern-detail-chip-value">
+          {new Date(due_date).toLocaleDateString()}
+        </div>
       </div>
     </div>
   );
 }
-function TaskOverviewSection({ task, currentPriority, completedSubtasks, totalSubtasks, progressPercentage }: {
+function TaskOverviewSection({
+  task,
+  currentPriority,
+  completedSubtasks,
+  totalSubtasks,
+  progressPercentage,
+}: {
   task: Task;
-  currentPriority: { value: number; label: string; icon: string; color: string };
+  currentPriority: {
+    value: number;
+    label: string;
+    icon: string;
+    color: string;
+  };
   completedSubtasks: number;
   totalSubtasks: number;
   progressPercentage: number;
 }) {
   return (
     <div className="modern-hero-section">
-      <div className="modern-quick-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))' }}>
+      <div
+        className="modern-quick-grid"
+        style={{ gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))" }}
+      >
         <StatusChip completed={task.completed} />
-        <PriorityChip icon={currentPriority.icon} label={currentPriority.label} />
-        {totalSubtasks > 0 && <ProgressChip completedSubtasks={completedSubtasks} totalSubtasks={totalSubtasks} />}
+        <PriorityChip
+          icon={currentPriority.icon}
+          label={currentPriority.label}
+        />
+        {totalSubtasks > 0 && (
+          <ProgressChip
+            completedSubtasks={completedSubtasks}
+            totalSubtasks={totalSubtasks}
+          />
+        )}
         {task.due_date && <DueDateChip due_date={task.due_date} />}
       </div>
       {/* Progress Bar for Subtasks */}
       {totalSubtasks > 0 && (
-        <div style={{ marginTop: 'var(--modern-space-md)' }}>
+        <div style={{ marginTop: "var(--modern-space-md)" }}>
           <div className="modern-progress-bar">
             <div
               className="modern-progress-fill"
@@ -433,7 +545,12 @@ interface Project {
 interface TaskDetailsModalContentProps {
   task: Task;
   parentTask: { id: number; title: string } | null;
-  currentPriority: { value: number; label: string; icon: string; color: string };
+  currentPriority: {
+    value: number;
+    label: string;
+    icon: string;
+    color: string;
+  };
   completedSubtasks: number;
   totalSubtasks: number;
   progressPercentage: number;
@@ -443,7 +560,10 @@ interface TaskDetailsModalContentProps {
   showEditForm: boolean;
   editFormLoading: boolean;
   editFormError: string | null;
-  handleTaskUpdate: (updatedTask: { title: string; description: string }) => void;
+  handleTaskUpdate: (updatedTask: {
+    title: string;
+    description: string;
+  }) => void;
   onClose: () => void;
   tasks: Task[];
   projects: Project[];
@@ -472,25 +592,29 @@ function TaskDetailsModalContent({
   blockingTasks,
 }: TaskDetailsModalContentProps) {
   function handleToggleDetails() {
-    toggleSection('details');
+    toggleSection("details");
   }
   function handleToggleSubtasks() {
-    toggleSection('subtasks');
+    toggleSection("subtasks");
   }
   function handleToggleSchedule() {
-    toggleSection('schedule');
+    toggleSection("schedule");
   }
   function handleToggleDependencies() {
-    toggleSection('dependencies');
+    toggleSection("dependencies");
   }
   function handleToggleReminders() {
-    toggleSection('reminders');
+    toggleSection("reminders");
   }
   function handleCloseEditForm() {
     setShowEditForm(false);
   }
   return (
-    <div className="modern-form-container" style={{ maxWidth: '600px' }} data-testid="task-details">
+    <div
+      className="modern-form-container"
+      style={{ maxWidth: "600px" }}
+      data-testid="task-details"
+    >
       {/* Header */}
       <TaskDetailsHeader
         task={task}
@@ -511,7 +635,7 @@ function TaskDetailsModalContent({
           />
           {/* Description - Expandable */}
           <TaskDescriptionSection
-            description={task.description || ''}
+            description={task.description || ""}
             expanded={expandedSections.details}
             toggle={handleToggleDetails}
           />
@@ -601,31 +725,33 @@ interface TaskDetailsModalProps {
 }
 
 const priorities = [
-  { value: 0, label: 'Low', icon: '🟢', color: '#10b981' },
-  { value: 1, label: 'Medium', icon: '🟡', color: '#f59e0b' },
-  { value: 2, label: 'High', icon: '🟠', color: '#ef4444' },
-  { value: 3, label: 'Critical', icon: '🔴', color: '#dc2626' },
+  { value: 0, label: "Low", icon: "🟢", color: "#10b981" },
+  { value: 1, label: "Medium", icon: "🟡", color: "#f59e0b" },
+  { value: 2, label: "High", icon: "🟠", color: "#ef4444" },
+  { value: 3, label: "Critical", icon: "🔴", color: "#dc2626" },
 ];
 
-const TaskDetails: React.FC<TaskDetailsModalProps> = ({ 
-  open, 
-  onClose, 
-  task, 
-  onEdit, 
-  parentTask, 
+const TaskDetails: React.FC<TaskDetailsModalProps> = ({
+  open,
+  onClose,
+  task,
+  onEdit,
+  parentTask,
   tasks = [],
-  projects = []
+  projects = [],
 }) => {
   const [showEditForm, setShowEditForm] = useState(false);
   const [editFormLoading, setEditFormLoading] = useState(false);
   const [editFormError, setEditFormError] = useState<string | null>(null);
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+  const [expandedSections, setExpandedSections] = useState<
+    Record<string, boolean>
+  >({
     overview: true,
     details: false,
     subtasks: false,
     dependencies: false,
     schedule: false,
-    reminders: false
+    reminders: false,
   });
 
   // Reset expanded sections when modal opens
@@ -635,9 +761,13 @@ const TaskDetails: React.FC<TaskDetailsModalProps> = ({
         overview: true,
         details: false,
         subtasks: Boolean(task?.subtasks && task.subtasks.length > 0),
-        dependencies: Boolean((task?.blocked_by?.length || 0) + (task?.blocking?.length || 0)),
-        schedule: Boolean(task?.due_date || task?.start_date || task?.recurrence),
-        reminders: Boolean(task?.reminder_enabled)
+        dependencies: Boolean(
+          (task?.blocked_by?.length || 0) + (task?.blocking?.length || 0),
+        ),
+        schedule: Boolean(
+          task?.due_date || task?.start_date || task?.recurrence,
+        ),
+        reminders: Boolean(task?.reminder_enabled),
       });
       setShowEditForm(false);
       // Reset form state when modal opens
@@ -649,16 +779,19 @@ const TaskDetails: React.FC<TaskDetailsModalProps> = ({
   // Helper function to ensure CSRF token
   const ensureCsrfToken = async () => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/csrf-token`, {
-        method: 'GET',
-        credentials: 'include',
-      });
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/api/csrf-token`,
+        {
+          method: "GET",
+          credentials: "include",
+        },
+      );
       if (response.ok) {
         const data = await response.json();
         return data.csrf_token;
       }
     } catch (error) {
-      console.error('Failed to fetch CSRF token:', error);
+      console.error("Failed to fetch CSRF token:", error);
     }
     return null;
   };
@@ -666,34 +799,37 @@ const TaskDetails: React.FC<TaskDetailsModalProps> = ({
   // Handle task update
   const handleTaskUpdate = async (updatedTask: Partial<Task>) => {
     if (!task) return;
-    
+
     setEditFormLoading(true);
     setEditFormError(null);
-    
+
     try {
       const csrfToken = await ensureCsrfToken();
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/tasks/${task.id}`, {
-        method: 'PUT',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/api/tasks/${task.id}`,
+        {
+          method: "PUT",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
+          },
+          body: JSON.stringify(updatedTask),
         },
-        body: JSON.stringify(updatedTask),
-      });
-      
+      );
+
       if (!response.ok) {
         const data = await response.json();
-        const errorMessage = data.error || 'Failed to update task';
+        const errorMessage = data.error || "Failed to update task";
         throw new Error(errorMessage);
       }
-      
+
       // Success - close form and call callback
       setShowEditForm(false);
       if (onEdit) onEdit();
-      
     } catch (err: unknown) {
-      const finalErrorMessage = err instanceof Error ? err.message : 'Unknown error';
+      const finalErrorMessage =
+        err instanceof Error ? err.message : "Unknown error";
       setEditFormError(finalErrorMessage);
     } finally {
       setEditFormLoading(false);
@@ -701,22 +837,31 @@ const TaskDetails: React.FC<TaskDetailsModalProps> = ({
   };
 
   const toggleSection = (section: string) => {
-    setExpandedSections(prev => ({
+    setExpandedSections((prev) => ({
       ...prev,
-      [section]: !prev[section]
+      [section]: !prev[section],
     }));
   };
 
   if (!open || !task) return null;
 
-  const currentPriority = priorities.find(p => p.value === task.priority) || priorities[1];
-  const completedSubtasks = task.subtasks?.filter(st => st.completed).length || 0;
+  const currentPriority =
+    priorities.find((p) => p.value === task.priority) || priorities[1];
+  const completedSubtasks =
+    task.subtasks?.filter((st) => st.completed).length || 0;
   const totalSubtasks = task.subtasks?.length || 0;
-  const progressPercentage = totalSubtasks > 0 ? (completedSubtasks / totalSubtasks) * 100 : 0;
+  const progressPercentage =
+    totalSubtasks > 0 ? (completedSubtasks / totalSubtasks) * 100 : 0;
 
   // Get dependency task names
-  const blockedByTasks = task.blocked_by?.map(id => tasks.find(t => t.id === id)?.title || `Task #${id}`).filter(Boolean) || [];
-  const blockingTasks = task.blocking?.map(id => tasks.find(t => t.id === id)?.title || `Task #${id}`).filter(Boolean) || [];
+  const blockedByTasks =
+    task.blocked_by
+      ?.map((id) => tasks.find((t) => t.id === id)?.title || `Task #${id}`)
+      .filter(Boolean) || [];
+  const blockingTasks =
+    task.blocking
+      ?.map((id) => tasks.find((t) => t.id === id)?.title || `Task #${id}`)
+      .filter(Boolean) || [];
 
   return (
     <>

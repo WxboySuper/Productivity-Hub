@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from "react";
 
 // Helper to read a cookie value by name
 export function getCookie(name: string): string | null {
@@ -8,15 +8,18 @@ export function getCookie(name: string): string | null {
 
 // Helper to fetch CSRF token if missing
 export async function ensureCsrfToken(): Promise<string | null> {
-  const token = getCookie('csrftoken');
+  const token = getCookie("csrftoken");
   if (token) return token;
   try {
-    const res = await fetch('/api/csrf-token', { method: 'GET', credentials: 'include' });
+    const res = await fetch("/api/csrf-token", {
+      method: "GET",
+      credentials: "include",
+    });
     if (!res.ok) return null;
     const data = await res.json();
     return data.csrf_token || null;
   } catch (err) {
-    console.error('Error getting CSRF token:', err);
+    console.error("Error getting CSRF token:", err);
     return null;
   }
 }
@@ -24,9 +27,9 @@ export async function ensureCsrfToken(): Promise<string | null> {
 // Logout verification helper
 export async function verifyLogoutSuccess(): Promise<boolean> {
   try {
-    const response = await fetch('/api/auth/check', {
-      method: 'GET',
-      credentials: 'include',
+    const response = await fetch("/api/auth/check", {
+      method: "GET",
+      credentials: "include",
     });
     if (response.ok) {
       const data = await response.json();
@@ -34,7 +37,7 @@ export async function verifyLogoutSuccess(): Promise<boolean> {
     }
     return false;
   } catch (error) {
-    console.error('Error verifying logout:', error);
+    console.error("Error verifying logout:", error);
     return false;
   }
 }
@@ -48,21 +51,25 @@ interface AuthContextType {
   checkAuth: () => Promise<void>;
 }
 
-export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(
+  undefined,
+);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [user, setUser] = useState<{ id: number; username: string; email: string } | undefined>();
+  const [user, setUser] = useState<
+    { id: number; username: string; email: string } | undefined
+  >();
 
   const checkAuth = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/auth/check', {
-        method: 'GET',
-        credentials: 'include', // Important for session cookies
+      const response = await fetch("/api/auth/check", {
+        method: "GET",
+        credentials: "include", // Important for session cookies
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         setIsAuthenticated(Boolean(data.authenticated));
@@ -73,7 +80,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(undefined);
       }
     } catch (error) {
-      console.error('Auth check error:', error);
+      console.error("Auth check error:", error);
       setIsAuthenticated(false);
       setUser(undefined);
     } finally {
@@ -85,37 +92,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkAuth();
   }, []);
 
-  const login = (token?: string) => {  // variable is unused but kept for compatibility, skipcq
+  const login = (token?: string) => {
+    // variable is unused but kept for compatibility, skipcq
     // After successful login, check auth status from server
     checkAuth();
   };
 
-  const logout = async (): Promise<boolean> => {    
+  const logout = async (): Promise<boolean> => {
     // Clear frontend state FIRST to ensure immediate UI update
     setIsAuthenticated(false);
     setUser(undefined);
-    
+
     try {
       // Get CSRF token for logout request
       const csrfToken = await ensureCsrfToken();
-      
+
       // Then call backend logout to clear server-side session
-      const response = await fetch('/api/logout', {
-        method: 'POST',
-        credentials: 'include',
+      const response = await fetch("/api/logout", {
+        method: "POST",
+        credentials: "include",
         headers: {
-          'Content-Type': 'application/json',
-          ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
+          "Content-Type": "application/json",
+          ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
         },
       });
-      
-      if (response.ok) {        
+
+      if (response.ok) {
         // Verify logout was successful
         const logoutVerified = await verifyLogoutSuccess();
         return logoutVerified;
       } else {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Logout failed with status ${response.status}`);
+        throw new Error(
+          errorData.error || `Logout failed with status ${response.status}`,
+        );
       }
     } catch (error) {
       // Even if backend logout fails, frontend is already cleared
@@ -126,14 +136,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ 
-      isAuthenticated, 
-      isLoading, 
-      login, 
-      logout, 
-      user,
-      checkAuth 
-    }}>
+    <AuthContext.Provider
+      value={{
+        isAuthenticated,
+        isLoading,
+        login,
+        logout,
+        user,
+        checkAuth,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
