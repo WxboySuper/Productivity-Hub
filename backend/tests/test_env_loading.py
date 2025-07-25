@@ -11,18 +11,14 @@ APP_PATH = os.path.join(BACKEND_DIR, "..", "app.py")
 
 @pytest.fixture
 def temp_env():
-    """
-    Fixture to create a temporary directory and .env file.
-    """
+    """Fixture to create a temporary directory and .env file."""
     temp_dir = tempfile.mkdtemp()
     dotenv_path = os.path.join(temp_dir, ".env")
     yield temp_dir, dotenv_path
     shutil.rmtree(temp_dir)
 
 
-def import_app_with_env(
-    dotenv_path, monkeypatch, exists_value=True, load_success=True
-):
+def import_app_with_env(dotenv_path, monkeypatch, exists_value=True, load_success=True):
     """
     Dynamically import app.py with a given DOTENV_PATH,
     controlling os.path.exists and load_dotenv return values.
@@ -84,6 +80,4 @@ def test_app_loads_env_file_success(monkeypatch, temp_env):
     with open(dotenv_path, "w") as f:
         f.write("DUMMY=1\n")
     # Simulate .env file exists and loads successfully
-    import_app_with_env(
-        dotenv_path, monkeypatch, exists_value=True, load_success=True
-    )
+    import_app_with_env(dotenv_path, monkeypatch, exists_value=True, load_success=True)

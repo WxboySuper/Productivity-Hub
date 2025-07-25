@@ -17,9 +17,7 @@ depends_on = None
 
 
 def upgrade():
-    op.add_column(
-        "notification", sa.Column("show_at", sa.DateTime(), nullable=True)
-    )
+    op.add_column("notification", sa.Column("show_at", sa.DateTime(), nullable=True))
 
 
 def downgrade():
