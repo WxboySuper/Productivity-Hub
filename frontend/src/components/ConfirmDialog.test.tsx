@@ -63,7 +63,7 @@ describe('ConfirmDialog', () => {
   });
 
   it('shows loading state on confirm button', () => {
-    render(<ConfirmDialog {...defaultProps} loading={true} />);
+  render(<ConfirmDialog {...defaultProps} loading />);
     
     const confirmButton = screen.getByRole('button', { name: /processing/i });
     expect(confirmButton).toBeDisabled();
@@ -71,7 +71,7 @@ describe('ConfirmDialog', () => {
   });
 
   it('disables both buttons when loading', () => {
-    render(<ConfirmDialog {...defaultProps} loading={true} />);
+  render(<ConfirmDialog {...defaultProps} loading />);
     
     const confirmButton = screen.getByRole('button', { name: /processing/i });
     const cancelButton = screen.getByRole('button', { name: /cancel/i });
@@ -157,7 +157,7 @@ describe('ConfirmDialog', () => {
   });
 
   it('does not handle hover events when loading', () => {
-    render(<ConfirmDialog {...defaultProps} type="danger" loading={true} />);
+  render(<ConfirmDialog {...defaultProps} type="danger" loading />);
     
     const confirmButton = screen.getByRole('button', { name: /processing/i });
     

@@ -45,7 +45,7 @@ describe('ErrorBoundary', () => {
   it('renders error UI when child component throws', () => {
     render(
       <ErrorBoundary>
-        <ThrowError shouldThrow={true} />
+        <ThrowError shouldThrow />
       </ErrorBoundary>
     );
 
@@ -57,7 +57,7 @@ describe('ErrorBoundary', () => {
   it('shows reload and try again buttons', () => {
     render(
       <ErrorBoundary>
-        <ThrowError shouldThrow={true} />
+        <ThrowError shouldThrow />
       </ErrorBoundary>
     );
 
@@ -68,7 +68,7 @@ describe('ErrorBoundary', () => {
   it('calls window.location.reload when reload button is clicked', () => {
     render(
       <ErrorBoundary>
-        <ThrowError shouldThrow={true} />
+        <ThrowError shouldThrow />
       </ErrorBoundary>
     );
 
@@ -80,7 +80,7 @@ describe('ErrorBoundary', () => {
   it('resets error state when try again button is clicked', () => {
     render(
       <ErrorBoundary>
-        <ThrowError shouldThrow={true} />
+        <ThrowError shouldThrow />
       </ErrorBoundary>
     );
 

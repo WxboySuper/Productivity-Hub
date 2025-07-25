@@ -123,9 +123,9 @@ const BackgroundSwitcher: React.FC<BackgroundSwitcherProps> = ({
                 title={option.description}
               >
                 <div className="flex items-center mb-2">
-                  {option.colors.map((color, index) => (
+                  {option.colors.map((color) => (
                     <div 
-                      key={index} 
+                      key={`${option.id}-${color}`}
                       className="w-3 h-3 rounded-full mr-1" 
                       style={{ backgroundColor: color }}
                     />
