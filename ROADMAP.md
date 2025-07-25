@@ -14,6 +14,34 @@ This roadmap is a step-by-step checklist for building your productivity assistan
 
 ---
 
+<details>
+<summary>🗂️ <strong>Milestone Progress Task List</strong></summary>
+
+- [x] Project Initialization
+- [x] Backend Environment
+- [x] Basic Models
+- [x] User Authentication
+- [x] Core API Endpoints
+- [x] Task Scheduling Fields
+- [x] API Testing
+- [x] Password Reset (Backend)
+- [x] Frontend Environment
+- [x] Auth UI
+- [x] Main Page
+- [x] Project Management UI & UI/UX Overhaul
+- [ ] Accessibility Audit & Forms
+- [ ] List/Kanban Views
+- [ ] Calendar/Timeline Views
+- [ ] Analytics & Charts
+- [ ] Custom Dashboard & Widgets
+- [ ] Scheduling UI
+- [ ] Settings & Customization
+- [ ] Notifications & Data Export
+- [ ] Info & Help Pages
+- [ ] First Stable Release 🎉
+
+</details>
+
 ## v0.1.0-alpha: Project Initialization
 - [x] Initialize Git repository
 - [x] Create project folders: `frontend/`, `backend/`, `docs/`
@@ -86,9 +114,12 @@ This roadmap is a step-by-step checklist for building your productivity assistan
 - [ ] Accessibility: audit for color contrast, focus management, screen reader output; expand automated accessibility tests for keyboard navigation, tab order, edge cases; review accessibility coverage after each major UI/UX change
 - [ ] Add forms for creating/editing tasks and projects
 
-## v0.13.0-beta: Task Views - List & Kanban
-- [ ] Implement List view
-- [ ] Implement Kanban view
+
+## v0.13.0-beta: Task Views - List & Kanban & Carryover
+
+## v0.13.0-beta: Task Views & Carryover
+- New: List view and Kanban view for tasks
+- Rollovers: Project management UI, forms for tasks/projects, and technical debt from v0.12.0
 
 ## v0.14.0-beta: Task Views - Calendar & Timeline
 - [ ] Implement Calendar view

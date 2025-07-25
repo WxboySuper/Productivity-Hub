@@ -2,6 +2,44 @@
 
 This document describes the REST API endpoints for Task management in Productivity Hub.
 
+> [!WARNING]
+> **API Changes in v0.12.0:**
+> - [Get All Tasks](#get-all-tasks): Response fields expanded, error handling improved
+> - [Notification Endpoints](#notification-endpoints): Added snooze and dismiss endpoints
+> - [Task Dependencies Endpoints](#task-dependencies-endpoints): New endpoints for managing dependencies
+> - [Password Reset Endpoints](#password-reset-endpoints): Token expiration and error responses improved
+> - [CSRF Token Usage](#csrf-token-usage): Details clarified
+> - [Timezone-Aware Datetime Handling](#timezone-aware-datetime-handling): All datetime fields are now timezone-aware
+> - [Error Handling (Granular)](#error-handling-granular): More granular error responses
+> See [CHANGELOG.md](../CHANGELOG.md) for full details.
+
+---
+
+<details>
+<summary>📋 <strong>API Endpoint Summary Table</strong></summary>
+
+| Endpoint                | Method | Description                      |
+|------------------------|--------|----------------------------------|
+| /api/tasks             | GET    | List all tasks                   |
+| /api/tasks/<task_id>   | GET    | Get task by ID                   |
+| /api/tasks             | POST   | Create a new task                |
+| /api/tasks/<task_id>   | PUT    | Update a task                    |
+| /api/tasks/<task_id>   | DELETE | Delete a task                    |
+| /api/projects          | GET    | List all projects                |
+| /api/projects/<id>     | GET    | Get project by ID                |
+| /api/projects          | POST    | Create a new project             |
+| /api/projects/<id>     | PUT    | Update a project                 |
+| /api/projects/<id>     | DELETE | Delete a project                 |
+| /api/register          | POST    | Register a new user              |
+| /api/login             | POST    | Login                            |
+| /api/logout            | POST    | Logout                           |
+| /api/profile           | GET    | Get current user profile         |
+| /api/profile           | PUT    | Update current user profile      |
+| /api/password-reset/request | POST | Request password reset         |
+| /api/password-reset/confirm | POST | Confirm password reset         |
+
+</details>
+
 ---
 
 ## Authentication
@@ -13,6 +51,8 @@ All endpoints require the user to be authenticated (session-based). Include the 
 
 ### Get All Tasks
 **GET** `/api/tasks`
+> [!NOTE]
+> **v0.12.0 Update:** Response fields expanded (description, recurrence, reminder fields, etc.), error handling improved, all datetime fields are now ISO 8601 and timezone-aware.
 - Returns a list of all tasks for the current user.
 - Response: `200 OK`, JSON array of tasks.
 - Response fields:
@@ -321,7 +361,8 @@ These fields are included in all task API responses and can be set/updated via t
 ---
 
 ## Notification Endpoints
-
+> [!NOTE]
+> **v0.12.0 Update:** Added snooze (`/api/notifications/<notification_id>/snooze`) and dismiss (`/api/notifications/<notification_id>/dismiss`) endpoints. Notification model expanded with snoozed_until and type fields.
 ### List Notifications
 **GET** `/api/notifications`
 - Returns a list of notifications for the current user (unread first, then by created_at desc).
@@ -457,7 +498,8 @@ const csrfToken = document.cookie.match(/_csrf_token=([^;]+)/)?.[1];
 ---
 
 ## Task Dependencies Endpoints
-
+> [!NOTE]
+> **v0.12.0 Update:** New endpoints for managing task dependencies (`blocked_by`, `blocking`). You can now set, patch, and get dependencies for tasks.
 #### Get Task Dependencies
 **GET** `/api/tasks/<task_id>/dependencies`
 - Returns all dependencies for a task (tasks this task is blocked by, and tasks it is blocking).
@@ -470,7 +512,8 @@ const csrfToken = document.cookie.match(/_csrf_token=([^;]+)/)?.[1];
   ```
 - Each dependency is a full task object (see Get Task by ID).
 - Errors: `404` if task not found.
-
+> [!NOTE]
+> **v0.12.0 Update:** Token expiration is now enforced, error responses are more detailed, and the email template includes expiration info.
 #### Set Task Dependencies (Replace All)
 **POST** `/api/tasks/<task_id>/dependencies`
 - Sets the dependencies for a task, replacing all existing dependencies.
@@ -483,7 +526,8 @@ const csrfToken = document.cookie.match(/_csrf_token=([^;]+)/)?.[1];
   ```
 - Response: `200 OK`, JSON updated task object.
 - Errors: `404` if task not found.
-
+> [!NOTE]
+> **v0.12.0 Update:** CSRF protection details clarified. Token is now stored in a cookie and must be sent in the `X-CSRF-Token` header for all state-changing requests.
 #### Patch Task Dependencies (Add/Remove)
 **PATCH** `/api/tasks/<task_id>/dependencies`
 - Add or remove specific dependencies for a task.
@@ -499,11 +543,13 @@ const csrfToken = document.cookie.match(/_csrf_token=([^;]+)/)?.[1];
 - All fields are optional arrays of task IDs.
 - Response: `200 OK`, JSON updated task object.
 - Errors: `404` if task not found.
-
+> [!NOTE]
+> **v0.12.0 Update:** All datetime fields are now timezone-aware and returned in ISO 8601 format.
 #### Notes
 - All dependency endpoints require authentication and CSRF token for state-changing requests.
 - Only tasks owned by the current user can be set as dependencies.
 - The main task create/update endpoints also accept `blocked_by` and `blocking` arrays in the payload to set dependencies at creation/update time.
 - The `blocked_by` and `blocking` fields in the task object are arrays of task IDs.
-
+> [!NOTE]
+> **v0.12.0 Update:** Error responses are now more granular and actionable, with specific messages for each validation failure.
 ---

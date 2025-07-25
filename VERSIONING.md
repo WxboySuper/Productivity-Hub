@@ -1,7 +1,18 @@
-
 # Versioning & Release Documentation Strategy
 
 This project uses a streamlined versioning and documentation process to keep development rewarding, organized, and easy to track. Every milestone is celebrated with clear, actionable records.
+
+<details>
+<summary>📝 <strong>Release Workflow Task List</strong></summary>
+
+- [x] Plan next milestone in ROADMAP.md
+- [x] Create actionable end-of-version checklist
+- [x] Track granular changes in personal docs
+- [x] Summarize and centralize changes in CHANGELOG.md
+- [x] Place newest release at top of CHANGELOG.md
+- [x] Archive/split old checklists and docs
+
+</details>
 
 ## Versioning Format
 - **vX.Y.Z** (e.g., v0.1.0, v0.12.0, v1.0.0)
