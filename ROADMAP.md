@@ -104,10 +104,6 @@ This roadmap is a step-by-step checklist for building your productivity assistan
   - [x] If not authenticated, show options to register or log in
   - [x] If authenticated, show a placeholder dashboard or welcome message
 
-## v0.12.0-beta: Project Management UI ⏳ _Current Focus_
-
-**Note:** v0.12.0 grew too large; future versions should be kept smaller and more focused. Testing and documentation should be considered when planning each version, even if not listed in the roadmap.
-
 # v0.12.0-beta: Project Management UI & UI/UX Overhaul
 
 - [x] Comprehensive UI/UX redesign: dynamic backgrounds, modern forms, responsive layout
@@ -125,8 +121,6 @@ This roadmap is a step-by-step checklist for building your productivity assistan
 - [x] Documentation updates
 - [ ] Accessibility: audit for color contrast, focus management, screen reader output; expand automated accessibility tests for keyboard navigation, tab order, edge cases; review accessibility coverage after each major UI/UX change
 - [ ] Add forms for creating/editing tasks and projects
-
-## v0.13.0-beta: Task Views - List & Kanban & Carryover
 
 ## v0.13.0-beta: Task Views & Carryover
 
