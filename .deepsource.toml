@@ -31,6 +31,10 @@ name = "python"
 [[analyzers]]
 name = "javascript"
 
+  [analyzers.meta]
+  plugins = ["react"]
+  environment = ["vitest"]
+
 [[analyzers]]
 name = "test-coverage"
 
@@ -39,3 +43,6 @@ name = "black"
 
 [[transformers]]
 name = "isort"
+
+[[transformers]]
+name = "prettier"
