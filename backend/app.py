@@ -1114,7 +1114,7 @@ def password_reset_request():
         send_email(
             "dummy@localhost",
             "Password Reset Request",
-            ("If this were real, you'd get a reset link."),
+            "If this were real, you'd get a reset link.",
         )
         time.sleep(0.5)  # Simulate token generation delay
     # Always return generic message
