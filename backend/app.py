@@ -332,7 +332,12 @@ def error_response(message, code):
     logger.error(message)
     # Only expose generic error messages for 500-level errors
     if code >= 500:
-        return jsonify({"error": "An internal server error occurred. Please try again later."}), code
+        return (
+            jsonify(
+                {"error": "An internal server error occurred. Please try again later."}
+            ),
+            code,
+        )
     return jsonify({"error": message}), code
 
 
