@@ -1113,8 +1113,7 @@ def get_csrf_token():
         token,
         secure=True,
         httponly=True,
-        samesite="Lax",
-        secure=True
+        samesite="Lax"
     )
     return response
 
