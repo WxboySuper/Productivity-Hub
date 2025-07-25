@@ -99,7 +99,7 @@ def test_get_project_by_id_success(auth_client):
         PROJECTS_URL,
         json={
             "name": "Single Project",
-            "description": ("Desc"),
+            "description": "Desc",
         },
     )
     assert resp.status_code == 201
