@@ -380,7 +380,8 @@ def generate_csrf_token():
     Returns the CSRF token string.
     """
     existing_token = request.cookies.get("_csrf_token")
-    if existing_token:
+    # Only accept existing token if it matches secure server-generated format
+    if existing_token and re.fullmatch(r"[a-f0-9]{32}", existing_token):
         logger.debug("Using existing CSRF token from cookie.")
         return existing_token
     logger.info("Generating new CSRF token.")
