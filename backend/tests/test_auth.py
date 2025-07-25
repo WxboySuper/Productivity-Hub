@@ -743,6 +743,7 @@ def test_get_current_user_found_and_not_found(client):
             assert found_user.username == username
 
     # Simulate a request context with no user_id in session
+    # skipcq: PTC-W0062
     with client.application.app_context():
         with client.application.test_request_context():
             flask.session.clear()
