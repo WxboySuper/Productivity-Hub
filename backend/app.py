@@ -1,3 +1,4 @@
+
 # ========================
 # Imports
 # ========================
@@ -545,7 +546,6 @@ def _validate_project_id(project_id, user):
         if not project:
             return "Invalid project ID"
     return None
-
 
 def _validate_dates(start_date, due_date):
     if start_date and due_date and start_date > due_date:
