@@ -1,8 +1,9 @@
+import importlib.util
 import os
+import shutil
 import sys
 import tempfile
-import shutil
-import importlib.util
+
 import pytest
 
 BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))

@@ -3,8 +3,9 @@ test_tasks.py: Automated tests for Task CRUD endpoints,
 including validation, error handling, and ownership checks.
 """
 
-import pytest
 import uuid
+
+import pytest
 
 REGISTER_URL = "/api/register"
 LOGIN_URL = "/api/login"

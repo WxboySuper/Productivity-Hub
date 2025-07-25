@@ -1,12 +1,13 @@
-import pytest
-import sys
 import os
+import sys
+from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
-from datetime import timedelta, datetime, timezone
+
+import pytest
 
 # Ensure the parent directory is in sys.path for relative imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from app import User, PasswordResetToken  # noqa: E402
+from app import PasswordResetToken, User  # noqa: E402
 
 
 @pytest.fixture
