@@ -1,12 +1,12 @@
-import { renderHook, act, waitFor } from '@testing-library/react';
-import { vi, beforeEach, afterEach, describe, it, expect } from 'vitest';
-import { useProjects } from './useProjects';
+import { renderHook, act, waitFor } from "@testing-library/react";
+import { vi, beforeEach, afterEach, describe, it, expect } from "vitest";
+import { useProjects } from "./useProjects";
 
 // Mock fetch globally
 global.fetch = vi.fn();
 const mockFetch = global.fetch as ReturnType<typeof vi.fn>;
 
-describe('useProjects', () => {
+describe("useProjects", () => {
   beforeEach(() => {
     mockFetch.mockClear();
   });
@@ -15,10 +15,10 @@ describe('useProjects', () => {
     vi.restoreAllMocks();
   });
 
-  it('should fetch projects successfully on mount', async () => {
+  it("should fetch projects successfully on mount", async () => {
     const mockProjects = [
-      { id: 1, name: 'Project 1', description: 'Description 1' },
-      { id: 2, name: 'Project 2', description: 'Description 2' }
+      { id: 1, name: "Project 1", description: "Description 1" },
+      { id: 2, name: "Project 2", description: "Description 2" },
     ];
 
     mockFetch.mockResolvedValueOnce({
@@ -40,11 +40,13 @@ describe('useProjects', () => {
 
     expect(result.current.projects).toEqual(mockProjects);
     expect(result.current.error).toBe(null);
-    expect(mockFetch).toHaveBeenCalledWith('/api/projects', { credentials: 'include' });
+    expect(mockFetch).toHaveBeenCalledWith("/api/projects", {
+      credentials: "include",
+    });
   });
 
-  it('should handle fetch error', async () => {
-    const errorMessage = 'Failed to fetch projects';
+  it("should handle fetch error", async () => {
+    const errorMessage = "Failed to fetch projects";
     mockFetch.mockRejectedValueOnce(new Error(errorMessage));
 
     const { result } = renderHook(() => useProjects());
@@ -57,10 +59,10 @@ describe('useProjects', () => {
     expect(result.current.error).toBe(errorMessage);
   });
 
-  it('should handle response not ok', async () => {
+  it("should handle response not ok", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: false,
-      json: () => Promise.resolve({ error: 'Server error' }),
+      json: () => Promise.resolve({ error: "Server error" }),
     } as Response);
 
     const { result } = renderHook(() => useProjects());
@@ -70,10 +72,10 @@ describe('useProjects', () => {
     });
 
     expect(result.current.projects).toEqual([]);
-    expect(result.current.error).toBe('Failed to fetch projects');
+    expect(result.current.error).toBe("Failed to fetch projects");
   });
 
-  it('should handle malformed response data', async () => {
+  it("should handle malformed response data", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve({}), // No projects field
@@ -89,13 +91,13 @@ describe('useProjects', () => {
     expect(result.current.error).toBe(null);
   });
 
-  it('should handle refetch functionality', async () => {
+  it("should handle refetch functionality", async () => {
     const initialProjects = [
-      { id: 1, name: 'Project 1', description: 'Description 1' }
+      { id: 1, name: "Project 1", description: "Description 1" },
     ];
     const updatedProjects = [
-      { id: 1, name: 'Project 1', description: 'Description 1' },
-      { id: 2, name: 'Project 2', description: 'Description 2' }
+      { id: 1, name: "Project 1", description: "Description 1" },
+      { id: 2, name: "Project 2", description: "Description 2" },
     ];
 
     // Initial fetch
@@ -128,8 +130,8 @@ describe('useProjects', () => {
     expect(mockFetch).toHaveBeenCalledTimes(2);
   });
 
-  it('should handle unknown error types', async () => {
-    mockFetch.mockRejectedValueOnce('String error'); // Non-Error object
+  it("should handle unknown error types", async () => {
+    mockFetch.mockRejectedValueOnce("String error"); // Non-Error object
 
     const { result } = renderHook(() => useProjects());
 
@@ -137,17 +139,17 @@ describe('useProjects', () => {
       expect(result.current.loading).toBe(false);
     });
 
-    expect(result.current.error).toBe('Unknown error');
+    expect(result.current.error).toBe("Unknown error");
   });
 
-  it('should reset error state on refetch', async () => {
+  it("should reset error state on refetch", async () => {
     // First call fails
-    mockFetch.mockRejectedValueOnce(new Error('Network error'));
+    mockFetch.mockRejectedValueOnce(new Error("Network error"));
 
     const { result } = renderHook(() => useProjects());
 
     await waitFor(() => {
-      expect(result.current.error).toBe('Network error');
+      expect(result.current.error).toBe("Network error");
     });
 
     // Second call succeeds
@@ -170,7 +172,7 @@ describe('useProjects', () => {
     expect(result.current.error).toBe(null);
   });
 
-  it('should maintain loading state during refetch', async () => {
+  it("should maintain loading state during refetch", async () => {
     // Initial successful fetch
     mockFetch.mockResolvedValueOnce({
       ok: true,
@@ -185,7 +187,7 @@ describe('useProjects', () => {
 
     // Setup delayed response for refetch
     let resolveRefetch: (value: Response) => void;
-    const refetchPromise = new Promise(resolve => {
+    const refetchPromise = new Promise((resolve) => {
       resolveRefetch = resolve;
     });
 
@@ -203,8 +205,8 @@ describe('useProjects', () => {
       resolveRefetch(
         new Response(JSON.stringify({ projects: [] }), {
           status: 200,
-          headers: { 'Content-Type': 'application/json' }
-        })
+          headers: { "Content-Type": "application/json" },
+        }),
       );
     });
 

@@ -6,12 +6,14 @@
 /* === PAGE LAYOUT IMPROVEMENTS === */
 .phub-page-container {
   min-height: 100vh;
-  background: linear-gradient(135deg, 
-    #667eea 0%, 
-    #764ba2 25%, 
-    #667eea 50%, 
-    #f093fb 75%, 
-    #f5576c 100%);
+  background: linear-gradient(
+    135deg,
+    #667eea 0%,
+    #764ba2 25%,
+    #667eea 50%,
+    #f093fb 75%,
+    #f5576c 100%
+  );
   background-size: 400% 400%;
   animation: phub-gradient-shift 15s ease infinite;
   position: relative;
@@ -19,24 +21,47 @@
 }
 
 @keyframes phub-gradient-shift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 /* Geometric background patterns */
 .phub-page-container::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: 
-    radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 75% 75%, rgba(255, 255, 255, 0.05) 0%, transparent 50%),
-    linear-gradient(45deg, transparent 40%, rgba(255, 255, 255, 0.03) 41%, rgba(255, 255, 255, 0.03) 59%, transparent 60%);
-  background-size: 200px 200px, 300px 300px, 100px 100px;
+  background-image:
+    radial-gradient(
+      circle at 25% 25%,
+      rgba(255, 255, 255, 0.1) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 75% 75%,
+      rgba(255, 255, 255, 0.05) 0%,
+      transparent 50%
+    ),
+    linear-gradient(
+      45deg,
+      transparent 40%,
+      rgba(255, 255, 255, 0.03) 41%,
+      rgba(255, 255, 255, 0.03) 59%,
+      transparent 60%
+    );
+  background-size:
+    200px 200px,
+    300px 300px,
+    100px 100px;
   pointer-events: none;
 }
 
@@ -45,7 +70,7 @@
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   border-radius: var(--phub-radius-2xl);
-  box-shadow: 
+  box-shadow:
     0 25px 50px -12px rgba(0, 0, 0, 0.25),
     0 0 0 1px rgba(255, 255, 255, 0.1) inset,
     0 1px 0 rgba(255, 255, 255, 0.6) inset;
@@ -74,7 +99,11 @@
   font-weight: 800;
   text-align: center;
   margin-bottom: var(--phub-space-md);
-  background: linear-gradient(135deg, var(--phub-primary) 0%, var(--phub-secondary) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--phub-primary) 0%,
+    var(--phub-secondary) 100%
+  );
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -115,23 +144,29 @@
 }
 
 .phub-message::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(90deg, 
-    rgba(255, 255, 255, 0.2) 0%, 
-    rgba(255, 255, 255, 0.1) 50%, 
-    rgba(255, 255, 255, 0.2) 100%);
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.2) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.2) 100%
+  );
   animation: phub-message-shimmer 2s infinite;
   pointer-events: none;
 }
 
 @keyframes phub-message-shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 .phub-message.error {
@@ -168,13 +203,17 @@
 }
 
 .phub-btn-link::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: -2px;
   left: 0;
   width: 0;
   height: 2px;
-  background: linear-gradient(135deg, var(--phub-primary) 0%, var(--phub-secondary) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--phub-primary) 0%,
+    var(--phub-secondary) 100%
+  );
   transition: width var(--phub-transition-fast);
 }
 
@@ -210,7 +249,11 @@
 .phub-logo {
   font-size: 1.5rem;
   font-weight: 800;
-  background: linear-gradient(135deg, var(--phub-primary) 0%, var(--phub-secondary) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--phub-primary) 0%,
+    var(--phub-secondary) 100%
+  );
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -248,7 +291,11 @@
 }
 
 .phub-sidebar-item.active {
-  background: linear-gradient(135deg, rgba(30, 64, 175, 0.1) 0%, rgba(124, 58, 237, 0.1) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(30, 64, 175, 0.1) 0%,
+    rgba(124, 58, 237, 0.1) 100%
+  );
   border-color: var(--phub-primary);
   color: var(--phub-primary);
   box-shadow: 0 2px 4px rgba(30, 64, 175, 0.1);
@@ -267,13 +314,17 @@
 }
 
 .phub-card::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(135deg, var(--phub-primary) 0%, var(--phub-secondary) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--phub-primary) 0%,
+    var(--phub-secondary) 100%
+  );
   transform: scaleX(0);
   transform-origin: left;
   transition: transform var(--phub-transition-fast);
@@ -379,18 +430,24 @@
 
 /* === LOADING ANIMATIONS === */
 .phub-skeleton {
-  background: linear-gradient(90deg, 
-    var(--phub-gray-200) 25%, 
-    var(--phub-gray-100) 50%, 
-    var(--phub-gray-200) 75%);
+  background: linear-gradient(
+    90deg,
+    var(--phub-gray-200) 25%,
+    var(--phub-gray-100) 50%,
+    var(--phub-gray-200) 75%
+  );
   background-size: 200% 100%;
   animation: phub-skeleton-wave 1.5s infinite;
   border-radius: var(--phub-radius-md);
 }
 
 @keyframes phub-skeleton-wave {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 .phub-pulse {
@@ -398,8 +455,13 @@
 }
 
 @keyframes phub-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 /* === ENHANCED SCROLLBARS === */
@@ -444,7 +506,11 @@
 
 /* === UTILITY CLASSES === */
 .phub-text-gradient {
-  background: linear-gradient(135deg, var(--phub-primary) 0%, var(--phub-secondary) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--phub-primary) 0%,
+    var(--phub-secondary) 100%
+  );
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -457,11 +523,15 @@
 }
 
 .phub-shadow-soft {
-  box-shadow: 0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04);
+  box-shadow:
+    0 2px 15px -3px rgba(0, 0, 0, 0.07),
+    0 10px 20px -2px rgba(0, 0, 0, 0.04);
 }
 
 .phub-hover-lift {
-  transition: transform var(--phub-transition-fast), box-shadow var(--phub-transition-fast);
+  transition:
+    transform var(--phub-transition-fast),
+    box-shadow var(--phub-transition-fast);
 }
 
 .phub-hover-lift:hover {
@@ -496,11 +566,11 @@
   .phub-page-container {
     padding: var(--phub-space-md);
   }
-  
+
   .phub-auth-container {
     padding: var(--phub-space-xl);
   }
-  
+
   .phub-nav-content {
     padding: var(--phub-space-sm) var(--phub-space-md);
   }
@@ -510,16 +580,16 @@
   .phub-auth-title {
     font-size: 1.75rem;
   }
-  
+
   .phub-grid.auto-fit,
   .phub-grid.auto-fill {
     grid-template-columns: 1fr;
   }
-  
+
   .phub-card {
     padding: var(--phub-space-md);
   }
-  
+
   .phub-sidebar-item {
     padding: var(--phub-space-sm) var(--phub-space-md);
   }
@@ -530,7 +600,7 @@
     margin: var(--phub-space-md);
     padding: var(--phub-space-lg);
   }
-  
+
   .phub-form-container {
     margin: var(--phub-space-sm);
     max-width: calc(100vw - 1rem);

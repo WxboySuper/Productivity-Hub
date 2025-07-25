@@ -1,9 +1,19 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import TaskRelationshipsSection from './TaskRelationshipsSection';
-import '../styles/Task.css';
+import { useState, useEffect, useRef, useCallback } from "react";
+import TaskRelationshipsSection from "./TaskRelationshipsSection";
+import "../styles/Task.css";
 
 // StickyActions subcomponent to flatten modal tree
-function StickyActions({ onClose, loading, editMode, title }: { onClose: () => void; loading?: boolean; editMode?: boolean; title: string }) {
+function StickyActions({
+  onClose,
+  loading,
+  editMode,
+  title,
+}: {
+  onClose: () => void;
+  loading?: boolean;
+  editMode?: boolean;
+  title: string;
+}) {
   return (
     <div className="modern-form-actions">
       <button
@@ -17,19 +27,19 @@ function StickyActions({ onClose, loading, editMode, title }: { onClose: () => v
       </button>
       <button
         type="submit"
-        className={`modern-btn modern-btn-primary ${loading ? 'loading' : ''}`}
+        className={`modern-btn modern-btn-primary ${loading ? "loading" : ""}`}
         disabled={loading || !title.trim()}
         aria-label="Create Task"
       >
         {loading ? (
           <>
-            <span style={{ animation: 'spin 1s linear infinite' }}>⏳</span>
-            {editMode ? 'Saving...' : 'Creating...'}
+            <span style={{ animation: "spin 1s linear infinite" }}>⏳</span>
+            {editMode ? "Saving..." : "Creating..."}
           </>
         ) : (
           <>
-            <span>{editMode ? '💾' : '✨'}</span>
-            {editMode ? 'Save Changes' : 'Create Task'}
+            <span>{editMode ? "💾" : "✨"}</span>
+            {editMode ? "Save Changes" : "Create Task"}
           </>
         )}
       </button>
@@ -38,7 +48,13 @@ function StickyActions({ onClose, loading, editMode, title }: { onClose: () => v
 }
 
 // ModalContent subcomponent to flatten JSX tree
-function ModalContent({ children, modalRef }: { children: React.ReactNode; modalRef: React.RefObject<HTMLDivElement> }) {
+function ModalContent({
+  children,
+  modalRef,
+}: {
+  children: React.ReactNode;
+  modalRef: React.RefObject<HTMLDivElement>;
+}) {
   return (
     <div
       className="modern-form-container"
@@ -63,36 +79,50 @@ function DependencyPopup({
   handlePopupTaskItemKeyDown,
   handlePopupOverlayClick,
   handlePopupOverlayKeyDown,
-  projects
+  projects,
 }: {
-  dependencyPopup: 'blocked-by' | 'blocking' | 'linked';
+  dependencyPopup: "blocked-by" | "blocking" | "linked";
   allTasks: DependencyTask[];
   initialValues: TaskFormValues;
   blockedBy: number[];
   blocking: number[];
   linkedTasks: number[];
   handlePopupTaskItemClick: (task: DependencyTask) => void;
-  handlePopupTaskItemKeyDown: (e: React.KeyboardEvent<HTMLDivElement>, task: DependencyTask) => void;
+  handlePopupTaskItemKeyDown: (
+    e: React.KeyboardEvent<HTMLDivElement>,
+    task: DependencyTask,
+  ) => void;
   handlePopupOverlayClick: () => void;
   handlePopupOverlayKeyDown: (e: React.KeyboardEvent<HTMLDivElement>) => void;
   projects: Project[];
 }) {
   // Stable handler for popup task item click
-  const handleTaskItemClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    const id = Number(e.currentTarget.getAttribute('data-taskid'));
-    const task = allTasks.find(t => t.id === id);
-    if (task) handlePopupTaskItemClick(task);
-  }, [allTasks, handlePopupTaskItemClick]);
+  const handleTaskItemClick = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      const id = Number(e.currentTarget.getAttribute("data-taskid"));
+      const task = allTasks.find((t) => t.id === id);
+      if (task) handlePopupTaskItemClick(task);
+    },
+    [allTasks, handlePopupTaskItemClick],
+  );
 
   // Stable handler for popup task item keydown
-  const handleTaskItemKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      const id = Number(e.currentTarget.getAttribute('data-taskid'));
-      const task = allTasks.find(t => t.id === id);
-      if (task) handlePopupTaskItemClick(task);
-    }
-    handlePopupTaskItemKeyDown(e, allTasks.find(t => t.id === Number(e.currentTarget.getAttribute('data-taskid'))) as DependencyTask);
-  }, [allTasks, handlePopupTaskItemClick, handlePopupTaskItemKeyDown]);
+  const handleTaskItemKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      if (e.key === "Enter" || e.key === " ") {
+        const id = Number(e.currentTarget.getAttribute("data-taskid"));
+        const task = allTasks.find((t) => t.id === id);
+        if (task) handlePopupTaskItemClick(task);
+      }
+      handlePopupTaskItemKeyDown(
+        e,
+        allTasks.find(
+          (t) => t.id === Number(e.currentTarget.getAttribute("data-taskid")),
+        ) as DependencyTask,
+      );
+    },
+    [allTasks, handlePopupTaskItemClick, handlePopupTaskItemKeyDown],
+  );
 
   return (
     <div
@@ -106,34 +136,47 @@ function DependencyPopup({
       <div className="modern-popup-content" role="dialog" aria-modal="true">
         <div className="modern-popup-header">
           <h3 className="modern-popup-title">
-            {dependencyPopup === 'blocked-by' && '🚫 Select Blocking Tasks'}
-            {dependencyPopup === 'blocking' && '⛔ Select Tasks to Block'}
-            {dependencyPopup === 'linked' && '🔗 Link Related Tasks'}
+            {dependencyPopup === "blocked-by" && "🚫 Select Blocking Tasks"}
+            {dependencyPopup === "blocking" && "⛔ Select Tasks to Block"}
+            {dependencyPopup === "linked" && "🔗 Link Related Tasks"}
           </h3>
-          <button type="button" className="modern-popup-close" onClick={handlePopupOverlayClick}>×</button>
+          <button
+            type="button"
+            className="modern-popup-close"
+            onClick={handlePopupOverlayClick}
+          >
+            ×
+          </button>
         </div>
         <div className="modern-popup-body">
           <p className="modern-popup-description">
-            {dependencyPopup === 'blocked-by' && 'Select tasks that must be completed before this task can start.'}
-            {dependencyPopup === 'blocking' && 'Select tasks that cannot start until this task is completed.'}
-            {dependencyPopup === 'linked' && 'Select tasks that are related or connected to this task.'}
+            {dependencyPopup === "blocked-by" &&
+              "Select tasks that must be completed before this task can start."}
+            {dependencyPopup === "blocking" &&
+              "Select tasks that cannot start until this task is completed."}
+            {dependencyPopup === "linked" &&
+              "Select tasks that are related or connected to this task."}
           </p>
           <div className="modern-popup-task-list">
             {allTasks
-              .filter(task => {
+              .filter((task) => {
                 if (task.id === initialValues.id) return false;
-                if (dependencyPopup === 'blocked-by') {
-                  return !blockedBy.includes(task.id) && !blocking.includes(task.id);
-                } else if (dependencyPopup === 'blocking') {
+                if (dependencyPopup === "blocked-by") {
+                  return (
+                    !blockedBy.includes(task.id) && !blocking.includes(task.id)
+                  );
+                } else if (dependencyPopup === "blocking") {
                   /* v8 ignore next 8 */
-                  return !blocking.includes(task.id) && !blockedBy.includes(task.id);
-                } else if (dependencyPopup === 'linked') {
+                  return (
+                    !blocking.includes(task.id) && !blockedBy.includes(task.id)
+                  );
+                } else if (dependencyPopup === "linked") {
                   /* v8 ignore next 8 */
                   return !linkedTasks.includes(task.id);
                 }
                 return true;
               })
-              .map(task => (
+              .map((task) => (
                 <div
                   key={task.id}
                   className="modern-popup-task-item"
@@ -149,19 +192,25 @@ function DependencyPopup({
                     /* v8 ignore next 8 */
                     <div className="modern-popup-task-project">
                       {/* v8 ignore next 8: Defensive fallback for project name */}
-                      📁 {projects.find(p => p.id === task.projectId)?.name || 'Unknown Project'}
+                      📁{" "}
+                      {projects.find((p) => p.id === task.projectId)?.name ||
+                        "Unknown Project"}
                     </div>
                   )}
                 </div>
               ))}
-            {allTasks.filter(task => {
+            {allTasks.filter((task) => {
               if (task.id === initialValues.id) return false;
-              if (dependencyPopup === 'blocked-by') {
-                return !blockedBy.includes(task.id) && !blocking.includes(task.id);
-              } else if (dependencyPopup === 'blocking') {
+              if (dependencyPopup === "blocked-by") {
+                return (
+                  !blockedBy.includes(task.id) && !blocking.includes(task.id)
+                );
+              } else if (dependencyPopup === "blocking") {
                 /* v8 ignore next 8 */
-                return !blocking.includes(task.id) && !blockedBy.includes(task.id);
-              } else if (dependencyPopup === 'linked') {
+                return (
+                  !blocking.includes(task.id) && !blockedBy.includes(task.id)
+                );
+              } else if (dependencyPopup === "linked") {
                 /* v8 ignore next 8 */
                 return !linkedTasks.includes(task.id);
               }
@@ -190,16 +239,19 @@ function renderDependencyPopup({
   handlePopupTaskItemKeyDown,
   handlePopupOverlayClick,
   handlePopupOverlayKeyDown,
-  projects
+  projects,
 }: {
-  dependencyPopup: 'blocked-by' | 'blocking' | 'linked' | null;
+  dependencyPopup: "blocked-by" | "blocking" | "linked" | null;
   allTasks: DependencyTask[];
   initialValues: TaskFormValues;
   blockedBy: number[];
   blocking: number[];
   linkedTasks: number[];
   handlePopupTaskItemClick: (task: DependencyTask) => void;
-  handlePopupTaskItemKeyDown: (e: React.KeyboardEvent<HTMLDivElement>, task: DependencyTask) => void;
+  handlePopupTaskItemKeyDown: (
+    e: React.KeyboardEvent<HTMLDivElement>,
+    task: DependencyTask,
+  ) => void;
   handlePopupOverlayClick: () => void;
   handlePopupOverlayKeyDown: (e: React.KeyboardEvent<HTMLDivElement>) => void;
   projects: Project[];
@@ -212,14 +264,15 @@ function renderDependencyPopup({
       allTasks={allTasks}
       initialValues={{
         ...initialValues,
-        projectId: initialValues.projectId !== undefined
-        /* v8 ignore next 8 */
-          ? typeof initialValues.projectId === 'string'
-          /* v8 ignore next 8 */
-            ? Number(initialValues.projectId)
-            /* v8 ignore next 8 */
-            : initialValues.projectId
-          : undefined
+        projectId:
+          initialValues.projectId !== undefined
+            ? /* v8 ignore next 8 */
+              typeof initialValues.projectId === "string"
+              ? /* v8 ignore next 8 */
+                Number(initialValues.projectId)
+              : /* v8 ignore next 8 */
+                initialValues.projectId
+            : undefined,
       }}
       blockedBy={blockedBy}
       blocking={blocking}
@@ -237,7 +290,7 @@ function renderDependencyPopup({
 function SubtasksList({
   subtasks,
   handleToggleSubtaskChange,
-  handleRemoveSubtaskClick
+  handleRemoveSubtaskClick,
 }: {
   subtasks: Subtask[];
   handleToggleSubtaskChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -246,7 +299,7 @@ function SubtasksList({
   return (
     <>
       {subtasks.map((subtask) => {
-        const subtaskId = typeof subtask.id === 'number' ? subtask.id : -1;
+        const subtaskId = typeof subtask.id === "number" ? subtask.id : -1;
         return (
           <div key={subtaskId} className="modern-subtask-item">
             <input
@@ -256,7 +309,9 @@ function SubtasksList({
               data-subtaskid={subtaskId}
               onChange={handleToggleSubtaskChange}
             />
-            <span className={`modern-subtask-text ${subtask.completed ? 'completed' : ''}`}>
+            <span
+              className={`modern-subtask-text ${subtask.completed ? "completed" : ""}`}
+            >
               {subtask.title}
             </span>
             <button
@@ -274,29 +329,30 @@ function SubtasksList({
   );
 }
 
-
 // Pure function for testable toggle logic
 export function toggleSubtask(subtasks: Subtask[], id: number): Subtask[] {
-  return subtasks.map(st =>
-    st.id === id ? { ...st, completed: !st.completed } : st
+  return subtasks.map((st) =>
+    st.id === id ? { ...st, completed: !st.completed } : st,
   );
 }
 
 // Modal Header Subcomponent
-function TaskFormHeader({ editMode, onClose }: { editMode?: boolean; onClose: () => void }) {
+function TaskFormHeader({
+  editMode,
+  onClose,
+}: {
+  editMode?: boolean;
+  onClose: () => void;
+}) {
   return (
     <div className="modern-form-header">
       <h2 className="modern-form-title">
-        {editMode ? '✏️ Edit Task' : '📝 New Task'}
+        {editMode ? "✏️ Edit Task" : "📝 New Task"}
       </h2>
       <p className="modern-form-subtitle">
-        {editMode ? 'Update task details' : 'Add a new task to your workflow'}
+        {editMode ? "Update task details" : "Add a new task to your workflow"}
       </p>
-      <button
-        className="modern-close-btn"
-        onClick={onClose}
-        type="button"
-      >
+      <button className="modern-close-btn" onClick={onClose} type="button">
         ×
       </button>
     </div>
@@ -326,7 +382,7 @@ function TaskFormContent(props: {
   priority: number;
   handlePriorityClick: () => void;
   handlePriorityChipClick: (prioValue: number) => void;
-  currentPriority: typeof priorities[number] | undefined;
+  currentPriority: (typeof priorities)[number] | undefined;
   completed: boolean;
   handleStatusClick: () => void;
   projectId: number | string;
@@ -395,7 +451,7 @@ function TaskFormContent(props: {
         <div className="modern-hero-section">
           <input
             type="text"
-            className={`modern-hero-input ${props.fieldErrors.title ? 'error' : ''}`}
+            className={`modern-hero-input ${props.fieldErrors.title ? "error" : ""}`}
             placeholder="What needs to be done?"
             value={props.title}
             onChange={props.handleTitleChange}
@@ -428,24 +484,24 @@ interface Subtask {
   isNew?: boolean;
 }
 
-  export interface TaskFormValues {
-    id?: number;
-    title: string;
-    description?: string;
-    due_date?: string;
-    priority?: number;
-    project_id?: number | string;
-    projectId?: number | string;
-    completed?: boolean;
-    subtasks?: Subtask[];
-    start_date?: string;
-    recurrence?: string;
-    blocked_by?: number[];
-    blocking?: number[];
-    linked_tasks?: number[];
-    reminder_enabled?: boolean;
-    reminder_time?: string;
-  }
+export interface TaskFormValues {
+  id?: number;
+  title: string;
+  description?: string;
+  due_date?: string;
+  priority?: number;
+  project_id?: number | string;
+  projectId?: number | string;
+  completed?: boolean;
+  subtasks?: Subtask[];
+  start_date?: string;
+  recurrence?: string;
+  blocked_by?: number[];
+  blocking?: number[];
+  linked_tasks?: number[];
+  reminder_enabled?: boolean;
+  reminder_time?: string;
+}
 
 interface TaskFormModalProps {
   open: boolean;
@@ -467,10 +523,10 @@ interface DependencyTask {
 }
 
 const priorities = [
-  { value: 0, label: 'Low', icon: '🟢', color: '#10b981' },
-  { value: 1, label: 'Medium', icon: '🟡', color: '#f59e0b' },
-  { value: 2, label: 'High', icon: '🟠', color: '#ef4444' },
-  { value: 3, label: 'Critical', icon: '🔴', color: '#dc2626' },
+  { value: 0, label: "Low", icon: "🟢", color: "#10b981" },
+  { value: 1, label: "Medium", icon: "🟡", color: "#f59e0b" },
+  { value: 2, label: "High", icon: "🟠", color: "#ef4444" },
+  { value: 3, label: "Critical", icon: "🔴", color: "#dc2626" },
 ];
 
 const TaskForm: React.FC<TaskFormModalProps> = ({
@@ -488,57 +544,81 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
   if (!open) return null;
 
   /* v8 ignore next: Defensive fallback for initial values, covered by tests */
-  const initialValues: TaskFormValues = rawInitialValues || { title: '' };
+  const initialValues: TaskFormValues = rawInitialValues || { title: "" };
 
   // Form state
   /* v8 ignore next: Defensive fallback for title, covered by tests */
-  const [title, setTitle] = useState(initialValues.title || '');
+  const [title, setTitle] = useState(initialValues.title || "");
   /* v8 ignore next: Defensive fallback for description, covered by tests */
-  const [description, setDescription] = useState(initialValues.description || '');
+  const [description, setDescription] = useState(
+    initialValues.description || "",
+  );
   /* v8 ignore next: Defensive fallback for dueDate, covered by tests */
-  const [dueDate, setDueDate] = useState(initialValues.due_date ? initialValues.due_date.slice(0, 16) : '');
+  const [dueDate, setDueDate] = useState(
+    initialValues.due_date ? initialValues.due_date.slice(0, 16) : "",
+  );
   /* v8 ignore next: Defensive fallback for priority, covered by tests */
-  const [priority, setPriority] = useState(typeof initialValues.priority === 'number' ? initialValues.priority : 1);
+  const [priority, setPriority] = useState(
+    typeof initialValues.priority === "number" ? initialValues.priority : 1,
+  );
   /* v8 ignore next: Defensive fallback for projectId, covered by tests */
-  const [projectId, setProjectId] = useState(initialValues.project_id || initialValues.projectId || '');
+  const [projectId, setProjectId] = useState(
+    initialValues.project_id || initialValues.projectId || "",
+  );
   /* v8 ignore next: Defensive fallback for completed, covered by tests */
   const [completed, setCompleted] = useState(initialValues.completed || false);
   /* v8 ignore next: Defensive fallback for subtasks, covered by tests */
-  const [subtasks, setSubtasks] = useState<Subtask[]>(initialValues.subtasks || []);
+  const [subtasks, setSubtasks] = useState<Subtask[]>(
+    initialValues.subtasks || [],
+  );
   /* v8 ignore next: Defensive fallback for newSubtaskTitle, covered by tests */
-  const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
+  const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
   /* v8 ignore next: Defensive fallback for startDate, covered by tests */
-  const [startDate, setStartDate] = useState(initialValues.start_date ? initialValues.start_date.slice(0, 16) : '');
+  const [startDate, setStartDate] = useState(
+    initialValues.start_date ? initialValues.start_date.slice(0, 16) : "",
+  );
   /* v8 ignore next: Defensive fallback for recurrenceMode, covered by tests */
-  const [recurrenceMode, setRecurrenceMode] = useState(initialValues.recurrence ? 'custom' : '');
+  const [recurrenceMode, setRecurrenceMode] = useState(
+    initialValues.recurrence ? "custom" : "",
+  );
   /* v8 ignore next: Defensive fallback for customRecurrence, covered by tests */
-  const [customRecurrence, setCustomRecurrence] = useState(initialValues.recurrence || '');
+  const [customRecurrence, setCustomRecurrence] = useState(
+    initialValues.recurrence || "",
+  );
   /* v8 ignore next: Defensive fallback for blockedBy, covered by tests */
   const [blockedBy, setBlockedBy] = useState(initialValues.blocked_by || []);
   /* v8 ignore next: Defensive fallback for blocking, covered by tests */
   const [blocking, setBlocking] = useState(initialValues.blocking || []);
   /* v8 ignore next: Defensive fallback for linkedTasks, covered by tests */
-  const [linkedTasks, setLinkedTasks] = useState(initialValues.linked_tasks || []);
+  const [linkedTasks, setLinkedTasks] = useState(
+    initialValues.linked_tasks || [],
+  );
   /* v8 ignore next: Defensive fallback for dependencyPopup, covered by tests */
-  const [dependencyPopup, setDependencyPopup] = useState<'blocked-by' | 'blocking' | 'linked' | null>(null);
+  const [dependencyPopup, setDependencyPopup] = useState<
+    "blocked-by" | "blocking" | "linked" | null
+  >(null);
   /* v8 ignore next: Defensive fallback for reminderEnabled, covered by tests */
   const [reminderEnabled, setReminderEnabled] = useState(
-    typeof initialValues.reminder_enabled === 'boolean' ? initialValues.reminder_enabled : true
+    typeof initialValues.reminder_enabled === "boolean"
+      ? initialValues.reminder_enabled
+      : true,
   );
   /* v8 ignore next: Defensive fallback for reminderTime, covered by tests */
   const [reminderTime, setReminderTime] = useState(
     initialValues.reminder_time
       ? new Date(initialValues.reminder_time).toISOString().slice(0, 16)
-      : ''
+      : "",
   );
 
   // Expandable sections state
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+  const [expandedSections, setExpandedSections] = useState<
+    Record<string, boolean>
+  >({
     details: false,
     subtasks: false,
     scheduling: false,
     reminders: false,
-    relationships: false
+    relationships: false,
   });
 
   // Advanced fields state
@@ -550,12 +630,15 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
   const modalRef = useRef<HTMLDivElement>(null);
 
   // Backdrop click handler (stable reference)
-  const handleBackdropClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget) {
-      /* v8 ignore next 8 */
-      onClose();
-    }
-  }, [onClose]);
+  const handleBackdropClick = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (e.target === e.currentTarget) {
+        /* v8 ignore next 8 */
+        onClose();
+      }
+    },
+    [onClose],
+  );
 
   // Handle click outside and Escape key for modal close
   useEffect(() => {
@@ -569,38 +652,53 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
       }
     };
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         onClose();
       }
     };
-    document.addEventListener('mousedown', handleClick);
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {  //skipcq: JS-0045
-      document.removeEventListener('mousedown', handleClick);
-      document.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener("mousedown", handleClick);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      //skipcq: JS-0045
+      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, [open, onClose]);
 
   // Reset form when opening (only once when modal opens)
   useEffect(() => {
     if (open) {
-      setTitle(initialValues.title || '');
-      setDescription(initialValues.description || '');
-      setDueDate(initialValues.due_date ? initialValues.due_date.slice(0, 16) : '');
-      setPriority(typeof initialValues.priority === 'number' ? initialValues.priority : 1);
-      setProjectId(initialValues.project_id || initialValues.projectId || '');
+      setTitle(initialValues.title || "");
+      setDescription(initialValues.description || "");
+      setDueDate(
+        initialValues.due_date ? initialValues.due_date.slice(0, 16) : "",
+      );
+      setPriority(
+        typeof initialValues.priority === "number" ? initialValues.priority : 1,
+      );
+      setProjectId(initialValues.project_id || initialValues.projectId || "");
       setCompleted(initialValues.completed || false);
       setSubtasks(initialValues.subtasks || []);
-      setNewSubtaskTitle('');
-      setStartDate(initialValues.start_date ? initialValues.start_date.slice(0, 16) : '');
-      setRecurrenceMode(initialValues.recurrence ? 'custom' : '');
-      setCustomRecurrence(initialValues.recurrence || '');
+      setNewSubtaskTitle("");
+      setStartDate(
+        initialValues.start_date ? initialValues.start_date.slice(0, 16) : "",
+      );
+      setRecurrenceMode(initialValues.recurrence ? "custom" : "");
+      setCustomRecurrence(initialValues.recurrence || "");
       setBlockedBy(initialValues.blocked_by || []);
       setBlocking(initialValues.blocking || []);
       setLinkedTasks(initialValues.linked_tasks || []);
       setDependencyPopup(null);
-      setReminderEnabled(typeof initialValues.reminder_enabled === 'boolean' ? initialValues.reminder_enabled : true);
-      setReminderTime(initialValues.reminder_time ? new Date(initialValues.reminder_time).toISOString().slice(0, 16) : '');
+      setReminderEnabled(
+        typeof initialValues.reminder_enabled === "boolean"
+          ? initialValues.reminder_enabled
+          : true,
+      );
+      setReminderTime(
+        initialValues.reminder_time
+          ? new Date(initialValues.reminder_time).toISOString().slice(0, 16)
+          : "",
+      );
       setFieldErrors({});
       // Collapse all sections on open
       setExpandedSections({
@@ -608,99 +706,149 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
         subtasks: false,
         scheduling: false,
         reminders: false,
-        relationships: false
+        relationships: false,
       });
     }
   }, [open]); // Remove initialValues from dependency array
 
   function handleToggleSection(section: string) {
     /* v8 ignore next 8 */
-    setExpandedSections(prev => ({
+    setExpandedSections((prev) => ({
       /* v8 ignore next 8 */
       ...prev,
-      [section]: !prev[section]
+      [section]: !prev[section],
     }));
-  /* v8 ignore next 8 */
+    /* v8 ignore next 8 */
   }
 
   const handleAddSubtask = useCallback(() => {
     /* v8 ignore next 8 */
     if (newSubtaskTitle.trim()) {
       /* v8 ignore next 8 */
-      setSubtasks(prev => [
+      setSubtasks((prev) => [
         ...prev,
         {
           id: Date.now(),
           title: newSubtaskTitle.trim(),
           completed: false,
-          isNew: true
-        }
+          isNew: true,
+        },
         /* v8 ignore next 8 */
       ]);
-      setNewSubtaskTitle('');
+      setNewSubtaskTitle("");
     }
   }, [newSubtaskTitle]);
 
   const handleRemoveSubtask = useCallback((id: number) => {
     /* v8 ignore next 8 */
-    setSubtasks(prev => prev.filter(st => st.id !== id));
+    setSubtasks((prev) => prev.filter((st) => st.id !== id));
   }, []);
 
   const handleToggleSubtask = useCallback((id: number) => {
     /* v8 ignore next 8 */
-    setSubtasks(prev => toggleSubtask(prev, id));
+    setSubtasks((prev) => toggleSubtask(prev, id));
   }, []);
 
-  const validateForm = () => { 
+  const validateForm = () => {
     const errors: Record<string, string> = {};
     if (!title.trim()) {
       /* v8 ignore next 8 */
-      errors.title = 'Task name is required';
+      errors.title = "Task name is required";
     } else if (title.trim().length < 2) {
       /* v8 ignore next 8 */
-      errors.title = 'Task name must be at least 2 characters';
+      errors.title = "Task name must be at least 2 characters";
     }
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
   /* v8 ignore next: covered by tests, but v8 misreports assignment with undefined result */
-  const currentPriority = priorities.find(p => p.value === priority);
-
+  const currentPriority = priorities.find((p) => p.value === priority);
 
   // Handler functions for JSX props
   /* v8 ignore next: all handler functions below are covered by tests, but v8 may misreport inline definitions */
-  function handleTitleChange(e: React.ChangeEvent<HTMLInputElement>) { setTitle(e.target.value); }
-  function handleProjectClick(e: React.MouseEvent<HTMLButtonElement>) { e.preventDefault(); e.stopPropagation(); handleToggleSection('project'); }
-  function handleDueDateClick() { handleToggleSection('scheduling'); }
-  function handlePriorityClick() { handleToggleSection('priority'); }
-  function handleStatusClick() { setCompleted(!completed); }
-  function handleProjectChange(e: React.ChangeEvent<HTMLSelectElement>) { setProjectId(e.target.value); }
-  function handleDueDateChange(e: React.ChangeEvent<HTMLInputElement>) { setDueDate(e.target.value); }
-  function handleStartDateChange(e: React.ChangeEvent<HTMLInputElement>) { setStartDate(e.target.value); }
-  function handleDescriptionChange(e: React.ChangeEvent<HTMLTextAreaElement>) { setDescription(e.target.value); }
-  function handleDetailsClick() { handleToggleSection('details'); }
-  function handleSubtasksClick() { handleToggleSection('subtasks'); }
-  function handleNewSubtaskTitleChange(e: React.ChangeEvent<HTMLInputElement>) { setNewSubtaskTitle(e.target.value); }
-  function handleNewSubtaskKeyDown(e: React.KeyboardEvent<HTMLInputElement>) { if (e.key === 'Enter') { e.preventDefault(); handleAddSubtask(); } }
-  function handleRemindersClick() { handleToggleSection('reminders'); }
-  function handleBlockedByClick() { setDependencyPopup('blocked-by'); }
-  function handleBlockingClick() { setDependencyPopup('blocking'); }
-  function handleLinkedClick() { setDependencyPopup('linked'); }
-  function handleReminderEnabledChange(e: React.ChangeEvent<HTMLInputElement>) { setReminderEnabled(e.target.checked); }
-  function handleReminderTimeChange(e: React.ChangeEvent<HTMLInputElement>) { setReminderTime(e.target.value); }
-  function handlePopupOverlayClick() { setDependencyPopup(null); }
-  function handlePopupOverlayKeyDown(e: React.KeyboardEvent<HTMLDivElement>) { if (["Enter", " ", "Escape"].includes(e.key)) { setDependencyPopup(null); } }
-  function handlePriorityChipClick(prioValue: number) { setPriority(prioValue); }
+  function handleTitleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setTitle(e.target.value);
+  }
+  function handleProjectClick(e: React.MouseEvent<HTMLButtonElement>) {
+    e.preventDefault();
+    e.stopPropagation();
+    handleToggleSection("project");
+  }
+  function handleDueDateClick() {
+    handleToggleSection("scheduling");
+  }
+  function handlePriorityClick() {
+    handleToggleSection("priority");
+  }
+  function handleStatusClick() {
+    setCompleted(!completed);
+  }
+  function handleProjectChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    setProjectId(e.target.value);
+  }
+  function handleDueDateChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setDueDate(e.target.value);
+  }
+  function handleStartDateChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setStartDate(e.target.value);
+  }
+  function handleDescriptionChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
+    setDescription(e.target.value);
+  }
+  function handleDetailsClick() {
+    handleToggleSection("details");
+  }
+  function handleSubtasksClick() {
+    handleToggleSection("subtasks");
+  }
+  function handleNewSubtaskTitleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setNewSubtaskTitle(e.target.value);
+  }
+  function handleNewSubtaskKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleAddSubtask();
+    }
+  }
+  function handleRemindersClick() {
+    handleToggleSection("reminders");
+  }
+  function handleBlockedByClick() {
+    setDependencyPopup("blocked-by");
+  }
+  function handleBlockingClick() {
+    setDependencyPopup("blocking");
+  }
+  function handleLinkedClick() {
+    setDependencyPopup("linked");
+  }
+  function handleReminderEnabledChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setReminderEnabled(e.target.checked);
+  }
+  function handleReminderTimeChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setReminderTime(e.target.value);
+  }
+  function handlePopupOverlayClick() {
+    setDependencyPopup(null);
+  }
+  function handlePopupOverlayKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+    if (["Enter", " ", "Escape"].includes(e.key)) {
+      setDependencyPopup(null);
+    }
+  }
+  function handlePriorityChipClick(prioValue: number) {
+    setPriority(prioValue);
+  }
   /* v8 ignore next: covered by tests, but v8 may misreport this branch */
   function handlePopupTaskItemClick(task: DependencyTask) {
-    if (dependencyPopup === 'blocked-by') {
+    if (dependencyPopup === "blocked-by") {
       setBlockedBy([...blockedBy, task.id]);
-    } else if (dependencyPopup === 'blocking') {
+    } else if (dependencyPopup === "blocking") {
       /* v8 ignore next 8 */
       setBlocking([...blocking, task.id]);
-    /* v8 ignore next 8 */
-    } else if (dependencyPopup === 'linked') {
+      /* v8 ignore next 8 */
+    } else if (dependencyPopup === "linked") {
       /* v8 ignore next 8 */
       setLinkedTasks([...linkedTasks, task.id]);
     }
@@ -709,15 +857,18 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
   /* v8 ignore next: covered by tests, but v8 may misreport this branch */
   function handleRelationshipsExpand() {
     /* v8 ignore next 8 */
-    setExpandedSections(prev => ({
+    setExpandedSections((prev) => ({
       /* v8 ignore next 8 */
       ...prev,
       /* v8 ignore next 8 */
-      relationships: !prev.relationships
+      relationships: !prev.relationships,
     }));
   }
-  function handlePopupTaskItemKeyDown(e: React.KeyboardEvent<HTMLDivElement>, task: DependencyTask) {
-    if (e.key === 'Enter' || e.key === ' ') {
+  function handlePopupTaskItemKeyDown(
+    e: React.KeyboardEvent<HTMLDivElement>,
+    task: DependencyTask,
+  ) {
+    if (e.key === "Enter" || e.key === " ") {
       handlePopupTaskItemClick(task);
     }
   }
@@ -733,18 +884,21 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
       priority,
       project_id: projectId ? Number(projectId) : undefined,
       completed,
-      subtasks: subtasks.map(st => ({
+      subtasks: subtasks.map((st) => ({
         title: st.title,
         completed: st.completed,
         id: st.id,
       })),
       start_date: startDate ? new Date(startDate).toISOString() : undefined,
-      recurrence: recurrenceMode === 'custom' ? customRecurrence : undefined,
+      recurrence: recurrenceMode === "custom" ? customRecurrence : undefined,
       blocked_by: blockedBy,
       blocking,
       linked_tasks: linkedTasks,
       reminder_enabled: reminderEnabled,
-      reminder_time: reminderEnabled && reminderTime ? new Date(reminderTime).toISOString() : undefined,
+      reminder_time:
+        reminderEnabled && reminderTime
+          ? new Date(reminderTime).toISOString()
+          : undefined,
       ...(initialValues.id ? { id: initialValues.id } : {}),
     };
 
@@ -754,39 +908,51 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
   // Stable relationship removal handlers
   const handleRemoveBlockedBy = useCallback((id: number) => {
     /* v8 ignore next 8 */
-    setBlockedBy(prev => prev.filter((taskId) => taskId !== id));
+    setBlockedBy((prev) => prev.filter((taskId) => taskId !== id));
   }, []);
   const handleRemoveBlocking = useCallback((id: number) => {
     /* v8 ignore next 8 */
-    setBlocking(prev => prev.filter((taskId) => taskId !== id));
+    setBlocking((prev) => prev.filter((taskId) => taskId !== id));
   }, []);
   const handleRemoveLinked = useCallback((id: number) => {
     /* v8 ignore next 8 */
-    setLinkedTasks(prev => prev.filter((taskId) => taskId !== id));
+    setLinkedTasks((prev) => prev.filter((taskId) => taskId !== id));
   }, []);
 
   // Stable handlers for SubtasksList
-  const handleToggleSubtaskChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const id = Number(e.currentTarget.getAttribute('data-subtaskid'));
-    handleToggleSubtask(id);
-  }, [handleToggleSubtask]);
-  const handleRemoveSubtaskClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
-    /* v8 ignore next 8 */
-    const id = Number(e.currentTarget.getAttribute('data-subtaskid'));
-    handleRemoveSubtask(id);
-  }, [handleRemoveSubtask]);
+  const handleToggleSubtaskChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const id = Number(e.currentTarget.getAttribute("data-subtaskid"));
+      handleToggleSubtask(id);
+    },
+    [handleToggleSubtask],
+  );
+  const handleRemoveSubtaskClick = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      /* v8 ignore next 8 */
+      const id = Number(e.currentTarget.getAttribute("data-subtaskid"));
+      handleRemoveSubtask(id);
+    },
+    [handleRemoveSubtask],
+  );
 
   // Stable handler for modal backdrop keydown
-  const handleBackdropKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'Escape' || e.key === 'Enter') {
-      onClose();
-    }
-  }, [onClose]);
+  const handleBackdropKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      if (e.key === "Escape" || e.key === "Enter") {
+        onClose();
+      }
+    },
+    [onClose],
+  );
 
   // Stable handler for form submit
-  const handleFormSubmit = useCallback((event: React.FormEvent<HTMLFormElement>) => {
-    handleSubmit(event);
-  }, [handleSubmit]);
+  const handleFormSubmit = useCallback(
+    (event: React.FormEvent<HTMLFormElement>) => {
+      handleSubmit(event);
+    },
+    [handleSubmit],
+  );
 
   // Stable props for TaskFormContent
   const taskFormContentProps = {
@@ -843,7 +1009,7 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
     onRemoveBlockedBy: handleRemoveBlockedBy,
     onRemoveBlocking: handleRemoveBlocking,
     onRemoveLinked: handleRemoveLinked,
-    TaskRelationshipsSection
+    TaskRelationshipsSection,
   };
 
   // Stable props for renderDependencyPopup
@@ -858,7 +1024,7 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
     handlePopupTaskItemKeyDown,
     handlePopupOverlayClick,
     handlePopupOverlayKeyDown,
-    projects
+    projects,
   };
 
   return (

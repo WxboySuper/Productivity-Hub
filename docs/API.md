@@ -5,6 +5,7 @@ This document describes the REST API endpoints for Task management in Productivi
 ---
 
 ## Authentication
+
 All endpoints require the user to be authenticated (session-based). Include the session cookie in your requests.
 
 ---
@@ -12,7 +13,9 @@ All endpoints require the user to be authenticated (session-based). Include the 
 ## Task Endpoints
 
 ### Get All Tasks
+
 **GET** `/api/tasks`
+
 - Returns a list of all tasks for the current user.
 - Response: `200 OK`, JSON array of tasks.
 - Response fields:
@@ -31,7 +34,9 @@ All endpoints require the user to be authenticated (session-based). Include the 
   - `reminder_enabled`: boolean, whether reminders are enabled for this task (default: true)
 
 ### Get Task by ID
+
 **GET** `/api/tasks/<task_id>`
+
 - Returns a single task by its ID (if it belongs to the user).
 - Response: `200 OK`, JSON task object. `404` if not found.
 - Response fields:
@@ -50,16 +55,18 @@ All endpoints require the user to be authenticated (session-based). Include the 
   - `reminder_enabled`: boolean, whether reminders are enabled for this task (default: true)
 
 ### Create Task
+
 **POST** `/api/tasks`
+
 - Request JSON:
   ```json
   {
     "title": "Task title",
     "description": "Optional description",
     "due_date": "2025-07-01T12:00:00",
-    "start_date": "2025-06-30T09:00:00",  // Optional, ISO 8601
+    "start_date": "2025-06-30T09:00:00", // Optional, ISO 8601
     "priority": 1,
-    "recurrence": "weekly",  // Optional, string (e.g., 'daily', 'weekly', 'custom')
+    "recurrence": "weekly", // Optional, string (e.g., 'daily', 'weekly', 'custom')
     "completed": false,
     "project_id": 2
   }
@@ -81,7 +88,9 @@ All endpoints require the user to be authenticated (session-based). Include the 
   - `400` if title is missing/empty, priority is not an integer 0-3, due_date/start_date is invalid, or start_date is after due_date (see error message for details).
 
 ### Update Task
+
 **PUT** `/api/tasks/<task_id>`
+
 - Request JSON: Any updatable fields (see above).
 - Headers: Must include `X-CSRF-Token` with the session's CSRF token value.
 - Validation:
@@ -91,7 +100,9 @@ All endpoints require the user to be authenticated (session-based). Include the 
   - `400` if title is missing/empty, priority is not an integer 0-3, due_date/start_date is invalid, or start_date is after due_date (see error message for details).
 
 ### Delete Task
+
 **DELETE** `/api/tasks/<task_id>`
+
 - Response: `200 OK` on success (returns `{ "message": "Task deleted successfully" }`). `404` if not found.
 
 ---
@@ -99,7 +110,9 @@ All endpoints require the user to be authenticated (session-based). Include the 
 ## User Endpoints
 
 ### Register
+
 **POST** `/api/register`
+
 - Registers a new user.
 - Request JSON:
   ```json
@@ -112,7 +125,9 @@ All endpoints require the user to be authenticated (session-based). Include the 
 - Response: `201 Created` on success, JSON message. `400` on validation error.
 
 ### Login
+
 **POST** `/api/login`
+
 - Logs in a user.
 - Request JSON:
   ```json
@@ -125,19 +140,25 @@ All endpoints require the user to be authenticated (session-based). Include the 
 - On success, a session cookie is set for authentication.
 
 ### Logout
+
 **POST** `/api/logout`
+
 - Logs out the current user.
 - Response: `200 OK` on success, JSON message.
 - Clears the session cookie.
 
 ### Get current user profile
+
 **GET** `/api/profile`
+
 - Returns the current user's profile (id, username, email).
 - Requires authentication.
 - Response: `200 OK`, JSON user object.
 
 ### Update current user profile
+
 **PUT** `/api/profile`
+
 - Updates the current user's username, email, and/or password.
 - Request JSON: any combination of `username`, `email`, `password` fields.
 - Headers: Must include `X-CSRF-Token` with the session's CSRF token value.
@@ -151,6 +172,7 @@ All endpoints require the user to be authenticated (session-based). Include the 
   - `400` if no valid fields to update
 
 #### Notes
+
 - All endpoints require authentication where applicable.
 - All state-changing endpoints require CSRF token in `X-CSRF-Token` header.
 - See error handling and security notes above for details.
@@ -160,7 +182,9 @@ All endpoints require the user to be authenticated (session-based). Include the 
 ## Password Reset Endpoints
 
 ### Request Password Reset Token
+
 **POST** `/api/password-reset/request`
+
 - Initiates a password reset for a user by email.
 - Request JSON:
   ```json
@@ -192,6 +216,7 @@ All endpoints require the user to be authenticated (session-based). Include the 
   - Email delivery uses SMTP settings configured via environment variables (see below).
 
 #### Model: PasswordResetToken
+
 - Stores password reset tokens and metadata for secure password reset flow.
 - Fields:
   - `id`: integer, primary key
@@ -205,6 +230,7 @@ All endpoints require the user to be authenticated (session-based). Include the 
   - Used to validate password reset requests and securely update user passwords.
 
 ##### Email Delivery Configuration
+
 - The backend uses SMTP to send password reset emails. Configure these environment variables (e.g., in a `.env` file):
   - `EMAIL_HOST` (SMTP server hostname, e.g., `smtp.gmail.com` or `localhost` for testing)
   - `EMAIL_PORT` (SMTP port, e.g., `587` for TLS, `1025` for local debug)
@@ -217,7 +243,9 @@ All endpoints require the user to be authenticated (session-based). Include the 
 - See the project `.env` file for an example configuration.
 
 ### Confirm Password Reset
+
 **POST** `/api/password-reset/confirm`
+
 - Confirms a password reset using a token and sets a new password.
 - Request JSON:
   ```json
@@ -258,7 +286,9 @@ All endpoints require the user to be authenticated (session-based). Include the 
 ## Project API Endpoints
 
 ### Get all projects
+
 **GET** `/api/projects`
+
 - Returns a paginated list of all projects for the current user.
 - Response: `200 OK`, JSON array of projects.
 - Query parameters:
@@ -266,12 +296,16 @@ All endpoints require the user to be authenticated (session-based). Include the 
   - `per_page`: optional, integer, number of projects per page (default: 10, max: 100)
 
 ### Get a project by ID
+
 **GET** `/api/projects/<project_id>`
+
 - Returns the project with the given ID if it belongs to the user.
 - Response: `200 OK`, JSON project object. `404` if not found.
 
 ### Create a project
+
 **POST** `/api/projects`
+
 - Request JSON:
   ```json
   {
@@ -288,7 +322,9 @@ All endpoints require the user to be authenticated (session-based). Include the 
   - `400` if name is missing/empty.
 
 ### Update a project
+
 **PUT** `/api/projects/<project_id>`
+
 - Request JSON: Any updatable fields (name, description).
 - Headers: Must include `X-CSRF-Token` with the session's CSRF token value.
 - Response: `200 OK`, JSON updated project object. `404` if not found.
@@ -296,10 +332,13 @@ All endpoints require the user to be authenticated (session-based). Include the 
   - `400` if name is present but empty.
 
 ### Delete a project
+
 **DELETE** `/api/projects/<project_id>`
+
 - Response: `200 OK` on success (returns `{ "message": "Project deleted successfully" }`). `404` if not found.
 
 #### Notes
+
 - All endpoints require authentication.
 - All state-changing endpoints require CSRF token in `X-CSRF-Token` header.
 - Only the current user's projects are accessible.
@@ -310,7 +349,9 @@ All endpoints require the user to be authenticated (session-based). Include the 
 ## Task Reminder & Notification Endpoints
 
 ### Task Reminder Fields
+
 All task endpoints now support the following additional fields:
+
 - `reminder_time`: string, ISO 8601 datetime, when to show the reminder (optional)
 - `reminder_recurring`: string, optional recurrence rule (e.g., 'DAILY', 'WEEKLY', or rrule string)
 - `reminder_snoozed_until`: string, ISO 8601 datetime, if snoozed (optional, managed by backend/UI)
@@ -323,7 +364,9 @@ These fields are included in all task API responses and can be set/updated via t
 ## Notification Endpoints
 
 ### List Notifications
+
 **GET** `/api/notifications`
+
 - Returns a list of notifications for the current user (unread first, then by created_at desc).
 - Response: `200 OK`, JSON array of notifications.
 - Response fields:
@@ -336,7 +379,9 @@ These fields are included in all task API responses and can be set/updated via t
   - `type`: string, notification type (e.g., 'reminder')
 
 ### Snooze Notification
+
 **POST** `/api/notifications/<notification_id>/snooze`
+
 - Snoozes a notification for a given number of minutes (default: 10).
 - Request JSON:
   ```json
@@ -346,7 +391,9 @@ These fields are included in all task API responses and can be set/updated via t
 - Errors: `404` if notification not found.
 
 ### Dismiss Notification
+
 **POST** `/api/notifications/<notification_id>/dismiss`
+
 - Marks a notification as read/dismissed.
 - Response: `200 OK`, JSON message.
 - Errors: `404` if notification not found.
@@ -356,6 +403,7 @@ These fields are included in all task API responses and can be set/updated via t
 ## Reminder/Notification Model
 
 ### Notification
+
 - `id`: integer, primary key
 - `user_id`: integer, foreign key to User
 - `task_id`: integer, foreign key to Task (nullable)
@@ -368,6 +416,7 @@ These fields are included in all task API responses and can be set/updated via t
 ---
 
 ## Reminder Generation
+
 - The backend automatically generates notifications for tasks with reminders enabled when the reminder time (and recurrence, if set) is due.
 - Notifications are only generated if not already present and unread for the same task/user.
 - Snoozed notifications will not reappear until after the snooze period.
@@ -375,6 +424,7 @@ These fields are included in all task API responses and can be set/updated via t
 ---
 
 ## Security Notes
+
 - **Production Warning:** If the app is not running in debug or development mode, a warning is shown at startup reminding you to check all security settings, including CSRF protection.
 - **Session Cookie Security:** The backend sets `SESSION_COOKIE_SECURE`, `SESSION_COOKIE_HTTPONLY`, and `SESSION_COOKIE_SAMESITE` in the Flask config for best security practices.
 - **CSRF Protection:**
@@ -387,27 +437,29 @@ These fields are included in all task API responses and can be set/updated via t
 ---
 
 ## CSRF Token Usage
+
 - **Obtaining Token:** Call `GET /api/csrf-token` to generate and receive a CSRF token. This endpoint is public and sets the `_csrf_token` cookie.
 - **Token Storage:** The CSRF token is stored in a cookie (`_csrf_token`) that is accessible to JavaScript (`httponly=false`).
 - **Token Transmission:** Include the token in the `X-CSRF-Token` header for all POST, PUT, DELETE requests.
 - **Token Validation:** Backend compares the header token with the cookie token for validation.
 
 ### Example CSRF Usage:
+
 ```javascript
 // Get CSRF token
-const response = await fetch('/api/csrf-token', { credentials: 'include' });
+const response = await fetch("/api/csrf-token", { credentials: "include" });
 const data = await response.json();
 const csrfToken = data.csrf_token;
 
 // Use token in subsequent requests
-await fetch('/api/tasks', {
-  method: 'POST',
+await fetch("/api/tasks", {
+  method: "POST",
   headers: {
-    'Content-Type': 'application/json',
-    'X-CSRF-Token': csrfToken
+    "Content-Type": "application/json",
+    "X-CSRF-Token": csrfToken,
   },
-  credentials: 'include',
-  body: JSON.stringify(taskData)
+  credentials: "include",
+  body: JSON.stringify(taskData),
 });
 
 // Or read from cookie directly
@@ -417,6 +469,7 @@ const csrfToken = document.cookie.match(/_csrf_token=([^;]+)/)?.[1];
 ---
 
 ## Error Handling (Granular)
+
 - All endpoints return specific, actionable error messages for each validation failure (e.g., missing/empty title, invalid priority, invalid due_date format).
 - Example error responses:
   - `{ "error": "Title is required and cannot be empty." }`
@@ -427,6 +480,7 @@ const csrfToken = document.cookie.match(/_csrf_token=([^;]+)/)?.[1];
 ---
 
 ## Timezone-Aware Datetime Handling
+
 - All incoming `due_date` values are parsed as local time if no timezone is provided, and stored as timezone-aware datetimes using the system's local timezone.
 - All returned datetime fields (`due_date`, `created_at`, `updated_at`) are ISO 8601 strings with timezone info if available.
 - This ensures all times are consistent with the user's local system.
@@ -434,6 +488,7 @@ const csrfToken = document.cookie.match(/_csrf_token=([^;]+)/)?.[1];
 ---
 
 ## Notes
+
 - `due_date`, `created_at`, and `updated_at` are returned as ISO 8601 strings. When creating or updating a task, the `due_date` field must be provided as an ISO 8601 string (e.g., `2025-07-01T12:00:00`). The backend now validates and converts this string to a datetime object. If the format is invalid, the API returns a 400 error with a clear message. This ensures robust and predictable datetime handling.
 - All endpoints return JSON responses.
 - All errors are returned as JSON with an `error` field.
@@ -452,14 +507,16 @@ const csrfToken = document.cookie.match(/_csrf_token=([^;]+)/)?.[1];
 
 ---
 
-*Expand this file as you add more endpoints or features.*
+_Expand this file as you add more endpoints or features._
 
 ---
 
 ## Task Dependencies Endpoints
 
 #### Get Task Dependencies
+
 **GET** `/api/tasks/<task_id>/dependencies`
+
 - Returns all dependencies for a task (tasks this task is blocked by, and tasks it is blocking).
 - Response: `200 OK`, JSON object:
   ```json
@@ -472,20 +529,24 @@ const csrfToken = document.cookie.match(/_csrf_token=([^;]+)/)?.[1];
 - Errors: `404` if task not found.
 
 #### Set Task Dependencies (Replace All)
+
 **POST** `/api/tasks/<task_id>/dependencies`
+
 - Sets the dependencies for a task, replacing all existing dependencies.
 - Request JSON:
   ```json
   {
-    "blocked_by": [2, 3],   // IDs of tasks this task is blocked by
-    "blocking": [4, 5]      // IDs of tasks this task is blocking
+    "blocked_by": [2, 3], // IDs of tasks this task is blocked by
+    "blocking": [4, 5] // IDs of tasks this task is blocking
   }
   ```
 - Response: `200 OK`, JSON updated task object.
 - Errors: `404` if task not found.
 
 #### Patch Task Dependencies (Add/Remove)
+
 **PATCH** `/api/tasks/<task_id>/dependencies`
+
 - Add or remove specific dependencies for a task.
 - Request JSON:
   ```json
@@ -501,6 +562,7 @@ const csrfToken = document.cookie.match(/_csrf_token=([^;]+)/)?.[1];
 - Errors: `404` if task not found.
 
 #### Notes
+
 - All dependency endpoints require authentication and CSRF token for state-changing requests.
 - Only tasks owned by the current user can be set as dependencies.
 - The main task create/update endpoints also accept `blocked_by` and `blocking` arrays in the payload to set dependencies at creation/update time.

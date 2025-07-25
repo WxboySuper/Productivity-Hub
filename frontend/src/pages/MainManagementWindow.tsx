@@ -1,32 +1,40 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import AppHeader from '../components/AppHeader';
-import TaskForm from '../components/TaskForm';
-import ProjectForm from '../components/ProjectForm';
-import ConfirmDialog from '../components/ConfirmDialog';
-import TaskDetails from '../components/TaskDetails';
-import BackgroundSwitcher from '../components/BackgroundSwitcher';
-import { useAuth } from '../auth';
-import { useBackground } from '../context/BackgroundContext';
-import { useToast } from '../components/ToastProvider';
-import { useProjects, type Project } from '../hooks/useProjects';
-import { ensureCsrfToken, type Task } from '../hooks/useTasks';
-import '../styles/ProjectForm.css';
-import '../styles/PageLayouts.css';
-import '../styles/MainLayout.css';
-import type { TaskFormValues } from '../components/TaskForm';
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import AppHeader from "../components/AppHeader";
+import TaskForm from "../components/TaskForm";
+import ProjectForm from "../components/ProjectForm";
+import ConfirmDialog from "../components/ConfirmDialog";
+import TaskDetails from "../components/TaskDetails";
+import BackgroundSwitcher from "../components/BackgroundSwitcher";
+import { useAuth } from "../auth";
+import { useBackground } from "../context/BackgroundContext";
+import { useToast } from "../components/ToastProvider";
+import { useProjects, type Project } from "../hooks/useProjects";
+import { ensureCsrfToken, type Task } from "../hooks/useTasks";
+import "../styles/ProjectForm.css";
+import "../styles/PageLayouts.css";
+import "../styles/MainLayout.css";
+import type { TaskFormValues } from "../components/TaskForm";
 
 // Sidebar component
 const Sidebar: React.FC<{
   collapsed: boolean;
   onCollapse: () => void;
-  items: { label: string; icon?: React.ReactNode; onClick: () => void; active?: boolean; variant?: 'danger' }[];
+  items: {
+    label: string;
+    icon?: React.ReactNode;
+    onClick: () => void;
+    active?: boolean;
+    variant?: "danger";
+  }[];
 }> = ({ collapsed, onCollapse, items }) => (
-  <aside className={`phub-sidebar ${collapsed ? 'phub-sidebar-collapsed' : ''}`}>
+  <aside
+    className={`phub-sidebar ${collapsed ? "phub-sidebar-collapsed" : ""}`}
+  >
     <button
       className="phub-sidebar-toggle"
       onClick={items[0].onClick}
-      style={{ marginBottom: '1rem' }}
+      style={{ marginBottom: "1rem" }}
     >
       {items[0].icon} {!collapsed && items[0].label}
     </button>
@@ -34,45 +42,75 @@ const Sidebar: React.FC<{
       className="phub-sidebar-toggle"
       onClick={onCollapse}
       style={{
-        background: 'rgba(59, 130, 246, 0.1)',
-        fontSize: '0.9rem',
-        marginBottom: '1.5rem',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: collapsed ? '3rem' : 'auto',
-        minWidth: '3rem',
-        padding: collapsed ? '0.75rem' : '0.75rem 1rem',
-        border: '1px solid rgba(59, 130, 246, 0.2)'
+        background: "rgba(59, 130, 246, 0.1)",
+        fontSize: "0.9rem",
+        marginBottom: "1.5rem",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: collapsed ? "3rem" : "auto",
+        minWidth: "3rem",
+        padding: collapsed ? "0.75rem" : "0.75rem 1rem",
+        border: "1px solid rgba(59, 130, 246, 0.2)",
       }}
-      aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+      aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
     >
       {collapsed ? (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2.5">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#3b82f6"
+          strokeWidth="2.5"
+        >
           <polyline points="9,18 15,12 9,6"></polyline>
         </svg>
       ) : (
         <>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2.5" style={{ marginRight: '0.5rem' }}>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#3b82f6"
+            strokeWidth="2.5"
+            style={{ marginRight: "0.5rem" }}
+          >
             <polyline points="15,18 9,12 15,6"></polyline>
           </svg>
-          <span style={{ color: '#3b82f6', fontSize: '0.875rem', fontWeight: '600' }}>Collapse</span>
+          <span
+            style={{
+              color: "#3b82f6",
+              fontSize: "0.875rem",
+              fontWeight: "600",
+            }}
+          >
+            Collapse
+          </span>
         </>
       )}
     </button>
-    <nav className="phub-sidebar-nav">{items.slice(1).map((item) => (
+    <nav className="phub-sidebar-nav">
+      {items.slice(1).map((item) => (
         <button
           key={item.label}
-          className={`phub-sidebar-item ${item.active ? 'phub-sidebar-item-active' : ''}`}
+          className={`phub-sidebar-item ${item.active ? "phub-sidebar-item-active" : ""}`}
           onClick={item.onClick}
-          style={item.variant === 'danger' ? {
-            background: 'linear-gradient(135deg, #ef4444, #dc2626)',
-            color: 'white',
-            border: '1px solid #dc2626'
-          } : {}}
+          style={
+            item.variant === "danger"
+              ? {
+                  background: "linear-gradient(135deg, #ef4444, #dc2626)",
+                  color: "white",
+                  border: "1px solid #dc2626",
+                }
+              : {}
+          }
         >
           {item.icon}
-          {!collapsed && <span className="phub-sidebar-label">{item.label}</span>}
+          {!collapsed && (
+            <span className="phub-sidebar-label">{item.label}</span>
+          )}
         </button>
       ))}
     </nav>
@@ -83,20 +121,31 @@ const Sidebar: React.FC<{
 function MainManagementWindow() {
   // Helper for checkbox disabled state (for TaskCard and QuickTaskCard)
   function isTaskCheckboxDisabled(task: Task): boolean {
-    return Boolean(task.subtasks && task.subtasks.length > 0 && task.subtasks.some((st: Task) => !st.completed));
+    return Boolean(
+      task.subtasks &&
+        task.subtasks.length > 0 &&
+        task.subtasks.some((st: Task) => !st.completed),
+    );
   }
   // Helper for checkbox title (for TaskCard and QuickTaskCard)
   function getTaskCheckboxTitle(task: Task): string {
-    return isTaskCheckboxDisabled(task) ? 'Complete all subtasks first' : '';
+    return isTaskCheckboxDisabled(task) ? "Complete all subtasks first" : "";
   }
   // --- All hooks/state and variables first ---
   const { logout } = useAuth();
   const { backgroundType, setBackgroundType } = useBackground();
   const { showSuccess, showError, showWarning, showInfo } = useToast();
   const navigate = useNavigate();
-  const { projects, loading: projectsLoading, error: projectsError, refetch: refetchProjects } = useProjects();
+  const {
+    projects,
+    loading: projectsLoading,
+    error: projectsError,
+    refetch: refetchProjects,
+  } = useProjects();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [activeView, setActiveView] = useState<'all' | 'quick' | 'projects'>('all');
+  const [activeView, setActiveView] = useState<"all" | "quick" | "projects">(
+    "all",
+  );
   const [tasks, setTasks] = useState<Task[]>([]);
   const [tasksLoading, setTasksLoading] = useState(false);
   const [tasksError, setTasksError] = useState<string | null>(null);
@@ -122,18 +171,21 @@ function MainManagementWindow() {
     setTasksError(null);
     try {
       await ensureCsrfToken();
-      const response = await fetch('/api/tasks', { credentials: 'include' });
-      if (!response.ok) throw new Error('Failed to fetch tasks');
+      const response = await fetch("/api/tasks", { credentials: "include" });
+      if (!response.ok) throw new Error("Failed to fetch tasks");
       const data = await response.json();
-      const tasks = Array.isArray(data) ? data : (data.tasks || []);
+      const tasks = Array.isArray(data) ? data : data.tasks || [];
       // Normalize task data
       const normalizedTasks = tasks.map((task: Task) => ({
         ...task,
-        projectId: typeof task.projectId !== 'undefined' ? task.projectId : task.project_id,
+        projectId:
+          typeof task.projectId !== "undefined"
+            ? task.projectId
+            : task.project_id,
       }));
       setTasks(normalizedTasks);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
       setTasksError(errorMessage);
     } finally {
       setTasksLoading(false);
@@ -146,33 +198,36 @@ function MainManagementWindow() {
   }, [fetchTasks]);
 
   // --- Handler functions for toggling and deleting tasks ---
-  const handleToggleTask = useCallback(async (id: number) => {
-    setTaskFormLoading(true);
-    setTaskFormError(null);
-    try {
-      const task = tasks.find((t: Task) => t.id === id);
-      if (!task) throw new Error('Task not found');
-      const csrfToken = await ensureCsrfToken();
-      const response = await fetch(`/api/tasks/${id}`, {
-        method: 'PUT',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
-        },
-        body: JSON.stringify({ completed: !task.completed }),
-      });
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to update task');
+  const handleToggleTask = useCallback(
+    async (id: number) => {
+      setTaskFormLoading(true);
+      setTaskFormError(null);
+      try {
+        const task = tasks.find((t: Task) => t.id === id);
+        if (!task) throw new Error("Task not found");
+        const csrfToken = await ensureCsrfToken();
+        const response = await fetch(`/api/tasks/${id}`, {
+          method: "PUT",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
+          },
+          body: JSON.stringify({ completed: !task.completed }),
+        });
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || "Failed to update task");
+        }
+        fetchTasks();
+      } catch (err: unknown) {
+        setTaskFormError(err instanceof Error ? err.message : "Unknown error");
+      } finally {
+        setTaskFormLoading(false);
       }
-      fetchTasks();
-    } catch (err: unknown) {
-      setTaskFormError(err instanceof Error ? err.message : 'Unknown error');
-    } finally {
-      setTaskFormLoading(false);
-    }
-  }, [tasks]);
+    },
+    [tasks],
+  );
 
   const handleDeleteTask = useCallback(async (id: number) => {
     setTaskFormLoading(true);
@@ -180,19 +235,19 @@ function MainManagementWindow() {
     try {
       const csrfToken = await ensureCsrfToken();
       const response = await fetch(`/api/tasks/${id}`, {
-        method: 'DELETE',
-        credentials: 'include',
+        method: "DELETE",
+        credentials: "include",
         headers: {
-          ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
+          ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
         },
       });
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Failed to delete task');
+        throw new Error(data.error || "Failed to delete task");
       }
       fetchTasks();
     } catch (err: unknown) {
-      setTaskFormError(err instanceof Error ? err.message : 'Unknown error');
+      setTaskFormError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setTaskFormLoading(false);
     }
@@ -200,8 +255,9 @@ function MainManagementWindow() {
 
   // --- Helper functions that use state/hooks ---
   const getTaskWithProject = (task: Task) => {
-    const projectId = typeof task.projectId !== 'undefined' ? task.projectId : task.project_id;
-    const project = projects.find(p => p.id === projectId);
+    const projectId =
+      typeof task.projectId !== "undefined" ? task.projectId : task.project_id;
+    const project = projects.find((p) => p.id === projectId);
     return {
       ...task,
       projectName: project ? project.name : undefined,
@@ -239,23 +295,22 @@ function MainManagementWindow() {
     setDeleteError(null);
   };
   const confirmDeleteProject = async () => {
-  /* v8 ignore next */
-  if (!deleteProject) return;
+    /* v8 ignore next */
+    if (!deleteProject) return;
     setDeleteLoading(true);
     setDeleteError(null);
     try {
       const csrfToken = await ensureCsrfToken();
       const response = await fetch(`/api/projects/${deleteProject.id}`, {
-        method: 'DELETE',
-        credentials: 'include',
+        method: "DELETE",
+        credentials: "include",
         headers: {
-
-          ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
+          ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
         },
       });
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Failed to delete project');
+        throw new Error(data.error || "Failed to delete project");
       }
       /* v8 ignore start */
       await refetchProjects(); // Refetch projects from the hook
@@ -263,7 +318,7 @@ function MainManagementWindow() {
       setSelectedProject(null);
       /* v8 ignore stop */
     } catch (err: unknown) {
-      setDeleteError(err instanceof Error ? err.message : 'Unknown error');
+      setDeleteError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setDeleteLoading(false);
     }
@@ -283,24 +338,24 @@ function MainManagementWindow() {
     setTaskFormError(null);
     try {
       const csrfToken = await ensureCsrfToken();
-      const response = await fetch('/api/tasks', {
-        method: 'POST',
-        credentials: 'include',
+      const response = await fetch("/api/tasks", {
+        method: "POST",
+        credentials: "include",
         headers: {
-          'Content-Type': 'application/json',
-          ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
+          "Content-Type": "application/json",
+          ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
         },
         body: JSON.stringify(task),
       });
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Failed to create task');
+        throw new Error(data.error || "Failed to create task");
       }
       setShowTaskForm(false);
       setEditTask(null);
       fetchTasks();
     } catch (err: unknown) {
-      setTaskFormError(err instanceof Error ? err.message : 'Unknown error');
+      setTaskFormError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setTaskFormLoading(false);
     }
@@ -316,17 +371,17 @@ function MainManagementWindow() {
     try {
       const csrfToken = await ensureCsrfToken();
       const response = await fetch(`/api/tasks/${editTask.id}`, {
-        method: 'PUT',
-        credentials: 'include',
+        method: "PUT",
+        credentials: "include",
         headers: {
-          'Content-Type': 'application/json',
-          ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
+          "Content-Type": "application/json",
+          ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
         },
         body: JSON.stringify(task),
       });
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Failed to update task');
+        throw new Error(data.error || "Failed to update task");
       }
       setShowTaskForm(false);
       setEditTask(null);
@@ -341,10 +396,10 @@ function MainManagementWindow() {
         }
       } catch (fetchError) {
         // If fetching updated task fails, just log it and continue
-        console.warn('Failed to fetch updated task details:', fetchError);
+        console.warn("Failed to fetch updated task details:", fetchError);
       }
     } catch (err: unknown) {
-      setTaskFormError(err instanceof Error ? err.message : 'Unknown error');
+      setTaskFormError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setTaskFormLoading(false);
     }
@@ -358,30 +413,32 @@ function MainManagementWindow() {
     const completed = task.completed ?? false;
     let projectId: number | undefined;
     if (task.projectId !== undefined) {
-      if (typeof task.projectId === 'string') {
+      if (typeof task.projectId === "string") {
         const parsed = parseInt(task.projectId, 10);
         projectId = isNaN(parsed) ? undefined : parsed;
-      } else if (typeof task.projectId === 'number') {
+      } else if (typeof task.projectId === "number") {
         projectId = task.projectId;
       }
     } else if (task.project_id !== undefined) {
-      if (typeof task.project_id === 'string') {
+      if (typeof task.project_id === "string") {
         const parsed = parseInt(task.project_id, 10);
         projectId = isNaN(parsed) ? undefined : parsed;
-      } else if (typeof task.project_id === 'number') {
+      } else if (typeof task.project_id === "number") {
         projectId = task.project_id;
       }
     }
 
     // Only include allowed fields for TaskFormValues
     const safeTask: Task = {
-      id: typeof task.id === 'number' ? task.id : 0, // fallback to 0 if undefined, or handle as needed
+      id: typeof task.id === "number" ? task.id : 0, // fallback to 0 if undefined, or handle as needed
       title: task.title ?? "",
-      description: task.description ?? '', // Ensure description is present
+      description: task.description ?? "", // Ensure description is present
       completed,
       projectId,
       // Only assign subtasks if they are of type Task[]
-      ...(Array.isArray(task.subtasks) ? { subtasks: task.subtasks as Task[] } : {})
+      ...(Array.isArray(task.subtasks)
+        ? { subtasks: task.subtasks as Task[] }
+        : {}),
     };
 
     if (editTask) {
@@ -394,46 +451,51 @@ function MainManagementWindow() {
 
   // Logout handler that manages navigation
   const handleLogout = useCallback(async () => {
-  /* v8 ignore start */
+    /* v8 ignore start */
     try {
-      showInfo('Signing out...', 'Please wait while we sign you out');
+      showInfo("Signing out...", "Please wait while we sign you out");
       const logoutSuccess = await logout();
-      
+
       if (logoutSuccess) {
-        showSuccess('Signed out successfully', 'You have been logged out of your account');
-        navigate('/', { replace: true });
+        showSuccess(
+          "Signed out successfully",
+          "You have been logged out of your account",
+        );
+        navigate("/", { replace: true });
       } else {
         showWarning(
-          'Logout incomplete', 
-          'You appear to be signed out locally, but there may be an issue with the server session. Please try signing in again.'
+          "Logout incomplete",
+          "You appear to be signed out locally, but there may be an issue with the server session. Please try signing in again.",
         );
         // Still navigate to home since frontend is cleared
-        navigate('/', { replace: true });
+        navigate("/", { replace: true });
       }
-    /* v8 ignore start */
+      /* v8 ignore start */
     } catch (error) {
-      console.error('Logout failed:', error);
+      console.error("Logout failed:", error);
       showError(
-        'Logout failed', 
-        error instanceof Error ? error.message : 'An unexpected error occurred during logout'
+        "Logout failed",
+        error instanceof Error
+          ? error.message
+          : "An unexpected error occurred during logout",
       );
       // Still navigate to home page since frontend state is cleared
-      navigate('/', { replace: true });
+      navigate("/", { replace: true });
     }
     /* v8 ignore stop */
   }, [logout, navigate, showSuccess, showError, showWarning, showInfo]);
 
   // Add handlers above sidebarItems
   const handleAllTasksClick = () => {
-    setActiveView('all');
+    setActiveView("all");
     setSelectedProject(null);
   };
   const handleQuickTasksClick = () => {
-    setActiveView('quick');
+    setActiveView("quick");
     setSelectedProject(null);
   };
   const handleProjectsClick = () => {
-    setActiveView('projects');
+    setActiveView("projects");
     setSelectedProject(null);
   };
 
@@ -447,15 +509,21 @@ function MainManagementWindow() {
     setSelectedTask(getTaskWithProject(task));
     setTaskDetailsOpen(true);
   };
-  const handleTaskCardTitleButtonKeyDown = (task: Task, e: React.KeyboardEvent<HTMLButtonElement>) => {
+  const handleTaskCardTitleButtonKeyDown = (
+    task: Task,
+    e: React.KeyboardEvent<HTMLButtonElement>,
+  ) => {
     /* v8 ignore start */
-    if (e.key === 'Enter' || e.key === ' ') {
+    if (e.key === "Enter" || e.key === " ") {
       setSelectedTask(getTaskWithProject(task));
       setTaskDetailsOpen(true);
     }
   };
   /* v8 ignore stop */
-  const handleTaskCardDeleteButtonClick = (taskId: number, e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleTaskCardDeleteButtonClick = (
+    taskId: number,
+    e: React.MouseEvent<HTMLButtonElement>,
+  ) => {
     /* v8 ignore start */
     e.stopPropagation();
     handleDeleteTask(taskId);
@@ -463,7 +531,10 @@ function MainManagementWindow() {
   /* v8 ignore start */
 
   // For QuickTaskCard
-  const handleQuickTaskCardCheckboxChange = (task: Task, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleQuickTaskCardCheckboxChange = (
+    task: Task,
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     /* v8 ignore start */
     e.stopPropagation();
     handleToggleTask(task.id);
@@ -475,9 +546,12 @@ function MainManagementWindow() {
     setTaskDetailsOpen(true);
   };
   /* v8 ignore stop */
-  const handleQuickTaskCardTitleButtonKeyDown = (task: Task, e: React.KeyboardEvent<HTMLButtonElement>) => {
+  const handleQuickTaskCardTitleButtonKeyDown = (
+    task: Task,
+    e: React.KeyboardEvent<HTMLButtonElement>,
+  ) => {
     /* v8 ignore start */
-    if (e.key === 'Enter' || e.key === ' ') {
+    if (e.key === "Enter" || e.key === " ") {
       setSelectedTask(getTaskWithProject(task));
       setTaskDetailsOpen(true);
     }
@@ -494,14 +568,20 @@ function MainManagementWindow() {
   const handleProjectCardClickWrapper = (project: Project) => {
     setSelectedProject(project);
   };
-  const handleProjectCardKeyDownWrapper = (project: Project, e: React.KeyboardEvent<HTMLButtonElement>) => {
+  const handleProjectCardKeyDownWrapper = (
+    project: Project,
+    e: React.KeyboardEvent<HTMLButtonElement>,
+  ) => {
     /* v8 ignore start */
-    if (e.key === 'Enter' || e.key === ' ') {
+    if (e.key === "Enter" || e.key === " ") {
       setSelectedProject(project);
     }
   };
   /* v8 ignore stop */
-  const handleProjectDeleteButtonClickWrapper = (project: Project, e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleProjectDeleteButtonClickWrapper = (
+    project: Project,
+    e: React.MouseEvent<HTMLButtonElement>,
+  ) => {
     e.stopPropagation();
     handleDeleteProject(project);
   };
@@ -514,35 +594,35 @@ function MainManagementWindow() {
   // Sidebar items
   const sidebarItems = [
     {
-      label: 'Add New',
+      label: "Add New",
       icon: <span className="text-xl">＋</span>,
       onClick: handleAddNewTask,
       active: false,
     },
     {
-      label: 'All Tasks',
+      label: "All Tasks",
       icon: <span className="text-xl">📋</span>,
       onClick: handleAllTasksClick,
-      active: activeView === 'all',
+      active: activeView === "all",
     },
     {
-      label: 'Quick Tasks',
+      label: "Quick Tasks",
       icon: <span className="text-xl">⚡</span>,
       onClick: handleQuickTasksClick,
-      active: activeView === 'quick',
+      active: activeView === "quick",
     },
     {
-      label: 'Projects',
+      label: "Projects",
       icon: <span className="text-xl">📁</span>,
       onClick: handleProjectsClick,
-      active: activeView === 'projects',
+      active: activeView === "projects",
     },
     {
-      label: 'Sign Out',
+      label: "Sign Out",
       icon: <span className="text-xl">🚪</span>,
       onClick: handleLogout,
       active: false,
-      variant: 'danger' as const,
+      variant: "danger" as const,
     },
   ];
 
@@ -565,7 +645,10 @@ function MainManagementWindow() {
     setSelectedProject(null);
   };
   // Handles both create and update for projects
-  const handleCreateOrUpdateProject = async (project: { name: string; description?: string }) => {
+  const handleCreateOrUpdateProject = async (project: {
+    name: string;
+    description?: string;
+  }) => {
     // If editing, update; else, create
     const isEdit = Boolean(editProject);
     try {
@@ -573,205 +656,224 @@ function MainManagementWindow() {
       const url = isEdit
         ? editProject
           ? `/api/projects/${editProject.id}`
-          /* v8 ignore next */
-          : (() => { throw new Error('editProject is null or undefined during edit operation'); })()
-        : '/api/projects';
-      const method = isEdit ? 'PUT' : 'POST';
+          : /* v8 ignore next */
+            (() => {
+              throw new Error(
+                "editProject is null or undefined during edit operation",
+              );
+            })()
+        : "/api/projects";
+      const method = isEdit ? "PUT" : "POST";
       const response = await fetch(url, {
         method,
-        credentials: 'include',
+        credentials: "include",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           name: project.name,
-          ...(project.description !== undefined ? { description: project.description } : {}),
+          ...(project.description !== undefined
+            ? { description: project.description }
+            : {}),
         }),
       });
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || `Failed to ${isEdit ? 'update' : 'create'} project`);
+        throw new Error(
+          data.error || `Failed to ${isEdit ? "update" : "create"} project`,
+        );
       }
       await refetchProjects();
       setShowForm(false);
       setEditProject(null);
       showSuccess(
-        isEdit ? 'Project updated' : 'Project created',
-        isEdit ? 'Project updated successfully.' : 'Project created successfully.'
+        isEdit ? "Project updated" : "Project created",
+        isEdit
+          ? "Project updated successfully."
+          : "Project created successfully.",
       );
     } catch (err: unknown) {
-      setFormError(err instanceof Error ? err.message : 'Unknown error');
+      setFormError(err instanceof Error ? err.message : "Unknown error");
       showError(
-        isEdit ? 'Failed to update project' : 'Failed to create project',
-        err instanceof Error ? err.message : 'Unknown error'
+        isEdit ? "Failed to update project" : "Failed to create project",
+        err instanceof Error ? err.message : "Unknown error",
       );
     }
   };
 
-interface ProjectTasksSectionProps {
-  tasks: Task[];
-  selectedProject: Project;
-  tasksLoading: boolean;
-  tasksError: string | null;
-  handleTaskToggle: (taskId: number) => void;
-  handleTaskTitleClick: (task: Task) => void;
-  handleTaskEdit: (task: Task) => void;
-  handleTaskDelete: (taskId: number) => void;
-  setShowTaskForm: (show: boolean) => void;
-}
-
-function ProjectTasksSection({
-  tasks,
-  selectedProject,
-  tasksLoading,
-  tasksError,
-  handleTaskToggle,
-  handleTaskTitleClick,
-  handleTaskEdit,
-  handleTaskDelete,
-  setShowTaskForm,
-}: ProjectTasksSectionProps) {
-  // Only show top-level project tasks (parent_id == null)
-  const projectTasks = tasks.filter((t: Task) => t.projectId === selectedProject.id && t.parent_id === null);
-
-  // Handler functions for ProjectTasksSection
-  function handleCheckboxChange(task: Task) {
-    return function () {
-      handleTaskToggle(task.id);
-    };
+  interface ProjectTasksSectionProps {
+    tasks: Task[];
+    selectedProject: Project;
+    tasksLoading: boolean;
+    tasksError: string | null;
+    handleTaskToggle: (taskId: number) => void;
+    handleTaskTitleClick: (task: Task) => void;
+    handleTaskEdit: (task: Task) => void;
+    handleTaskDelete: (taskId: number) => void;
+    setShowTaskForm: (show: boolean) => void;
   }
-  function handleTitleButtonClick(task: Task) {
-    return function () {
-      handleTaskTitleClick(task);
-    };
-  }
-  function handleTitleButtonKeyDown(task: Task) {
-    return function (e: React.KeyboardEvent<HTMLButtonElement>) {
-      /* v8 ignore start */
-      if (e.key === 'Enter' || e.key === ' ') {
+
+  function ProjectTasksSection({
+    tasks,
+    selectedProject,
+    tasksLoading,
+    tasksError,
+    handleTaskToggle,
+    handleTaskTitleClick,
+    handleTaskEdit,
+    handleTaskDelete,
+    setShowTaskForm,
+  }: ProjectTasksSectionProps) {
+    // Only show top-level project tasks (parent_id == null)
+    const projectTasks = tasks.filter(
+      (t: Task) => t.projectId === selectedProject.id && t.parent_id === null,
+    );
+
+    // Handler functions for ProjectTasksSection
+    function handleCheckboxChange(task: Task) {
+      return function () {
+        handleTaskToggle(task.id);
+      };
+    }
+    function handleTitleButtonClick(task: Task) {
+      return function () {
         handleTaskTitleClick(task);
-      }
-    };
-    /* v8 ignore stop */
-  }
-  function handleEditButtonClick(task: Task) {
-    return function () {
-      /* v8 ignore start */
-      handleTaskEdit(task);
-    };
-    /* v8 ignore stop */
-  }
-  function handleDeleteButtonClick(task: Task) {
-    return function () {
-      handleTaskDelete(task.id);
-    };
-  }
-  // Helper for checkbox disabled state
-  function isTaskCheckboxDisabled(task: Task): boolean {
-    return Boolean(task.subtasks && task.subtasks.length > 0 && task.subtasks.some((st: Task) => !st.completed));
-  }
-  // Helper for checkbox title
-  function getTaskCheckboxTitle(task: Task): string {
-    return isTaskCheckboxDisabled(task) ? 'Complete all subtasks first' : '';
-  }
+      };
+    }
+    function handleTitleButtonKeyDown(task: Task) {
+      return function (e: React.KeyboardEvent<HTMLButtonElement>) {
+        /* v8 ignore start */
+        if (e.key === "Enter" || e.key === " ") {
+          handleTaskTitleClick(task);
+        }
+      };
+      /* v8 ignore stop */
+    }
+    function handleEditButtonClick(task: Task) {
+      return function () {
+        /* v8 ignore start */
+        handleTaskEdit(task);
+      };
+      /* v8 ignore stop */
+    }
+    function handleDeleteButtonClick(task: Task) {
+      return function () {
+        handleTaskDelete(task.id);
+      };
+    }
+    // Helper for checkbox disabled state
+    function isTaskCheckboxDisabled(task: Task): boolean {
+      return Boolean(
+        task.subtasks &&
+          task.subtasks.length > 0 &&
+          task.subtasks.some((st: Task) => !st.completed),
+      );
+    }
+    // Helper for checkbox title
+    function getTaskCheckboxTitle(task: Task): string {
+      return isTaskCheckboxDisabled(task) ? "Complete all subtasks first" : "";
+    }
 
-  // Add handler for Add Task button to avoid arrow function in JSX
-  function handleAddTaskButtonClick() {
-    setShowTaskForm(true);
-  }
+    // Add handler for Add Task button to avoid arrow function in JSX
+    function handleAddTaskButtonClick() {
+      setShowTaskForm(true);
+    }
 
-  if (!tasksLoading && !tasksError && projectTasks.length === 0) {
+    if (!tasksLoading && !tasksError && projectTasks.length === 0) {
+      return (
+        <div className="phub-empty-state">
+          <div className="phub-empty-icon">📝</div>
+          <h3 className="phub-empty-title">No tasks for this project</h3>
+          <p className="phub-empty-subtitle">
+            Add a task to start making progress on this project!
+          </p>
+          <button
+            className="phub-action-btn"
+            onClick={handleAddTaskButtonClick}
+          >
+            <span>📝</span>
+            Add Task
+          </button>
+        </div>
+      );
+    }
     return (
-      <div className="phub-empty-state">
-        <div className="phub-empty-icon">📝</div>
-        <h3 className="phub-empty-title">No tasks for this project</h3>
-        <p className="phub-empty-subtitle">Add a task to start making progress on this project!</p>
-        <button
-          className="phub-action-btn"
-          onClick={handleAddTaskButtonClick}
-        >
-          <span>📝</span>
-          Add Task
-        </button>
+      <div className="space-y-4">
+        {projectTasks.map((task: Task) => {
+          // Move handlers outside of JSX
+          const onCheckboxChange = handleCheckboxChange(task);
+          const onTitleButtonClick = handleTitleButtonClick(task);
+          const onTitleButtonKeyDown = handleTitleButtonKeyDown(task);
+          const onEditButtonClick = handleEditButtonClick(task);
+          const onDeleteButtonClick = handleDeleteButtonClick(task);
+
+          return (
+            <div key={task.id} className="phub-item-card">
+              <div className="phub-item-content">
+                <div className="phub-item-header">
+                  <input
+                    type="checkbox"
+                    checked={task.completed}
+                    onChange={onCheckboxChange}
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                    disabled={isTaskCheckboxDisabled(task)}
+                    title={getTaskCheckboxTitle(task)}
+                  />
+                  <button
+                    className="phub-item-title cursor-pointer flex-1"
+                    onClick={onTitleButtonClick}
+                    tabIndex={0}
+                    onKeyDown={onTitleButtonKeyDown}
+                    style={{
+                      textDecoration: task.completed ? "line-through" : "none",
+                      opacity: task.completed ? 0.6 : 1,
+                      background: "none",
+                      border: "none",
+                      padding: 0,
+                      margin: 0,
+                      textAlign: "left",
+                      width: "100%",
+                    }}
+                    aria-label={`View details for ${task.title}`}
+                  >
+                    {task.title}
+                  </button>
+                  <button
+                    className="phub-action-btn-secondary"
+                    onClick={onEditButtonClick}
+                    style={{ padding: "0.5rem", fontSize: "0.8rem" }}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    className="px-2 py-1 rounded transition-colors font-semibold"
+                    onClick={onDeleteButtonClick}
+                    style={{
+                      background: "linear-gradient(135deg, #ef4444, #dc2626)",
+                      color: "white",
+                      border: "1px solid #dc2626",
+                    }}
+                  >
+                    Delete
+                  </button>
+                </div>
+                <div className="phub-item-meta">
+                  {task.subtasks && task.subtasks.length > 0 && (
+                    <span className="phub-item-badge">
+                      📝 {task.subtasks.length} subtask
+                      {task.subtasks.length > 1 ? "s" : ""}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
     );
   }
-  return (
-    <div className="space-y-4">
-      {projectTasks.map((task: Task) => {
-        // Move handlers outside of JSX
-        const onCheckboxChange = handleCheckboxChange(task);
-        const onTitleButtonClick = handleTitleButtonClick(task);
-        const onTitleButtonKeyDown = handleTitleButtonKeyDown(task);
-        const onEditButtonClick = handleEditButtonClick(task);
-        const onDeleteButtonClick = handleDeleteButtonClick(task);
 
-        return (
-          <div key={task.id} className="phub-item-card">
-            <div className="phub-item-content">
-              <div className="phub-item-header">
-                <input
-                  type="checkbox"
-                  checked={task.completed}
-                  onChange={onCheckboxChange}
-                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-                  disabled={isTaskCheckboxDisabled(task)}
-                  title={getTaskCheckboxTitle(task)}
-                />
-                <button
-                  className="phub-item-title cursor-pointer flex-1"
-                  onClick={onTitleButtonClick}
-                  tabIndex={0}
-                  onKeyDown={onTitleButtonKeyDown}
-                  style={{
-                    textDecoration: task.completed ? 'line-through' : 'none',
-                    opacity: task.completed ? 0.6 : 1,
-                    background: 'none',
-                    border: 'none',
-                    padding: 0,
-                    margin: 0,
-                    textAlign: 'left',
-                    width: '100%'
-                  }}
-                  aria-label={`View details for ${task.title}`}
-                >
-                  {task.title}
-                </button>
-                <button
-                  className="phub-action-btn-secondary"
-                  onClick={onEditButtonClick}
-                  style={{ padding: '0.5rem', fontSize: '0.8rem' }}
-                >
-                  Edit
-                </button>
-                <button
-                  className="px-2 py-1 rounded transition-colors font-semibold"
-                  onClick={onDeleteButtonClick}
-                  style={{
-                    background: 'linear-gradient(135deg, #ef4444, #dc2626)',
-                    color: 'white',
-                    border: '1px solid #dc2626'
-                  }}
-                >
-                  Delete
-                </button>
-              </div>
-              <div className="phub-item-meta">
-                {task.subtasks && task.subtasks.length > 0 && (
-                  <span className="phub-item-badge">
-                    📝 {task.subtasks.length} subtask{task.subtasks.length > 1 ? 's' : ''}
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-        );
-      })}
-    </div>
-    );
-  }
-
-  if (activeView === 'all') {
+  if (activeView === "all") {
     // Only show top-level tasks (parent_id == null)
     const topLevelTasks = tasks.filter((task: Task) => task.parent_id === null);
     // Extracted TaskCard to reduce nesting
@@ -779,8 +881,12 @@ function ProjectTasksSection({
       // Move all handlers outside of JSX
       const handleCheckboxChange = () => handleTaskCardCheckboxChange(task);
       const handleTitleButtonClick = () => handleTaskCardTitleButtonClick(task);
-      const handleTitleButtonKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => handleTaskCardTitleButtonKeyDown(task, e);
-      const handleDeleteButtonClick = (e: React.MouseEvent<HTMLButtonElement>) => handleTaskCardDeleteButtonClick(task.id, e);
+      const handleTitleButtonKeyDown = (
+        e: React.KeyboardEvent<HTMLButtonElement>,
+      ) => handleTaskCardTitleButtonKeyDown(task, e);
+      const handleDeleteButtonClick = (
+        e: React.MouseEvent<HTMLButtonElement>,
+      ) => handleTaskCardDeleteButtonClick(task.id, e);
 
       return (
         <div className="phub-item-card">
@@ -795,11 +901,17 @@ function ProjectTasksSection({
                 title={getTaskCheckboxTitle(task)}
               />
               <button
-                className={`phub-item-title cursor-pointer ${task.completed ? 'line-through opacity-60' : ''}`}
+                className={`phub-item-title cursor-pointer ${task.completed ? "line-through opacity-60" : ""}`}
                 onClick={handleTitleButtonClick}
                 tabIndex={0}
                 onKeyDown={handleTitleButtonKeyDown}
-                style={{ background: 'none', border: 'none', padding: 0, margin: 0, textAlign: 'left' }}
+                style={{
+                  background: "none",
+                  border: "none",
+                  padding: 0,
+                  margin: 0,
+                  textAlign: "left",
+                }}
                 aria-label={`View details for ${task.title}`}
               >
                 {task.title}
@@ -808,9 +920,9 @@ function ProjectTasksSection({
                 className="text-sm px-3 py-1 rounded transition-colors font-semibold"
                 onClick={handleDeleteButtonClick}
                 style={{
-                  background: 'linear-gradient(135deg, #ef4444, #dc2626)',
-                  color: 'white',
-                  border: '1px solid #dc2626'
+                  background: "linear-gradient(135deg, #ef4444, #dc2626)",
+                  color: "white",
+                  border: "1px solid #dc2626",
                 }}
               >
                 Delete
@@ -818,11 +930,14 @@ function ProjectTasksSection({
             </div>
             <div className="phub-item-meta">
               <span className="phub-item-badge">
-                {task.projectId ? `📁 ${projects.find(p => p.id === task.projectId)?.name || 'Unknown'}` : '⚡ Quick Task'}
+                {task.projectId
+                  ? `📁 ${projects.find((p) => p.id === task.projectId)?.name || "Unknown"}`
+                  : "⚡ Quick Task"}
               </span>
               {task.subtasks && task.subtasks.length > 0 && (
                 <span className="phub-item-badge">
-                  📝 {task.subtasks.length} subtask{task.subtasks.length > 1 ? 's' : ''}
+                  📝 {task.subtasks.length} subtask
+                  {task.subtasks.length > 1 ? "s" : ""}
                 </span>
               )}
             </div>
@@ -839,39 +954,46 @@ function ProjectTasksSection({
         </div>
         {tasksLoading && <div className="phub-loading">Loading tasks...</div>}
         {tasksError && <div className="phub-error">⚠️ {tasksError}</div>}
-        {(!tasksLoading && !tasksError && topLevelTasks.length === 0) ? (
+        {!tasksLoading && !tasksError && topLevelTasks.length === 0 ? (
           <div className="phub-empty-state">
             <div className="phub-empty-icon">📋</div>
             <h3 className="phub-empty-title">No tasks found</h3>
-            <p className="phub-empty-subtitle">Start by adding a new task to get productive!</p>
-            <button
-              className="phub-action-btn"
-              onClick={handleAddNewTask}
-            >
+            <p className="phub-empty-subtitle">
+              Start by adding a new task to get productive!
+            </p>
+            <button className="phub-action-btn" onClick={handleAddNewTask}>
               <span>✨</span>
               Add Your First Task
             </button>
           </div>
         ) : (
           <div className="space-y-4">
-            {topLevelTasks.map(task => (
+            {topLevelTasks.map((task) => (
               <TaskCard key={task.id} task={task} />
             ))}
           </div>
         )}
       </div>
     );
-  } else if (activeView === 'quick') {
+  } else if (activeView === "quick") {
     // Only show top-level quick tasks (parent_id == null)
-    const quickTasks = tasks.filter((t: Task) => !t.projectId && t.parent_id === null);
+    const quickTasks = tasks.filter(
+      (t: Task) => !t.projectId && t.parent_id === null,
+    );
     // Extracted QuickTaskCard to reduce nesting
     const QuickTaskCard = ({ task }: { task: Task }) => {
       // Move all handlers outside of JSX
-      const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => handleQuickTaskCardCheckboxChange(task, e);
-      const handleTitleButtonClick = () => handleQuickTaskCardTitleButtonClick(task);
-      const handleTitleButtonKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => handleQuickTaskCardTitleButtonKeyDown(task, e);
-      const handleEditButtonClick = () => handleQuickTaskCardEditButtonClick(task);
-      const handleDeleteButtonClick = () => handleQuickTaskCardDeleteButtonClick(task.id);
+      const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) =>
+        handleQuickTaskCardCheckboxChange(task, e);
+      const handleTitleButtonClick = () =>
+        handleQuickTaskCardTitleButtonClick(task);
+      const handleTitleButtonKeyDown = (
+        e: React.KeyboardEvent<HTMLButtonElement>,
+      ) => handleQuickTaskCardTitleButtonKeyDown(task, e);
+      const handleEditButtonClick = () =>
+        handleQuickTaskCardEditButtonClick(task);
+      const handleDeleteButtonClick = () =>
+        handleQuickTaskCardDeleteButtonClick(task.id);
 
       return (
         <div className="phub-item-card">
@@ -891,14 +1013,14 @@ function ProjectTasksSection({
                 tabIndex={0}
                 onKeyDown={handleTitleButtonKeyDown}
                 style={{
-                  textDecoration: task.completed ? 'line-through' : 'none',
+                  textDecoration: task.completed ? "line-through" : "none",
                   opacity: task.completed ? 0.6 : 1,
-                  background: 'none',
-                  border: 'none',
+                  background: "none",
+                  border: "none",
                   padding: 0,
                   margin: 0,
-                  textAlign: 'left',
-                  width: '100%'
+                  textAlign: "left",
+                  width: "100%",
                 }}
                 aria-label={`View details for ${task.title}`}
               >
@@ -907,7 +1029,7 @@ function ProjectTasksSection({
               <button
                 className="phub-action-btn-secondary"
                 onClick={handleEditButtonClick}
-                style={{ padding: '0.5rem', fontSize: '0.8rem' }}
+                style={{ padding: "0.5rem", fontSize: "0.8rem" }}
               >
                 Edit
               </button>
@@ -915,9 +1037,9 @@ function ProjectTasksSection({
                 className="px-2 py-1 rounded transition-colors font-semibold"
                 onClick={handleDeleteButtonClick}
                 style={{
-                  background: 'linear-gradient(135deg, #ef4444, #dc2626)',
-                  color: 'white',
-                  border: '1px solid #dc2626'
+                  background: "linear-gradient(135deg, #ef4444, #dc2626)",
+                  color: "white",
+                  border: "1px solid #dc2626",
                 }}
               >
                 Delete
@@ -927,7 +1049,8 @@ function ProjectTasksSection({
               {task.subtasks && task.subtasks.length > 0 && (
                 /* v8 ignore start */
                 <span className="phub-item-badge">
-                  📝 {task.subtasks.length} subtask{task.subtasks.length > 1 ? 's' : ''}
+                  📝 {task.subtasks.length} subtask
+                  {task.subtasks.length > 1 ? "s" : ""}
                 </span>
                 /* v8 ignore stop */
               )}
@@ -942,35 +1065,36 @@ function ProjectTasksSection({
         <div className="phub-content-section" aria-live="polite">
           <div className="phub-section-header">
             <h2 className="phub-section-title">Quick Tasks</h2>
-            <p className="phub-section-subtitle">Your rapid-fire action items</p>
+            <p className="phub-section-subtitle">
+              Your rapid-fire action items
+            </p>
           </div>
           {tasksLoading && <div className="phub-loading">Loading tasks...</div>}
           {tasksError && <div className="phub-error">⚠️ {tasksError}</div>}
-          {(!tasksLoading && !tasksError && quickTasks.length === 0) ? (
+          {!tasksLoading && !tasksError && quickTasks.length === 0 ? (
             <div className="phub-empty-state">
               <div className="phub-empty-icon">⚡</div>
               <h3 className="phub-empty-title">No quick tasks found</h3>
-              <p className="phub-empty-subtitle">Add a quick task for something you need to do soon!</p>
-              <button
-                className="phub-action-btn"
-                onClick={handleAddNewTask}
-              >
+              <p className="phub-empty-subtitle">
+                Add a quick task for something you need to do soon!
+              </p>
+              <button className="phub-action-btn" onClick={handleAddNewTask}>
                 <span>⚡</span>
                 Add Quick Task
               </button>
             </div>
           ) : null}
         </div>
-        {(!tasksLoading && !tasksError && quickTasks.length > 0) && (
+        {!tasksLoading && !tasksError && quickTasks.length > 0 && (
           <div className="space-y-4">
-            {quickTasks.map(task => (
+            {quickTasks.map((task) => (
               <QuickTaskCard key={task.id} task={task} />
             ))}
           </div>
         )}
       </>
     );
-  } else if (activeView === 'projects') {
+  } else if (activeView === "projects") {
     // Only show top-level project tasks (parent_id == null)
     content = (
       <div className="w-full max-w-3xl mx-auto py-10 px-4" aria-live="polite">
@@ -978,15 +1102,23 @@ function ProjectTasksSection({
           <div className="phub-content-section">
             <div className="phub-section-header">
               <h2 className="phub-section-title">Your Projects</h2>
-              <p className="phub-section-subtitle">Organize your work into meaningful projects</p>
+              <p className="phub-section-subtitle">
+                Organize your work into meaningful projects
+              </p>
             </div>
-            {projectsLoading && <div className="phub-loading">Loading projects...</div>}
-            {projectsError && <div className="phub-error">⚠️ {projectsError}</div>}
+            {projectsLoading && (
+              <div className="phub-loading">Loading projects...</div>
+            )}
+            {projectsError && (
+              <div className="phub-error">⚠️ {projectsError}</div>
+            )}
             {!projectsLoading && !projectsError && projects.length === 0 && (
               <div className="phub-empty-state">
                 <div className="phub-empty-icon">📁</div>
                 <h3 className="phub-empty-title">No projects found</h3>
-                <p className="phub-empty-subtitle">Start by creating a new project to organize your work.</p>
+                <p className="phub-empty-subtitle">
+                  Start by creating a new project to organize your work.
+                </p>
                 <button
                   className="phub-action-btn"
                   onClick={handleAddProjectClick}
@@ -1011,17 +1143,34 @@ function ProjectTasksSection({
               <div className="phub-grid auto-fit">
                 {projects.map((project) => {
                   // Move handlers outside of JSX
-                  const handleProjectCardClick = () => handleProjectCardClickWrapper(project);
-                  const handleProjectCardKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => handleProjectCardKeyDownWrapper(project, e);
-                  const handleEditButtonClick = (e: React.MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); setEditProject(project); setShowForm(false); };
-                  const handleDeleteButtonClick = (e: React.MouseEvent<HTMLButtonElement>) => handleProjectDeleteButtonClickWrapper(project, e);
+                  const handleProjectCardClick = () =>
+                    handleProjectCardClickWrapper(project);
+                  const handleProjectCardKeyDown = (
+                    e: React.KeyboardEvent<HTMLButtonElement>,
+                  ) => handleProjectCardKeyDownWrapper(project, e);
+                  const handleEditButtonClick = (
+                    e: React.MouseEvent<HTMLButtonElement>,
+                  ) => {
+                    e.stopPropagation();
+                    setEditProject(project);
+                    setShowForm(false);
+                  };
+                  const handleDeleteButtonClick = (
+                    e: React.MouseEvent<HTMLButtonElement>,
+                  ) => handleProjectDeleteButtonClickWrapper(project, e);
 
                   return (
                     <button
                       key={project.id}
                       className="phub-item-card phub-hover-lift cursor-pointer"
                       onClick={handleProjectCardClick}
-                      style={{ background: 'none', border: 'none', padding: 0, textAlign: 'left', width: '100%' }}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        padding: 0,
+                        textAlign: "left",
+                        width: "100%",
+                      }}
                       tabIndex={0}
                       onKeyDown={handleProjectCardKeyDown}
                       aria-label={`Select project ${project.name}`}
@@ -1032,13 +1181,18 @@ function ProjectTasksSection({
                           <div className="phub-item-title">{project.name}</div>
                         </div>
                         {project.description && (
-                          <div className="phub-item-description">{project.description}</div>
+                          <div className="phub-item-description">
+                            {project.description}
+                          </div>
                         )}
                         <div className="phub-item-meta">
                           <button
                             className="phub-action-btn-secondary"
                             onClick={handleEditButtonClick}
-                            style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}
+                            style={{
+                              fontSize: "0.8rem",
+                              padding: "0.4rem 0.8rem",
+                            }}
                           >
                             Edit
                           </button>
@@ -1059,7 +1213,7 @@ function ProjectTasksSection({
         ) : (
           // skipcq: JS-0415
           <>
-            <div className="phub-item-card" style={{ marginBottom: '2rem' }}>
+            <div className="phub-item-card" style={{ marginBottom: "2rem" }}>
               <div className="phub-item-content">
                 <div className="phub-item-header">
                   <span className="phub-item-icon">📂</span>
@@ -1086,14 +1240,20 @@ function ProjectTasksSection({
                   </div>
                 </div>
                 {selectedProject.description && (
-                  <div className="phub-item-description">{selectedProject.description}</div>
+                  <div className="phub-item-description">
+                    {selectedProject.description}
+                  </div>
                 )}
               </div>
             </div>
 
             <div className="phub-section-header">
-              <h3 className="phub-section-title" style={{ fontSize: '1.5rem' }}>Tasks for this Project</h3>
-              <p className="phub-section-subtitle">Manage project-specific tasks and deliverables</p>
+              <h3 className="phub-section-title" style={{ fontSize: "1.5rem" }}>
+                Tasks for this Project
+              </h3>
+              <p className="phub-section-subtitle">
+                Manage project-specific tasks and deliverables
+              </p>
             </div>
 
             <div className="phub-content-section">
@@ -1133,7 +1293,11 @@ function ProjectTasksSection({
         <ConfirmDialog
           open={Boolean(deleteProject)}
           title="Delete Project?"
-          message={deleteProject ? `Are you sure you want to delete "${deleteProject.name}"? This cannot be undone.` : ''}
+          message={
+            deleteProject
+              ? `Are you sure you want to delete "${deleteProject.name}"? This cannot be undone.`
+              : ""
+          }
           confirmLabel="Delete"
           cancelLabel="Cancel"
           onConfirm={confirmDeleteProject}
@@ -1152,7 +1316,9 @@ function ProjectTasksSection({
     tasks.forEach((task: Task) => {
       flat.push(task);
       if (Array.isArray(task.subtasks)) {
-        task.subtasks.forEach((sub: Task) => flat.push({ ...sub, parent_id: task.id }));
+        task.subtasks.forEach((sub: Task) =>
+          flat.push({ ...sub, parent_id: task.id }),
+        );
       }
     });
     return flat;
@@ -1161,16 +1327,16 @@ function ProjectTasksSection({
   useEffect(() => {
     const handler = (e: CustomEvent<number>) => {
       const subtaskId = e.detail;
-      const subtask = allTasks.find(t => t.id === subtaskId);
+      const subtask = allTasks.find((t) => t.id === subtaskId);
       if (subtask) {
         setSelectedTask(getTaskWithProject(subtask));
         setTaskDetailsOpen(true);
       }
     };
-    window.addEventListener('openTaskDetails', handler as EventListener);
-    return () => window.removeEventListener('openTaskDetails', handler as EventListener);
+    window.addEventListener("openTaskDetails", handler as EventListener);
+    return () =>
+      window.removeEventListener("openTaskDetails", handler as EventListener);
   }, [allTasks, projects]);
-
 
   // Add this handler above the return statement, near other handlers
   const handleTaskDetailsClose = () => {
@@ -1198,23 +1364,30 @@ function ProjectTasksSection({
   // Add this handler above the return statement, near other handlers
   const getParentTask = () => {
     if (selectedTask?.parent_id) {
-      return tasks.find(t => t.id === selectedTask.parent_id) || null;
+      return tasks.find((t) => t.id === selectedTask.parent_id) || null;
     }
     return null;
   };
 
   return (
-    <div className="min-h-screen flex flex-col" data-testid="main-management-window">
-      <AppHeader 
+    <div
+      className="min-h-screen flex flex-col"
+      data-testid="main-management-window"
+    >
+      <AppHeader
         rightContent={
-          <BackgroundSwitcher 
+          <BackgroundSwitcher
             currentBackground={backgroundType}
             onBackgroundChange={setBackgroundType}
           />
         }
       />
       <div className="flex h-screen">
-        <Sidebar collapsed={sidebarCollapsed} onCollapse={handleSidebarCollapse} items={sidebarItems} />
+        <Sidebar
+          collapsed={sidebarCollapsed}
+          onCollapse={handleSidebarCollapse}
+          items={sidebarItems}
+        />
         <main className="flex-1 p-0">
           {content}
           <TaskForm
@@ -1243,6 +1416,6 @@ function ProjectTasksSection({
       </div>
     </div>
   );
-};
+}
 
 export default MainManagementWindow;

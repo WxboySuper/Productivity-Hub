@@ -8,12 +8,12 @@
   --phub-primary: #2563eb;
   --phub-primary-light: #3b82f6;
   --phub-primary-dark: #1d4ed8;
-  
+
   /* Secondary Colors - More muted */
   --phub-secondary: #8b5cf6;
   --phub-secondary-light: #a78bfa;
   --phub-secondary-dark: #7c3aed;
-  
+
   /* Neutral Colors - Better contrast */
   --phub-gray-50: #f8fafc;
   --phub-gray-100: #f1f5f9;
@@ -25,20 +25,20 @@
   --phub-gray-700: #334155;
   --phub-gray-800: #1e293b;
   --phub-gray-900: #0f172a;
-  
+
   /* Semantic Colors */
   --phub-success: #059669;
   --phub-warning: #d97706;
   --phub-error: #dc2626;
   --phub-info: var(--phub-primary);
-  
+
   /* TEXT COLORS - All dark for white backgrounds */
-  --phub-text-primary: #0f172a;    /* Very dark for main text */
-  --phub-text-secondary: #1e293b;  /* Dark for secondary text */
-  --phub-text-body: #334155;       /* Dark for body text */
-  --phub-text-muted: #475569;      /* Medium for muted text */
+  --phub-text-primary: #0f172a; /* Very dark for main text */
+  --phub-text-secondary: #1e293b; /* Dark for secondary text */
+  --phub-text-body: #334155; /* Dark for body text */
+  --phub-text-muted: #475569; /* Medium for muted text */
   --phub-text-placeholder: #64748b; /* Darker placeholders */
-  
+
   /* Spacing */
   --phub-space-xs: 0.25rem;
   --phub-space-sm: 0.5rem;
@@ -46,32 +46,43 @@
   --phub-space-lg: 1.5rem;
   --phub-space-xl: 2rem;
   --phub-space-2xl: 3rem;
-  
+
   /* Radius */
   --phub-radius-sm: 0.375rem;
   --phub-radius-md: 0.5rem;
   --phub-radius-lg: 0.75rem;
   --phub-radius-xl: 1rem;
-  
+
   /* Transitions */
   --phub-transition-fast: 150ms ease-out;
   --phub-transition-normal: 250ms ease-out;
   --phub-transition-slow: 350ms ease-out;
-  
+
   /* Shadows */
   --phub-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --phub-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --phub-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --phub-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --phub-shadow-md:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --phub-shadow-lg:
+    0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --phub-shadow-xl:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
 /* === PRODUCTIVITY-FOCUSED MODAL === */
 .phub-productive-modal-backdrop {
   position: fixed;
   inset: 0;
-  background: 
-    radial-gradient(circle at 25% 25%, rgba(37, 99, 235, 0.1) 0%, transparent 25%),
-    radial-gradient(circle at 75% 75%, rgba(139, 92, 246, 0.1) 0%, transparent 25%),
+  background:
+    radial-gradient(
+      circle at 25% 25%,
+      rgba(37, 99, 235, 0.1) 0%,
+      transparent 25%
+    ),
+    radial-gradient(
+      circle at 75% 75%,
+      rgba(139, 92, 246, 0.1) 0%,
+      transparent 25%
+    ),
     rgba(15, 23, 42, 0.4);
   backdrop-filter: blur(4px);
   display: flex;
@@ -86,13 +97,16 @@
 }
 
 @keyframes phub-backdrop-appear {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .phub-productive-form-container {
-  background: 
-    linear-gradient(135deg, #ffffff 0%, #fefefe 50%, #fdfdfd 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #fefefe 50%, #fdfdfd 100%);
   border-radius: var(--phub-radius-xl);
   box-shadow: var(--phub-shadow-xl);
   width: 90vw;
@@ -107,20 +121,24 @@
 }
 
 @keyframes phub-form-appear {
-  from { 
-    opacity: 0; 
-    transform: scale(0.95) translateY(10px); 
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
   }
-  to { 
-    opacity: 1; 
-    transform: scale(1) translateY(0); 
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
   }
 }
 
 /* === CLEAN HEADER === */
 .phub-productive-form-header {
   padding: var(--phub-space-xl) var(--phub-space-xl) var(--phub-space-lg);
-  background: linear-gradient(135deg, var(--phub-primary) 0%, var(--phub-secondary) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--phub-primary) 0%,
+    var(--phub-secondary) 100%
+  );
   color: white;
   position: relative;
 }
@@ -214,7 +232,11 @@
   flex-wrap: wrap;
   gap: var(--phub-space-md);
   padding: var(--phub-space-lg);
-  background: linear-gradient(135deg, var(--phub-gray-700) 0%, var(--phub-gray-800) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--phub-gray-700) 0%,
+    var(--phub-gray-800) 100%
+  );
   border-radius: var(--phub-radius-lg);
   border: 1px solid var(--phub-gray-600);
 }
@@ -566,7 +588,11 @@
 /* === HELPFUL TIPS (Fixed Dark Text Issue) === */
 /* === HELPFUL TIPS SECTION - Improved formatting === */
 .phub-tips-section {
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(139, 92, 246, 0.05) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(37, 99, 235, 0.08) 0%,
+    rgba(139, 92, 246, 0.05) 100%
+  );
   border: 1px solid rgba(37, 99, 235, 0.2);
   border-radius: var(--phub-radius-lg);
   padding: var(--phub-space-lg);
@@ -636,21 +662,21 @@
     width: 95vw;
     max-height: 95vh;
   }
-  
+
   .phub-productive-form-header,
   .phub-productive-form-body,
   .phub-form-actions {
     padding: var(--phub-space-lg);
   }
-  
+
   .phub-quick-actions {
     flex-direction: column;
   }
-  
+
   .phub-priority-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   .phub-form-actions {
     flex-direction: column;
   }

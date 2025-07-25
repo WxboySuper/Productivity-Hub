@@ -3,6 +3,7 @@
 A high-level list of features for reference. For the step-by-step development checklist, see `ROADMAP.md`.
 
 ## Core Features
+
 - User authentication (register, login, logout) using Flask sessions, with optional social login (Google, Discord) via Flask-Dance/Authlib
 - Task management (CRUD, categories, priorities, deadlines, recurrence)
 - Project management (CRUD, progress tracking)
@@ -18,6 +19,7 @@ A high-level list of features for reference. For the step-by-step development ch
 - Gamification (badges, streaks, achievements, etc.)
 
 ## Advanced/Future Features
+
 - Multiplatform support (responsive web, desktop, Android)
 - AI/ML features (smart suggestions, productivity insights)
 - Collaboration/team features
@@ -33,6 +35,7 @@ A high-level list of features for reference. For the step-by-step development ch
 ## Implementation Status
 
 ### Implemented (as of v0.4.0-dev6)
+
 - User registration, login, and logout endpoints using Flask session (not Flask-Login)
 - Secure password hashing and constant-time password validation to prevent timing attacks
 - Session-based authentication: user ID stored in session on login, cleared on logout
@@ -41,6 +44,7 @@ A high-level list of features for reference. For the step-by-step development ch
 - Logging for all authentication events and errors
 
 ### Planned
+
 - Social login (Google, Discord) via Flask-Dance/Authlib
 - Task management (CRUD, categories, priorities, deadlines, recurrence)
 - Project management (CRUD, progress tracking)

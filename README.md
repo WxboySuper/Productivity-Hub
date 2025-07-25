@@ -14,6 +14,7 @@ A personal productivity assistant to help you track tasks, manage projects, sche
 ## Getting Started
 
 ### Prerequisites
+
 - Node.js (for frontend)
 - Python 3.9+ (for backend)
 - SQLite (default, comes with Python)
@@ -33,15 +34,19 @@ A personal productivity assistant to help you track tasks, manage projects, sche
    - `python app.py`
 
 ### Deployment
+
 - See `DEPLOYMENT.md` for VPS deployment instructions (to be created).
 
 ## Roadmap
+
 See [ROADMAP.md](./ROADMAP.md) for a step-by-step development checklist.
 
 ## Features
+
 See [FEATURES.md](./FEATURES.md) for a high-level feature list.
 
 ## License
+
 MIT
 
 ---
@@ -51,6 +56,7 @@ MIT
 ### Register
 
 POST `/api/register`
+
 ```json
 {
   "username": "yourname",
@@ -62,13 +68,16 @@ POST `/api/register`
 ### Login
 
 POST `/api/login`
+
 ```json
 {
   "username": "yourname",
   "password": "StrongPassword123!"
 }
 ```
+
 or
+
 ```json
 {
   "email": "your@email.com",
