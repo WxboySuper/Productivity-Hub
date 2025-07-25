@@ -7,6 +7,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## API Change Summary Requirement
 - For every stable, alpha, or beta release, summarize all API changes (new endpoints, deleted endpoints, changes to endpoints, etc.) in the changelog, even if they were already documented in dev releases. This ensures the release notes provide a complete overview of API evolution for each version.
 
+## [v0.12.0-beta] - 2024-XX-XX
+
+### UI/UX & Project Management
+- Major UI/UX redesign: dynamic backgrounds, modern forms, responsive layout
+- Background theme system (10 themes: Ocean, Sunset, Forest, Space, etc.)
+- Multiple form design systems (Creative, Productivity Focused, Modern, etc.)
+- Authentication improvements: CSRF, error handling, session management
+- Toast notification system
+- ErrorBoundary and fallback UI
+- Project management UI (completed)
+- Refactored component structure and test organization
+- Added/expanded frontend and backend tests (high coverage)
+- CI/CD workflow improvements
+- Documentation updates
+
+### Accessibility & Testing
+- ARIA audit and improvements for all major UI components
+- Automated accessibility tests for forms, modals, notifications, and navigation
+- Keyboard navigation and tab order fixes
+- Color contrast and focus management improvements
+- Accessibility coverage tracked in checklists and roadmap
+
+### Documentation & Process
+- End-of-version checklist template updated for best practices
+- Roadmap split into smaller milestones for reviewability
+- Archived old checklists for reference
+- Personal change tracking and idea dumping system added
+
 ## [v0.12.0-dev11] - 2025-07-22
 
 ### Frontend Testing & Coverage
@@ -58,308 +86,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Technical Fixes
 - Updated component mocking: Fixed TaskForm, ProjectForm, and TaskDetails mocks for hook-based architecture
 - Resolved duplicate element selection: Fixed "Found multiple elements" errors with specific DOM targeting
-- Corrected hook mock structure: Aligned API response mocks with `useProjects`/`useTasks` hook expectations
-- Fixed import paths: Resolved all test import issues after directory restructuring
-
-## [v0.12.0-dev9] - 2025-07-13
-### Added
-- **Complete UI/UX System Overhaul:** Implemented a comprehensive modern UI design system with multiple themes and dynamic backgrounds
-  - **Dynamic Background System:** Added 10 creative background themes with smooth animations including Creative Dots, Neural Network, Cosmic Waves, Aurora Borealis, Ocean Depths, and more
-  - **Background Switcher:** Interactive background switcher with real-time preview in the top-right corner
-  - **Form System Redesign:** Complete overhaul of all forms with modern, productivity-focused design inspired by ClickUp/Todoist
-  - **Advanced Form Components:** New creative form system with floating labels, animated inputs, priority selectors, and expandable sections
-  - **Component Architecture:** Modular component structure for scalable UI development
-
-- **Enhanced Authentication System:** 
-  - **CSRF Token Security:** Fixed critical CSRF token validation issues by correcting cookie vs session token handling
-  - **Authentication Context:** Robust auth state management with proper session validation
-  - **Error Handling:** Comprehensive error boundary system with toast notifications
-  - **Logout Verification:** Enhanced logout process with backend verification
-
-- **Advanced Error Handling & User Feedback:**
-  - **ErrorBoundary Component:** React error boundary with graceful fallbacks and detailed error reporting
-  - **Toast Notification System:** Modern toast provider with success, error, warning, and info notifications
-  - **Loading States:** Comprehensive loading indicators throughout the application
-  - **Form Validation:** Real-time form validation with user-friendly error messages
-
-- **Creative Components & Layout System:**
-  - **Multiple Form Variants:** Created 5+ different form design systems (Creative, Productive, Modern, Advanced Creative, etc.)
-  - **Background Context:** Global background state management with React Context
-  - **Responsive Design:** Mobile-first responsive design across all components
-  - **CSS Architecture:** Organized CSS system with modular stylesheets for each component type
-
-### Changed
-- **Authentication Flow:** 
-  - Completely redesigned authentication components with modern UI
-  - Enhanced session management with proper cleanup on logout
-  - Improved CSRF token handling throughout the application
-  - Fixed authentication state persistence issues
-
-- **Main Management Interface:**
-  - Redesigned sidebar with collapsible navigation
-  - Modern card-based layout for tasks and projects
-  - Enhanced typography and spacing throughout
-  - Improved visual hierarchy and information architecture
-
-- **Form Interactions:**
-  - Complete redesign of task and project forms with modern UX patterns
-  - Progressive disclosure for advanced options
-  - Improved field validation and error display
-  - Enhanced accessibility with proper focus management
-
-- **Notification System:**
-  - Protected notification API calls from unauthenticated access
-  - Improved notification center with better visual design
-  - Enhanced notification cleanup on authentication state changes
-
-### Fixed
-- **Critical CSRF Security Issue:** Resolved CSRF token validation failures where backend was incorrectly checking session storage instead of cookie values
-- **Authentication Logout:** Fixed logout functionality that was failing due to CSRF token mismatches
-- **Debug Panel Removal:** Removed development debug authentication panel from production build
-- **API Error Handling:** Improved error handling for all API endpoints with proper user feedback
-- **Form State Management:** Fixed form state persistence and validation issues
-- **Memory Leaks:** Resolved potential memory leaks in notification polling and authentication checks
-- **Console Log Cleanup:** Removed 15+ debug console.log statements from production code while preserving essential error logging
-
-### Security
-- **CSRF Protection:** Enhanced CSRF token validation system with proper cookie-based verification
-- **Session Security:** Improved session management with secure logout verification
-- **Authentication Guards:** Added comprehensive authentication guards throughout the application
-- **API Security:** Protected all API endpoints with proper authentication and CSRF validation
-
-### Performance
-- **Component Optimization:** Optimized React components with proper memoization and state management
-- **CSS Optimization:** Streamlined CSS with efficient animations and reduced reflows
-- **Background Rendering:** Optimized dynamic background rendering with GPU acceleration
-- **Bundle Size:** Improved code splitting and component lazy loading
-- **Debug Code Cleanup:** Removed 15+ development console.log statements to reduce runtime overhead and prevent debug information exposure
-
-### Developer Experience
-- **CSS Architecture:** Organized stylesheet structure with clear naming conventions
-- **Component Library:** Created reusable component library for consistent UI development
-- **Type Safety:** Enhanced TypeScript types throughout the application
-- **Code Organization:** Improved file structure and component organization
-- **Code Quality:** Removed debug logging and cleaned up development artifacts for production readiness
-
-### API Changes
-- **CSRF Token Endpoint:** Enhanced `/api/csrf-token` endpoint reliability
-- **Authentication Endpoints:** Improved session validation and cleanup
-- **Error Responses:** Standardized error response format across all endpoints
-- **Security Headers:** Enhanced security headers for CSRF protection
-
-### Breaking Changes
-- **Component API:** Some component props may have changed due to UI system overhaul
-- **CSS Classes:** Custom CSS classes may need updates due to new design system
-- **Authentication:** Authentication state management behavior has been enhanced
-
-### Migration Notes
-- **UI Components:** All forms and UI components have been updated with new design system
-- **Authentication:** Enhanced authentication flow may require re-login for existing sessions
-- **Notifications:** Notification system has been enhanced with new security measures
-
-## [v0.12.0-dev8] - 2025-07-09
-### Added
-- **Robust Notification Timing:** Implemented production-ready, resilient notification/reminder timing for all users. Notifications (in-app and browser/OS) now appear only once, at the correct time, and are resilient to server/client restarts.
-- **Persistent Notification Scheduling:** Added a persistent `show_at` (appear at) field to the Notification model and database (Alembic migration). All notification logic now uses this field for precise, reliable scheduling.
-- **Frontend Notification Logic:** Updated `NotificationCenter.tsx` to use `show_at` for notification timing, ensuring notifications are shown only once and at the intended time. Fixed all double-conversion and timezone bugs in notification display and reminder handling.
-- **Backend Notification Logic:** Updated backend endpoints and reminder job to use and return `show_at` for all notifications. All notification and reminder logic now uses UTC consistently.
-- **Date Precision Fix:** Trimmed `show_at` to seconds precision in frontend to avoid JS Date precision issues.
-- **API Documentation:** Updated `docs/API.md` to document new/changed notification and reminder fields and endpoints.
-- **UI Dependencies:** Added `@mui/material`, `@emotion/react`, and `@emotion/styled` to frontend dependencies for improved notification UI.
-
-### Changed
-- **Timezone Handling:** All time handling is now robust: backend stores/returns `show_at` in UTC, frontend converts local input to UTC exactly once, and all logic uses UTC. Eliminated all timezone/double-conversion bugs in both backend and frontend.
-- **Notification/Reminder Logic:** All notification and reminder logic now uses the persistent `show_at` field for scheduling and display. Removed all previous ad-hoc or test/dev logic for notification timing.
-- **Frontend Reminder Input:** Fixed all double-conversion bugs in `TaskFormModal.tsx` (reminder time input and submission).
-- **Code Cleanup:** Removed all debug logging, test notification injectors, and test listeners from `NotificationCenter.tsx`. Removed `TestReminderPopup` and all test notification code from `App.tsx`. Cleaned up `TaskFormModal.tsx` to ensure only production logic remains.
-- **Backend Cleanup:** Removed `/api/notifications/test-create` endpoint and all test/dev-only reminder code from `app.py`.
-- **Database Migration:** Added Alembic migration for `show_at` field in Notification table.
-
-### Removed
-- All test/dev-only code and endpoints related to notifications and reminders from both backend and frontend. Restored production-like behavior throughout the codebase.
-
-### API Change Summary
-- **Notification model:** Added persistent `show_at` (UTC, ISO 8601) field for all notifications.
-- **Notification endpoints:** All endpoints now use and return `show_at` for notification scheduling and display.
-- **Removed:** All test/dev-only notification endpoints and fields.
-- **Task API:** Reminder fields (`reminder_time`, `reminder_recurring`, `reminder_snoozed_until`, `reminder_enabled`) remain as in previous dev version, but all reminder logic now uses robust UTC handling and persistent scheduling.
-- See `docs/API.md` for full details and updated field descriptions.
-
-## [v0.12.0-dev7] - 2025-07-09
-### Changed
-- Implemented task dependencies (Blocked By/Blocking) in backend, API, and frontend UI.
-  - Backend: Added self-referential many-to-many relationship (`task_dependencies` table) to Task model for dependencies.
-  - API: Added endpoints for managing dependencies (`GET/POST/PATCH /api/tasks/<id>/dependencies`), updated main task endpoints to accept `blocked_by` and `blocking` arrays, and improved serialization to include dependency info.
-  - Frontend: Added multi-select dropdown for "Blocking" tasks in TaskFormModal ("Blocked By" is now read-only and derived from other tasks' "Blocking" fields). Dependencies are displayed in TaskDetailsModal with clickable links.
-  - UI: Practical blocking logic—tasks cannot be marked complete if blocked by incomplete tasks or have incomplete subtasks. Clear message shown explaining why completion is disabled.
-  - Fixed linting error in TaskDetailsModal.tsx (undefined `tasks` variable) by passing all tasks as a prop.
-  - Clarified dependency editing: only "Blocking" is user-editable; "Blocked By" is derived and read-only.
-  - Improved task fetching in TaskFormModal: tasks are only fetched once when the modal opens, not on every render.
-
-### Fixed
-- Logging and error handling added for all new backend logic.
-
-### API Change Summary
-- Added `task_dependencies` table and self-referential many-to-many relationship to Task model.
-- New endpoints:
-  - `GET /api/tasks/<id>/dependencies`
-  - `POST /api/tasks/<id>/dependencies`
-  - `PATCH /api/tasks/<id>/dependencies`
-- Updated main task create/update endpoints to accept `blocked_by` and `blocking` arrays.
-- Task serialization now includes `blocked_by` and `blocking` arrays in API responses.
-
-## [v0.12.0-dev6] - 2025-07-08
-### Changed
-- Migrated frontend from Create React App to Vite (Vite config, scripts, and entry points updated; CRA config removed).
-- Refactored `frontend/src/pages/MainManagementWindow.tsx` to use a robust `ensureCsrfToken` helper for all project and task CRUD flows.
-- Updated all project and task CRUD handlers to use the new CSRF logic for security and reliability.
-- Improved error handling and consistency for all API calls in `MainManagementWindow.tsx`.
-- Updated checklist and docs to reflect completed features and bug fixes for v0.12.0-beta.
-
-### Fixed
-- Fixed missing CSRF token in the add project button and all project/task CRUD flows in `MainManagementWindow.tsx`.
-- Fixed React hook order errors and modal logic in `TaskDetailsModal` and related components.
-- Fixed project creation modal logic and ensured correct modal opens from Projects tab.
-- Fixed project assignment and clearing in all CRUD flows.
-- Fixed date/time offset issues in backend for recurring tasks.
-
-### API Change Summary
-- No new endpoints in this dev release, but all state-changing project and task API requests now robustly require and send a CSRF token using the new helper.
-- All frontend API calls for project/task CRUD now use the new CSRF logic for security and reliability.
-
-## [v0.12.0-dev5] - 2025-07-05
-### Changed
-- Updated `.gitignore` to add rules for `docs/temp/*` and `docs/temp` (temp docs exclusion).
-- Upgraded `requirements.txt` (Python dependencies) for backend: added/updated `python-dateutil` and other packages for recurrence and datetime support.
-- Backend (`backend/app.py`):
-  - Added robust recurrence support for tasks, including `next_occurrence` calculation in API responses.
-  - Improved `parse_local_datetime` to avoid double-applying timezone info.
-  - Added `get_next_occurrence` helper for recurring tasks.
-  - Fixed bug: updating a task with `project_id` as `None` or missing now clears the project assignment in the database (allows moving tasks to quick tasks).
-  - Refactored `update_task` endpoint to always process `project_id` and ensure correct clearing/assignment.
-- Frontend (`frontend/src/components/TaskFormModal.tsx`, `TaskDetailsModal.tsx`, `MainManagementWindow.tsx`):
-  - TaskFormModal: Now sends `undefined` for `project_id` when "None (Quick Task)" is selected, allowing backend to clear project assignment.
-  - TaskDetailsModal: Displays `next_occurrence` for recurring tasks.
-  - MainManagementWindow: Normalizes `project_id`/`projectId` mapping, ensures projects are loaded before tasks/forms, and fixes all project/task assignment flows.
-  - Fixed: Editing a task to remove its project now updates both backend and UI correctly.
-  - Fixed: Task Details modal closes before edit form opens, preventing modal stacking issues.
-  - Fixed: Project dropdown in TaskFormModal always loads projects before opening the form.
-  - Fixed: "+ Add Project" button and project creation modal in projects tab.
-  - Removed deprecated project management button from dashboard placeholder.
-
-### Fixed
-- All bugs related to project assignment, quick task conversion, and modal stacking in task/project management flows.
-- Ensured all CRUD flows for tasks and projects work as expected, including clearing project assignment.
-
-### API Change Summary
-- `PUT /api/tasks/<task_id>`: Now allows clearing a task's project assignment by omitting or setting `project_id` to `null`/`None` in the request body. This moves a task from a project to a quick task.
-- Task API responses now include a `next_occurrence` field for recurring tasks.
-
-## [v0.12.0-dev4] - 2025-07-04
-### Added
-- Main Management Window (`MainManagementWindow.tsx`):  
-  - Modern, scalable UI for project and task management with a collapsible sidebar (Add New, All Tasks, Quick Tasks, Projects).
-  - Sidebar navigation with prominent "Add New" button and improved accessibility.
-  - Integrated project management UI under the "Projects" tab, including project info bar and CRUD operations.
-  - Task management views: All Tasks, Quick Tasks, and Project Tasks, each with clear distinction and empty state UI.
-  - Task Details modal (`TaskDetailsModal.tsx`) for viewing all task info, including before-start indicator and recurrence display.
-  - TaskFormModal (`TaskFormModal.tsx`) for adding and editing tasks, supporting all fields, recurrence, and date/time split.
-  - Visual indicator for tasks before their start date/time in TaskDetailsModal.
-  - Edit button in TaskDetailsModal opens TaskFormModal in edit mode, pre-filled with task data.
-
-### Changed
-- Refactored task and project CRUD logic to use real backend API for all operations, with robust error and loading state handling.
-- TaskFormModal now supports both add and edit modes, with proper state reset and hybrid recurrence UI (dropdown + custom input).
-- Date/time fields for due/start date are now split, with time optional and backend-compatible.
-- Improved modal width, alignment, and input state management for better usability.
-- All modals and forms now handle loading and error states gracefully.
-- Refactored code to remove unused variables and resolve all ESLint warnings.
-- TaskFormModal now guards against null `initialValues` to prevent runtime errors.
-
-### Fixed
-- Fixed bug where TaskFormModal would crash if `initialValues` was null.
-- Fixed input state reset bug in TaskFormModal (inputs no longer clear while typing).
-- Fixed modal state, error overlays, and modal not appearing in certain flows.
-- Fixed all ESLint warnings (unused variables, unnecessary escape characters, etc.).
-- Fixed edit task flow: editing a task now updates the backend and refreshes the UI.
-
-### Removed
-- All unused state variables and handlers in MainManagementWindow and TaskDetailsModal for code quality.
-
-### API Change Summary
-_No new API changes in this release. See previous entries for the latest API additions._
-
-## [v0.12.0-dev3] - 2025-07-04
-### Fixed
-- JS-0417: Refactored all inline functions and arrow functions in JSX properties to stable, memoized handlers using `useCallback` in `RegisterPage.tsx`, `ProjectListPage.tsx`, `PasswordResetConfirmPage.tsx`, and `LoginPage.tsx`.
-- JS-0415: Reduced JSX nesting in `RegisterPage.tsx`, `PasswordResetConfirmPage.tsx`, and `LoginPage.tsx` by extracting content into smaller sections or components.
-- JS-0066: Replaced shorthand type coercion with `Boolean(deleteProject)` in `ProjectListPage.tsx` for clarity and code quality.
-
-## [v0.12.0-dev2] - 2025-07-04
-### Added
-- Modern, consistent app-wide header (`AppHeader.tsx`) applied to all main pages (dashboard, home, login, register, password reset, project management).
-- Unified background gradients and layout for all main pages for a visually consistent experience.
-- Project Management UI (`ProjectListPage.tsx`):
-  - Project listing with friendly empty state and instant updates.
-  - Modal form for project creation (`ProjectForm.tsx`) with CSRF and error handling.
-- Improved navigation: app title in header now links to home/dashboard.
-- Project editing and deletion in `ProjectListPage.tsx`:
-  - "Edit" and "Delete" buttons for each project.
-  - Reusable `ConfirmDialog` component for deletion confirmation.
-  - `ProjectForm.tsx` extended to support edit mode (`initialName`, `initialDescription`, `editMode` props).
-  - UI updates instantly after edit/delete.
-
-### Changed
-- Refactored authentication context (`auth.tsx`) to use a single source of truth (`token`), fixing redirect loops and ensuring persistent login state.
-- Removed unused variables in `LoginPage.tsx`, `RegisterPage.tsx`, and `PasswordResetConfirmPage.tsx` to resolve ESLint warnings.
-- Unified and modernized page backgrounds and layouts for a cohesive look (applied to all main pages).
-- Improved debug output and troubleshooting for authentication/routing.
-
-### Fixed
-- JS-0323: Replaced all `any` types with `unknown` for error handling in `ProjectListPage.tsx`.
-- JS-0356: Removed unused variable assignments (e.g., `handleSubmit`) in `RegisterPage.tsx`, `PasswordResetConfirmPage.tsx`, and `LoginPage.tsx`.
-- JS-0417: Refactored `ProjectForm.tsx` to use `useCallback` for all event handlers, avoiding local functions in JSX props.
-- JS-0757: Removed `autoFocus` prop from `ProjectForm.tsx` to comply with accessibility and code quality guidelines.
-- JS-0415: Reduced JSX nesting in `RegisterPage.tsx`, `PasswordResetRequestPage.tsx`, `PasswordResetConfirmPage.tsx`, `LoginPage.tsx`, `HomePage.tsx`, and `DashboardPlaceholderPage.tsx` by extracting content into smaller sections or components.
-
-### Removed
-- Unused variables and assignments in `LoginPage.tsx`, `RegisterPage.tsx`, and `PasswordResetConfirmPage.tsx` (code quality).
-
-### API Change Summary
-_No new API changes in this release. See previous entries for the latest API additions._
-
-## [v0.12.0-dev1] - 2025-07-04
-### Added
-- Modern, consistent app-wide header (`AppHeader.tsx`) applied to all main pages (dashboard, home, login, register, password reset, project management).
-- Unified background gradients and layout for all main pages for a visually consistent experience.
-- Project Management UI (`ProjectListPage.tsx`):
-  - Project listing with friendly empty state and instant updates.
-  - Modal form for project creation (`ProjectForm.tsx`) with CSRF and error handling.
-- Improved navigation: app title in header now links to home/dashboard.
-
-### Changed
-- Refactored authentication context (`auth.tsx`) to use a single source of truth (`token`), fixing redirect loops and ensuring persistent login state.
-- Removed unused variables in `LoginPage.tsx`, `RegisterPage.tsx`, and `PasswordResetConfirmPage.tsx` to resolve ESLint warnings.
-- Unified and modernized page backgrounds and layouts for a cohesive look.
-
-### Fixed
-- Debug output and troubleshooting for authentication and routing issues.
-- All changes tested for robustness and user experience.
-
-### API Change Summary
-_No new API changes in this release. See previous entries for the latest API additions._
-
-## [v0.11.0-beta] - 2025-07-04
-### Summary
-This beta release introduces a modern, full-page unauthenticated landing page, a protected dashboard placeholder for authenticated users, and a robust, persistent authentication flow. All authentication and routing logic has been refactored for security, maintainability, and user experience. DeepSource issues have been addressed for code quality. The changelog and roadmap are fully up to date for this release.
-
-### Added
-- Modern, creative unauthenticated landing page (`HomePage.tsx`) with SVG background and feature highlights.
-- Placeholder dashboard page (`DashboardPlaceholderPage.tsx`) for authenticated users, including a "Sign Out" button.
-- Robust authentication context (`AuthProvider` and `useAuth` in `auth.tsx`) with persistent login state using localStorage.
-- Login flow in `LoginPage.tsx` now uses the backend authentication token and stores it securely in localStorage.
-- Route protection in `App.tsx`: authenticated users see the dashboard, unauthenticated users see the landing page.
-
 ### Changed
 - Refactored routing and authentication logic for clarity, maintainability, and security.
 - Updated changelog and roadmap to reflect all new features and improvements.
@@ -642,7 +368,7 @@ _No new API changes in this release. See v0.8.0-alpha for the latest API additio
 ## [v0.7.0-alpha] - 2025-07-02
 ### Changed
 - Marked all tasks as done, tests were previously implemented already
-
+s
 ## [v0.6.0-alpha] - 2025-07-02
 ### Added
 - `start_date` (optional, ISO 8601 datetime) and `recurrence` (optional, string) fields to the Task model and API.

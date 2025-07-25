@@ -832,7 +832,7 @@ function ProjectTasksSection({
     };
 
     content = (
-      <div className="phub-content-section">
+      <div className="phub-content-section" aria-live="polite">
         <div className="phub-section-header">
           <h2 className="phub-section-title">All Tasks</h2>
           <p className="phub-section-subtitle">Your complete task overview</p>
@@ -939,7 +939,7 @@ function ProjectTasksSection({
 
     content = (
       <>
-        <div className="phub-content-section">
+        <div className="phub-content-section" aria-live="polite">
           <div className="phub-section-header">
             <h2 className="phub-section-title">Quick Tasks</h2>
             <p className="phub-section-subtitle">Your rapid-fire action items</p>
@@ -973,7 +973,7 @@ function ProjectTasksSection({
   } else if (activeView === 'projects') {
     // Only show top-level project tasks (parent_id == null)
     content = (
-      <div className="w-full max-w-3xl mx-auto py-10 px-4">
+      <div className="w-full max-w-3xl mx-auto py-10 px-4" aria-live="polite">
         {!selectedProject ? (
           <div className="phub-content-section">
             <div className="phub-section-header">

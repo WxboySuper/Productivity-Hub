@@ -75,14 +75,14 @@ export default function PasswordResetRequestPage() {
           className="w-full max-w-md bg-white/95 rounded-xl shadow-2xl p-10 border border-blue-200 backdrop-blur-sm z-10 mt-10 phub-glass"
         >
           <h2 className="text-2xl font-bold mb-6 text-center phub-text-gradient">Reset Password</h2>
-          {error && <>
+          {error && <div role="alert" className="mb-4 flex items-center gap-2 rounded border border-red-300 bg-red-50 px-4 py-3 text-red-800 shadow-sm animate-fade-in">
             <svg className="w-5 h-5 text-red-500 mb-1" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12A9 9 0 1 1 3 12a9 9 0 0 1 18 0Z" /></svg>
-            <span role="alert" className="mb-4 block font-semibold text-red-800 bg-red-50 border border-red-300 rounded px-4 py-3 shadow-sm animate-fade-in">{error}</span>
-          </>}
-          {success && <>
+            <span className="font-semibold">{error}</span>
+          </div>}
+          {success && <div role="alert" className="mb-4 flex items-center gap-2 rounded border border-green-300 bg-green-50 px-4 py-3 text-green-800 shadow-sm animate-fade-in">
             <svg className="w-5 h-5 text-green-500 mb-1" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-            <span role="alert" className="mb-4 block font-semibold text-green-800 bg-green-50 border border-green-300 rounded px-4 py-3 shadow-sm animate-fade-in">{success}</span>
-          </>}
+            <span className="font-semibold">{success}</span>
+          </div>}
           <label className="block mb-1 font-medium mb-6" htmlFor="email">
             Email
             <input
