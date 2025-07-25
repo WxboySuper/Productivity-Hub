@@ -266,7 +266,6 @@ def test_paginate_query_tasks_edge_cases(auth_client):
     resp = auth_client.get("/api/tasks?per_page=999")
     assert resp.status_code == 200
     data = resp.get_json()
-    # per_page should be capped at 100
     assert data["per_page"] <= 100
 
 
