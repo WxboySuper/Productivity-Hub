@@ -1,4 +1,3 @@
-
 # =========================
 # Imports
 # =========================
@@ -328,7 +327,9 @@ def validate_title(data):
         return None, "Task title is required"
     return title.strip(), None
 
-def validate_project_id(data, user):
+def validate_project_id(data, user=None):
+    if user is None:
+        user = get_current_user()
     project_id = data.get('project_id')
     if project_id:
         project = Project.query.filter_by(id=project_id, user_id=user.id).first()
@@ -412,28 +413,51 @@ def _serialize_task(task):
         d["recurrence"] = task.recurrence
     return d
 
+def _validate_title(title):
+    if not title or not title.strip():
+        return "Task title is required"
+    return None
+
+def _validate_project_id(project_id, user):
+    if project_id:
+        project = Project.query.filter_by(id=project_id, user_id=user.id).first()
+        if not project:
+            return "Invalid project ID"
+    return None
+
+def _validate_dates(start_date, due_date):
+    if start_date and due_date and start_date > due_date:
+        return "start_date cannot be after due_date"
+    return None
+
 def _validate_and_update_task_fields(task, data, user):
+    """Validate and update task fields. Returns error string or None."""
     # Title
     if 'title' in data:
-        if not data['title'] or not data['title'].strip():
-            return "Task title is required"
+        err = _validate_title(data['title'])
+        if err:
+            return err
         task.title = data['title'].strip()
+
     # Description
     if 'description' in data:
         task.description = data['description'].strip() if data['description'] else ''
+
     # Completed
     if 'completed' in data:
         task.completed = bool(data['completed'])
+
     # Priority
     if 'priority' in data:
         task.priority = data['priority']
+
     # Project
     if 'project_id' in data:
-        if data['project_id']:
-            project = Project.query.filter_by(id=data['project_id'], user_id=user.id).first()
-            if not project:
-                return "Invalid project ID"
+        err = _validate_project_id(data['project_id'])
+        if err:
+            return err
         task.project_id = data['project_id']
+
     # Due Date
     if 'due_date' in data:
         if data['due_date']:
@@ -443,6 +467,7 @@ def _validate_and_update_task_fields(task, data, user):
             task.due_date = due_date
         else:
             task.due_date = None
+
     # Start Date
     if 'start_date' in data:
         if data['start_date']:
@@ -452,12 +477,16 @@ def _validate_and_update_task_fields(task, data, user):
             task.start_date = start_date
         else:
             task.start_date = None
+
     # Recurrence
     if 'recurrence' in data:
         task.recurrence = data['recurrence']
+
     # Validate start_date vs due_date
-    if task.start_date and task.due_date and task.start_date > task.due_date:
-        return "start_date cannot be after due_date"
+    err = _validate_dates(task.start_date, task.due_date)
+    if err:
+        return err
+
     return None
 
 #########################
