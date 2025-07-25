@@ -453,10 +453,11 @@ def _validate_and_update_task_fields(task, data, user):
 
     # Project
     if 'project_id' in data:
-        err = _validate_project_id(data['project_id'])
+        err = _validate_project_id(data['project_id'], user)
         if err:
             return err
-        task.project_id = data['project_id']
+        # Allow removal of project association by setting to None
+        task.project_id = data['project_id'] if data['project_id'] else None
 
     # Due Date
     if 'due_date' in data:
