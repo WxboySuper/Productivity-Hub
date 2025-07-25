@@ -442,17 +442,14 @@ def update_task_title(task, data):
 def update_task_description(task, data):
     if 'description' in data:
         task.description = data['description'].strip() if data['description'] else ''
-    return None
 
 def update_task_completed(task, data):
     if 'completed' in data:
         task.completed = bool(data['completed'])
-    return None
 
 def update_task_priority(task, data):
     if 'priority' in data:
         task.priority = data['priority']
-    return None
 
 def update_task_project(task, data, user):
     if 'project_id' in data:
@@ -487,7 +484,6 @@ def update_task_start_date(task, data):
 def update_task_recurrence(task, data):
     if 'recurrence' in data:
         task.recurrence = data['recurrence']
-    return None
 
 def _validate_and_update_task_fields(task, data, user):
     """Validate and update task fields. Returns error string or None."""
