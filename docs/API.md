@@ -270,9 +270,9 @@ All endpoints require the user to be authenticated (session-based). Include the 
 - Usage:
   - Tokens are single-use and expire after a set period (default: 60 minutes, configurable).
   - Used to validate password reset requests and securely update user passwords.
- 
- > [!NOTE]
- > **v0.12.0 Update:** Token expiration is now enforced, error responses are more detailed, and the email template includes expiration info.
+
+> [!NOTE]
+> **v0.12.0 Update:** Token expiration is now enforced, error responses are more detailed, and the email template includes expiration info.
 
 ##### Email Delivery Configuration
 
