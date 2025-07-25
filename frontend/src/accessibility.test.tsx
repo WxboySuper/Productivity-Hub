@@ -8,7 +8,7 @@ import App from './App';
 describe('Accessibility', () => {
   it('App should have no major accessibility violations', async () => {
     const { container } = render(<App />);
-  // axe-core expects a raw HTML string or document
+  // axe-core expects a raw HTML element or document
   const results = await axe.run(container);
   expect(results.violations.length).toBe(0);
   });
