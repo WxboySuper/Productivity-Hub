@@ -15,9 +15,7 @@ PROJECTS_URL = "/api/projects"
 def auth_client(client):
     unique = uuid.uuid4().hex[:8]
     username = f"projuser_{unique}"
-    email = (
-        f"proj_{unique}@weatherboysuper.com"
-    )
+    email = f"proj_{unique}@weatherboysuper.com"
     client.post(
         REGISTER_URL,
         json={
@@ -38,9 +36,7 @@ def test_create_project_success(auth_client):
         PROJECTS_URL,
         json={
             "name": "Test Project",
-            "description": (
-                "A project for testing."
-            ),
+            "description": "A project for testing.",
         },
     )
     assert resp.status_code == 201
@@ -59,7 +55,8 @@ def test_create_project_missing_name(auth_client):
 
 def test_create_project_requires_json(auth_client):
     """
-    Test that /api/projects POST returns 400 and correct error if request is not JSON (covers app.py:798-799).
+    Test that /api/projects POST returns 400 and correct error if
+    request is not JSON (covers app.py:798-799).
     """
     # Send form data instead of JSON
     resp = auth_client.post(
@@ -77,7 +74,8 @@ def test_create_project_requires_json(auth_client):
 
 def test_create_project_requires_json_variants(auth_client):
     """
-    Test that /api/projects POST returns 400 and correct error if request is not JSON (explicitly covers app.py:1001-1002).
+    Test that /api/projects POST returns 400 and correct error if
+    request is not JSON (explicitly covers app.py:1001-1002).
     """
     # Send no data, no content type
     resp = auth_client.post(PROJECTS_URL)

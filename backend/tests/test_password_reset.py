@@ -3,12 +3,12 @@ import sys
 import os
 from unittest.mock import patch
 from datetime import timedelta, datetime, timezone
+from app import User, PasswordResetToken
 
 # Ensure the parent directory is in sys.path for relative imports
 sys.path.insert(
     0, os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 )
-from app import User, PasswordResetToken
 
 
 @pytest.fixture
@@ -32,7 +32,8 @@ def test_password_reset_request_valid_email(mock_send_email, client, db, user):
     assert "token" in data
     # Token should be stored in DB
     prt = PasswordResetToken.query.filter_by(
-        user_id=user.id, token=data["token"]
+        user_id=user.id,
+        token=data["token"]
     ).first()
     assert prt is not None
 

@@ -24,7 +24,8 @@ def import_app_with_env(
     dotenv_path, monkeypatch, exists_value=True, load_success=True
 ):
     """
-    Dynamically import app.py with a given DOTENV_PATH, controlling os.path.exists and load_dotenv return values.
+    Dynamically import app.py with a given DOTENV_PATH,
+    controlling os.path.exists and load_dotenv return values.
     """
     orig_join = os.path.join
 

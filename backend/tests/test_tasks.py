@@ -1,5 +1,6 @@
 """
-test_tasks.py: Automated tests for Task CRUD endpoints, including validation, error handling, and ownership checks.
+test_tasks.py: Automated tests for Task CRUD endpoints,
+including validation, error handling, and ownership checks.
 """
 
 import pytest
@@ -49,7 +50,8 @@ def test_create_task_missing_title(auth_client):
 
 def test_create_task_invalid_project_id(auth_client):
     """
-    Test /api/tasks POST with an invalid project_id returns 400 and correct error (covers app.py:1018-1021).
+    Test /api/tasks POST with an invalid project_id returns 400 and correct error.
+    Covers app.py:1018-1021.
     """
     # Use a project_id that does not exist for this user
     resp = auth_client.post(
@@ -67,7 +69,8 @@ def test_create_task_invalid_project_id(auth_client):
 
 def test_create_task_invalid_parent_id(auth_client):
     """
-    Test /api/tasks POST with an invalid parent_id returns 400 and correct error (covers app.py:1026-1027).
+    Test /api/tasks POST with an invalid parent_id returns 400 and correct error.
+    Covers app.py:1026-1027.
     """
     # Use a parent_id that does not exist for this user
     resp = auth_client.post(
@@ -85,7 +88,8 @@ def test_create_task_invalid_parent_id(auth_client):
 
 def test_create_task_invalid_due_date_format(auth_client):
     """
-    Test /api/tasks POST with an invalid due_date format returns 400 and correct error (covers app.py:1043-1044).
+    Test /api/tasks POST with an invalid due_date format returns 400 and correct error.
+    Covers app.py:1043-1044.
     """
     resp = auth_client.post(
         TASKS_URL,

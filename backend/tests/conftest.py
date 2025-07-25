@@ -7,12 +7,12 @@ import pytest
 import sys
 import os
 import tempfile
+from app import app as flask_app, db as _db
 
 # Ensure the backend directory is in sys.path for imports
 sys.path.insert(
     0, os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 )
-from app import app as flask_app, db as _db
 
 
 @pytest.fixture(scope="session")
@@ -55,8 +55,9 @@ def db():
 @pytest.fixture(scope="function")
 def auth_client(app):
     """
-    Returns a test client with a registered and logged-in user using a valid email domain.
-    Ensures CSRF is fully disabled for all requests in test mode.
+    Returns a test client with a registered and logged-in user
+    using a valid email domain. Ensures CSRF is fully disabled
+    for all requests in test mode.
     """
     client = app.test_client()
     # Use a valid, non-example.com email
