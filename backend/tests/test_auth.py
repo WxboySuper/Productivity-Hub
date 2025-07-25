@@ -745,7 +745,7 @@ def test_generate_csrf_token_new_token(client):
 @pytest.mark.usefixtures("client", "db")
 def test_generate_csrf_token_existing_cookie(client):
     """Covers the branch where an existing CSRF token is found in cookies and returned."""
-    test_token = "testtoken1234"
+    test_token = "7a3a01c066082e712fa8dd9b4aeccb0c"  # valid 32-char hex string
     with client.application.test_request_context(
         "/", headers={"Cookie": f"_csrf_token={test_token}"}
     ):
