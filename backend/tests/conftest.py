@@ -1,17 +1,24 @@
+
 """
-conftest.py for pytest configuration and fixtures for the Productivity Hub backend.
-Sets up a test Flask app and database for isolated testing.
+conftest.py for pytest configuration and fixtures for the Productivity Hub
+backend. Sets up a test Flask app and database for isolated testing.
 """
 
-# Add backend directory to sys.path for local imports (required for test discovery)
+# Add backend directory to sys.path for local imports
+# (required for test discovery)
 import sys
 import os
-
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
 import tempfile
 import pytest
-from app import app as flask_app, db as _db
+
+sys.path.insert(
+    0,
+    os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..")
+    ),
+)
+
+from app import app as flask_app, db as _db  # noqa: E402
 
 
 @pytest.fixture(scope="session")

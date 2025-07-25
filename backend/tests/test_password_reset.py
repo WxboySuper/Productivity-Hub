@@ -8,7 +8,7 @@ from datetime import timedelta, datetime, timezone
 sys.path.insert(
     0, os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 )
-from app import User, PasswordResetToken
+from app import User, PasswordResetToken  # noqa: E402
 
 
 @pytest.fixture
