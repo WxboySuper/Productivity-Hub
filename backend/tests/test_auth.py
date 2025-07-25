@@ -1,6 +1,6 @@
 """
-Automated tests for user registration, login, logout, profile, and CSRF/session logic.
-Covers both success and failure cases.
+Automated tests for user registration, login, logout, profile,
+and CSRF/session logic. Covers both success and failure cases.
 """
 
 import pytest
@@ -53,7 +53,9 @@ def test_register_missing_fields(client):
 
 @pytest.mark.usefixtures("client", "db")
 def test_register_requires_json():
-    """Test that /api/register returns 400 and correct error if request is not JSON."""
+    """
+    Test that /api/register returns 400 and correct error if request is not JSON.
+    """
     from app import app as flask_app
 
     with flask_app.test_client() as client:
@@ -73,7 +75,9 @@ def test_register_requires_json():
 
 @pytest.mark.usefixtures("client", "db")
 def test_register_invalid_email():
-    """Test that /api/register returns 400 and correct error for invalid email."""
+    """
+    Test that /api/register returns 400 and correct error for invalid email.
+    """
     from app import app as flask_app
 
     with flask_app.test_client() as client:
@@ -90,7 +94,9 @@ def test_register_invalid_email():
 
 @pytest.mark.usefixtures("client", "db")
 def test_login_requires_json():
-    """Test that /api/login returns 400 and correct error if request is not JSON."""
+    """
+    Test that /api/login returns 400 and correct error if request is not JSON.
+    """
     from app import app as flask_app
 
     with flask_app.test_client() as client:
