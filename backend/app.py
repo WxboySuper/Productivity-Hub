@@ -369,7 +369,6 @@ def login_required(f):
             logger.warning("Unauthorized access attempt.")
             return error_response("Authentication required", 401)
         return f(*args, **kwargs)
-
     return decorated_function
 
 
@@ -380,7 +379,10 @@ def generate_csrf_token():
     The token should be set as a cookie by the caller.
     Returns the CSRF token string.
     """
-    # Always generate a new secure token
+    existing_token = request.cookies.get("_csrf_token")
+    if existing_token:
+        logger.debug("Using existing CSRF token from cookie.")
+        return existing_token
     logger.info("Generating new CSRF token.")
     return secrets.token_hex(16)
 
@@ -408,17 +410,17 @@ def csrf_protect():
 
         cookie_str = token[:10] + "..." if token else "None"
         header_str = header_token[:10] + "..." if header_token else "None"
-    logger.debug("CSRF cookie:")
-    logger.debug(cookie_str)
-    logger.debug("CSRF header:")
-    logger.debug(header_str)
-    if not token or token != header_token:
-        logger.warning(
-            "CSRF token missing or invalid. Cookie: %s, Header: %s",
-            token,
-            header_token,
-        )
-        return error_response("Invalid or missing CSRF token", 403)
+        logger.debug("CSRF cookie:")
+        logger.debug(cookie_str)
+        logger.debug("CSRF header:")
+        logger.debug(header_str)
+        if not token or token != header_token:
+            logger.warning(
+                "CSRF token missing or invalid. Cookie: %s, Header: %s",
+                token,
+                header_token,
+            )
+            return error_response("Invalid or missing CSRF token", 403)
 
 
 # --- Task Validation/Parsing Helpers ---
@@ -883,6 +885,9 @@ def get_profile():
     """Get the current user's profile."""
     logger.info("Profile GET endpoint accessed.")
     user = get_current_user()
+    if not user:
+        logger.warning("Profile requested for missing user (unauthenticated or deleted).")
+        return error_response("Authentication required", 401)
     logger.info(
         "Returning profile for user: %s (ID: %s)", user.username, user.id
     )
@@ -1102,15 +1107,11 @@ def get_csrf_token():
         "CSRF token endpoint accessed."
     )
     token = generate_csrf_token()
-    response = jsonify(
-        {
-            "csrf_token": token
-        }
-    )
+    response = jsonify({"csrf_token": token if token else ""})
     # Set cookie for frontend JS with a secure, server-generated token
     response.set_cookie(
         "_csrf_token",
-        token,
+        token if token else "",
         secure=True,
         httponly=True,
         samesite="Lax"
