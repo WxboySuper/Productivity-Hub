@@ -1,8 +1,7 @@
+import importlib.util
 import os
 import sys
-import importlib.util
 import warnings
-
 
 BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
 APP_PATH = os.path.abspath(os.path.join(BACKEND_DIR, "..", "app.py"))

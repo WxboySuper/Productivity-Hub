@@ -3,20 +3,21 @@ Automated tests for user registration, login, logout, profile,
 and CSRF/session logic. Covers both success and failure cases.
 """
 
-import pytest
-import uuid
-import re
-import flask
-import logging
-from unittest.mock import patch, MagicMock
-from datetime import datetime, timedelta, timezone
 import builtins
+import logging
+import re
+import uuid
+from datetime import datetime, timedelta, timezone
+from unittest.mock import MagicMock, patch
+
+import flask
+import pytest
 from app import (
-    get_current_user,
-    db,
-    User,
-    generate_csrf_token,
     Notification,
+    User,
+    db,
+    generate_csrf_token,
+    get_current_user,
     send_email,
 )
 
