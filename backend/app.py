@@ -353,6 +353,7 @@ def parse_date(date_str, field_name):
 
     return None, None
 
+
 # --- Task Creation/Serialization Helpers ---
 def _extract_task_fields(data, user):
     """Helper to extract and validate all fields for task creation."""
@@ -410,6 +411,54 @@ def _serialize_task(task):
     if task.recurrence:
         d["recurrence"] = task.recurrence
     return d
+
+def _validate_and_update_task_fields(task, data, user):
+    # Title
+    if 'title' in data:
+        if not data['title'] or not data['title'].strip():
+            return "Task title is required"
+        task.title = data['title'].strip()
+    # Description
+    if 'description' in data:
+        task.description = data['description'].strip() if data['description'] else ''
+    # Completed
+    if 'completed' in data:
+        task.completed = bool(data['completed'])
+    # Priority
+    if 'priority' in data:
+        task.priority = data['priority']
+    # Project
+    if 'project_id' in data:
+        if data['project_id']:
+            project = Project.query.filter_by(id=data['project_id'], user_id=user.id).first()
+            if not project:
+                return "Invalid project ID"
+        task.project_id = data['project_id']
+    # Due Date
+    if 'due_date' in data:
+        if data['due_date']:
+            due_date, err = parse_date(data['due_date'], 'due_date')
+            if err:
+                return err
+            task.due_date = due_date
+        else:
+            task.due_date = None
+    # Start Date
+    if 'start_date' in data:
+        if data['start_date']:
+            start_date, err = parse_date(data['start_date'], 'start_date')
+            if err:
+                return err
+            task.start_date = start_date
+        else:
+            task.start_date = None
+    # Recurrence
+    if 'recurrence' in data:
+        task.recurrence = data['recurrence']
+    # Validate start_date vs due_date
+    if task.start_date and task.due_date and task.start_date > task.due_date:
+        return "start_date cannot be after due_date"
+    return None
 
 #########################
 # Route Definitions
@@ -1236,44 +1285,9 @@ def update_task(task_id):
     data = request.get_json()
 
     try:
-        # Update fields if provided
-        if 'title' in data:
-            if not data['title'] or not data['title'].strip():
-                return error_response("Task title is required", 400)
-            task.title = data['title'].strip()
-        if 'description' in data:
-            task.description = data['description'].strip() if data['description'] else ''
-        if 'completed' in data:
-            task.completed = bool(data['completed'])
-        if 'priority' in data:
-            task.priority = data['priority']
-        if 'project_id' in data:
-            if data['project_id']:
-                project = Project.query.filter_by(id=data['project_id'], user_id=user.id).first()
-                if not project:
-                    return error_response("Invalid project ID", 400)
-            task.project_id = data['project_id']
-        if 'due_date' in data:
-            if data['due_date']:
-                due_date, err = parse_date(data['due_date'], 'due_date')
-                if err:
-                    return error_response(err, 400)
-                task.due_date = due_date
-            else:
-                task.due_date = None
-        if 'start_date' in data:
-            if data['start_date']:
-                start_date, err = parse_date(data['start_date'], 'start_date')
-                if err:
-                    return error_response(err, 400)
-                task.start_date = start_date
-            else:
-                task.start_date = None
-        if 'recurrence' in data:
-            task.recurrence = data['recurrence']
-        # Validate that start_date is not after due_date
-        if task.start_date and task.due_date and task.start_date > task.due_date:
-            return error_response("start_date cannot be after due_date", 400)
+        err = _validate_and_update_task_fields(task, data, user)
+        if err:
+            return error_response(err, 400)
         db.session.commit()
         logger.info("Task '%s' updated successfully for user: %s", task.title, user.username)
         task_dict = {
