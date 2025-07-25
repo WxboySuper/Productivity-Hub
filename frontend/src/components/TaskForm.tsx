@@ -642,7 +642,9 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
 
   // Handle click outside and Escape key for modal close
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      return undefined;
+    }
 
     const handleClick = (e: MouseEvent) => {
       /* v8 ignore next 8 */
@@ -659,7 +661,6 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
     document.addEventListener("mousedown", handleClick);
     document.addEventListener("keydown", handleKeyDown);
     return () => {
-      //skipcq: JS-0045
       document.removeEventListener("mousedown", handleClick);
       document.removeEventListener("keydown", handleKeyDown);
     };
