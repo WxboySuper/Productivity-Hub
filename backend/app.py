@@ -589,7 +589,6 @@ def update_task_recurrence(task, data):
 
 def _validate_and_update_task_fields(task, data, user):
     """Validate and update task fields. Returns error string or None."""
-
     for updater in [
         lambda: update_task_title(task, data),
         lambda: update_task_description(task, data),
@@ -821,22 +820,21 @@ def check_auth():
             ),
             200,
         )
-    else:
-        logger.info("Auth check: No authenticated user")
-        return (
-            jsonify(
-                {
-                    "authenticated": False,
-                    "user": None,
-                    "session_info": {
-                        "has_session_id": bool(session.get("_id")),
-                        "has_user_id": bool(session.get("user_id")),
-                        "session_keys": list(session.keys()),
-                    },
-                }
-            ),
-            200,
-        )
+    logger.info("Auth check: No authenticated user")
+    return (
+        jsonify(
+            {
+                "authenticated": False,
+                "user": None,
+                "session_info": {
+                    "has_session_id": bool(session.get("_id")),
+                    "has_user_id": bool(session.get("user_id")),
+                    "session_keys": list(session.keys()),
+                },
+            }
+        ),
+        200,
+    )
 
 
 # --- Get User Profile ---
@@ -1147,9 +1145,7 @@ def password_reset_request():
 
 @app.route("/api/password-reset/confirm", methods=["POST"])
 def password_reset_confirm():
-    """
-    Confirm password reset: token, new_password, validate, update.
-    """
+    """Confirm password reset: token, new_password, validate, update."""
     logger.info("Password reset confirmation endpoint accessed.")
     if not request.is_json:
         logger.error("Password reset confirm failed: " "Request must be JSON.")
@@ -1211,9 +1207,7 @@ EMAIL_FROM = os.environ.get("EMAIL_FROM", "noreply@localhost")
 
 
 def send_email(to_address, subject, body):
-    """
-    Send an email using SMTP. Logs success or failure.
-    """
+    """Send an email using SMTP. Logs success or failure."""
     msg = EmailMessage()
     msg["Subject"] = subject
     msg["From"] = EMAIL_FROM
@@ -1245,9 +1239,7 @@ def send_email(to_address, subject, body):
 
 # Helper for password reset email template
 def render_password_reset_email(reset_link, expiration_minutes=60):
-    """
-    Render the password reset email body using a template.
-    """
+    """Render the password reset email body using a template."""
     template = Template(
         "Hello,\n\nA password reset was requested for your account. "
         "If this was you, click the link below to reset your password.\n\n"

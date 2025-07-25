@@ -11,9 +11,7 @@ APP_PATH = os.path.join(BACKEND_DIR, "..", "app.py")
 
 @pytest.fixture
 def temp_env():
-    """
-    Fixture to create a temporary directory and .env file.
-    """
+    """Fixture to create a temporary directory and .env file."""
     temp_dir = tempfile.mkdtemp()
     dotenv_path = os.path.join(temp_dir, ".env")
     yield temp_dir, dotenv_path

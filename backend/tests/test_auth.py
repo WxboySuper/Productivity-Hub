@@ -76,9 +76,7 @@ def test_register_requires_json():
 
 @pytest.mark.usefixtures("client", "db")
 def test_register_invalid_email():
-    """
-    Test that /api/register returns 400 and correct error for invalid email.
-    """
+    """Test that /api/register returns 400 and correct error for invalid email."""
     from app import app as flask_app
 
     with flask_app.test_client() as client:
@@ -95,9 +93,7 @@ def test_register_invalid_email():
 
 @pytest.mark.usefixtures("client", "db")
 def test_login_requires_json():
-    """
-    Test that /api/login returns 400 and correct error if request is not JSON.
-    """
+    """Test that /api/login returns 400 and correct error if request is not JSON."""
     from app import app as flask_app
 
     with flask_app.test_client() as client:
