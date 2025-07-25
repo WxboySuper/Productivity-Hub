@@ -12,6 +12,7 @@ This document describes the REST API endpoints for Task management in Productivi
 > - [CSRF Token Usage](#csrf-token-usage): Details clarified
 > - [Timezone-Aware Datetime Handling](#timezone-aware-datetime-handling): All datetime fields are now timezone-aware
 > - [Error Handling (Granular)](#error-handling-granular): More granular error responses
+>
 >   See [CHANGELOG.md](../CHANGELOG.md) for full details.
 
 ---
@@ -624,7 +625,8 @@ _Expand this file as you add more endpoints or features._
 - Only tasks owned by the current user can be set as dependencies.
 - The main task create/update endpoints also accept `blocked_by` and `blocking` arrays in the payload to set dependencies at creation/update time.
 - The `blocked_by` and `blocking` fields in the task object are arrays of task IDs.
-  > [!NOTE]
-  > **v0.12.0 Update:** Error responses are now more granular and actionable, with specific messages for each validation failure.
+  
+> [!NOTE]
+> **v0.12.0 Update:** Error responses are now more granular and actionable, with specific messages for each validation failure.
 
 ---
