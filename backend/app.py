@@ -1116,7 +1116,8 @@ def get_csrf_token():
     response.set_cookie(
         "_csrf_token",
         token,
-        httponly=False,
+        secure=True,
+        httponly=True,
         samesite="Lax"
     )
     return response
