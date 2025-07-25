@@ -430,36 +430,39 @@ def _validate_dates(start_date, due_date):
         return "start_date cannot be after due_date"
     return None
 
-def _validate_and_update_task_fields(task, data, user):
-    """Validate and update task fields. Returns error string or None."""
-    # Title
+# --- Task Update Helpers ---
+def update_task_title(task, data):
     if 'title' in data:
         err = _validate_title(data['title'])
         if err:
             return err
         task.title = data['title'].strip()
+    return None
 
-    # Description
+def update_task_description(task, data):
     if 'description' in data:
         task.description = data['description'].strip() if data['description'] else ''
+    return None
 
-    # Completed
+def update_task_completed(task, data):
     if 'completed' in data:
         task.completed = bool(data['completed'])
+    return None
 
-    # Priority
+def update_task_priority(task, data):
     if 'priority' in data:
         task.priority = data['priority']
+    return None
 
-    # Project
+def update_task_project(task, data, user):
     if 'project_id' in data:
         err = _validate_project_id(data['project_id'], user)
         if err:
             return err
-        # Allow removal of project association by setting to None
         task.project_id = data['project_id'] if data['project_id'] else None
+    return None
 
-    # Due Date
+def update_task_due_date(task, data):
     if 'due_date' in data:
         if data['due_date']:
             due_date, err = parse_date(data['due_date'], 'due_date')
@@ -468,8 +471,9 @@ def _validate_and_update_task_fields(task, data, user):
             task.due_date = due_date
         else:
             task.due_date = None
+    return None
 
-    # Start Date
+def update_task_start_date(task, data):
     if 'start_date' in data:
         if data['start_date']:
             start_date, err = parse_date(data['start_date'], 'start_date')
@@ -478,16 +482,33 @@ def _validate_and_update_task_fields(task, data, user):
             task.start_date = start_date
         else:
             task.start_date = None
+    return None
 
-    # Recurrence
+def update_task_recurrence(task, data):
     if 'recurrence' in data:
         task.recurrence = data['recurrence']
+    return None
 
-    # Validate start_date vs due_date
+def _validate_and_update_task_fields(task, data, user):
+    """Validate and update task fields. Returns error string or None."""
+
+    for updater in [
+        lambda: update_task_title(task, data),
+        lambda: update_task_description(task, data),
+        lambda: update_task_completed(task, data),
+        lambda: update_task_priority(task, data),
+        lambda: update_task_project(task, data, user),
+        lambda: update_task_due_date(task, data),
+        lambda: update_task_start_date(task, data),
+        lambda: update_task_recurrence(task, data)
+    ]:
+        err = updater()
+        if err:
+            return err
+
     err = _validate_dates(task.start_date, task.due_date)
     if err:
         return err
-
     return None
 
 #########################
