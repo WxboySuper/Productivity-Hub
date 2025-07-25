@@ -29,9 +29,7 @@ def upgrade():
         sa.UniqueConstraint("username"),
     )
     with op.batch_alter_table("user", schema=None) as batch_op:
-        batch_op.create_index(
-            batch_op.f("ix_user_email"), ["email"], unique=True
-        )
+        batch_op.create_index(batch_op.f("ix_user_email"), ["email"], unique=True)
 
     op.create_table(
         "password_reset_tokens",
@@ -101,12 +99,8 @@ def upgrade():
         sa.Column("reminder_recurring", sa.String(), nullable=True),
         sa.Column("reminder_snoozed_until", sa.DateTime(), nullable=True),
         sa.Column("reminder_enabled", sa.Boolean(), nullable=False),
-        sa.ForeignKeyConstraint(
-            ["parent_id"], ["task.id"], ondelete="CASCADE"
-        ),
-        sa.ForeignKeyConstraint(
-            ["project_id"], ["project.id"], ondelete="SET NULL"
-        ),
+        sa.ForeignKeyConstraint(["parent_id"], ["task.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(["project_id"], ["project.id"], ondelete="SET NULL"),
         sa.ForeignKeyConstraint(
             ["user_id"],
             ["user.id"],
@@ -142,12 +136,8 @@ def upgrade():
         "task_dependencies",
         sa.Column("blocker_id", sa.Integer(), nullable=False),
         sa.Column("blocked_id", sa.Integer(), nullable=False),
-        sa.ForeignKeyConstraint(
-            ["blocked_id"], ["task.id"], ondelete="CASCADE"
-        ),
-        sa.ForeignKeyConstraint(
-            ["blocker_id"], ["task.id"], ondelete="CASCADE"
-        ),
+        sa.ForeignKeyConstraint(["blocked_id"], ["task.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(["blocker_id"], ["task.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("blocker_id", "blocked_id"),
     )
     # ### end Alembic commands ###

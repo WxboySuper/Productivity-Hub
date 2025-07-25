@@ -9,7 +9,4 @@ def test_home_route():
     with app.test_client() as client:
         response = client.get("/")
         assert response.status_code == 200
-        assert (
-            response.data.decode()
-            == "Welcome to the Productivity Hub Backend!"
-        )
+        assert response.data.decode() == "Welcome to the Productivity Hub Backend!"

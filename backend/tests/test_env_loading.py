@@ -20,9 +20,7 @@ def temp_env():
     shutil.rmtree(temp_dir)
 
 
-def import_app_with_env(
-    dotenv_path, monkeypatch, exists_value=True, load_success=True
-):
+def import_app_with_env(dotenv_path, monkeypatch, exists_value=True, load_success=True):
     """
     Dynamically import app.py with a given DOTENV_PATH,
     controlling os.path.exists and load_dotenv return values.
@@ -84,6 +82,4 @@ def test_app_loads_env_file_success(monkeypatch, temp_env):
     with open(dotenv_path, "w") as f:
         f.write("DUMMY=1\n")
     # Simulate .env file exists and loads successfully
-    import_app_with_env(
-        dotenv_path, monkeypatch, exists_value=True, load_success=True
-    )
+    import_app_with_env(dotenv_path, monkeypatch, exists_value=True, load_success=True)

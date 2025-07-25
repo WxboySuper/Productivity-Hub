@@ -24,17 +24,13 @@ def auth_client(client):
             "password": "StrongPass1!",
         },
     )
-    client.post(
-        LOGIN_URL, json={"username": username, "password": "StrongPass1!"}
-    )
+    client.post(LOGIN_URL, json={"username": username, "password": "StrongPass1!"})
     client._taskuser = username
     return client
 
 
 def test_create_task_success(auth_client):
-    resp = auth_client.post(
-        TASKS_URL, json={"title": "Test Task", "priority": 2}
-    )
+    resp = auth_client.post(TASKS_URL, json={"title": "Test Task", "priority": 2})
     assert resp.status_code == 201
     data = resp.get_json()
     assert data["title"] == "Test Task"
@@ -134,9 +130,7 @@ def test_create_task_with_valid_project_id(auth_client):
         "/api/projects",
         json={
             "name": "Project For Task",
-            "description": (
-                "Project to test valid project_id on task creation."
-            ),
+            "description": ("Project to test valid project_id on task creation."),
         },
     )
     assert resp.status_code == 201
@@ -189,9 +183,7 @@ def test_update_task_requires_json(auth_client):
 
 def test_update_task(auth_client):
     # Create a task
-    resp = auth_client.post(
-        TASKS_URL, json={"title": "To Update", "priority": 1}
-    )
+    resp = auth_client.post(TASKS_URL, json={"title": "To Update", "priority": 1})
     task_id = resp.get_json()["id"]
     # Update
     resp = auth_client.put(
@@ -205,9 +197,7 @@ def test_update_task(auth_client):
 
 def test_delete_task(auth_client):
     # Create a task
-    resp = auth_client.post(
-        TASKS_URL, json={"title": "To Delete", "priority": 1}
-    )
+    resp = auth_client.post(TASKS_URL, json={"title": "To Delete", "priority": 1})
     task_id = resp.get_json()["id"]
     # Delete
     resp = auth_client.delete(f"{TASKS_URL}/{task_id}")
@@ -224,9 +214,7 @@ def test_update_task_404(auth_client):
     Covers app.py:1153.
     """
     # Use a task_id that does not exist
-    resp = auth_client.put(
-        f"{TASKS_URL}/99999999", json={"title": "Should Fail"}
-    )
+    resp = auth_client.put(f"{TASKS_URL}/99999999", json={"title": "Should Fail"})
     assert resp.status_code == 404
     data = resp.get_json()
     assert "error" in data and "not found" in data["error"].lower()
@@ -254,9 +242,7 @@ def test_get_object_or_404_task_404(auth_client):
 @pytest.mark.usefixtures("auth_client")
 def test_paginate_query_tasks_edge_cases(auth_client):
     # Create 1 task
-    auth_client.post(
-        "/api/tasks", json={"title": "Paginate Task", "priority": 1}
-    )
+    auth_client.post("/api/tasks", json={"title": "Paginate Task", "priority": 1})
     # Request page out of range
     resp = auth_client.get("/api/tasks?page=100&per_page=1")
     assert resp.status_code == 200
@@ -319,9 +305,7 @@ def test_get_tasks_due_start_recurrence_fields(auth_client):
     )
     assert resp.status_code == 201
     # Create a task with none of those fields
-    resp2 = auth_client.post(
-        TASKS_URL, json={"title": "No Fields", "priority": 1}
-    )
+    resp2 = auth_client.post(TASKS_URL, json={"title": "No Fields", "priority": 1})
     assert resp2.status_code == 201
     # Fetch all tasks
     resp = auth_client.get(TASKS_URL)
@@ -352,9 +336,7 @@ def test_get_tasks_with_subtasks(auth_client):
     Covers app.py:966-967.
     """
     # Create a parent task
-    resp = auth_client.post(
-        TASKS_URL, json={"title": "Parent Task", "priority": 1}
-    )
+    resp = auth_client.post(TASKS_URL, json={"title": "Parent Task", "priority": 1})
     assert resp.status_code == 201
     parent_id = resp.get_json()["id"]
 
@@ -374,9 +356,7 @@ def test_get_tasks_with_subtasks(auth_client):
     try:
         parent_task = next(t for t in data if t["title"] == "Parent Task")
     except StopIteration:
-        pytest.fail(
-            "Parent task with title 'Parent Task' not found in response data"
-        )
+        pytest.fail("Parent task with title 'Parent Task' not found in response data")
     # Check that subtasks field exists and contains the subtask
     assert "subtasks" in parent_task
     assert isinstance(parent_task["subtasks"], list)
@@ -393,9 +373,7 @@ def test_get_tasks_subtask_due_start_fields(auth_client):
     Covers app.py:976-979.
     """
     # Create a parent task
-    resp = auth_client.post(
-        TASKS_URL, json={"title": "Parent Task 2", "priority": 1}
-    )
+    resp = auth_client.post(TASKS_URL, json={"title": "Parent Task 2", "priority": 1})
     assert resp.status_code == 201
     parent_id = resp.get_json()["id"]
     # Create a subtask with due_date and start_date
@@ -419,18 +397,12 @@ def test_get_tasks_subtask_due_start_fields(auth_client):
     try:
         parent_task = next(t for t in data if t["title"] == "Parent Task 2")
     except StopIteration:
-        pytest.fail(
-            "Parent task with title 'Parent Task 2' not found in response data"
-        )
+        pytest.fail("Parent task with title 'Parent Task 2' not found in response data")
     # Find subtask in parent's subtasks
     try:
-        subtask = next(
-            st for st in parent_task["subtasks"] if st["id"] == subtask_id
-        )
+        subtask = next(st for st in parent_task["subtasks"] if st["id"] == subtask_id)
     except StopIteration:
-        pytest.fail(
-            f"Subtask with id {subtask_id} not found in parent's subtasks"
-        )
+        pytest.fail(f"Subtask with id {subtask_id} not found in parent's subtasks")
     assert subtask["due_date"] == "2025-08-01T10:00:00"
     assert subtask["start_date"] == "2025-07-25T09:00:00"
 
@@ -442,9 +414,7 @@ def test_get_task_by_id_minimal_fields(auth_client):
     Covers app.py:1114-1136, 'if' statements not taken.
     """
     # Create a parent task with only required fields
-    resp = auth_client.post(
-        TASKS_URL, json={"title": "Parent Minimal", "priority": 1}
-    )
+    resp = auth_client.post(TASKS_URL, json={"title": "Parent Minimal", "priority": 1})
     assert resp.status_code == 201
     parent = resp.get_json()
     parent_id = parent["id"]
@@ -472,9 +442,7 @@ def test_get_task_by_id_minimal_fields(auth_client):
     try:
         st = next(st for st in data["subtasks"] if st["id"] == subtask_id)
     except StopIteration:
-        pytest.fail(
-            f"Subtask with id {subtask_id} not found in parent's subtasks"
-        )
+        pytest.fail(f"Subtask with id {subtask_id} not found in parent's subtasks")
     assert st["title"] == "Sub Minimal"
     assert st["priority"] == 1
     assert "due_date" not in st
@@ -533,9 +501,7 @@ def test_get_task_by_id_full_serialization(auth_client):
     try:
         st = next(st for st in data["subtasks"] if st["id"] == subtask_id)
     except StopIteration:
-        pytest.fail(
-            f"Subtask with id {subtask_id} not found in parent's subtasks"
-        )
+        pytest.fail(f"Subtask with id {subtask_id} not found in parent's subtasks")
     assert st["title"] == "Sub Full"
     assert st["description"] == "Sub Desc"
     assert st["priority"] == 3
@@ -571,9 +537,7 @@ def test_create_task_start_date_after_due_date(auth_client):
         },
     )
     assert resp.status_code == 400
-    assert "start_date cannot be after due_date" in resp.get_json().get(
-        "error", ""
-    )
+    assert "start_date cannot be after due_date" in resp.get_json().get("error", "")
 
 
 def test_update_task_start_date_after_due_date(auth_client):
@@ -592,9 +556,7 @@ def test_update_task_start_date_after_due_date(auth_client):
         f"{TASKS_URL}/{task_id}", json={"start_date": "2025-07-11T10:00:00"}
     )
     assert resp.status_code == 400
-    assert "start_date cannot be after due_date" in resp.get_json().get(
-        "error", ""
-    )
+    assert "start_date cannot be after due_date" in resp.get_json().get("error", "")
 
 
 def test_update_task_empty_or_whitespace_title(auth_client):
@@ -604,9 +566,7 @@ def test_update_task_empty_or_whitespace_title(auth_client):
     Covers app.py:1163-1164.
     """
     # Create a valid task
-    resp = auth_client.post(
-        TASKS_URL, json={"title": "Valid Task", "priority": 1}
-    )
+    resp = auth_client.post(TASKS_URL, json={"title": "Valid Task", "priority": 1})
     assert resp.status_code == 201
     task_id = resp.get_json()["id"]
 
@@ -647,9 +607,7 @@ def test_update_task_description_and_completed_fields(auth_client):
     data = resp.get_json()
     assert data["description"] == ""
     # Update description to whitespace only
-    resp = auth_client.put(
-        f"{TASKS_URL}/{task_id}", json={"description": "   "}
-    )
+    resp = auth_client.put(f"{TASKS_URL}/{task_id}", json={"description": "   "})
     assert resp.status_code == 200
     data = resp.get_json()
     assert data["description"] == ""
@@ -712,16 +670,12 @@ def test_update_task_project_id_and_due_date(auth_client):
     Covers app.py:1176-1190.
     """
     # Create a valid task
-    resp = auth_client.post(
-        TASKS_URL, json={"title": "Proj/Due Update", "priority": 1}
-    )
+    resp = auth_client.post(TASKS_URL, json={"title": "Proj/Due Update", "priority": 1})
     assert resp.status_code == 201
     task_id = resp.get_json()["id"]
 
     # Try to update with invalid project_id
-    resp = auth_client.put(
-        f"{TASKS_URL}/{task_id}", json={"project_id": 99999999}
-    )
+    resp = auth_client.put(f"{TASKS_URL}/{task_id}", json={"project_id": 99999999})
     assert resp.status_code == 400
     data = resp.get_json()
     assert data["error"] == "Invalid project ID"
@@ -735,26 +689,20 @@ def test_update_task_project_id_and_due_date(auth_client):
     project_id = resp.get_json()["id"]
 
     # Update with valid project_id
-    resp = auth_client.put(
-        f"{TASKS_URL}/{task_id}", json={"project_id": project_id}
-    )
+    resp = auth_client.put(f"{TASKS_URL}/{task_id}", json={"project_id": project_id})
     assert resp.status_code == 200
     data = resp.get_json()
     assert data["project_id"] == project_id
 
     # Try to update with invalid due_date
-    resp = auth_client.put(
-        f"{TASKS_URL}/{task_id}", json={"due_date": "not-a-date"}
-    )
+    resp = auth_client.put(f"{TASKS_URL}/{task_id}", json={"due_date": "not-a-date"})
     assert resp.status_code == 400
     data = resp.get_json()
     assert data["error"] == "Invalid due_date format"
 
     # Update with valid due_date
     valid_due = "2025-12-31T23:59:00"
-    resp = auth_client.put(
-        f"{TASKS_URL}/{task_id}", json={"due_date": valid_due}
-    )
+    resp = auth_client.put(f"{TASKS_URL}/{task_id}", json={"due_date": valid_due})
     assert resp.status_code == 200
     data = resp.get_json()
     assert data["due_date"] == valid_due
@@ -779,18 +727,14 @@ def test_update_task_start_date_field(auth_client):
     task_id = resp.get_json()["id"]
 
     # Try to update with invalid start_date
-    resp = auth_client.put(
-        f"{TASKS_URL}/{task_id}", json={"start_date": "not-a-date"}
-    )
+    resp = auth_client.put(f"{TASKS_URL}/{task_id}", json={"start_date": "not-a-date"})
     assert resp.status_code == 400
     data = resp.get_json()
     assert data["error"] == "Invalid start_date format"
 
     # Update with valid start_date
     valid_start = "2025-11-30T08:00:00"
-    resp = auth_client.put(
-        f"{TASKS_URL}/{task_id}", json={"start_date": valid_start}
-    )
+    resp = auth_client.put(f"{TASKS_URL}/{task_id}", json={"start_date": valid_start})
     assert resp.status_code == 200
     data = resp.get_json()
     assert data["start_date"] == valid_start

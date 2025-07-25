@@ -146,9 +146,7 @@ def test_login_success(client):
 
 @pytest.mark.usefixtures("client", "db")
 def test_login_invalid(client):
-    resp = client.post(
-        LOGIN_URL, json={"username": "nouser", "password": "wrongpass"}
-    )
+    resp = client.post(LOGIN_URL, json={"username": "nouser", "password": "wrongpass"})
     assert resp.status_code == 401
     assert "error" in resp.get_json()
 
@@ -166,9 +164,7 @@ def test_logout(client):
             "password": "StrongPass1!",
         },
     )
-    client.post(
-        LOGIN_URL, json={"username": username, "password": "StrongPass1!"}
-    )
+    client.post(LOGIN_URL, json={"username": username, "password": "StrongPass1!"})
     resp = client.post(LOGOUT_URL)
     assert resp.status_code == 200
     assert resp.get_json()["message"] == "Logout successful"
@@ -194,9 +190,7 @@ def test_profile_success(client):
             "password": "StrongPass1!",
         },
     )
-    client.post(
-        LOGIN_URL, json={"username": username, "password": "StrongPass1!"}
-    )
+    client.post(LOGIN_URL, json={"username": username, "password": "StrongPass1!"})
     resp = client.get(PROFILE_URL)
     assert resp.status_code == 200
     data = resp.get_json()
@@ -317,18 +311,14 @@ def test_get_notifications_endpoint(client, caplog):
     # Add notifications for this user
     with client.application.app_context():
         user = User.query.filter_by(username=username).first()
-        n1 = Notification(
-            user_id=user.id, message="Test notification 1", read=False
-        )
+        n1 = Notification(user_id=user.id, message="Test notification 1", read=False)
         n2 = Notification(
             user_id=user.id,
             message="Test notification 2",
             read=True,
             show_at=None,
         )
-        n3 = Notification(
-            user_id=user.id, message="Test notification 3", read=False
-        )
+        n3 = Notification(user_id=user.id, message="Test notification 3", read=False)
         db.session.add_all([n1, n2, n3])
         db.session.commit()
         # Add snoozed_until and show_at to n2
@@ -356,8 +346,7 @@ def test_get_notifications_endpoint(client, caplog):
             assert "snoozed_until" in notif
     # Check log message for number of notifications
     assert any(
-        "Returning" in m and "notifications for user" in m
-        for m in caplog.messages
+        "Returning" in m and "notifications for user" in m for m in caplog.messages
     )
 
 
@@ -397,9 +386,7 @@ def test_notification_dismiss_endpoint(client, caplog):
         n = db.session.get(Notification, notif_id)
         assert n.read is True
     # Check log messages
-    assert any(
-        "Notification dismiss endpoint accessed" in m for m in caplog.messages
-    )
+    assert any("Notification dismiss endpoint accessed" in m for m in caplog.messages)
     assert any("dismissed by user" in m for m in caplog.messages)
     # Try dismissing a non-existent notification
     with caplog.at_level(logging.WARNING):
@@ -456,36 +443,26 @@ def test_notification_snooze_endpoint(client, caplog):
         now_utc = datetime.now(timezone.utc)
         assert snoozed_until > now_utc - timedelta(minutes=1)
     # Check log messages
-    assert any(
-        "Notification snooze endpoint accessed" in m for m in caplog.messages
-    )
+    assert any("Notification snooze endpoint accessed" in m for m in caplog.messages)
     assert any("snoozed for" in m and "by user" in m for m in caplog.messages)
     # Error: missing minutes
     resp = client.post(f"/api/notifications/{notif_id}/snooze", json={})
     assert resp.status_code == 400
     assert resp.get_json()["error"] == "Minutes parameter is required"
     # Error: invalid minutes (non-integer)
-    resp = client.post(
-        f"/api/notifications/{notif_id}/snooze", json={"minutes": "bad"}
-    )
+    resp = client.post(f"/api/notifications/{notif_id}/snooze", json={"minutes": "bad"})
     assert resp.status_code == 400
     assert resp.get_json()["error"] == "Invalid minutes value"
     # Error: negative minutes
-    resp = client.post(
-        f"/api/notifications/{notif_id}/snooze", json={"minutes": -5}
-    )
+    resp = client.post(f"/api/notifications/{notif_id}/snooze", json={"minutes": -5})
     assert resp.status_code == 400
     assert resp.get_json()["error"] == "Minutes must be positive"
     # Error: zero minutes
-    resp = client.post(
-        f"/api/notifications/{notif_id}/snooze", json={"minutes": 0}
-    )
+    resp = client.post(f"/api/notifications/{notif_id}/snooze", json={"minutes": 0})
     assert resp.status_code == 400
     assert resp.get_json()["error"] == "Minutes must be positive"
     # Error: notification not found
-    resp = client.post(
-        "/api/notifications/999999/snooze", json={"minutes": 10}
-    )
+    resp = client.post("/api/notifications/999999/snooze", json={"minutes": 10})
     assert resp.status_code == 404
     assert resp.get_json()["error"] == "Notification not found"
     # Error: snoozed_until attribute missing (simulate by monkeypatching
@@ -523,8 +500,8 @@ def test_send_email_success_and_failure(caplog):
         assert result is True
         smtp_instance.send_message.assert_called()
         smtp_instance.quit.assert_called()
-    # Explicitly check SMTP called with correct host/port
-    # (covers app.py:726)
+        # Explicitly check SMTP called with correct host/port
+        # (covers app.py:726)
         from app import EMAIL_HOST, EMAIL_PORT
 
         mock_smtp.assert_any_call(EMAIL_HOST, EMAIL_PORT)
@@ -570,9 +547,7 @@ def test_csrf_protect_profile_update(client):
             "password": "StrongPass1!",
         },
     )
-    client.post(
-        LOGIN_URL, json={"username": username, "password": "StrongPass1!"}
-    )
+    client.post(LOGIN_URL, json={"username": username, "password": "StrongPass1!"})
     client.application.config["TESTING"] = False
     resp = client.put(PROFILE_URL, json={"username": "newname"})
     assert resp.status_code in (403, 400, 401)
@@ -673,9 +648,7 @@ def auth_client(client):
             "password": "StrongPass1!",
         },
     )
-    client.post(
-        LOGIN_URL, json={"username": username, "password": "StrongPass1!"}
-    )
+    client.post(LOGIN_URL, json={"username": username, "password": "StrongPass1!"})
     # skipcq: PYL-W0212
     client._authtestuser = username
     return client
@@ -883,8 +856,7 @@ def test_csrf_protect_testing_mode_skips_check(client, caplog):
     with caplog.at_level("DEBUG"):
         client.post("/api/register", json=reg_data)
     assert any(
-        "CSRF protection is disabled in TESTING mode." in m
-        for m in caplog.messages
+        "CSRF protection is disabled in TESTING mode." in m for m in caplog.messages
     )
 
 
@@ -961,6 +933,4 @@ def test_auth_check_no_user_logs_info(client, caplog):
         resp = client.get("/api/auth/check")
     assert resp.status_code == 200
     # Check that the info log for no authenticated user is present
-    assert any(
-        "Auth check: No authenticated user" in m for m in caplog.messages
-    )
+    assert any("Auth check: No authenticated user" in m for m in caplog.messages)

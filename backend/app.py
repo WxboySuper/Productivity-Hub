@@ -1,4 +1,3 @@
-
 # ========================
 # Imports
 # ========================
@@ -30,15 +29,11 @@ from string import Template
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 DOTENV_PATH = os.path.join(BASE_DIR, ".env")
 if not os.path.exists(DOTENV_PATH):
-    print(
-        f"ERROR: .env file not found at {DOTENV_PATH}. "
-        "Application will exit."
-    )
+    print(f"ERROR: .env file not found at {DOTENV_PATH}. " "Application will exit.")
     sys.exit(1)
 if not load_dotenv(DOTENV_PATH):
     print(
-        f"ERROR: Failed to load .env file at {DOTENV_PATH}. "
-        "Application will exit."
+        f"ERROR: Failed to load .env file at {DOTENV_PATH}. " "Application will exit."
     )
     sys.exit(1)
 
@@ -62,15 +57,11 @@ db_path = os.path.join(BASE_DIR, "productivity_hub.db")
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
     "DATABASE_URL", f"sqlite:///{db_path}"
 )
-app.config["SESSION_COOKIE_SECURE"] = (
-    False  # Set to True in production with HTTPS
-)
+app.config["SESSION_COOKIE_SECURE"] = False  # Set to True in production with HTTPS
 app.config["SESSION_COOKIE_HTTPONLY"] = (
     True  # Prevent JavaScript access to session cookies
 )
-app.config["SESSION_COOKIE_SAMESITE"] = (
-    "Lax"  # Set SameSite policy for session cookies
-)
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"  # Set SameSite policy for session cookies
 
 # --- Production Warning ---
 if (
@@ -161,9 +152,7 @@ class Task(db.Model):
     due_date = db.Column(db.DateTime)
     start_date = db.Column(db.DateTime)  # New: optional start date
     priority = db.Column(db.Integer, default=1, nullable=False)
-    recurrence = db.Column(
-        db.String
-    )  # New: optional recurrence rule (string or JSON)
+    recurrence = db.Column(db.String)  # New: optional recurrence rule (string or JSON)
     completed = db.Column(db.Boolean, default=False)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     project_id = db.Column(
@@ -240,9 +229,7 @@ class PasswordResetToken(db.Model):
     created_at = db.Column(
         db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False
     )
-    expires_at = db.Column(
-        db.DateTime, nullable=False
-    )  # New: expiration timestamp
+    expires_at = db.Column(db.DateTime, nullable=False)  # New: expiration timestamp
     used = db.Column(db.Boolean, default=False, nullable=False)
 
     user = db.relationship(
@@ -255,9 +242,7 @@ class Notification(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     task_id = db.Column(db.Integer, db.ForeignKey("task.id"), nullable=True)
-    title = db.Column(
-        db.String(100), nullable=True
-    )  # Optional title for notifications
+    title = db.Column(db.String(100), nullable=True)  # Optional title for notifications
     message = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     read = db.Column(db.Boolean, default=False, nullable=False)
@@ -267,12 +252,8 @@ class Notification(db.Model):
         db.DateTime, nullable=True
     )  # When the notification should appear
 
-    user = db.relationship(
-        "User", backref=db.backref("notifications", lazy=True)
-    )
-    task = db.relationship(
-        "Task", backref=db.backref("notifications", lazy=True)
-    )
+    user = db.relationship("User", backref=db.backref("notifications", lazy=True))
+    task = db.relationship("Task", backref=db.backref("notifications", lazy=True))
 
 
 ##
@@ -333,9 +314,7 @@ def get_current_user():
     if user_id:
         user = db.session.get(User, user_id)
         if user:
-            logger.info(
-                "Current user found: %s (ID: %s)", user.username, user.id
-            )
+            logger.info("Current user found: %s (ID: %s)", user.username, user.id)
         else:
             logger.warning("User ID %s not found in database.", user_id)
         return user
@@ -369,6 +348,7 @@ def login_required(f):
             logger.warning("Unauthorized access attempt.")
             return error_response("Authentication required", 401)
         return f(*args, **kwargs)
+
     return decorated_function
 
 
@@ -436,9 +416,7 @@ def validate_project_id(data, user=None):
         user = get_current_user()
     project_id = data.get("project_id")
     if project_id:
-        project = Project.query.filter_by(
-            id=project_id, user_id=user.id
-        ).first()
+        project = Project.query.filter_by(id=project_id, user_id=user.id).first()
         if not project:
             return None, "Invalid project ID"
     return project_id, None
@@ -447,9 +425,7 @@ def validate_project_id(data, user=None):
 def validate_parent_id(data, user):
     parent_id = data.get("parent_id")
     if parent_id:
-        parent_task = Task.query.filter_by(
-            id=parent_id, user_id=user.id
-        ).first()
+        parent_task = Task.query.filter_by(id=parent_id, user_id=user.id).first()
         if not parent_task:
             return None, "Invalid parent task ID"
     return parent_id, None
@@ -536,9 +512,7 @@ def _validate_title(title):
 
 def _validate_project_id(project_id, user):
     if project_id:
-        project = Project.query.filter_by(
-            id=project_id, user_id=user.id
-        ).first()
+        project = Project.query.filter_by(id=project_id, user_id=user.id).first()
         if not project:
             return "Invalid project ID"
     return None
@@ -562,9 +536,7 @@ def update_task_title(task, data):
 
 def update_task_description(task, data):
     if "description" in data:
-        task.description = (
-            data["description"].strip() if data["description"] else ""
-        )
+        task.description = data["description"].strip() if data["description"] else ""
 
 
 def update_task_completed(task, data):
@@ -641,9 +613,7 @@ def _validate_and_update_task_fields(task, data, user):
 ##
 # Route Definitions
 ##
-app.before_request(
-    csrf_protect
-)  # Register CSRF protection as a before_request handler
+app.before_request(csrf_protect)  # Register CSRF protection as a before_request handler
 
 
 @app.route("/")
@@ -683,9 +653,7 @@ def register():
         or not email.strip()
         or not password.strip()
     ):
-        logger.error(
-            "Missing required fields: username, email, or password."
-        )
+        logger.error("Missing required fields: username, email, or password.")
         return error_response(
             "Missing required fields: username, email, or password",
             400,
@@ -756,8 +724,7 @@ def login():
 
     # Find user by username or email
     user = User.query.filter(
-        (User.username == username_or_email)
-        | (User.email == username_or_email)
+        (User.username == username_or_email) | (User.email == username_or_email)
     ).first()
 
     # Always perform password check to prevent timing attacks
@@ -782,9 +749,7 @@ def login():
 
     # Debug session after login
     logger.debug("Session after login: %s", dict(session))
-    logger.debug(
-        "Session ID after login: %s", session.get("_id", "No session ID")
-    )
+    logger.debug("Session ID after login: %s", session.get("_id", "No session ID"))
 
     logger.info("User %s logged in successfully.", user.username)
     return (
@@ -829,9 +794,7 @@ def check_auth():
     # Debug session information
     logger.debug("Session contents: %s", dict(session))
     logger.debug("Session ID: %s", session.get("_id", "No session ID"))
-    logger.debug(
-        "User ID from session: %s", session.get("user_id", "No user ID")
-    )
+    logger.debug("User ID from session: %s", session.get("user_id", "No user ID"))
 
     user = get_current_user()
     if user:
@@ -890,13 +853,9 @@ def get_profile():
             "Profile requested for missing user (unauthenticated or deleted)."
         )
         return error_response("Authentication required", 401)
-    logger.info(
-        "Returning profile for user: %s (ID: %s)", user.username, user.id
-    )
+    logger.info("Returning profile for user: %s (ID: %s)", user.username, user.id)
     return (
-        jsonify(
-            {"id": user.id, "username": user.username, "email": user.email}
-        ),
+        jsonify({"id": user.id, "username": user.username, "email": user.email}),
         200,
     )
 
@@ -914,11 +873,7 @@ def update_profile():
     email = data.get("email")
     errors = {}
     if username is not None:
-        if (
-            not isinstance(username, str)
-            or not username.strip()
-            or len(username) < 3
-        ):
+        if not isinstance(username, str) or not username.strip() or len(username) < 3:
             errors["username"] = "Username must be at least 3 characters."
         elif (
             User.query.filter_by(username=username).first()
@@ -933,19 +888,14 @@ def update_profile():
         except EmailNotValidError:
             errors["email"] = "Invalid email address."
         else:
-            if (
-                User.query.filter_by(email=email).first()
-                and email != user.email
-            ):
+            if User.query.filter_by(email=email).first() and email != user.email:
                 errors["email"] = "Email already in use."
             else:
                 user.email = email
     if errors:
         return jsonify({"error": errors}), 400
     db.session.commit()
-    logger.info(
-        "Profile updated for user: %s (ID: %s)", user.username, user.id
-    )
+    logger.info("Profile updated for user: %s (ID: %s)", user.username, user.id)
     return jsonify({"message": "Profile updated successfully."}), 200
 
 
@@ -980,13 +930,8 @@ def get_notifications():
         if notification.show_at:
             notification_dict["show_at"] = notification.show_at.isoformat()
         # Include snoozed_until if it exists
-        if (
-            hasattr(notification, "snoozed_until")
-            and notification.snoozed_until
-        ):
-            notification_dict["snoozed_until"] = (
-                notification.snoozed_until.isoformat()
-            )
+        if hasattr(notification, "snoozed_until") and notification.snoozed_until:
+            notification_dict["snoozed_until"] = notification.snoozed_until.isoformat()
 
         notifications_data.append(notification_dict)
 
@@ -1027,9 +972,7 @@ def dismiss_notification(notification_id):
     notification.read = True
     db.session.commit()
 
-    logger.info(
-        "Notification %s dismissed by user: %s", notification_id, user.username
-    )
+    logger.info("Notification %s dismissed by user: %s", notification_id, user.username)
     return jsonify({"success": True}), 200
 
 
@@ -1087,9 +1030,7 @@ def snooze_notification(notification_id):
             user.username,
         )
         return (
-            jsonify(
-                {"success": True, "snoozed_until": snooze_until.isoformat()}
-            ),
+            jsonify({"success": True, "snoozed_until": snooze_until.isoformat()}),
             200,
         )
 
@@ -1105,18 +1046,12 @@ def get_csrf_token():
     This allows unauthenticated users to get a CSRF token for password reset
     and other flows.
     """
-    logger.info(
-        "CSRF token endpoint accessed."
-    )
+    logger.info("CSRF token endpoint accessed.")
     token = generate_csrf_token()
     response = jsonify({"csrf_token": token})
     # Set cookie for frontend JS with a secure, server-generated token
     response.set_cookie(
-        "_csrf_token",
-        token,
-        secure=True,
-        httponly=True,
-        samesite="Lax"
+        "_csrf_token", token, secure=True, httponly=True, samesite="Lax"
     )
     return response
 
@@ -1145,9 +1080,7 @@ def password_reset_request():
         send_email(
             "dummy@localhost",
             "Password Reset Request",
-            (
-                "If this were real, you'd get a reset link."
-            ),
+            ("If this were real, you'd get a reset link."),
         )
         time.sleep(0.5)  # Simulate token generation delay
         return error_response("Email is required", 400)
@@ -1156,46 +1089,24 @@ def password_reset_request():
     # Always generate token and send email, even if user does not exist
     token = secrets.token_urlsafe(48)
     expiration_minutes = int(
-        os.environ.get(
-            "PASSWORD_RESET_TOKEN_EXPIRATION_MINUTES",
-            60
-        )
+        os.environ.get("PASSWORD_RESET_TOKEN_EXPIRATION_MINUTES", 60)
     )
-    expires_at = (
-        datetime.now(timezone.utc)
-        + timedelta(
-            minutes=expiration_minutes
-        )
-    )
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=expiration_minutes)
     if user:
-        prt = PasswordResetToken(
-            user_id=user.id, token=token, expires_at=expires_at
-        )
+        prt = PasswordResetToken(user_id=user.id, token=token, expires_at=expires_at)
         db.session.add(prt)
         db.session.commit()
         msg = (
             f"Password reset token generated for user_id={user.id} "
             f"(expires at {expires_at.isoformat()})"
         )
-        logger.info(
-            msg
-        )
-        frontend_base_url = os.environ.get(
-            "FRONTEND_BASE_URL", "http://localhost:3000"
-        )
+        logger.info(msg)
+        frontend_base_url = os.environ.get("FRONTEND_BASE_URL", "http://localhost:3000")
         reset_link = (
-            f"{frontend_base_url.rstrip('/')}/password-reset/confirm?token="
-            f"{token}"
+            f"{frontend_base_url.rstrip('/')}/password-reset/confirm?token=" f"{token}"
         )
-        email_body = render_password_reset_email(
-            reset_link,
-            expiration_minutes
-        )
-        email_sent = send_email(
-            user.email,
-            "Password Reset Request",
-            email_body
-        )
+        email_body = render_password_reset_email(reset_link, expiration_minutes)
+        email_sent = send_email(user.email, "Password Reset Request", email_body)
         if not email_sent:
             logger.error("Failed to send password reset email")
     else:
@@ -1203,9 +1114,7 @@ def password_reset_request():
         send_email(
             "dummy@localhost",
             "Password Reset Request",
-            (
-                "If this were real, you'd get a reset link."
-            ),
+            ("If this were real, you'd get a reset link."),
         )
         time.sleep(0.5)  # Simulate token generation delay
     # Always return generic message
@@ -1227,18 +1136,14 @@ def password_reset_request():
         )
     return (
         jsonify(
-            {
-                "message": (
-                    "If the email exists, a password reset link will be "
-                    "sent."
-                )
-            }
+            {"message": ("If the email exists, a password reset link will be " "sent.")}
         ),
         200,
     )
 
 
 # --- Password Reset Confirm ---
+
 
 @app.route("/api/password-reset/confirm", methods=["POST"])
 def password_reset_confirm():
@@ -1247,10 +1152,7 @@ def password_reset_confirm():
     """
     logger.info("Password reset confirmation endpoint accessed.")
     if not request.is_json:
-        logger.error(
-            "Password reset confirm failed: "
-            "Request must be JSON."
-        )
+        logger.error("Password reset confirm failed: " "Request must be JSON.")
         return error_response("Request must be JSON", 400)
 
     data = request.get_json()
@@ -1258,8 +1160,7 @@ def password_reset_confirm():
     new_password = data.get("new_password")
     if not token or not new_password:
         logger.error(
-            "Password reset confirm failed: "
-            "Token and new_password are required."
+            "Password reset confirm failed: " "Token and new_password are required."
         )
         return error_response("Token and new_password are required", 400)
 
@@ -1277,22 +1178,16 @@ def password_reset_confirm():
     else:
         expires_at_aware = prt.expires_at
     if expires_at_aware < datetime.now(timezone.utc):
-        logger.warning(
-            "Password reset confirm failed: Token expired."
-        )
+        logger.warning("Password reset confirm failed: Token expired.")
         return error_response("Invalid or expired token", 400)
 
     user = db.session.get(User, prt.user_id)
     if not user:
-        logger.error(
-            "Password reset confirm failed: User not found."
-        )
+        logger.error("Password reset confirm failed: User not found.")
         return error_response("Invalid or expired token", 400)
 
     if not is_strong_password(new_password):
-        logger.error(
-            "Password reset confirm failed: Weak password."
-        )
+        logger.error("Password reset confirm failed: Weak password.")
         return error_response(
             "Password must be at least 8 characters long and include "
             "uppercase, lowercase, numbers, and special characters.",
@@ -1308,9 +1203,7 @@ def password_reset_confirm():
 
 # Email configuration (set these as environment variables)
 EMAIL_HOST = os.environ.get("EMAIL_HOST", "localhost")
-EMAIL_PORT = int(
-    os.environ.get("EMAIL_PORT", 1025)
-)  # Default to local debug SMTP
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", 1025))  # Default to local debug SMTP
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "false").lower() == "true"
@@ -1375,9 +1268,7 @@ def render_password_reset_email(reset_link, expiration_minutes=60):
 @login_required
 def get_projects():
     """Get all projects for the current user, paginated."""
-    logger.info(
-        "Projects GET endpoint accessed."
-    )
+    logger.info("Projects GET endpoint accessed.")
     user = get_current_user()
 
     # Parse pagination parameters
@@ -1392,9 +1283,7 @@ def get_projects():
     logger.debug("Paginating projects: page=%s, per_page=%s", page, per_page)
 
     # Build query
-    query = Project.query.filter_by(user_id=user.id).order_by(
-        Project.created_at.desc()
-    )
+    query = Project.query.filter_by(user_id=user.id).order_by(Project.created_at.desc())
 
     # Paginate
     pagination = query.paginate(page=page, per_page=per_page, error_out=False)
@@ -1411,11 +1300,7 @@ def get_projects():
             }
         )
 
-    logger.info(
-        "Returning %d projects for user: %s",
-        len(projects_data),
-        user.username
-    )
+    logger.info("Returning %d projects for user: %s", len(projects_data), user.username)
     return (
         jsonify(
             {
@@ -1490,18 +1375,14 @@ def create_project():
 @login_required
 def get_project(project_id):
     """Get a specific project by ID."""
-    logger.info(
-        "Projects GET endpoint accessed for project ID: %s", project_id
-    )
+    logger.info("Projects GET endpoint accessed for project ID: %s", project_id)
     user = get_current_user()
 
     project = Project.query.filter_by(id=project_id, user_id=user.id).first()
     if not project:
         return error_response("Project not found", 404)
 
-    logger.info(
-        "Returning project '%s' for user: %s", project.name, user.username
-    )
+    logger.info("Returning project '%s' for user: %s", project.name, user.username)
     return (
         jsonify(
             {
@@ -1523,9 +1404,7 @@ def get_project(project_id):
 @login_required
 def update_project(project_id):
     """Update an existing project."""
-    logger.info(
-        "Projects PUT endpoint accessed for project ID: %s", project_id
-    )
+    logger.info("Projects PUT endpoint accessed for project ID: %s", project_id)
     user = get_current_user()
 
     project = Project.query.filter_by(id=project_id, user_id=user.id).first()
@@ -1580,9 +1459,7 @@ def update_project(project_id):
 @login_required
 def delete_project(project_id):
     """Delete an existing project and all its tasks."""
-    logger.info(
-        "Projects DELETE endpoint accessed for project ID: %s", project_id
-    )
+    logger.info("Projects DELETE endpoint accessed for project ID: %s", project_id)
     user = get_current_user()
 
     project = Project.query.filter_by(id=project_id, user_id=user.id).first()
@@ -1612,9 +1489,7 @@ def delete_project(project_id):
 @login_required
 def list_tasks():
     """List all tasks for the current user, paginated."""
-    logger.info(
-        "Tasks GET endpoint accessed."
-    )
+    logger.info("Tasks GET endpoint accessed.")
     user = get_current_user()
     try:
         page = int(request.args.get("page", 1))
@@ -1624,9 +1499,7 @@ def list_tasks():
         return error_response("Invalid pagination parameters.", 400)
     per_page = max(1, min(per_page, 100))
     logger.debug("Paginating tasks: page=%s, per_page=%s", page, per_page)
-    query = Task.query.filter_by(user_id=user.id).order_by(
-        Task.created_at.desc()
-    )
+    query = Task.query.filter_by(user_id=user.id).order_by(Task.created_at.desc())
     pagination = query.paginate(page=page, per_page=per_page, error_out=False)
     tasks_data = []
     for task in pagination.items:
@@ -1665,11 +1538,7 @@ def list_tasks():
                 subtask_dict["start_date"] = subtask.start_date.isoformat()
             task_dict["subtasks"].append(subtask_dict)
         tasks_data.append(task_dict)
-    logger.info(
-        "Returning %d tasks for user: %s",
-        len(tasks_data),
-        user.username
-    )
+    logger.info("Returning %d tasks for user: %s", len(tasks_data), user.username)
     return (
         jsonify(
             {

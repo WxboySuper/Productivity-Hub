@@ -24,9 +24,7 @@ def auth_client(client):
             "password": "StrongPass1!",
         },
     )
-    client.post(
-        LOGIN_URL, json={"username": username, "password": "StrongPass1!"}
-    )
+    client.post(LOGIN_URL, json={"username": username, "password": "StrongPass1!"})
     client._projuser = username
     return client
 
@@ -42,9 +40,7 @@ def test_create_project_success(auth_client):
     assert resp.status_code == 201
     data = resp.get_json()
     assert data["name"] == "Test Project"
-    assert (
-        data["description"] == "A project for testing."
-    )
+    assert data["description"] == "A project for testing."
 
 
 def test_create_project_missing_name(auth_client):
@@ -59,17 +55,10 @@ def test_create_project_requires_json(auth_client):
     request is not JSON (covers app.py:798-799).
     """
     # Send form data instead of JSON
-    resp = auth_client.post(
-        PROJECTS_URL,
-        data={
-            "name": "Not JSON"
-        }
-    )
+    resp = auth_client.post(PROJECTS_URL, data={"name": "Not JSON"})
     assert resp.status_code == 400
     data = resp.get_json()
-    assert (
-        data["error"] == "Request must be JSON"
-    )
+    assert data["error"] == "Request must be JSON"
 
 
 def test_create_project_requires_json_variants(auth_client):
@@ -81,16 +70,10 @@ def test_create_project_requires_json_variants(auth_client):
     resp = auth_client.post(PROJECTS_URL)
     assert resp.status_code == 400
     data = resp.get_json()
-    assert (
-        data["error"] == "Request must be JSON"
-    )
+    assert data["error"] == "Request must be JSON"
 
     # Send with explicit non-JSON content type
-    resp = auth_client.post(
-        PROJECTS_URL,
-        data="not json",
-        content_type="text/plain"
-    )
+    resp = auth_client.post(PROJECTS_URL, data="not json", content_type="text/plain")
     assert resp.status_code == 400
     data = resp.get_json()
     assert data["error"] == "Request must be JSON"
@@ -116,9 +99,7 @@ def test_get_project_by_id_success(auth_client):
         PROJECTS_URL,
         json={
             "name": "Single Project",
-            "description": (
-                "Desc"
-            ),
+            "description": ("Desc"),
         },
     )
     assert resp.status_code == 201
@@ -130,9 +111,7 @@ def test_get_project_by_id_success(auth_client):
     data = resp.get_json()
     assert data["id"] == project_id
     assert data["name"] == "Single Project"
-    assert (
-        data["description"] == "Desc"
-    )
+    assert data["description"] == "Desc"
 
 
 def test_update_project(auth_client):
@@ -141,16 +120,11 @@ def test_update_project(auth_client):
     project_id = resp.get_json()["id"]
     # Update
     resp = auth_client.put(
-        f"{PROJECTS_URL}/{project_id}",
-        json={
-            "name": "Updated Project"
-        }
+        f"{PROJECTS_URL}/{project_id}", json={"name": "Updated Project"}
     )
     assert resp.status_code == 200
     data = resp.get_json()
-    assert (
-        data["name"] == "Updated Project"
-    )
+    assert data["name"] == "Updated Project"
 
 
 def test_update_project_not_found(auth_client):
@@ -158,12 +132,7 @@ def test_update_project_not_found(auth_client):
     Test updating a non-existent project returns 404 (covers
     app.py:859-860).
     """
-    resp = auth_client.put(
-        f"{PROJECTS_URL}/999999",
-        json={
-            "name": "Should Fail"
-        }
-    )
+    resp = auth_client.put(f"{PROJECTS_URL}/999999", json={"name": "Should Fail"})
     assert resp.status_code == 404
     data = resp.get_json()
     assert data["error"] == "Project not found"
@@ -178,12 +147,7 @@ def test_update_project_requires_json(auth_client):
     resp = auth_client.post(PROJECTS_URL, json={"name": "Update Me"})
     project_id = resp.get_json()["id"]
     # Try to update with form data
-    resp = auth_client.put(
-        f"{PROJECTS_URL}/{project_id}",
-        data={
-            "name": "Not JSON"
-        }
-    )
+    resp = auth_client.put(f"{PROJECTS_URL}/{project_id}", data={"name": "Not JSON"})
     assert resp.status_code == 400
     data = resp.get_json()
     assert data["error"] == "Request must be JSON"
@@ -201,9 +165,7 @@ def test_update_project_missing_or_blank_name(auth_client):
     resp = auth_client.put(f"{PROJECTS_URL}/{project_id}", json={})
     assert resp.status_code == 400
     data = resp.get_json()
-    assert (
-        data["error"] == "Project name is required"
-    )
+    assert data["error"] == "Project name is required"
     # Try to update with no description (should not error,
     # just for completeness)
 
@@ -225,58 +187,36 @@ def test_update_project_description_variants(auth_client):
         f"{PROJECTS_URL}/{project_id}",
         json={
             "name": "DescTest",
-            "description": (
-                "  New Desc  "
-            ),
+            "description": ("  New Desc  "),
         },
     )
     assert resp.status_code == 200
     data = resp.get_json()
     # Should be stripped
-    assert (
-        data["description"] == "New Desc"
-    )
+    assert data["description"] == "New Desc"
 
     # Update with empty string (should set to empty string)
     resp = auth_client.put(
         f"{PROJECTS_URL}/{project_id}",
         json={
             "name": "DescTest",
-            "description": (
-                ""
-            ),
+            "description": (""),
         },
     )
     assert resp.status_code == 200
     data = resp.get_json()
-    assert (
-        data["description"] == ""
-    )
+    assert data["description"] == ""
 
     # Update with no description field (should leave unchanged)
-    resp = auth_client.put(
-        f"{PROJECTS_URL}/{project_id}",
-        json={
-            "name": "DescTest"
-        }
-    )
+    resp = auth_client.put(f"{PROJECTS_URL}/{project_id}", json={"name": "DescTest"})
     assert resp.status_code == 200
     data = resp.get_json()
-    assert (
-        data["description"] == ""  # Remains as last set value
-    )
+    assert data["description"] == ""  # Remains as last set value
     # Try to update with blank name
-    resp = auth_client.put(
-        f"{PROJECTS_URL}/{project_id}",
-        json={
-            "name": "   "
-        }
-    )
+    resp = auth_client.put(f"{PROJECTS_URL}/{project_id}", json={"name": "   "})
     assert resp.status_code == 400
     data = resp.get_json()
-    assert (
-        data["error"] == "Project name is required"
-    )
+    assert data["error"] == "Project name is required"
 
 
 def test_delete_project(auth_client):
@@ -284,13 +224,9 @@ def test_delete_project(auth_client):
     resp = auth_client.post(PROJECTS_URL, json={"name": "To Delete"})
     project_id = resp.get_json()["id"]
     # Delete
-    resp = auth_client.delete(
-        f"{PROJECTS_URL}/{project_id}"
-    )
+    resp = auth_client.delete(f"{PROJECTS_URL}/{project_id}")
     assert resp.status_code == 200
-    assert (
-        resp.get_json()["message"] == "Project deleted successfully"
-    )
+    assert resp.get_json()["message"] == "Project deleted successfully"
     # Confirm deletion
     resp = auth_client.get(f"{PROJECTS_URL}/{project_id}")
     assert resp.status_code == 404
@@ -301,14 +237,10 @@ def test_delete_project_not_found(auth_client):
     Test deleting a non-existent project returns 404 (covers
     app.py:901-902 for DELETE endpoint).
     """
-    resp = auth_client.delete(
-        f"{PROJECTS_URL}/999999"
-    )
+    resp = auth_client.delete(f"{PROJECTS_URL}/999999")
     assert resp.status_code == 404
     data = resp.get_json()
-    assert (
-        data["error"] == "Project not found"
-    )
+    assert data["error"] == "Project not found"
 
 
 @pytest.mark.usefixtures("client", "db")
@@ -318,19 +250,11 @@ def test_csrf_protect_enforced(client):
         "/api/register",
         json={
             "username": "csrfuser",
-            "email": (
-                "csrf@weatherboysuper.com"
-            ),
-            "password": "StrongPass1!"
+            "email": ("csrf@weatherboysuper.com"),
+            "password": "StrongPass1!",
         },
     )
-    client.post(
-        "/api/login",
-        json={
-            "username": "csrfuser",
-            "password": "StrongPass1!"
-        }
-    )
+    client.post("/api/login", json={"username": "csrfuser", "password": "StrongPass1!"})
     # POST without CSRF token (should fail in non-testing mode)
     client.application.config["TESTING"] = False
     resp = client.post("/api/projects", json={"name": "CSRF Test Project"})
@@ -343,15 +267,11 @@ def test_get_object_or_404_returns_404(auth_client):
     # Try to get a non-existent project
     resp = auth_client.get("/api/projects/99999")
     assert resp.status_code == 404
-    assert (
-        "error" in resp.get_json()
-    )
+    assert "error" in resp.get_json()
     # Try to get a non-existent task
     resp = auth_client.get("/api/tasks/99999")
     assert resp.status_code == 404
-    assert (
-        "error" in resp.get_json()
-    )
+    assert "error" in resp.get_json()
 
 
 @pytest.mark.usefixtures("auth_client")
@@ -362,16 +282,12 @@ def test_paginate_query_edge_cases(auth_client):
     resp = auth_client.get("/api/projects?page=100&per_page=1")
     assert resp.status_code == 200
     data = resp.get_json()
-    assert (
-        data["projects"] == []
-    )
+    assert data["projects"] == []
     # Request per_page over max
     resp = auth_client.get("/api/projects?per_page=999")
     assert resp.status_code == 200
     data = resp.get_json()
-    assert (
-        data["per_page"] <= 100
-    )
+    assert data["per_page"] <= 100
 
 
 def test_get_projects_invalid_pagination_params(auth_client):
@@ -383,6 +299,4 @@ def test_get_projects_invalid_pagination_params(auth_client):
     resp = auth_client.get("/api/projects?page=abc&per_page=2")
     assert resp.status_code == 400
     data = resp.get_json()
-    assert (
-        data["error"] == "Invalid pagination parameters."
-    )
+    assert data["error"] == "Invalid pagination parameters."

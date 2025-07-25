@@ -1,4 +1,3 @@
-
 """
 conftest.py for pytest configuration and fixtures for the Productivity Hub
 backend. Sets up a test Flask app and database for isolated testing.
@@ -13,9 +12,7 @@ import pytest
 
 sys.path.insert(
     0,
-    os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "..")
-    ),
+    os.path.abspath(os.path.join(os.path.dirname(__file__), "..")),
 )
 
 from app import app as flask_app, db as _db  # noqa: E402
