@@ -23,9 +23,9 @@ describe("AppHeader", () => {
   });
 
   it("renders beta label when provided", () => {
-    render(<AppHeaderWrapper betaLabel="v0.12.0-dev10" />);
+    render(<AppHeaderWrapper betaLabel="v0.12.0" />);
 
-    expect(screen.getByText("v0.12.0-dev10")).toBeInTheDocument();
+    expect(screen.getByText("v0.12.0")).toBeInTheDocument();
   });
 
   it("does not render beta label when not provided", () => {
