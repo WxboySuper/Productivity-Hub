@@ -1,5 +1,3 @@
-# DeepSource configuration file
-# Learn how to configure: https://docs.deepsource.com/docs/configuration
 version = 1
 
 test_patterns = [
@@ -35,3 +33,9 @@ name = "javascript"
 
 [[analyzers]]
 name = "test-coverage"
+
+[[transformers]]
+name = "black"
+
+[[transformers]]
+name = "isort"
