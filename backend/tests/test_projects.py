@@ -108,7 +108,8 @@ def test_get_projects(auth_client):
 
 def test_get_project_by_id_success(auth_client):
     """
-    Test /api/projects/<project_id> GET returns the correct project and covers logger/return (app.py:842-843).
+    Test /api/projects/<project_id> GET returns the correct project and
+    covers logger/return (app.py:842-843).
     """
     # Create a project
     resp = auth_client.post(
@@ -154,7 +155,8 @@ def test_update_project(auth_client):
 
 def test_update_project_not_found(auth_client):
     """
-    Test updating a non-existent project returns 404 (covers app.py:859-860).
+    Test updating a non-existent project returns 404 (covers
+    app.py:859-860).
     """
     resp = auth_client.put(
         f"{PROJECTS_URL}/999999",
@@ -169,7 +171,8 @@ def test_update_project_not_found(auth_client):
 
 def test_update_project_requires_json(auth_client):
     """
-    Test updating a project with non-JSON data returns 400 (covers app.py:862-863).
+    Test updating a project with non-JSON data returns 400 (covers
+    app.py:862-863).
     """
     # Create a project
     resp = auth_client.post(PROJECTS_URL, json={"name": "Update Me"})
@@ -188,7 +191,8 @@ def test_update_project_requires_json(auth_client):
 
 def test_update_project_missing_or_blank_name(auth_client):
     """
-    Test updating a project with missing or blank name returns 400 (covers app.py:869-870 for PUT endpoint).
+    Test updating a project with missing or blank name returns 400
+    (covers app.py:869-870 for PUT endpoint).
     """
     # Create a project
     resp = auth_client.post(PROJECTS_URL, json={"name": "Update Name Test"})
@@ -200,12 +204,14 @@ def test_update_project_missing_or_blank_name(auth_client):
     assert (
         data["error"] == "Project name is required"
     )
-    # Try to update with no description (should not error, just for completeness)
+    # Try to update with no description (should not error,
+    # just for completeness)
 
 
 def test_update_project_description_variants(auth_client):
     """
-    Test updating a project's description with various values to cover app.py:874-875.
+    Test updating a project's description with various values to cover
+    app.py:874-875.
     """
     # Create a project with initial description
     resp = auth_client.post(
@@ -292,7 +298,8 @@ def test_delete_project(auth_client):
 
 def test_delete_project_not_found(auth_client):
     """
-    Test deleting a non-existent project returns 404 (covers app.py:901-902 for DELETE endpoint).
+    Test deleting a non-existent project returns 404 (covers
+    app.py:901-902 for DELETE endpoint).
     """
     resp = auth_client.delete(
         f"{PROJECTS_URL}/999999"
@@ -369,7 +376,8 @@ def test_paginate_query_edge_cases(auth_client):
 
 def test_get_projects_invalid_pagination_params(auth_client):
     """
-    Test /api/projects GET with invalid (non-integer) pagination params to cover ValueError branch (app.py:759-761).
+    Test /api/projects GET with invalid (non-integer) pagination params
+    to cover ValueError branch (app.py:759-761).
     """
     # Pass a non-integer page parameter
     resp = auth_client.get("/api/projects?page=abc&per_page=2")

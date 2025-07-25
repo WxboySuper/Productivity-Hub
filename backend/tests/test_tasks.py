@@ -50,8 +50,8 @@ def test_create_task_missing_title(auth_client):
 
 def test_create_task_invalid_project_id(auth_client):
     """
-    Test /api/tasks POST with an invalid project_id returns 400 and correct error.
-    Covers app.py:1018-1021.
+    Test /api/tasks POST with an invalid project_id returns 400 and correct
+    error. Covers app.py:1018-1021.
     """
     # Use a project_id that does not exist for this user
     resp = auth_client.post(
@@ -69,8 +69,8 @@ def test_create_task_invalid_project_id(auth_client):
 
 def test_create_task_invalid_parent_id(auth_client):
     """
-    Test /api/tasks POST with an invalid parent_id returns 400 and correct error.
-    Covers app.py:1026-1027.
+    Test /api/tasks POST with an invalid parent_id returns 400 and correct
+    error. Covers app.py:1026-1027.
     """
     # Use a parent_id that does not exist for this user
     resp = auth_client.post(
@@ -88,7 +88,8 @@ def test_create_task_invalid_parent_id(auth_client):
 
 def test_create_task_invalid_due_date_format(auth_client):
     """
-    Test /api/tasks POST with an invalid due_date format returns 400 and correct error.
+    Test /api/tasks POST with an invalid due_date format returns 400 and
+    correct error.
     Covers app.py:1043-1044.
     """
     resp = auth_client.post(
@@ -106,7 +107,9 @@ def test_create_task_invalid_due_date_format(auth_client):
 
 def test_create_task_invalid_start_date_format(auth_client):
     """
-    Test /api/tasks POST with an invalid start_date format returns 400 and correct error (covers app.py:1049-1050).
+    Test /api/tasks POST with an invalid start_date format returns 400 and
+    correct error.
+    Covers app.py:1049-1050.
     """
     resp = auth_client.post(
         TASKS_URL,
@@ -123,14 +126,17 @@ def test_create_task_invalid_start_date_format(auth_client):
 
 def test_create_task_with_valid_project_id(auth_client):
     """
-    Test /api/tasks POST with a valid project_id (covers the success path through app.py:1020).
+    Test /api/tasks POST with a valid project_id. Covers the success path
+    through app.py:1020.
     """
     # First, create a project for this user
     resp = auth_client.post(
         "/api/projects",
         json={
             "name": "Project For Task",
-            "description": "Project to test valid project_id on task creation.",
+            "description": (
+                "Project to test valid project_id on task creation."
+            ),
         },
     )
     assert resp.status_code == 201
@@ -162,7 +168,8 @@ def test_get_tasks(auth_client):
 
 def test_update_task_requires_json(auth_client):
     """
-    Test PUT /api/tasks/<task_id> with non-JSON data returns 400 and correct error (covers app.py:1155-1156).
+    Test PUT /api/tasks/<task_id> with non-JSON data returns 400 and correct
+    error. Covers app.py:1155-1156.
     """
     # Create a task
     resp = auth_client.post(
@@ -213,7 +220,8 @@ def test_delete_task(auth_client):
 
 def test_update_task_404(auth_client):
     """
-    Test PUT /api/tasks/<task_id> with a non-existent task returns 404 (covers app.py:1153).
+    Test PUT /api/tasks/<task_id> with a non-existent task returns 404.
+    Covers app.py:1153.
     """
     # Use a task_id that does not exist
     resp = auth_client.put(
@@ -226,7 +234,8 @@ def test_update_task_404(auth_client):
 
 def test_delete_task_404(auth_client):
     """
-    Test DELETE /api/tasks/<task_id> with a non-existent task returns 404 (covers app.py:1248).
+    Test DELETE /api/tasks/<task_id> with a non-existent task returns 404.
+    Covers app.py:1248.
     """
     # Use a task_id that does not exist
     resp = auth_client.delete(f"{TASKS_URL}/99999999")
@@ -257,12 +266,14 @@ def test_paginate_query_tasks_edge_cases(auth_client):
     resp = auth_client.get("/api/tasks?per_page=999")
     assert resp.status_code == 200
     data = resp.get_json()
+    # per_page should be capped at 100
     assert data["per_page"] <= 100
 
 
 def test_get_tasks_invalid_pagination_params(auth_client):
     """
-    Test /api/tasks GET with invalid (non-integer) pagination params to cover ValueError branch (app.py:929-931).
+    Test /api/tasks GET with invalid (non-integer) pagination params.
+    Covers ValueError branch (app.py:929-931).
     """
     # Pass a non-integer page parameter
     resp = auth_client.get("/api/tasks?page=abc&per_page=2")
@@ -291,7 +302,10 @@ def test_create_task_with_start_date_and_recurrence(auth_client):
 
 def test_get_tasks_due_start_recurrence_fields(auth_client):
     """
-    Test GET /api/tasks returns due_date, start_date, and recurrence fields when set, and omits them when not set (covers app.py:957-962).
+    Test GET /api/tasks returns due_date, start_date, and recurrence fields
+    when set.
+    Omits them when not set.
+    Covers app.py:957-962.
     """
     # Create a task with all fields
     resp = auth_client.post(
@@ -335,7 +349,8 @@ def test_get_tasks_due_start_recurrence_fields(auth_client):
 
 def test_get_tasks_with_subtasks(auth_client):
     """
-    Test GET /api/tasks returns subtasks in the parent task's 'subtasks' field (covers app.py:966-967).
+    Test GET /api/tasks returns subtasks in the parent task's 'subtasks' field.
+    Covers app.py:966-967.
     """
     # Create a parent task
     resp = auth_client.post(
@@ -374,7 +389,9 @@ def test_get_tasks_with_subtasks(auth_client):
 
 def test_get_tasks_subtask_due_start_fields(auth_client):
     """
-    Test GET /api/tasks returns due_date and start_date fields for subtasks when set (covers app.py:976-979).
+    Test GET /api/tasks returns due_date and start_date fields for subtasks
+    when set.
+    Covers app.py:976-979.
     """
     # Create a parent task
     resp = auth_client.post(
@@ -421,7 +438,9 @@ def test_get_tasks_subtask_due_start_fields(auth_client):
 
 def test_get_task_by_id_minimal_fields(auth_client):
     """
-    Test GET /api/tasks/<task_id> omits due_date, start_date, and recurrence when not set (covers app.py:1114-1136, 'if' statements not taken).
+    Test GET /api/tasks/<task_id> omits due_date, start_date, and recurrence
+    when not set.
+    Covers app.py:1114-1136, 'if' statements not taken.
     """
     # Create a parent task with only required fields
     resp = auth_client.post(
@@ -465,7 +484,8 @@ def test_get_task_by_id_minimal_fields(auth_client):
 
 def test_get_task_by_id_full_serialization(auth_client):
     """
-    Test GET /api/tasks/<task_id> returns all fields and subtasks correctly (covers app.py:1102-1142).
+    Test GET /api/tasks/<task_id> returns all fields and subtasks correctly.
+    Covers app.py:1102-1142.
     """
     # Create a parent task with all optional fields
     resp = auth_client.post(
@@ -580,7 +600,9 @@ def test_update_task_start_date_after_due_date(auth_client):
 
 def test_update_task_empty_or_whitespace_title(auth_client):
     """
-    Test PUT /api/tasks/<task_id> with empty or whitespace-only title returns 400 and correct error (covers app.py:1163-1164).
+    Test PUT /api/tasks/<task_id> with empty or whitespace-only title returns
+    400.
+    Covers app.py:1163-1164.
     """
     # Create a valid task
     resp = auth_client.post(
@@ -604,7 +626,8 @@ def test_update_task_empty_or_whitespace_title(auth_client):
 
 def test_update_task_description_and_completed_fields(auth_client):
     """
-    Test PUT /api/tasks/<task_id> updates description to empty/whitespace and toggles completed (covers app.py:1167-1171).
+    Test PUT /api/tasks/<task_id> updates description to empty/whitespace and
+    toggles completed. Covers app.py:1167-1171.
     """
     # Create a valid task with a description and completed False
     resp = auth_client.post(
@@ -645,7 +668,8 @@ def test_update_task_description_and_completed_fields(auth_client):
 
 def test_update_task_remove_project_id(auth_client):
     """
-    Test PUT /api/tasks/<task_id> with project_id set to None (removes project association, covers branch where data['project_id'] is falsy).
+    Test PUT /api/tasks/<task_id> with project_id set to None (removes project
+    association). Covers branch where data['project_id'] is falsy.
     """
     # Create a valid project
     resp = auth_client.post(
@@ -685,7 +709,8 @@ def test_update_task_remove_project_id(auth_client):
 
 def test_update_task_project_id_and_due_date(auth_client):
     """
-    Test PUT /api/tasks/<task_id> for project_id and due_date update logic (covers app.py:1176-1190).
+    Test PUT /api/tasks/<task_id> for project_id and due date update logic.
+    Covers app.py:1176-1190.
     """
     # Create a valid task
     resp = auth_client.post(
@@ -744,7 +769,8 @@ def test_update_task_project_id_and_due_date(auth_client):
 
 def test_update_task_start_date_field(auth_client):
     """
-    Test PUT /api/tasks/<task_id> for start_date update logic (covers app.py:1196-1199).
+    Test PUT /api/tasks/<task_id> for start_date update logic.
+    Covers app.py:1196-1199.
     """
     # Create a valid task
     resp = auth_client.post(
@@ -779,7 +805,8 @@ def test_update_task_start_date_field(auth_client):
 
 def test_create_task_requires_json(auth_client):
     """
-    Test POST /api/tasks with non-JSON data returns 400 and correct error (covers app.py:1147-1148).
+    Test POST /api/tasks with non-JSON data returns 400 and correct error.
+    Covers app.py:1147-1148.
     """
     # Try to create a task with form data (not JSON)
     resp = auth_client.post(
