@@ -3,16 +3,15 @@ conftest.py for pytest configuration and fixtures for the Productivity Hub backe
 Sets up a test Flask app and database for isolated testing.
 """
 
-import pytest
+# Add backend directory to sys.path for local imports (required for test discovery)
 import sys
 import os
-import tempfile
-from app import app as flask_app, db as _db
 
-# Ensure the backend directory is in sys.path for imports
-sys.path.insert(
-    0, os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-)
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+import tempfile
+import pytest
+from app import app as flask_app, db as _db
 
 
 @pytest.fixture(scope="session")
