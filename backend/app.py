@@ -886,7 +886,9 @@ def get_profile():
     logger.info("Profile GET endpoint accessed.")
     user = get_current_user()
     if not user:
-        logger.warning("Profile requested for missing user (unauthenticated or deleted).")
+        logger.warning(
+            "Profile requested for missing user (unauthenticated or deleted)."
+        )
         return error_response("Authentication required", 401)
     logger.info(
         "Returning profile for user: %s (ID: %s)", user.username, user.id
