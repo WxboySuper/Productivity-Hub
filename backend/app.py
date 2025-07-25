@@ -1103,7 +1103,7 @@ def password_reset_request():
         logger.info(msg)
         frontend_base_url = os.environ.get("FRONTEND_BASE_URL", "http://localhost:3000")
         reset_link = (
-            f"{frontend_base_url.rstrip('/')}/password-reset/confirm?token=" f"{token}"
+            f"{frontend_base_url.rstrip('/')}/password-reset/confirm?token={token}"
         )
         email_body = render_password_reset_email(reset_link, expiration_minutes)
         email_sent = send_email(user.email, "Password Reset Request", email_body)
