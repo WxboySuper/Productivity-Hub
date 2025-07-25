@@ -65,45 +65,65 @@ This roadmap is a step-by-step checklist for building your productivity assistan
     - [x] If authenticated, show a placeholder dashboard or welcome message
 
 ## v0.12.0-beta: Project Management UI ⏳ *Current Focus*
-- [x] Implement comprehensive UI/UX redesign with dynamic backgrounds and modern form systems
-- [x] Add background theme system (10 themes: Ocean, Sunset, Forest, Space, etc.)
-- [x] Implement multiple form design systems (Creative, Productivity Focused, Modern, etc.)
-- [x] Enhance authentication system with improved CSRF handling
-- [x] Add React ErrorBoundary and comprehensive error handling
-- [x] Implement Toast notification system for user feedback
-- [ ] Complete project management UI implementation
+
+**Note:** v0.12.0 grew too large; future versions should be kept smaller and more focused. Testing and documentation should be considered when planning each version, even if not listed in the roadmap.
+
+
+# v0.12.0-beta: Project Management UI & UI/UX Overhaul
+- [x] Comprehensive UI/UX redesign: dynamic backgrounds, modern forms, responsive layout
+- [x] Background theme system (10 themes: Ocean, Sunset, Forest, Space, etc.)
+- [x] Multiple form design systems (Creative, Productivity Focused, Modern, etc.)
+- [x] Authentication improvements: CSRF, error handling, session management
+- [x] Toast notification system
+- [x] ErrorBoundary and fallback UI
+- [x] Accessibility improvements (ARIA, keyboard, screen readers)
+- [x] Automated accessibility tests (ongoing)
+- [x] Project management UI (completed)
+- [x] Refactored component structure and test organization
+- [x] Added/expanded frontend and backend tests (high coverage)
+- [x] CI/CD workflow improvements
+- [x] Documentation updates
+- [ ] Accessibility: audit for color contrast, focus management, screen reader output; expand automated accessibility tests for keyboard navigation, tab order, edge cases; review accessibility coverage after each major UI/UX change
 - [ ] Add forms for creating/editing tasks and projects
 
-## v0.13.0-beta: Task Views
+## v0.13.0-beta: Task Views - List & Kanban
 - [ ] Implement List view
 - [ ] Implement Kanban view
+
+## v0.14.0-beta: Task Views - Calendar & Timeline
 - [ ] Implement Calendar view
 - [ ] Implement Timeline view
 
-## v0.14.0-beta: Analytics & Charts
+## v0.15.0-beta: Analytics & Charts
 - [ ] Add analytics/charts (using a chart library)
 
-## v0.15.0-beta: Custom Dashboard
-- [ ] Create a customizable dashboard for authenticated users
-    - [ ] Overview of tasks, projects, and productivity status
-    - [ ] Charts/analytics (e.g., tasks due soon, completed, project progress)
-    - [ ] Quick links to key features (tasks, projects, settings, etc.)
-    - [ ] Preset widgets (charts, lists, links) that users can add/remove and rearrange to personalize their dashboard layout
-- [ ] Ensure the dashboard is extensible for future widgets, charts, and integrations
-- [ ] Implement UI for users to customize their dashboard layout (add/remove/reorder preset widgets)
+## v0.16.0-beta: Custom Dashboard - Overview & Quick Links
+- [ ] Dashboard Overview: tasks, projects, productivity status
+- [ ] Dashboard Quick Links: tasks, projects, settings, etc.
 
-## v0.16.0-beta: Scheduling UI
+## v0.17.0-beta: Custom Dashboard - Widgets & Extensibility
+- [ ] Dashboard Widgets: add/remove/rearrange preset widgets
+- [ ] Dashboard Extensibility: support for future widgets, charts, integrations
+
+## v0.18.0-beta: Custom Dashboard - Customization UI
+- [ ] Dashboard Customization UI: add/remove/reorder widgets
+
+## v0.19.0-beta: Scheduling UI
 - [ ] Add scheduling UI (calendar, drag-and-drop)
 
-## v0.17.0-beta: Settings & Customization
-- [ ] Add settings page (theme, integrations, notifications)
-- [ ] Add theming (light/dark mode)
-- [ ] Add custom fields for tasks/projects
-- [ ] Add widget-based dashboard customization
+## v0.20.0-beta: Settings & Customization - Settings Page & Theming
+- [ ] Settings Page: theme, integrations, notifications
+- [ ] Theming: light/dark mode
 
-## v0.18.0-beta: Notifications & Data Export
+## v0.21.0-beta: Settings & Customization - Custom Fields & Widget Dashboard
+- [ ] Custom Fields: tasks/projects
+- [ ] Widget-Based Dashboard Customization
+
+## v0.22.0-beta: Notifications & Data Export
 - [ ] Add notifications/reminders (browser, email)
 - [ ] Add data export/import (CSV, JSON)
+
+## v0.23.0-beta: Info & Help Pages
 - [ ] Add info pages (About, Features, Development, Contact) - *See docs/temp/info-pages-plan.md*
 - [ ] Add footer with links to GitHub, roadmap, and documentation
 - [ ] Add help/FAQ section
@@ -134,38 +154,39 @@ This roadmap is a step-by-step checklist for building your productivity assistan
 - [ ] Add Google Drive/Docs UI integration (frontend)
 - [ ] Add file attachment support for tasks and projects
 
-## v1.3.0: Communication Integrations
+## v1.3.0: Discord Integration
 - [ ] Add Discord integration endpoints (backend)
 - [ ] Add Discord UI integration (frontend)
-- [ ] Add email notification improvements
-- [ ] Add Slack integration (optional)
 
-## v1.4.0: Smart Scheduling & AI Features
+## v1.4.0: Email Notification Improvements
+- [ ] Add email notification improvements
+
+## v1.5.0: Smart Scheduling
 - [ ] Design algorithm for auto-scheduling/prioritizing tasks
 - [ ] Implement backend logic for smart scheduling
 - [ ] Add frontend UI for smart scheduling suggestions
+
+## v1.6.0: AI-Powered Task Suggestions
 - [ ] Add AI-powered task suggestions
 
-## v1.5.0: Gamification System Part 1
+## v1.7.0: Gamification System - Badges & Streaks
 - [ ] Design gamification system (define goals, rewards, and progression)
 - [ ] Implement badge system (e.g., for task streaks, project completions)
 - [ ] Implement streak tracking (daily/weekly task completion)
 
-## v1.6.0: Gamification System Part 2
+## v1.8.0: Gamification System - Achievements & XP
 - [ ] Add achievement system (e.g., milestones, productivity challenges)
 - [ ] Add points/XP system for completing tasks and projects
 - [ ] Add progress bar or level system (visualize user progress)
 - [ ] Add gamification UI components and notifications
 
-## v1.7.0: Voice & Smart Home Integration
+## v1.9.0: Voice & Smart Home Integration
 - [ ] Add Alexa integration endpoints (backend)
 - [ ] Add Alexa UI integration (frontend)
 - [ ] Add Google Assistant support
 - [ ] Add voice command processing
 
----
-
-## Future/Advanced (v2.0+)
+## v2.0.0+: Major Platform Upgrade
 - [ ] Desktop app (Electron)
 - [ ] Mobile apps (Progressive Web App or React Native)
 - [ ] Advanced AI/ML features (productivity insights, habit tracking)
@@ -178,4 +199,5 @@ This roadmap is a step-by-step checklist for building your productivity assistan
 
 ---
 
-**Tip:** Make each version a celebration! Adjust, split, or combine versions as you see fit for your own rewarding progress.
+
+**Tip:** Make each version a celebration! Adjust, split, or combine versions as you see fit for your own rewarding progress. Keep versions small and focused for faster progress and more frequent releases. Testing and documentation time should be considered when planning each version.

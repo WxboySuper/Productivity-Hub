@@ -38,6 +38,6 @@ create-random-branch.ps1
 backend/productivity_hub.db-journal
 
 # Temp Docs
-docs/temp/*
-docs/temp
+docs/personal-docs/*
+docs/personal-docs
 */app.backup.py
