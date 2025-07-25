@@ -7,33 +7,49 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## API Change Summary Requirement
 - For every stable, alpha, or beta release, summarize all API changes (new endpoints, deleted endpoints, changes to endpoints, etc.) in the changelog, even if they were already documented in dev releases. This ensures the release notes provide a complete overview of API evolution for each version.
 
-## [v0.12.0-beta] - 2024-XX-XX
 
-### UI/UX & Project Management
-- Major UI/UX redesign: dynamic backgrounds, modern forms, responsive layout
-- Background theme system (10 themes: Ocean, Sunset, Forest, Space, etc.)
+## [v0.12.0-beta] - 2025-07-25
+
+### Added
+- Dynamic backgrounds (10 creative themes), sidebar navigation, and modern card-based layouts
 - Multiple form design systems (Creative, Productivity Focused, Modern, etc.)
-- Authentication improvements: CSRF, error handling, session management
-- Toast notification system
-- ErrorBoundary and fallback UI
-- Project management UI (completed)
-- Refactored component structure and test organization
-- Added/expanded frontend and backend tests (high coverage)
-- CI/CD workflow improvements
-- Documentation updates
+- Toast notification system and improved notification center with persistent scheduling (UTC support)
+- Advanced form components: floating labels, animated inputs, priority selectors, expandable sections
+- Modular component library for consistent UI development
+- Automated accessibility tests (axe-core) and ARIA improvements
+- 441 passing frontend tests; backend coverage >95%
+- Persistent notification scheduling and new API endpoints for task dependencies
+- End-of-version checklist template and personal change tracking system
 
-### Accessibility & Testing
-- ARIA audit and improvements for all major UI components
-- Automated accessibility tests for forms, modals, notifications, and navigation
+### Changed
+- Major UI/UX redesign: responsive layout, unified backgrounds, enhanced typography, progressive disclosure for forms
+- Authentication and security: robust CSRF handling, session management, secure logout, authentication guards
+- Comprehensive error handling: React ErrorBoundary, standardized API error responses, improved user feedback
+- Notification/reminder logic now uses UTC consistently
+- All major flows, accessibility, and coverage requirements tracked in checklists and roadmap
+- Documentation updated for all new features, test patterns, migration notes, and best practices
+
+### Fixed
+- Color contrast and focus management improvements for accessibility
 - Keyboard navigation and tab order fixes
-- Color contrast and focus management improvements
-- Accessibility coverage tracked in checklists and roadmap
+- Date precision fix for notification scheduling
+- Closed all single-line/component coverage gaps in ProjectForm, PasswordResetConfirmPage, LoginPage, useTasks
+- Addressed moderate/complex coverage gaps in NotificationCenter, TaskForm, TaskDetails, MainManagementWindow
 
-### Documentation & Process
-- End-of-version checklist template updated for best practices
-- Roadmap split into smaller milestones for reviewability
-- Archived old checklists for reference
-- Personal change tracking and idea dumping system added
+### Refactored
+- Component structure and test organization for maintainability and speed
+- CSS architecture: modular stylesheets for each component type
+- Authentication context refactored for robust auth state management
+- Refactored and stabilized test infrastructure
+
+### API Change Summary
+- No breaking API changes; all new/changed endpoints and models are documented in `docs/API.md`
+- Persistent notification scheduling and new endpoints for task dependencies
+
+### Breaking Changes & Migration Notes
+- Component API and CSS classes updated for new design system
+- Authentication flow enhancements may require re-login
+- Notification system enhanced with new security measures
 
 ## [v0.11.0-beta] - 2025-07-04
 ### Summary
