@@ -413,6 +413,25 @@ def _serialize_task(task):
     return d
 
 def _validate_and_update_task_fields(task, data, user):
+    """
+    Validates and updates the fields of a Task object based on the provided data.
+
+    Parameters:
+        task (Task): The Task object to be updated.
+        data (dict): A dictionary containing the fields to update. Keys may include:
+            - 'title': The title of the task (string, required).
+            - 'description': The description of the task (string, optional).
+            - 'completed': Whether the task is completed (boolean, optional).
+            - 'priority': The priority level of the task (integer, optional).
+            - 'project_id': The ID of the associated project (integer, optional).
+            - 'due_date': The due date of the task (ISO 8601 string, optional).
+            - 'start_date': The start date of the task (ISO 8601 string, optional).
+            - 'recurrence': Recurrence pattern for the task (string, optional).
+        user (User): The user object, used for validating project ownership.
+
+    Returns:
+        str or None: An error message if validation fails, otherwise None.
+    """
     # Title
     if 'title' in data:
         if not data['title'] or not data['title'].strip():
