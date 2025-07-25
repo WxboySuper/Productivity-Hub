@@ -355,6 +355,7 @@ def parse_date(date_str, field_name):
 #########################
 # Route Definitions
 #########################
+app.before_request(csrf_protect)  # Register CSRF protection as a before_request handler
 @app.route('/')
 def home():
     """Home route."""
@@ -1013,7 +1014,79 @@ def delete_project(project_id):
         return error_response("Failed to delete project", 500)
 
 
+# --- List Tasks ---
+@app.route('/api/tasks', methods=['GET'])
+@login_required
+def list_tasks():
+    """List all tasks for the current user, paginated."""
+    logger.info("Tasks GET endpoint accessed.")
+    user = get_current_user()
+    try:
+        page = int(request.args.get('page', 1))
+        per_page = int(request.args.get('per_page', 20))
+    except ValueError:
+        logger.warning("Invalid pagination parameters for tasks GET.")
+        return error_response("Invalid pagination parameters.", 400)
+    per_page = max(1, min(per_page, 100))
+    logger.debug("Paginating tasks: page=%s, per_page=%s", page, per_page)
+    query = Task.query.filter_by(user_id=user.id).order_by(Task.created_at.desc())
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+    tasks_data = []
+    for task in pagination.items:
+        task_dict = {
+            "id": task.id,
+            "title": task.title,
+            "description": task.description,
+            "completed": task.completed,
+            "priority": task.priority,
+            "project_id": task.project_id,
+            "parent_id": task.parent_id,
+            "created_at": task.created_at.isoformat(),
+            "updated_at": task.updated_at.isoformat(),
+            "subtasks": []
+        }
+        if task.due_date:
+            task_dict["due_date"] = task.due_date.isoformat()
+        if task.start_date:
+            task_dict["start_date"] = task.start_date.isoformat()
+        if task.recurrence:
+            task_dict["recurrence"] = task.recurrence
+        # Add subtasks
+        for subtask in task.subtasks:
+            subtask_dict = {
+                "id": subtask.id,
+                "title": subtask.title,
+                "description": subtask.description,
+                "completed": subtask.completed,
+                "priority": subtask.priority,
+                "created_at": subtask.created_at.isoformat(),
+                "updated_at": subtask.updated_at.isoformat()
+            }
+            if subtask.due_date:
+                subtask_dict["due_date"] = subtask.due_date.isoformat()
+            if subtask.start_date:
+                subtask_dict["start_date"] = subtask.start_date.isoformat()
+            task_dict["subtasks"].append(subtask_dict)
+        tasks_data.append(task_dict)
+    logger.info("Returning %d tasks for user: %s", len(tasks_data), user.username)
+    return jsonify({
+        "tasks": tasks_data,
+        "total": pagination.total,
+        "pages": pagination.pages,
+        "current_page": pagination.page,
+        "per_page": pagination.per_page
+    }), 200
 
+# --- Create Task ---
+@app.route('/api/tasks', methods=['POST'])
+@login_required
+def create_task():
+    """Create a new task for the current user."""
+    logger.info("Tasks POST endpoint accessed.")
+    user = get_current_user()
+    if not request.is_json:
+        return error_response("Request must be JSON", 400)
+    data = request.get_json()
     try:
         title, err = validate_title(data)
         if err:
@@ -1079,17 +1152,16 @@ def delete_project(project_id):
         logger.error("Task creation failed: %s", e)
         return error_response("Failed to create task", 500)
 
+# --- Get Task by ID ---
 @app.route('/api/tasks/<int:task_id>', methods=['GET'])
 @login_required
 def get_task(task_id):
     """Get a specific task by ID."""
     logger.info("Tasks GET endpoint accessed for task ID: %s", task_id)
     user = get_current_user()
-    
     task = Task.query.filter_by(id=task_id, user_id=user.id).first()
     if not task:
         return error_response("Task not found", 404)
-    
     task_dict = {
         "id": task.id,
         "title": task.title,
@@ -1101,14 +1173,12 @@ def get_task(task_id):
         "created_at": task.created_at.isoformat(),
         "updated_at": task.updated_at.isoformat()
     }
-    
     if task.due_date:
         task_dict["due_date"] = task.due_date.isoformat()
     if task.start_date:
         task_dict["start_date"] = task.start_date.isoformat()
     if task.recurrence:
         task_dict["recurrence"] = task.recurrence
-        
     # Add subtasks
     subtasks = []
     for subtask in task.subtasks:
@@ -1126,9 +1196,7 @@ def get_task(task_id):
         if subtask.start_date:
             subtask_dict["start_date"] = subtask.start_date.isoformat()
         subtasks.append(subtask_dict)
-    
     task_dict["subtasks"] = subtasks
-    
     logger.info("Returning task '%s' for user: %s", task.title, user.username)
     return jsonify(task_dict), 200
 
