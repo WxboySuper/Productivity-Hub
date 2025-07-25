@@ -380,13 +380,7 @@ def generate_csrf_token():
     The token should be set as a cookie by the caller.
     Returns the CSRF token string.
     """
-    # Check if token already exists in cookie
-    existing_token = request.cookies.get("_csrf_token")
-    if existing_token:
-        logger.debug("Using existing CSRF token from cookie.")
-        return existing_token
-
-    # Generate new token
+    # Always generate a new secure token
     logger.info("Generating new CSRF token.")
     return secrets.token_hex(16)
 
@@ -546,6 +540,7 @@ def _validate_project_id(project_id, user):
         if not project:
             return "Invalid project ID"
     return None
+
 
 def _validate_dates(start_date, due_date):
     if start_date and due_date and start_date > due_date:
@@ -1112,13 +1107,14 @@ def get_csrf_token():
             "csrf_token": token
         }
     )
-    # Optionally set cookie for frontend JS (session cookie is usually enough)
+    # Set cookie for frontend JS with a secure, server-generated token
     response.set_cookie(
         "_csrf_token",
         token,
         secure=True,
         httponly=True,
-        samesite="Lax"
+        samesite="Lax",
+        secure=True
     )
     return response
 
