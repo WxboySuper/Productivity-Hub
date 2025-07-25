@@ -9,6 +9,7 @@ A personal productivity assistant to help you track tasks, manage projects, sche
 > - Notification system
 > - Accessibility improvements
 > - Project management UI
+>
 >   See the [CHANGELOG](./CHANGELOG.md) for full details.
 
 <details>
