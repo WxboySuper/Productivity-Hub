@@ -17,7 +17,6 @@ interface BackgroundProps {
   backgroundType?: BackgroundType;
 }
 
-
 const Background: React.FC<BackgroundProps> = ({
   backgroundType = "creative-dots",
 }) => {

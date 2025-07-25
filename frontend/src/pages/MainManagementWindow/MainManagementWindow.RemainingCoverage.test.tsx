@@ -56,7 +56,7 @@ beforeEach(() => {
       if (url === "/api/auth/check") {
         return Promise.resolve({
           ok: true,
-          json: () => 
+          json: () =>
             Promise.resolve({
               authenticated: true,
               user: { username: "testuser", id: 1 },
@@ -197,10 +197,10 @@ describe("MainManagementWindow - Remaining Coverage", () => {
       // Update mock to return tasks with subtasks
       global.fetch = vi
         .fn()
-         .mockImplementation((url: string, options?: RequestInit) => {
-           // skipcq: JS-0356
-           const method = options?.method;
-           if (url === "/api/csrf-token") {
+        .mockImplementation((url: string, options?: RequestInit) => {
+          // skipcq: JS-0356
+          const method = options?.method;
+          if (url === "/api/csrf-token") {
             return Promise.resolve({
               ok: true,
               json: () => Promise.resolve({ csrf_token: "mock-csrf-token" }),
@@ -286,8 +286,8 @@ describe("MainManagementWindow - Remaining Coverage", () => {
       // Update mock to return a task
       global.fetch = vi
         .fn()
-         .mockImplementation((url: string, options?: RequestInit) => {
-           const method = options?.method || "GET";
+        .mockImplementation((url: string, options?: RequestInit) => {
+          const method = options?.method || "GET";
 
           if (url === "/api/csrf-token") {
             return Promise.resolve({
@@ -398,10 +398,10 @@ describe("MainManagementWindow - Remaining Coverage", () => {
       // Update mock to return a task
       global.fetch = vi
         .fn()
-         .mockImplementation((url: string, options?: RequestInit) => {
-           // skipcq: JS-0356
-           const method = options?.method;
-           if (url === "/api/csrf-token") {
+        .mockImplementation((url: string, options?: RequestInit) => {
+          // skipcq: JS-0356
+          const method = options?.method;
+          if (url === "/api/csrf-token") {
             return Promise.resolve({
               ok: true,
               json: () => Promise.resolve({ csrf_token: "mock-csrf-token" }),
