@@ -177,6 +177,7 @@ describe("MainManagementWindow - Additional Coverage", () => {
         .fn()
         .mockImplementation((url: string, options?: RequestInit) => {
           // skipcq: JS-0356
+          const method = options?.method || "GET";
           if (url === "/api/csrf-token") {
             return Promise.resolve({
               ok: true,

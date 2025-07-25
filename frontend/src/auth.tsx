@@ -45,7 +45,7 @@ export async function verifyLogoutSuccess(): Promise<boolean> {
 interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (token: string) => void;
+  login: () => void;
   logout: () => Promise<boolean>;
   user?: { id: number; username: string; email: string };
   checkAuth: () => Promise<void>;
@@ -92,8 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkAuth();
   }, []);
 
-  const login = (token?: string) => {
-    // variable is unused but kept for compatibility, skipcq
+  const login = () => {
     // After successful login, check auth status from server
     checkAuth();
   };

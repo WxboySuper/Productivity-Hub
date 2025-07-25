@@ -30,7 +30,7 @@ beforeEach(() => {
   global.fetch = vi
     .fn()
     .mockImplementation((url: string, options?: RequestInit) => {
-      const method = options?.method || "GET";
+      const method = options?.method;
 
       if (url === "/api/csrf-token") {
         return Promise.resolve({
@@ -56,7 +56,7 @@ beforeEach(() => {
       if (url === "/api/auth/check") {
         return Promise.resolve({
           ok: true,
-          json: () =>
+          json: () => 
             Promise.resolve({
               authenticated: true,
               user: { username: "testuser", id: 1 },
@@ -197,9 +197,10 @@ describe("MainManagementWindow - Remaining Coverage", () => {
       // Update mock to return tasks with subtasks
       global.fetch = vi
         .fn()
-        .mockImplementation((url: string, options?: RequestInit) => {
-          // skipcq: JS-0356
-          if (url === "/api/csrf-token") {
+         .mockImplementation((url: string, options?: RequestInit) => {
+           // skipcq: JS-0356
+           const method = options?.method;
+           if (url === "/api/csrf-token") {
             return Promise.resolve({
               ok: true,
               json: () => Promise.resolve({ csrf_token: "mock-csrf-token" }),
@@ -285,8 +286,8 @@ describe("MainManagementWindow - Remaining Coverage", () => {
       // Update mock to return a task
       global.fetch = vi
         .fn()
-        .mockImplementation((url: string, options?: RequestInit) => {
-          const method = options?.method || "GET";
+         .mockImplementation((url: string, options?: RequestInit) => {
+           const method = options?.method || "GET";
 
           if (url === "/api/csrf-token") {
             return Promise.resolve({
@@ -397,9 +398,10 @@ describe("MainManagementWindow - Remaining Coverage", () => {
       // Update mock to return a task
       global.fetch = vi
         .fn()
-        .mockImplementation((url: string, options?: RequestInit) => {
-          // skipcq: JS-0356
-          if (url === "/api/csrf-token") {
+         .mockImplementation((url: string, options?: RequestInit) => {
+           // skipcq: JS-0356
+           const method = options?.method;
+           if (url === "/api/csrf-token") {
             return Promise.resolve({
               ok: true,
               json: () => Promise.resolve({ csrf_token: "mock-csrf-token" }),
@@ -449,12 +451,12 @@ describe("MainManagementWindow - Remaining Coverage", () => {
           } as Response);
         });
 
-      await act(async () => {
+      act(() => {
         render(<MainManagementWindowWrapper />);
       });
 
       // Navigate to projects and select one
-      await act(async () => {
+      act(() => {
         const projectsButton = screen.getByText("Projects");
         fireEvent.click(projectsButton);
       });
@@ -463,7 +465,7 @@ describe("MainManagementWindow - Remaining Coverage", () => {
         expect(screen.getByText("Test Project")).toBeInTheDocument();
       });
 
-      await act(async () => {
+      act(() => {
         const projectCard = screen.getByText("Test Project");
         fireEvent.click(projectCard);
       });
@@ -473,7 +475,7 @@ describe("MainManagementWindow - Remaining Coverage", () => {
         expect(screen.getByText("Test Task")).toBeInTheDocument();
       });
 
-      await act(async () => {
+      act(() => {
         const taskTitle = screen.getByText("Test Task");
         fireEvent.click(taskTitle);
       });
@@ -484,7 +486,7 @@ describe("MainManagementWindow - Remaining Coverage", () => {
       });
 
       // Click the Edit Task button in details modal to cover onEdit callback
-      await act(async () => {
+      act(() => {
         const editButton = screen.getByText("Edit Details");
         fireEvent.click(editButton);
       });
@@ -510,7 +512,7 @@ describe("MainManagementWindow - Remaining Coverage", () => {
       global.fetch = vi
         .fn()
         .mockImplementation((url: string, options?: RequestInit) => {
-          const method = options?.method || "GET";
+          const method = options?.method;
 
           if (url === "/api/csrf-token") {
             return Promise.resolve({
@@ -569,12 +571,12 @@ describe("MainManagementWindow - Remaining Coverage", () => {
           } as Response);
         });
 
-      await act(async () => {
+      act(() => {
         render(<MainManagementWindowWrapper />);
       });
 
       // Navigate to projects, select one, and open edit form
-      await act(async () => {
+      act(() => {
         const projectsButton = screen.getByText("Projects");
         fireEvent.click(projectsButton);
       });
@@ -583,7 +585,7 @@ describe("MainManagementWindow - Remaining Coverage", () => {
         expect(screen.getByText("Test Project")).toBeInTheDocument();
       });
 
-      await act(async () => {
+      act(() => {
         const projectCard = screen.getByText("Test Project");
         fireEvent.click(projectCard);
       });
