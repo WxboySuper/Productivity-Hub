@@ -1,11 +1,13 @@
-"""
-Automated tests for user registration, login, logout, profile,
-and CSRF/session logic. Covers both success and failure cases.
-"""
+# ============================================================
+# Automated tests for user registration, login, logout, profile,
+# and CSRF/session logic. Covers both success and failure cases.
+# ============================================================
 
 import builtins
 import logging
 import re
+import secrets
+import time
 import uuid
 from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock, patch
@@ -15,13 +17,123 @@ import pytest
 from app import (
     Notification,
     User,
+)
+from app import app as flask_app
+from app import (
     db,
     generate_csrf_token,
     get_current_user,
+    regenerate_session,
     send_email,
 )
 
 # --- API Endpoint Constants (must be defined before use) ---
+REGISTER_URL = "/api/register"
+LOGIN_URL = "/api/login"
+LOGOUT_URL = "/api/logout"
+PROFILE_URL = "/api/profile"
+
+
+# --- Session/Token Management Tests ---
+def test_regenerate_session_clears_and_modifies():
+    """
+    Directly test that regenerate_session clears the session and marks it as modified.
+    """
+    with flask_app.test_request_context("/"):
+        flask.session["user_id"] = 123
+        flask.session["foo"] = "bar"
+        flask.session.modified = False
+        assert "user_id" in flask.session
+        assert "foo" in flask.session
+        assert flask.session.modified is False
+        regenerate_session()
+        assert len(flask.session.keys()) == 0
+        assert flask.session.modified is True
+
+
+# --- Test session ID regeneration on login and logout ---
+def test_session_id_regeneration_on_login_logout(client):
+    """Test that session is cleared and a new session is started on login and logout."""
+    unique = secrets.token_hex(4)
+    username = f"regenuser_{unique}"
+    # --- API Endpoint Constants (must be defined before use) ---
+    REGISTER_URL = "/api/register"
+    LOGIN_URL = "/api/login"
+    LOGOUT_URL = "/api/logout"
+
+    email = f"regen_{unique}@weatherboysuper.com"
+    password = "StrongPass1!"
+    # Register
+    client.post(
+        REGISTER_URL, json={"username": username, "email": email, "password": password}
+    )
+    # Login
+    resp = client.post(LOGIN_URL, json={"username": username, "password": password})
+    assert resp.status_code == 200
+    # Check session after login
+    with client.session_transaction() as sess:
+        assert "user_id" in sess
+        # There should be a session cookie
+    # Logout
+    resp = client.post(LOGOUT_URL)
+    assert resp.status_code == 200
+    # After logout, session should be cleared
+    with client.session_transaction() as sess:
+        assert "user_id" not in sess
+
+
+# --- Test session cookie security attributes ---
+def test_session_cookie_security_attributes(client):
+    """
+    Test that session cookie is set with Secure, HttpOnly, and SameSite attributes.
+    """
+    # Set production-like config
+    flask_app.config["SESSION_COOKIE_SECURE"] = True
+    flask_app.config["SESSION_COOKIE_HTTPONLY"] = True
+    flask_app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+    flask_app.config["TESTING"] = True
+    unique = secrets.token_hex(4)
+    username = f"cookieuser_{unique}"
+    email = f"cookie_{unique}@weatherboysuper.com"
+    password = "StrongPass1!"
+    # Register and login
+    client.post(
+        REGISTER_URL, json={"username": username, "email": email, "password": password}
+    )
+    resp = client.post(LOGIN_URL, json={"username": username, "password": password})
+    assert resp.status_code == 200
+    # Check Set-Cookie header
+    set_cookie = resp.headers.get("Set-Cookie", "")
+    assert "HttpOnly" in set_cookie
+    assert "Secure" in set_cookie
+    assert "SameSite=Lax" in set_cookie
+
+
+# --- API Endpoint Constants (must be defined before use) ---
+# --- Test session lifetime and sliding expiration ---
+def test_session_lifetime_and_sliding_expiration(client):
+    """Test that session lifetime and sliding expiration are set as expected."""
+    flask_app.config["PERMANENT_SESSION_LIFETIME"] = 60  # 60 seconds for test
+    flask_app.config["SESSION_REFRESH_EACH_REQUEST"] = True
+    unique = secrets.token_hex(4)
+    username = f"lifetimeuser_{unique}"
+    email = f"lifetime_{unique}@weatherboysuper.com"
+    password = "StrongPass1!"
+    # Register and login
+    client.post(
+        REGISTER_URL, json={"username": username, "email": email, "password": password}
+    )
+    resp = client.post(LOGIN_URL, json={"username": username, "password": password})
+    assert resp.status_code == 200
+    # Check session is permanent and expiration is set
+    with client.session_transaction() as sess:
+        assert sess.permanent is True
+    # Simulate a request after some time to check sliding expiration
+    time.sleep(1)
+    resp2 = client.get(PROFILE_URL)
+    assert resp2.status_code == 200
+
+
 REGISTER_URL = "/api/register"
 LOGIN_URL = "/api/login"
 LOGOUT_URL = "/api/logout"
@@ -58,7 +170,6 @@ def test_register_requires_json():
     Test that /api/register returns 400 and correct error if request
     is not JSON.
     """
-    from app import app as flask_app
 
     with flask_app.test_client() as client:
         # Send form data instead of JSON
@@ -78,7 +189,6 @@ def test_register_requires_json():
 @pytest.mark.usefixtures("client", "db")
 def test_register_invalid_email():
     """Test that /api/register returns 400 and correct error for invalid email."""
-    from app import app as flask_app
 
     with flask_app.test_client() as client:
         payload = {
@@ -95,7 +205,6 @@ def test_register_invalid_email():
 @pytest.mark.usefixtures("client", "db")
 def test_login_requires_json():
     """Test that /api/login returns 400 and correct error if request is not JSON."""
-    from app import app as flask_app
 
     with flask_app.test_client() as client:
         # Send form data instead of JSON
@@ -560,7 +669,6 @@ def test_csrf_protect_not_skipped_for_other_endpoints(client):
     This test posts to /api/profile (requires auth) and expects CSRF
     check to be enforced.
     """
-    from app import app as flask_app
 
     original_testing = flask_app.config.get("TESTING", False)
     flask_app.config["TESTING"] = False
@@ -595,7 +703,6 @@ def test_csrf_protect_valid_token_allows_request(client):
     (line 291 condition is false). This test sets a valid CSRF token in both
     cookie and header.
     """
-    from app import app as flask_app
 
     original_testing = flask_app.config.get("TESTING", False)
     flask_app.config["TESTING"] = False
@@ -799,7 +906,6 @@ def test_csrf_skip_logs_debug_message(client, endpoint, caplog):
     for login/register endpoints. Temporarily disables TESTING mode to reach
     the relevant code.
     """
-    from app import app as flask_app
 
     unique = uuid.uuid4().hex[:8]
     if endpoint == "/api/register":
@@ -840,7 +946,6 @@ def test_csrf_protect_testing_mode_skips_check(client, caplog):
     Ensure CSRF protection exits early in TESTING mode and logs the correct
     message. Covers the early return at line 227 in app.py.
     """
-    from app import app as flask_app
 
     # TESTING should be True by default in pytest, but ensure it
     flask_app.config["TESTING"] = True
@@ -864,7 +969,6 @@ def test_csrf_protect_invalid_token_returns_403(client):
     Ensure CSRF protection returns 403 for missing/invalid CSRF token on a
     protected endpoint. Covers the error response at line 291 in app.py.
     """
-    from app import app as flask_app
 
     # Temporarily disable TESTING to activate CSRF protection
     original_testing = flask_app.config.get("TESTING", False)
