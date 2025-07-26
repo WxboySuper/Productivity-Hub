@@ -2,15 +2,20 @@
 Security Vulnerability Tests for Flask Backend
 Covers: SQL Injection, XSS, IDOR, Privilege Escalation, Information Leakage
 """
-import pytest
+
 import uuid
-from app import db, User, Notification, app as flask_app
+
+import pytest
+from app import Notification, User
+from app import app as flask_app
+from app import db
 
 REGISTER_URL = "/api/register"
 LOGIN_URL = "/api/login"
 PROFILE_URL = "/api/profile"
 PROJECTS_URL = "/api/projects"
 TASKS_URL = "/api/tasks"
+
 
 @pytest.mark.usefixtures("client", "db")
 def test_sql_injection_on_login(client):
@@ -23,7 +28,9 @@ def test_sql_injection_on_login(client):
     username = f"sqltest_{unique}"
     email = f"sqltest_{unique}@weatherboysuper.com"
     password = "StrongPass1!"
-    client.post(REGISTER_URL, json={"username": username, "email": email, "password": password})
+    client.post(
+        REGISTER_URL, json={"username": username, "email": email, "password": password}
+    )
     # Attempt SQL injection in username
     payload = {"username": "' OR '1'='1", "password": "wrongpass"}
     resp = client.post(LOGIN_URL, json=payload)
@@ -33,6 +40,7 @@ def test_sql_injection_on_login(client):
     # Should not leak SQL error or stack trace
     assert "sql" not in data["error"].lower()
     assert "trace" not in data["error"].lower()
+
 
 @pytest.mark.usefixtures("client", "db")
 def test_xss_in_profile_update(client):
@@ -44,7 +52,9 @@ def test_xss_in_profile_update(client):
     username = f"xsstest_{unique}"
     email = f"xsstest_{unique}@weatherboysuper.com"
     password = "StrongPass1!"
-    client.post(REGISTER_URL, json={"username": username, "email": email, "password": password})
+    client.post(
+        REGISTER_URL, json={"username": username, "email": email, "password": password}
+    )
     client.post(LOGIN_URL, json={"username": username, "password": password})
     xss_payload = "<script>alert('xss')</script>"
     resp = client.put(PROFILE_URL, json={"username": xss_payload})
@@ -52,6 +62,7 @@ def test_xss_in_profile_update(client):
     assert xss_payload not in resp.get_data(as_text=True)
     # Should return error or sanitize
     assert resp.status_code in (400, 422)
+
 
 @pytest.mark.usefixtures("client", "db")
 def test_idor_on_profile_access(client):
@@ -66,8 +77,14 @@ def test_idor_on_profile_access(client):
     username2 = f"idor2_{unique}"
     email2 = f"idor2_{unique}@weatherboysuper.com"
     password = "StrongPass1!"
-    client.post(REGISTER_URL, json={"username": username1, "email": email1, "password": password})
-    client.post(REGISTER_URL, json={"username": username2, "email": email2, "password": password})
+    client.post(
+        REGISTER_URL,
+        json={"username": username1, "email": email1, "password": password},
+    )
+    client.post(
+        REGISTER_URL,
+        json={"username": username2, "email": email2, "password": password},
+    )
     # Login as user1
     client.post(LOGIN_URL, json={"username": username1, "password": password})
     # Try to access user2's profile by guessing (should not be possible, but test for endpoint leaks)
@@ -76,6 +93,7 @@ def test_idor_on_profile_access(client):
     data = resp.get_json()
     assert data["username"] == username1
     assert data["email"] == email1
+
 
 @pytest.mark.usefixtures("client", "db")
 def test_privilege_escalation_on_admin_route(client):
@@ -88,11 +106,14 @@ def test_privilege_escalation_on_admin_route(client):
     username = f"notadmin_{unique}"
     email = f"notadmin_{unique}@weatherboysuper.com"
     password = "StrongPass1!"
-    client.post(REGISTER_URL, json={"username": username, "email": email, "password": password})
+    client.post(
+        REGISTER_URL, json={"username": username, "email": email, "password": password}
+    )
     client.post(LOGIN_URL, json={"username": username, "password": password})
     # Try to access admin route (if exists)
     resp = client.get("/api/admin")
     assert resp.status_code in (401, 403, 404)
+
 
 @pytest.mark.usefixtures("client", "db")
 def test_error_message_information_leakage(client):

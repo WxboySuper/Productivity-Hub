@@ -9,12 +9,12 @@ import secrets
 import smtplib
 import sys
 import warnings
-import bleach
 from datetime import datetime, timedelta, timezone
 from email.message import EmailMessage
 from functools import wraps
 from string import Template
 
+import bleach
 from dotenv import load_dotenv
 from email_validator import EmailNotValidError, validate_email
 from flask import Flask, jsonify, request, session
@@ -651,7 +651,6 @@ def register():
     """User registration endpoint."""
     logger.info("Register endpoint accessed.")
 
-
     if not request.is_json:
         logger.error("Request must be JSON.")
         return error_response("Request must be JSON", 400)
@@ -900,7 +899,11 @@ def update_profile():
         sanitized_username = bleach.clean(username, tags=[], strip=True)
         if sanitized_username != username:
             errors["username"] = "Username cannot contain HTML or special tags."
-        elif not isinstance(sanitized_username, str) or not sanitized_username.strip() or len(sanitized_username) < 3:
+        elif (
+            not isinstance(sanitized_username, str)
+            or not sanitized_username.strip()
+            or len(sanitized_username) < 3
+        ):
             errors["username"] = "Username must be at least 3 characters."
         elif (
             User.query.filter_by(username=sanitized_username).first()
