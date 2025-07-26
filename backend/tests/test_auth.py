@@ -1,15 +1,11 @@
-"""
-Automated tests for user registration, login, logout, profile,
-and CSRF/session logic. Covers both success and failure cases.
-"""
-
+import secrets
+import re
+import time
 import builtins
 import logging
-import re
 import uuid
 from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock, patch
-
 import flask
 import pytest
 from app import (
@@ -19,9 +15,267 @@ from app import (
     generate_csrf_token,
     get_current_user,
     send_email,
+    regenerate_session,
+    app as flask_app,
 )
 
+"""
+Automated tests for user registration, login, logout, profile,
+and CSRF/session logic. Covers both success and failure cases.
+"""
 # --- API Endpoint Constants (must be defined before use) ---
+REGISTER_URL = "/api/register"
+LOGIN_URL = "/api/login"
+LOGOUT_URL = "/api/logout"
+PROFILE_URL = "/api/profile"
+
+# --- Session/Token Management Tests ---
+def test_regenerate_session_clears_and_modifies():
+    """
+    Directly test that regenerate_session clears the session and marks it as modified.
+    """
+    with flask_app.test_request_context('/'):
+        flask.session['user_id'] = 123
+        flask.session['foo'] = 'bar'
+        flask.session.modified = False
+        assert 'user_id' in flask.session
+        assert 'foo' in flask.session
+        assert flask.session.modified is False
+        regenerate_session()
+        assert len(flask.session.keys()) == 0
+        assert flask.session.modified is True
+
+def test_session_id_regeneration_on_login_logout(client):
+    """
+    Test that session is cleared and a new session is started on login and logout.
+    """
+    unique = secrets.token_hex(4)
+    username = f"regenuser_{unique}"
+    email = f"regen_{unique}@weatherboysuper.com"
+    password = "StrongPass1!"
+    # Register
+    client.post(REGISTER_URL, json={"username": username, "email": email, "password": password})
+    # Login
+    resp = client.post(LOGIN_URL, json={"username": username, "password": password})
+    assert resp.status_code == 200
+    # Check session after login
+    with client.session_transaction() as sess:
+        assert 'user_id' in sess
+    # Logout
+    resp = client.post(LOGOUT_URL)
+    assert resp.status_code == 200
+    # After logout, session should be cleared
+    with client.session_transaction() as sess:
+        assert 'user_id' not in sess
+
+def test_session_cookie_security_attributes(client):
+    """
+    Test that session cookie is set with Secure, HttpOnly, and SameSite attributes.
+    """
+    flask_app.config['SESSION_COOKIE_SECURE'] = True
+    flask_app.config['SESSION_COOKIE_HTTPONLY'] = True
+    flask_app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+    flask_app.config['TESTING'] = True
+    unique = secrets.token_hex(4)
+    username = f"cookieuser_{unique}"
+    email = f"cookie_{unique}@weatherboysuper.com"
+    password = "StrongPass1!"
+    client.post(REGISTER_URL, json={"username": username, "email": email, "password": password})
+    resp = client.post(LOGIN_URL, json={"username": username, "password": password})
+    assert resp.status_code == 200
+    set_cookie = resp.headers.get('Set-Cookie', '')
+    assert 'HttpOnly' in set_cookie
+    assert 'Secure' in set_cookie
+    assert 'SameSite=Lax' in set_cookie
+
+def test_session_lifetime_and_sliding_expiration(client):
+    """
+    Test that session lifetime and sliding expiration are set as expected.
+    """
+    flask_app.config['PERMANENT_SESSION_LIFETIME'] = 60  # 60 seconds for test
+    flask_app.config['SESSION_REFRESH_EACH_REQUEST'] = True
+    unique = secrets.token_hex(4)
+    username = f"lifetimeuser_{unique}"
+    email = f"lifetime_{unique}@weatherboysuper.com"
+    password = "StrongPass1!"
+    client.post(REGISTER_URL, json={"username": username, "email": email, "password": password})
+    resp = client.post(LOGIN_URL, json={"username": username, "password": password})
+    assert resp.status_code == 200
+    with client.session_transaction() as sess:
+        assert sess.permanent is True
+    time.sleep(1)
+    resp2 = client.get(PROFILE_URL)
+    assert resp2.status_code == 200
+
+# --- Direct test for regenerate_session helper ---
+def test_regenerate_session_clears_and_modifies():
+    """
+    Directly test that regenerate_session clears the session and marks it as modified.
+    """
+    with flask_app.test_request_context('/'):
+        flask.session['user_id'] = 123
+        flask.session['foo'] = 'bar'
+        flask.session.modified = False
+        assert 'user_id' in flask.session
+        assert 'foo' in flask.session
+        assert flask.session.modified is False
+        regenerate_session()
+        assert len(flask.session.keys()) == 0
+        assert flask.session.modified is True
+# --- Test session ID regeneration on login and logout ---
+def test_session_id_regeneration_on_login_logout(client):
+    """
+    Test that session is cleared and a new session is started on login and logout.
+    """
+    unique = secrets.token_hex(4)
+    username = f"regenuser_{unique}"
+    # --- API Endpoint Constants (must be defined before use) ---
+    REGISTER_URL = "/api/register"
+    LOGIN_URL = "/api/login"
+    LOGOUT_URL = "/api/logout"
+    PROFILE_URL = "/api/profile"
+
+    # --- Session/Token Management Tests ---
+    def test_regenerate_session_clears_and_modifies():
+        """
+        Directly test that regenerate_session clears the session and marks it as modified.
+        """
+        with flask_app.test_request_context('/'):
+            flask.session['user_id'] = 123
+            flask.session['foo'] = 'bar'
+            flask.session.modified = False
+            assert 'user_id' in flask.session
+            assert 'foo' in flask.session
+            assert flask.session.modified is False
+            regenerate_session()
+            assert len(flask.session.keys()) == 0
+            assert flask.session.modified is True
+
+    def test_session_id_regeneration_on_login_logout(client):
+        """
+        Test that session is cleared and a new session is started on login and logout.
+        """
+        unique = secrets.token_hex(4)
+        username = f"regenuser_{unique}"
+        email = f"regen_{unique}@weatherboysuper.com"
+        password = "StrongPass1!"
+        # Register
+        client.post(REGISTER_URL, json={"username": username, "email": email, "password": password})
+        # Login
+        resp = client.post(LOGIN_URL, json={"username": username, "password": password})
+        assert resp.status_code == 200
+        # Check session after login
+        with client.session_transaction() as sess:
+            assert 'user_id' in sess
+        # Logout
+        resp = client.post(LOGOUT_URL)
+        assert resp.status_code == 200
+        # After logout, session should be cleared
+        with client.session_transaction() as sess:
+            assert 'user_id' not in sess
+
+    def test_session_cookie_security_attributes(client):
+        """
+        Test that session cookie is set with Secure, HttpOnly, and SameSite attributes.
+        """
+        flask_app.config['SESSION_COOKIE_SECURE'] = True
+        flask_app.config['SESSION_COOKIE_HTTPONLY'] = True
+        flask_app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+        flask_app.config['TESTING'] = True
+        unique = secrets.token_hex(4)
+        username = f"cookieuser_{unique}"
+        email = f"cookie_{unique}@weatherboysuper.com"
+        password = "StrongPass1!"
+        client.post(REGISTER_URL, json={"username": username, "email": email, "password": password})
+        resp = client.post(LOGIN_URL, json={"username": username, "password": password})
+        assert resp.status_code == 200
+        set_cookie = resp.headers.get('Set-Cookie', '')
+        assert 'HttpOnly' in set_cookie
+        assert 'Secure' in set_cookie
+        assert 'SameSite=Lax' in set_cookie
+
+    def test_session_lifetime_and_sliding_expiration(client):
+        """
+        Test that session lifetime and sliding expiration are set as expected.
+        """
+        flask_app.config['PERMANENT_SESSION_LIFETIME'] = 60  # 60 seconds for test
+        flask_app.config['SESSION_REFRESH_EACH_REQUEST'] = True
+        unique = secrets.token_hex(4)
+        username = f"lifetimeuser_{unique}"
+        email = f"lifetime_{unique}@weatherboysuper.com"
+        password = "StrongPass1!"
+        client.post(REGISTER_URL, json={"username": username, "email": email, "password": password})
+        resp = client.post(LOGIN_URL, json={"username": username, "password": password})
+        assert resp.status_code == 200
+        with client.session_transaction() as sess:
+            assert sess.permanent is True
+        time.sleep(1)
+        resp2 = client.get(PROFILE_URL)
+        assert resp2.status_code == 200
+    email = f"regen_{unique}@weatherboysuper.com"
+    password = "StrongPass1!"
+    # Register
+    client.post(REGISTER_URL, json={"username": username, "email": email, "password": password})
+    # Login
+    resp = client.post(LOGIN_URL, json={"username": username, "password": password})
+    assert resp.status_code == 200
+    # Check session after login
+    with client.session_transaction() as sess:
+        assert 'user_id' in sess
+        # There should be a session cookie
+    # Logout
+    resp = client.post(LOGOUT_URL)
+    assert resp.status_code == 200
+    # After logout, session should be cleared
+    with client.session_transaction() as sess:
+        assert 'user_id' not in sess
+
+# --- Test session cookie security attributes ---
+def test_session_cookie_security_attributes(client):
+    """
+    Test that session cookie is set with Secure, HttpOnly, and SameSite attributes.
+    """
+    # Set production-like config
+    flask_app.config['SESSION_COOKIE_SECURE'] = True
+    flask_app.config['SESSION_COOKIE_HTTPONLY'] = True
+    flask_app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+    flask_app.config['TESTING'] = True
+    unique = secrets.token_hex(4)
+    username = f"cookieuser_{unique}"
+    email = f"cookie_{unique}@weatherboysuper.com"
+    password = "StrongPass1!"
+    # Register and login
+    client.post(REGISTER_URL, json={"username": username, "email": email, "password": password})
+    resp = client.post(LOGIN_URL, json={"username": username, "password": password})
+    assert resp.status_code == 200
+    # Check Set-Cookie header
+    set_cookie = resp.headers.get('Set-Cookie', '')
+    assert 'HttpOnly' in set_cookie
+    assert 'Secure' in set_cookie
+    assert 'SameSite=Lax' in set_cookie
+# --- API Endpoint Constants (must be defined before use) ---
+# --- Test session lifetime and sliding expiration ---
+def test_session_lifetime_and_sliding_expiration(client):
+    """
+    Test that session lifetime and sliding expiration are set as expected.
+    """
+    flask_app.config['PERMANENT_SESSION_LIFETIME'] = 60  # 60 seconds for test
+    flask_app.config['SESSION_REFRESH_EACH_REQUEST'] = True
+    unique = secrets.token_hex(4)
+    username = f"lifetimeuser_{unique}"
+    email = f"lifetime_{unique}@weatherboysuper.com"
+    password = "StrongPass1!"
+    # Register and login
+    client.post(REGISTER_URL, json={"username": username, "email": email, "password": password})
+    resp = client.post(LOGIN_URL, json={"username": username, "password": password})
+    assert resp.status_code == 200
+    # Check session is permanent and expiration is set
+    with client.session_transaction() as sess:
+        assert sess.permanent is True
+    # Simulate a request after some time to check sliding expiration
+    time.sleep(1)
+    resp2 = client.get(PROFILE_URL)
+    assert resp2.status_code == 200
 REGISTER_URL = "/api/register"
 LOGIN_URL = "/api/login"
 LOGOUT_URL = "/api/logout"

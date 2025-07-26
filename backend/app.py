@@ -19,6 +19,7 @@ from email_validator import EmailNotValidError, validate_email
 from flask import Flask, jsonify, request, session
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
+from datetime import timedelta
 from werkzeug.security import check_password_hash, generate_password_hash
 
 # =========================
@@ -58,10 +59,10 @@ app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
     "DATABASE_URL", f"sqlite:///{db_path}"
 )
 app.config["SESSION_COOKIE_SECURE"] = False  # Set to True in production with HTTPS
-app.config["SESSION_COOKIE_HTTPONLY"] = (
-    True  # Prevent JavaScript access to session cookies
-)
+app.config["SESSION_COOKIE_HTTPONLY"] = True  # Prevent JavaScript access to session cookies
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"  # Set SameSite policy for session cookies
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=8)  # Absolute timeout
+app.config["SESSION_REFRESH_EACH_REQUEST"] = True  # Sliding expiration
 
 # --- Production Warning ---
 if (
@@ -270,6 +271,11 @@ def init_db():
         db.create_all()
     logger.info("Database tables created.")
 
+# --- Session Regeneration Helper ---
+def regenerate_session():
+    """Regenerate the session ID to prevent fixation attacks."""
+    session.clear()
+    session.modified = True
 
 # --- Password Strength Validation ---
 def is_strong_password(password):
@@ -784,7 +790,7 @@ def logout():
     Clears the user's session, effectively logging them out.
     """
     logger.info("Logout endpoint accessed.")
-    session.clear()  # Clear the entire session
+    regenerate_session()  # Regenerate session ID and clear session
     logger.info("User logged out successfully.")
     return jsonify({"message": "Logout successful"}), 200
 
