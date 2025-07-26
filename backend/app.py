@@ -9,6 +9,7 @@ import secrets
 import smtplib
 import sys
 import warnings
+import bleach
 from datetime import datetime, timedelta, timezone
 from email.message import EmailMessage
 from functools import wraps
@@ -650,11 +651,19 @@ def register():
     """User registration endpoint."""
     logger.info("Register endpoint accessed.")
 
+
     if not request.is_json:
         logger.error("Request must be JSON.")
         return error_response("Request must be JSON", 400)
 
-    data = request.get_json()
+    try:
+        data = request.get_json()
+    except Exception as e:
+        logger.error("Malformed JSON: %s", e)
+        return error_response("Malformed JSON in request body", 400)
+    if not isinstance(data, dict):
+        logger.error("Request JSON body is not an object.")
+        return error_response("Request JSON body must be an object", 400)
 
     username = data.get("username")
     email = data.get("email")
@@ -888,15 +897,18 @@ def update_profile():
     email = data.get("email")
     errors = {}
     if username is not None:
-        if not isinstance(username, str) or not username.strip() or len(username) < 3:
+        sanitized_username = bleach.clean(username, tags=[], strip=True)
+        if sanitized_username != username:
+            errors["username"] = "Username cannot contain HTML or special tags."
+        elif not isinstance(sanitized_username, str) or not sanitized_username.strip() or len(sanitized_username) < 3:
             errors["username"] = "Username must be at least 3 characters."
         elif (
-            User.query.filter_by(username=username).first()
-            and username != user.username
+            User.query.filter_by(username=sanitized_username).first()
+            and sanitized_username != user.username
         ):
             errors["username"] = "Username already taken."
         else:
-            user.username = username
+            user.username = sanitized_username
     if email:
         try:
             validate_email(email)
