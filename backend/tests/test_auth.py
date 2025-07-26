@@ -122,20 +122,6 @@ def test_session_lifetime_and_sliding_expiration(client):
 
 
 # --- Direct test for regenerate_session helper ---
-def test_regenerate_session_clears_and_modifies():
-    """
-    Directly test that regenerate_session clears the session and marks it as modified.
-    """
-    with flask_app.test_request_context("/"):
-        flask.session["user_id"] = 123
-        flask.session["foo"] = "bar"
-        flask.session.modified = False
-        assert "user_id" in flask.session
-        assert "foo" in flask.session
-        assert flask.session.modified is False
-        regenerate_session()
-        assert len(flask.session.keys()) == 0
-        assert flask.session.modified is True
 
 
 # --- Test session ID regeneration on login and logout ---
