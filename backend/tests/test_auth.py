@@ -974,7 +974,7 @@ def test_password_reset_confirm_invalid_token(client):
         "/api/password-reset/confirm",
         json={"token": "badtoken", "new_password": "NewStrongPass1!"},
     )
-    assert resp.status_code == 400 or resp.status_code == 401
+    assert (resp.status_code in (400, 401))
     data = resp.get_json()
     assert "error" in data
 
@@ -986,7 +986,7 @@ def test_password_reset_confirm_weak_password(client):
     resp = client.post(
         "/api/password-reset/confirm", json={"token": "dummy", "new_password": "123"}
     )
-    assert resp.status_code == 400 or resp.status_code == 422
+    assert (resp.status_code in (400, 422))
     data = resp.get_json()
     assert "error" in data
 
