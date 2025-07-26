@@ -121,9 +121,6 @@ def test_session_lifetime_and_sliding_expiration(client):
     assert resp2.status_code == 200
 
 
-# --- Direct test for regenerate_session helper ---
-
-
 # --- Test session ID regeneration on login and logout ---
 def test_session_id_regeneration_on_login_logout(client):
     """
