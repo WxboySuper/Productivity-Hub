@@ -175,6 +175,13 @@ This roadmap is a step-by-step checklist for building your productivity assistan
 - [ ] Add footer with links to GitHub, roadmap, and documentation
 - [ ] Add help/FAQ section
 
+## v0.24.0-beta: Admin Dashboard & Developer Tools
+
+- [ ] Admin Dashboard: manage users, settings, and content
+- [ ] Visual test coverage map: see which components/pages have test coverage
+- [ ] Performance dashboard: track render times, API latency, resource usage
+- [ ] Codebase health report: summary of lint, test, coverage, and accessibility status
+
 ## v1.0.0: First Stable Release 🎉
 
 **Core Productivity Platform - Ready for Production**
