@@ -6,9 +6,6 @@ Covers: SQL Injection, XSS, IDOR, Privilege Escalation, Information Leakage
 import uuid
 
 import pytest
-from app import Notification, User
-from app import app as flask_app
-from app import db
 
 REGISTER_URL = "/api/register"
 LOGIN_URL = "/api/login"
@@ -117,9 +114,7 @@ def test_privilege_escalation_on_admin_route(client):
 
 @pytest.mark.usefixtures("client", "db")
 def test_error_message_information_leakage(client):
-    """
-    Ensure error messages do not leak stack traces or sensitive info.
-    """
+    """Ensure error messages do not leak stack traces or sensitive info."""
     # Send malformed JSON to endpoint
     resp = client.post(REGISTER_URL, data="notjson", content_type="application/json")
     data = resp.get_json()
