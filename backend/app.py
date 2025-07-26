@@ -14,6 +14,7 @@ from email.message import EmailMessage
 from functools import wraps
 from string import Template
 
+import bleach
 from dotenv import load_dotenv
 from email_validator import EmailNotValidError, validate_email
 from flask import Flask, jsonify, request, session
@@ -654,7 +655,14 @@ def register():
         logger.error("Request must be JSON.")
         return error_response("Request must be JSON", 400)
 
-    data = request.get_json()
+    try:
+        data = request.get_json()
+    except Exception as e:
+        logger.error("Malformed JSON: %s", e)
+        return error_response("Malformed JSON in request body", 400)
+    if not isinstance(data, dict):
+        logger.error("Request JSON body is not an object.")
+        return error_response("Request JSON body must be an object", 400)
 
     username = data.get("username")
     email = data.get("email")
@@ -888,15 +896,20 @@ def update_profile():
     email = data.get("email")
     errors = {}
     if username is not None:
-        if not isinstance(username, str) or not username.strip() or len(username) < 3:
-            errors["username"] = "Username must be at least 3 characters."
+        sanitized_username = bleach.clean(username, tags=[], strip=True)
+        if sanitized_username != username:
+            errors["username"] = "Username cannot contain HTML or special tags."
+        elif not sanitized_username.strip() or len(sanitized_username) < 3:
+            errors["username"] = (
+                "Username must be at least 3 characters and not empty after removing HTML."
+            )
         elif (
-            User.query.filter_by(username=username).first()
-            and username != user.username
+            User.query.filter_by(username=sanitized_username).first()
+            and sanitized_username != user.username
         ):
             errors["username"] = "Username already taken."
         else:
-            user.username = username
+            user.username = sanitized_username
     if email:
         try:
             validate_email(email)
