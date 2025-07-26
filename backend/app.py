@@ -900,7 +900,9 @@ def update_profile():
         if sanitized_username != username:
             errors["username"] = "Username cannot contain HTML or special tags."
         elif not sanitized_username.strip() or len(sanitized_username) < 3:
-            errors["username"] = "Username must be at least 3 characters and not empty after removing HTML."
+            errors["username"] = (
+                "Username must be at least 3 characters and not empty after removing HTML."
+            )
         elif (
             User.query.filter_by(username=sanitized_username).first()
             and sanitized_username != user.username
