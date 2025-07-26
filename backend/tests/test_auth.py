@@ -1,3 +1,8 @@
+# ============================================================
+# Automated tests for user registration, login, logout, profile,
+# and CSRF/session logic. Covers both success and failure cases.
+# ============================================================
+
 import builtins
 import logging
 import re
@@ -22,10 +27,6 @@ from app import (
     send_email,
 )
 
-"""
-Automated tests for user registration, login, logout, profile,
-and CSRF/session logic. Covers both success and failure cases.
-"""
 # --- API Endpoint Constants (must be defined before use) ---
 REGISTER_URL = "/api/register"
 LOGIN_URL = "/api/login"
