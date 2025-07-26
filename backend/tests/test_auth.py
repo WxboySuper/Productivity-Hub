@@ -935,41 +935,61 @@ def test_auth_check_no_user_logs_info(client, caplog):
 
 # --- Additional Auth Flow Tests: Password Reset, Duplicate Registration, Logout Edge ---
 
+
 @pytest.mark.usefixtures("client", "db")
 def test_password_reset_request_valid_email(client):
     """Test password reset request with a valid email returns 200 and sends email."""
     unique = uuid.uuid4().hex[:8]
     email = f"reset_{unique}@weatherboysuper.com"
-    client.post(REGISTER_URL, json={"username": f"reset_{unique}", "email": email, "password": "StrongPass1!"})
+    client.post(
+        REGISTER_URL,
+        json={
+            "username": f"reset_{unique}",
+            "email": email,
+            "password": "StrongPass1!",
+        },
+    )
     resp = client.post("/api/password-reset/request", json={"email": email})
     assert resp.status_code in (200, 202)
     data = resp.get_json()
     assert "message" in data or "success" in data
 
+
 @pytest.mark.usefixtures("client", "db")
 def test_password_reset_request_invalid_email(client):
     """Test password reset request with an invalid/nonexistent email returns 200/202 (no info leak)."""
-    resp = client.post("/api/password-reset/request", json={"email": "notarealuser@weatherboysuper.com"})
+    resp = client.post(
+        "/api/password-reset/request",
+        json={"email": "notarealuser@weatherboysuper.com"},
+    )
     assert resp.status_code in (200, 202)
     data = resp.get_json()
     assert "message" in data or "success" in data
 
+
 @pytest.mark.usefixtures("client", "db")
 def test_password_reset_confirm_invalid_token(client):
     """Test password reset confirm with an invalid token fails gracefully."""
-    resp = client.post("/api/password-reset/confirm", json={"token": "badtoken", "new_password": "NewStrongPass1!"})
+    resp = client.post(
+        "/api/password-reset/confirm",
+        json={"token": "badtoken", "new_password": "NewStrongPass1!"},
+    )
     assert resp.status_code == 400 or resp.status_code == 401
     data = resp.get_json()
     assert "error" in data
+
 
 @pytest.mark.usefixtures("client", "db")
 def test_password_reset_confirm_weak_password(client):
     """Test password reset confirm with a weak password fails validation."""
     # This assumes you have a way to generate a valid token for testing; here we use a dummy
-    resp = client.post("/api/password-reset/confirm", json={"token": "dummy", "new_password": "123"})
+    resp = client.post(
+        "/api/password-reset/confirm", json={"token": "dummy", "new_password": "123"}
+    )
     assert resp.status_code == 400 or resp.status_code == 422
     data = resp.get_json()
     assert "error" in data
+
 
 @pytest.mark.usefixtures("client", "db")
 def test_duplicate_registration_username(client):
@@ -978,11 +998,20 @@ def test_duplicate_registration_username(client):
     username = f"dupuser_{unique}"
     email1 = f"dup1_{unique}@weatherboysuper.com"
     email2 = f"dup2_{unique}@weatherboysuper.com"
-    client.post(REGISTER_URL, json={"username": username, "email": email1, "password": "StrongPass1!"})
-    resp = client.post(REGISTER_URL, json={"username": username, "email": email2, "password": "StrongPass1!"})
+    client.post(
+        REGISTER_URL,
+        json={"username": username, "email": email1, "password": "StrongPass1!"},
+    )
+    resp = client.post(
+        REGISTER_URL,
+        json={"username": username, "email": email2, "password": "StrongPass1!"},
+    )
     assert resp.status_code == 400
     data = resp.get_json()
-    assert "error" in data and ("username" in data["error"] or "exists" in data["error"])
+    assert "error" in data and (
+        "username" in data["error"] or "exists" in data["error"]
+    )
+
 
 @pytest.mark.usefixtures("client", "db")
 def test_duplicate_registration_email(client):
@@ -991,11 +1020,18 @@ def test_duplicate_registration_email(client):
     username1 = f"dupuser1_{unique}"
     username2 = f"dupuser2_{unique}"
     email = f"dup_{unique}@weatherboysuper.com"
-    client.post(REGISTER_URL, json={"username": username1, "email": email, "password": "StrongPass1!"})
-    resp = client.post(REGISTER_URL, json={"username": username2, "email": email, "password": "StrongPass1!"})
+    client.post(
+        REGISTER_URL,
+        json={"username": username1, "email": email, "password": "StrongPass1!"},
+    )
+    resp = client.post(
+        REGISTER_URL,
+        json={"username": username2, "email": email, "password": "StrongPass1!"},
+    )
     assert resp.status_code == 400
     data = resp.get_json()
     assert "error" in data and ("email" in data["error"] or "exists" in data["error"])
+
 
 @pytest.mark.usefixtures("client", "db")
 def test_logout_when_not_logged_in(client):
