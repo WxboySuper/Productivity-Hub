@@ -20,8 +20,6 @@ from werkzeug.security import check_password_hash
 
 auth_bp = Blueprint("auth", __name__)
 
-auth_bp = Blueprint("auth", __name__)
-
 
 @auth_bp.route("/api/register", methods=["POST"])
 def register():
