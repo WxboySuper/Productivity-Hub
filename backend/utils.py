@@ -35,6 +35,7 @@ def _extract_task_fields(data, user):
         "recurrence": recurrence,
     }, None
 
+
 # --- Recreated Task Validation Helpers ---
 def validate_title(data):
     title = data.get("title", "")
@@ -43,6 +44,7 @@ def validate_title(data):
     if len(title.strip()) > 255:
         return None, "Title must be 255 characters or less."
     return title.strip(), None
+
 
 def validate_project_id(data, user=None):
     project_id = data.get("project_id")
@@ -54,10 +56,12 @@ def validate_project_id(data, user=None):
         return None, "Invalid project ID"
     if user:
         from models import Project
+
         project = Project.query.filter_by(id=project_id, user_id=user.id).first()
         if not project:
             return None, "Invalid project ID"
     return project_id, None
+
 
 def validate_parent_id(data, user):
     parent_id = data.get("parent_id")
@@ -68,12 +72,16 @@ def validate_parent_id(data, user):
     except (ValueError, TypeError):
         return None, "Invalid parent task ID"
     from models import Task
+
     task = Task.query.filter_by(id=parent_id, user_id=user.id).first()
     if not task:
         return None, "Invalid parent task ID"
     return parent_id, None
 
+
 from datetime import datetime
+
+
 def parse_date(date_str, field_name):
     if not date_str:
         return None, None
@@ -82,6 +90,7 @@ def parse_date(date_str, field_name):
         return datetime.fromisoformat(date_str), None
     except Exception:
         return None, f"Invalid {field_name} format"
+
 
 def _serialize_task(task):
     """Helper to serialize a Task object to dict."""
@@ -105,6 +114,7 @@ def _serialize_task(task):
         d["recurrence"] = task.recurrence
     return d
 
+
 def _validate_and_update_task_fields(task, data, user):
     """Validate and update task fields. Returns error string or None."""
     for updater in [
@@ -125,6 +135,7 @@ def _validate_and_update_task_fields(task, data, user):
         return err
     return None
 
+
 def update_task_title(task, data):
     if "title" in data:
         title = data["title"]
@@ -135,6 +146,7 @@ def update_task_title(task, data):
         task.title = title.strip()
     return None
 
+
 def update_task_description(task, data):
     if "description" in data:
         desc = data["description"]
@@ -142,10 +154,12 @@ def update_task_description(task, data):
             task.description = str(desc).strip()
     return None
 
+
 def update_task_completed(task, data):
     if "completed" in data:
         task.completed = bool(data["completed"])
     return None
+
 
 def update_task_priority(task, data):
     if "priority" in data:
@@ -154,6 +168,7 @@ def update_task_priority(task, data):
         except (ValueError, TypeError):
             return "Invalid priority value."
     return None
+
 
 def update_task_project(task, data, user):
     if "project_id" in data:
@@ -166,11 +181,13 @@ def update_task_project(task, data, user):
         except (ValueError, TypeError):
             return "Invalid project ID"
         from models import Project
+
         project = Project.query.filter_by(id=project_id, user_id=user.id).first()
         if not project:
             return "Invalid project ID"
         task.project_id = project_id
     return None
+
 
 def update_task_due_date(task, data):
     if "due_date" in data:
@@ -184,6 +201,7 @@ def update_task_due_date(task, data):
             task.due_date = None
     return None
 
+
 def update_task_start_date(task, data):
     if "start_date" in data:
         start_date_str = data["start_date"]
@@ -196,15 +214,19 @@ def update_task_start_date(task, data):
             task.start_date = None
     return None
 
+
 def update_task_recurrence(task, data):
     if "recurrence" in data:
         task.recurrence = data["recurrence"]
     return None
 
+
 def _validate_dates(start_date, due_date):
     if start_date and due_date and start_date > due_date:
         return "start_date cannot be after due_date"
     return None
+
+
 import re
 import secrets
 from functools import wraps

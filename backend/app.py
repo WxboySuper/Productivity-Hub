@@ -19,10 +19,9 @@ from flask import Flask, jsonify, request
 from flask_migrate import Migrate
 from models import Notification, Project, Task, db, logger
 from routes.auth import auth_bp
-from utils import error_response, get_current_user, login_required
 from routes.projects import projects_bp
 from routes.tasks_routes import tasks_bp
-
+from utils import error_response, get_current_user, login_required
 
 # --- Environment Loading ---
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -52,12 +51,6 @@ app.config["SESSION_COOKIE_HTTPONLY"] = (
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"  # Set SameSite policy for session cookies
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=8)  # Absolute timeout
 app.config["SESSION_REFRESH_EACH_REQUEST"] = True  # Sliding expiration
-
-
-
-
-
-
 
 
 # --- Global error handler for 404s on API routes ---
@@ -97,8 +90,6 @@ logger.info("SQLAlchemy is set up.")
 # =========================
 # Configuration & App Setup
 # =========================
-
-
 
 
 ##
@@ -151,8 +142,6 @@ def csrf_protect():
                 header_token,
             )
             return error_response("Invalid or missing CSRF token", 403)
-
-
 
 
 def _validate_and_update_task_fields(task, data, user):
@@ -316,11 +305,6 @@ def snooze_notification(notification_id):
 # ==================
 # Project Endpoints
 # ==================
-
-
-
-
-
 
 
 if __name__ == "__main__":  # pragma: no cover
