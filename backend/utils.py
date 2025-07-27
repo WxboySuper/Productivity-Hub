@@ -17,7 +17,14 @@ def error_response(message, code):
             ),
             code,
         )
-    return jsonify({"error": "A request error occurred. Please check your input and try again."}), code
+    return (
+        jsonify(
+            {
+                "error": "A request error occurred. Please check your input and try again."
+            }
+        ),
+        code,
+    )
 
 
 def get_current_user():
