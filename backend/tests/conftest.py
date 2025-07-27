@@ -72,12 +72,17 @@ def auth_client(app):
         "email": "authtestuser@devmail.local",
         "password": "StrongPass1!",
     }
-    client.post("/api/auth/register", json=reg_data)
+    client.post("/api/register", json=reg_data)
     client.post(
-        "/api/auth/login",
+        "/api/login",
         json={
             "username": reg_data["username"],
             "password": reg_data["password"],
         },
     )
+    # Fetch CSRF token and set it in cookie and header for subsequent requests
+    resp = client.get("/api/csrf-token")
+    csrf_token = resp.get_json()["csrf_token"]
+    client.set_cookie("localhost", "_csrf_token", csrf_token)
+    client.csrf_token = csrf_token  # Attach to client for use in tests
     return client
