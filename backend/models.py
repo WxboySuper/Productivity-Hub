@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime, timezone
+
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -39,6 +40,7 @@ task_links = db.Table(
     ),
 )
 
+
 # --- User Model ---
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -59,6 +61,7 @@ class User(db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
+
 # --- Project Model ---
 class Project(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -73,6 +76,7 @@ class Project(db.Model):
     tasks = db.relationship(
         "Task", backref="project", lazy=True, cascade="all, delete-orphan"
     )
+
 
 # --- Task Model ---
 class Task(db.Model):
@@ -123,6 +127,7 @@ class Task(db.Model):
     reminder_snoozed_until = db.Column(db.DateTime, nullable=True)
     reminder_enabled = db.Column(db.Boolean, default=True, nullable=False)
 
+
 # --- PasswordResetToken Model ---
 class PasswordResetToken(db.Model):
     __tablename__ = "password_reset_tokens"
@@ -137,6 +142,7 @@ class PasswordResetToken(db.Model):
     user = db.relationship(
         "User", backref=db.backref("password_reset_tokens", lazy=True)
     )
+
 
 # --- Notification Model ---
 class Notification(db.Model):

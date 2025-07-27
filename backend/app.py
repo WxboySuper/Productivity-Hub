@@ -11,9 +11,9 @@ from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request
 from flask_migrate import Migrate
-from models import db, logger, Task, Project, Notification
-from utils import error_response, get_current_user, login_required
+from models import Notification, Project, Task, db, logger
 from routes.auth import auth_bp
+from utils import error_response, get_current_user, login_required
 
 # =========================
 # Configuration & App Setup
@@ -457,7 +457,6 @@ def snooze_notification(notification_id):
     if not data or "minutes" not in data:
         return jsonify({"error": "Minutes parameter is required"}), 400
 
-
     try:
         minutes = int(data["minutes"])
         if minutes <= 0:
@@ -491,6 +490,7 @@ def snooze_notification(notification_id):
 
     except (ValueError, TypeError):
         return jsonify({"error": "Invalid minutes value"}), 400
+
 
 # ==================
 # Project Endpoints

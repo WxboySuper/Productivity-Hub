@@ -15,11 +15,11 @@ from unittest.mock import MagicMock, patch
 import flask
 import pytest
 from app import Notification
-from models import User
 from app import app as flask_app
 from app import db
-from utils import generate_csrf_token, get_current_user, regenerate_session
 from email_utils import send_email
+from models import User
+from utils import generate_csrf_token, get_current_user, regenerate_session
 
 # --- API Endpoint Constants (must be defined before use) ---
 REGISTER_URL = "/api/register"
@@ -602,9 +602,11 @@ def test_send_email_success_and_failure(mock_smtp, caplog):
     # Explicitly check SMTP called with correct host/port
     # (covers app.py:726)
     from email_utils import EMAIL_HOST, EMAIL_PORT
+
     mock_smtp.assert_any_call(EMAIL_HOST, EMAIL_PORT)
     # Simulate TLS success
     import email_utils
+
     orig_tls = email_utils.EMAIL_USE_TLS
     email_utils.EMAIL_USE_TLS = True
     smtp_instance.reset_mock()
@@ -731,7 +733,9 @@ def test_auth_client_fixture_works(auth_client):
     Test that the auth_client fixture provides a valid authenticated
     session and can access the profile endpoint.
     """
-    resp = auth_client.get("/api/profile", headers={"X-CSRF-Token": getattr(auth_client, "csrf_token", "")})
+    resp = auth_client.get(
+        "/api/profile", headers={"X-CSRF-Token": getattr(auth_client, "csrf_token", "")}
+    )
     data = resp.get_json()
     assert resp.status_code == 200
     # skipcq: PYL-W0212
@@ -760,7 +764,9 @@ def test_get_current_user_found_and_not_found(client):
     # Set the now-nonexistent user_id in the session and call /api/profile
     with client.session_transaction() as sess:
         sess["user_id"] = user_id
-        resp = client.get(PROFILE_URL, headers={"X-CSRF-Token": getattr(client, "csrf_token", "")})
+        resp = client.get(
+            PROFILE_URL, headers={"X-CSRF-Token": getattr(client, "csrf_token", "")}
+        )
     # Should return 401 because user is not found
     assert resp.status_code == 401
     assert "error" in resp.get_json()

@@ -2,6 +2,7 @@ import os
 import smtplib
 from email.message import EmailMessage
 from string import Template
+
 from models import logger
 
 EMAIL_HOST = os.environ.get("EMAIL_HOST", "localhost")
@@ -10,6 +11,7 @@ EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "false").lower() == "true"
 EMAIL_FROM = os.environ.get("EMAIL_FROM", "noreply@localhost")
+
 
 def send_email(to_address, subject, body):
     msg = EmailMessage()
@@ -32,6 +34,7 @@ def send_email(to_address, subject, body):
     except Exception as e:
         logger.error("Failed to send email to %s: %s", to_address, e)
         return False
+
 
 def render_password_reset_email(reset_link, expiration_minutes=60):
     template = Template(
