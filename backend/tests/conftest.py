@@ -80,4 +80,9 @@ def auth_client(app):
             "password": reg_data["password"],
         },
     )
+    # Fetch CSRF token and set it in cookie and header for subsequent requests
+    resp = client.get("/api/csrf-token")
+    csrf_token = resp.get_json()["csrf_token"]
+    client.set_cookie("localhost", "_csrf_token", csrf_token)
+    client.csrf_token = csrf_token  # Attach to client for use in tests
     return client

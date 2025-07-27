@@ -7,20 +7,20 @@ import pytest
 
 # Ensure the parent directory is in sys.path for relative imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from app import PasswordResetToken, User  # noqa: E402
+from models import PasswordResetToken, User  # noqa: E402
 
 
 @pytest.fixture
 def user(db):
-    u = User(username="resetuser", email="resetuser@example.com")
+    u = User(username="resetuser", email="resetuser@devmail.local")
     u.set_password("StrongPassw0rd!")
     db.session.add(u)
     db.session.commit()
     return u
 
 
-@patch("app.send_email")
-def test_password_reset_request_valid_email(mock_send_email, client, db, user):
+@patch("email_utils.send_email")
+def test_password_reset_request_valid_email(mock_send_email, client, user):
     mock_send_email.return_value = True
     resp = client.post("/api/password-reset/request", json={"email": user.email})
     assert resp.status_code == 200
@@ -34,8 +34,8 @@ def test_password_reset_request_valid_email(mock_send_email, client, db, user):
     assert prt is not None
 
 
-@patch("app.send_email")
-def test_password_reset_request_invalid_email(mock_send_email, client, db):
+@patch("email_utils.send_email")
+def test_password_reset_request_invalid_email(mock_send_email, client):
     mock_send_email.return_value = True
     resp = client.post(
         "/api/password-reset/request",
@@ -47,8 +47,8 @@ def test_password_reset_request_invalid_email(mock_send_email, client, db):
     assert "token" not in data or data["token"] is None
 
 
-@patch("app.send_email")
-def test_password_reset_request_missing_email(mock_send_email, client, db):
+@patch("email_utils.send_email")
+def test_password_reset_request_missing_email(mock_send_email, client):
     mock_send_email.return_value = True
     resp = client.post("/api/password-reset/request", json={})
     assert resp.status_code == 400  # Should return 400 for missing email
@@ -56,18 +56,18 @@ def test_password_reset_request_missing_email(mock_send_email, client, db):
     assert "error" in data
 
 
-def test_password_reset_email_sent(client, db, user):
-    with patch("app.send_email") as mock_send:
-        mock_send.return_value = True
-        resp = client.post("/api/password-reset/request", json={"email": user.email})
-        assert resp.status_code == 200
-        data = resp.get_json()
-        assert "message" in data
-        assert "token" in data  # Only in dev/test mode
-        mock_send.assert_called_once()
+@patch("routes.auth.send_email")
+def test_password_reset_email_sent(mock_send, client, db, user):
+    mock_send.return_value = True
+    resp = client.post("/api/password-reset/request", json={"email": user.email})
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert "message" in data
+    assert "token" in data  # Only in dev/test mode
+    mock_send.assert_called()
 
 
-@patch("app.send_email")
+@patch("email_utils.send_email")
 def test_password_reset_confirm_valid(mock_send_email, client, db, user):
     mock_send_email.return_value = True
     # Request a reset token
@@ -90,7 +90,7 @@ def test_password_reset_confirm_valid(mock_send_email, client, db, user):
     assert user_updated.check_password("NewStrongPassw0rd!")
 
 
-def test_password_reset_confirm_invalid_token(client, db, user):
+def test_password_reset_confirm_invalid_token(client):
     resp = client.post(
         "/api/password-reset/confirm",
         json={"token": "invalid_token", "new_password": "NewStrongPassw0rd!"},
@@ -100,8 +100,8 @@ def test_password_reset_confirm_invalid_token(client, db, user):
     assert "error" in data
 
 
-@patch("app.send_email")
-def test_password_reset_confirm_used_token(mock_send_email, client, db, user):
+@patch("email_utils.send_email")
+def test_password_reset_confirm_used_token(mock_send_email, client, user):
     mock_send_email.return_value = True
     # Request a reset token
     resp = client.post("/api/password-reset/request", json={"email": user.email})
@@ -123,8 +123,8 @@ def test_password_reset_confirm_used_token(mock_send_email, client, db, user):
     assert "expired" in data["error"].lower()  # Updated to match actual error message
 
 
-@patch("app.send_email")
-def test_password_reset_confirm_weak_password(mock_send_email, client, db, user):
+@patch("email_utils.send_email")
+def test_password_reset_confirm_weak_password(mock_send_email, client, user):
     mock_send_email.return_value = True
     # Request a reset token
     resp = client.post("/api/password-reset/request", json={"email": user.email})

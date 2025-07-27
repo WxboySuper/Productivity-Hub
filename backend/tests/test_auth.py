@@ -14,18 +14,12 @@ from unittest.mock import MagicMock, patch
 
 import flask
 import pytest
-from app import (
-    Notification,
-    User,
-)
+from app import Notification
+from models import User
 from app import app as flask_app
-from app import (
-    db,
-    generate_csrf_token,
-    get_current_user,
-    regenerate_session,
-    send_email,
-)
+from app import db
+from utils import generate_csrf_token, get_current_user, regenerate_session
+from email_utils import send_email
 
 # --- API Endpoint Constants (must be defined before use) ---
 REGISTER_URL = "/api/register"
@@ -56,12 +50,9 @@ def test_session_id_regeneration_on_login_logout(client):
     """Test that session is cleared and a new session is started on login and logout."""
     unique = secrets.token_hex(4)
     username = f"regenuser_{unique}"
-    # --- API Endpoint Constants (must be defined before use) ---
-    REGISTER_URL = "/api/register"
-    LOGIN_URL = "/api/login"
-    LOGOUT_URL = "/api/logout"
 
     email = f"regen_{unique}@weatherboysuper.com"
+    # skipcq: PTC-W1006
     password = "StrongPass1!"
     # Register
     client.post(
@@ -95,6 +86,7 @@ def test_session_cookie_security_attributes(client):
     unique = secrets.token_hex(4)
     username = f"cookieuser_{unique}"
     email = f"cookie_{unique}@weatherboysuper.com"
+    # skipcq: PTC-W1006
     password = "StrongPass1!"
     # Register and login
     client.post(
@@ -118,6 +110,7 @@ def test_session_lifetime_and_sliding_expiration(client):
     unique = secrets.token_hex(4)
     username = f"lifetimeuser_{unique}"
     email = f"lifetime_{unique}@weatherboysuper.com"
+    # skipcq: PTC-W1006
     password = "StrongPass1!"
     # Register and login
     client.post(
@@ -514,6 +507,7 @@ def test_notification_snooze_endpoint(client, caplog):
     unique = uuid.uuid4().hex[:8]
     username = f"snoozeuser_{unique}"
     email = f"snoozeuser_{unique}@weatherboysuper.com"
+    # skipcq: PTC-W1006
     password = "StrongPass1!"
     # Register and login
     client.post(
@@ -592,51 +586,48 @@ def test_notification_snooze_endpoint(client, caplog):
         builtins.hasattr = orig_hasattr
 
 
-def test_send_email_success_and_failure(caplog):
+@patch("email_utils.smtplib.SMTP")
+def test_send_email_success_and_failure(mock_smtp, caplog):
     """
     Test send_email utility for both TLS and non-TLS, success and failure
     cases. Covers app.py:716-732.
     """
-    # Patch smtplib.SMTP
-    with patch("app.smtplib.SMTP") as mock_smtp:
-        # Simulate non-TLS success
-        smtp_instance = MagicMock()
-        mock_smtp.return_value = smtp_instance
+    # Simulate non-TLS success
+    smtp_instance = MagicMock()
+    mock_smtp.return_value = smtp_instance
+    result = send_email("to@example.com", "Subject", "Body")
+    assert result is True
+    smtp_instance.send_message.assert_called()
+    smtp_instance.quit.assert_called()
+    # Explicitly check SMTP called with correct host/port
+    # (covers app.py:726)
+    from email_utils import EMAIL_HOST, EMAIL_PORT
+    mock_smtp.assert_any_call(EMAIL_HOST, EMAIL_PORT)
+    # Simulate TLS success
+    import email_utils
+    orig_tls = email_utils.EMAIL_USE_TLS
+    email_utils.EMAIL_USE_TLS = True
+    smtp_instance.reset_mock()
+    result = send_email("to@example.com", "Subject", "Body")
+    assert result is True
+    smtp_instance.starttls.assert_called()
+    smtp_instance.send_message.assert_called()
+    smtp_instance.quit.assert_called()
+    email_utils.EMAIL_USE_TLS = orig_tls
+    # Simulate login credentials
+    email_utils.EMAIL_HOST_USER = "user"
+    email_utils.EMAIL_HOST_PASSWORD = "pw"
+    smtp_instance.reset_mock()
+    result = send_email("to@example.com", "Subject", "Body")
+    smtp_instance.login.assert_called_with("user", "pw")
+    email_utils.EMAIL_HOST_USER = ""
+    email_utils.EMAIL_HOST_PASSWORD = ""
+    # Simulate send failure
+    smtp_instance.send_message.side_effect = Exception("fail")
+    with caplog.at_level("ERROR"):
         result = send_email("to@example.com", "Subject", "Body")
-        assert result is True
-        smtp_instance.send_message.assert_called()
-        smtp_instance.quit.assert_called()
-        # Explicitly check SMTP called with correct host/port
-        # (covers app.py:726)
-        from app import EMAIL_HOST, EMAIL_PORT
-
-        mock_smtp.assert_any_call(EMAIL_HOST, EMAIL_PORT)
-        # Simulate TLS success
-        import app
-
-        orig_tls = app.EMAIL_USE_TLS
-        app.EMAIL_USE_TLS = True
-        smtp_instance.reset_mock()
-        result = send_email("to@example.com", "Subject", "Body")
-        assert result is True
-        smtp_instance.starttls.assert_called()
-        smtp_instance.send_message.assert_called()
-        smtp_instance.quit.assert_called()
-        app.EMAIL_USE_TLS = orig_tls
-        # Simulate login credentials
-        app.EMAIL_HOST_USER = "user"
-        app.EMAIL_HOST_PASSWORD = "pw"
-        smtp_instance.reset_mock()
-        result = send_email("to@example.com", "Subject", "Body")
-        smtp_instance.login.assert_called_with("user", "pw")
-        app.EMAIL_HOST_USER = ""
-        app.EMAIL_HOST_PASSWORD = ""
-        # Simulate send failure
-        smtp_instance.send_message.side_effect = Exception("fail")
-        with caplog.at_level("ERROR"):
-            result = send_email("to@example.com", "Subject", "Body")
-        assert result is False
-        assert any("Failed to send email" in m for m in caplog.messages)
+    assert result is False
+    assert any("Failed to send email" in m for m in caplog.messages)
 
 
 # Additional test for CSRF protection on profile update
@@ -697,46 +688,23 @@ def test_csrf_protect_not_skipped_for_other_endpoints(client):
 
 # --- CSRF Protection: Valid Token (Covers line 291 not true) ---
 @pytest.mark.usefixtures("client", "db")
-def test_csrf_protect_valid_token_allows_request(client):
+def test_csrf_protect_valid_token_allows_request(auth_client):
     """
     Ensure CSRF protection allows request when valid CSRF token is present
     (line 291 condition is false). This test sets a valid CSRF token in both
     cookie and header.
     """
 
-    original_testing = flask_app.config.get("TESTING", False)
-    flask_app.config["TESTING"] = False
-    # Register and login a user
-    unique = uuid.uuid4().hex[:8]
-    reg_data = {
-        "username": f"csrfvalid_{unique}",
-        "email": f"csrfvalid_{unique}@weatherboysuper.com",
-        "password": "StrongPass1!",
-    }
-    client.post(REGISTER_URL, json=reg_data)
-    client.post(
-        LOGIN_URL,
-        json={
-            "username": reg_data["username"],
-            "password": reg_data["password"],
-        },
-    )
-    # Get a CSRF token from the endpoint
-    resp = client.get("/api/csrf-token")
-    csrf_token = resp.get_json()["csrf_token"]
-    # Use the token in both cookie and header for the PUT request
-    client.set_cookie("_csrf_token", csrf_token)
-    resp = client.put(
+    resp = auth_client.put(
         PROFILE_URL,
         json={"username": "newname"},
-        headers={"X-CSRF-Token": csrf_token},
+        headers={"X-CSRF-Token": getattr(auth_client, "csrf_token", "")},
     )
     # Should not return a CSRF error (should be 200 or 400 depending on
     # profile update logic)
     assert resp.status_code in (200, 400)
     if resp.status_code == 403:
         assert resp.get_json().get("error") != "Invalid or missing CSRF token"
-    flask_app.config["TESTING"] = original_testing
 
 
 @pytest.fixture
@@ -763,7 +731,7 @@ def test_auth_client_fixture_works(auth_client):
     Test that the auth_client fixture provides a valid authenticated
     session and can access the profile endpoint.
     """
-    resp = auth_client.get("/api/profile")
+    resp = auth_client.get("/api/profile", headers={"X-CSRF-Token": getattr(auth_client, "csrf_token", "")})
     data = resp.get_json()
     assert resp.status_code == 200
     # skipcq: PYL-W0212
@@ -792,7 +760,7 @@ def test_get_current_user_found_and_not_found(client):
     # Set the now-nonexistent user_id in the session and call /api/profile
     with client.session_transaction() as sess:
         sess["user_id"] = user_id
-    resp = client.get(PROFILE_URL)
+        resp = client.get(PROFILE_URL, headers={"X-CSRF-Token": getattr(client, "csrf_token", "")})
     # Should return 401 because user is not found
     assert resp.status_code == 401
     assert "error" in resp.get_json()
