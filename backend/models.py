@@ -6,6 +6,38 @@ from werkzeug.security import check_password_hash, generate_password_hash
 # --- Extensions ---
 db = SQLAlchemy()
 logger = logging.getLogger(__name__)
+# --- Association Tables ---
+task_dependencies = db.Table(
+    "task_dependencies",
+    db.Column(
+        "blocker_id",
+        db.Integer,
+        db.ForeignKey("task.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+    db.Column(
+        "blocked_id",
+        db.Integer,
+        db.ForeignKey("task.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+)
+
+task_links = db.Table(
+    "task_links",
+    db.Column(
+        "task_a_id",
+        db.Integer,
+        db.ForeignKey("task.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+    db.Column(
+        "task_b_id",
+        db.Integer,
+        db.ForeignKey("task.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+)
 
 # --- User Model ---
 class User(db.Model):
@@ -90,39 +122,6 @@ class Task(db.Model):
     reminder_recurring = db.Column(db.String, nullable=True)
     reminder_snoozed_until = db.Column(db.DateTime, nullable=True)
     reminder_enabled = db.Column(db.Boolean, default=True, nullable=False)
-
-# --- Association Tables ---
-task_dependencies = db.Table(
-    "task_dependencies",
-    db.Column(
-        "blocker_id",
-        db.Integer,
-        db.ForeignKey("task.id", ondelete="CASCADE"),
-        primary_key=True,
-    ),
-    db.Column(
-        "blocked_id",
-        db.Integer,
-        db.ForeignKey("task.id", ondelete="CASCADE"),
-        primary_key=True,
-    ),
-)
-
-task_links = db.Table(
-    "task_links",
-    db.Column(
-        "task_a_id",
-        db.Integer,
-        db.ForeignKey("task.id", ondelete="CASCADE"),
-        primary_key=True,
-    ),
-    db.Column(
-        "task_b_id",
-        db.Integer,
-        db.ForeignKey("task.id", ondelete="CASCADE"),
-        primary_key=True,
-    ),
-)
 
 # --- PasswordResetToken Model ---
 class PasswordResetToken(db.Model):
