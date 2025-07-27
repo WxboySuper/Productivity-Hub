@@ -85,7 +85,11 @@ def login():
     if not request.is_json:
         logger.error("Request must be JSON.")
         return error_response("Request must be JSON", 400)
-    data = request.get_json()
+    try:
+        data = request.get_json()
+    except Exception as e:
+        logger.error("Malformed JSON: %s", e)
+        return error_response("Malformed JSON in request body", 400)
     username_or_email = data.get("username") or data.get("email")
     password = data.get("password")
     if (

@@ -72,9 +72,9 @@ def auth_client(app):
         "email": "authtestuser@devmail.local",
         "password": "StrongPass1!",
     }
-    client.post("/api/auth/register", json=reg_data)
+    client.post("/api/register", json=reg_data)
     client.post(
-        "/api/auth/login",
+        "/api/login",
         json={
             "username": reg_data["username"],
             "password": reg_data["password"],

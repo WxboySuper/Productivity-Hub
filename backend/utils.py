@@ -17,14 +17,8 @@ def error_response(message, code):
             ),
             code,
         )
-    return (
-        jsonify(
-            {
-                "error": "A request error occurred. Please check your input and try again."
-            }
-        ),
-        code,
-    )
+    # For 400-level errors, return the specific message
+    return jsonify({"error": message}), code
 
 
 def get_current_user():
