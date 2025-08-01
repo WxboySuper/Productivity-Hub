@@ -16,19 +16,19 @@ import smtplib
 def test_send_email_success(monkeypatch):
     class DummySMTP:
         def __init__(self, *a, **k):
-            pass
+            pass  # skipcq: PTC-W0049
 
         def starttls(self):
-            pass
+            pass  # skipcq: PTC-W0049
 
         def login(self, u, p):
-            pass
+            pass  # skipcq: PTC-W0049
 
         def send_message(self, msg):
             self.sent = True
 
         def quit(self):
-            pass
+            pass  # skipcq: PTC-W0049
 
     monkeypatch.setattr(smtplib, "SMTP", lambda *a, **k: DummySMTP())
     result = email_utils.send_email("to@x.com", "Subject", "Body")
