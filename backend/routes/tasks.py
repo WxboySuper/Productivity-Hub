@@ -1,15 +1,15 @@
 from datetime import datetime
 
 from flask import Blueprint, jsonify, request
-from models import Task, db
-from utils import (
+from models.task import Task
+from models import db
+from utils import error_response
+from helpers.task_helpers import (
     _extract_task_fields,
     _serialize_task,
     _validate_and_update_task_fields,
-    error_response,
-    get_current_user,
-    login_required,
 )
+from helpers.auth_helpers import get_current_user, login_required
 
 tasks_bp = Blueprint("tasks", __name__)
 
@@ -139,5 +139,3 @@ def delete_task(task_id):
         db.session.rollback()
         return error_response("Failed to delete task", 500)
 
-
-tasks_bp = Blueprint("tasks", __name__)

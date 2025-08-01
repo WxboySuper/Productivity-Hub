@@ -1,6 +1,9 @@
 from flask import Blueprint, jsonify, request
-from models import Project, db
-from utils import error_response, get_current_user, login_required
+from models.project import Project
+from models import db
+from utils import error_response
+from helpers.project_helpers import serialize_project, validate_project_name
+from helpers.auth_helpers import get_current_user, login_required
 
 projects_bp = Blueprint("projects", __name__)
 
@@ -19,29 +22,8 @@ def get_projects():
     per_page = max(1, min(per_page, 100))
     query = Project.query.filter_by(user_id=user.id).order_by(Project.created_at.desc())
     pagination = query.paginate(page=page, per_page=per_page, error_out=False)
-    projects_data = []
-    for project in pagination.items:
-        projects_data.append(
-            {
-                "id": project.id,
-                "name": project.name,
-                "description": project.description,
-                "created_at": project.created_at.isoformat(),
-                "updated_at": project.updated_at.isoformat(),
-            }
-        )
-    return (
-        jsonify(
-            {
-                "projects": projects_data,
-                "total": pagination.total,
-                "pages": pagination.pages,
-                "current_page": pagination.page,
-                "per_page": pagination.per_page,
-            }
-        ),
-        200,
-    )
+    projects_data = [serialize_project(project) for project in pagination.items]
+    return jsonify(projects_data), 200
 
 
 # --- Create Project ---
@@ -53,10 +35,10 @@ def create_project():
     if not request.is_json:
         return error_response("Request must be JSON", 400)
     data = request.get_json()
-    name = data.get("name")
+    name, err = validate_project_name(data)
     description = data.get("description", "")
-    if not name or not name.strip():
-        return error_response("Project name is required", 400)
+    if err:
+        return error_response(err, 400)
     try:
         project = Project(
             name=name.strip(),
@@ -65,18 +47,9 @@ def create_project():
         )
         db.session.add(project)
         db.session.commit()
-        return (
-            jsonify(
-                {
-                    "id": project.id,
-                    "name": project.name,
-                    "description": project.description,
-                    "created_at": project.created_at.isoformat(),
-                    "updated_at": project.updated_at.isoformat(),
-                }
-            ),
-            201,
-        )
+        project_data = serialize_project(project)
+        response = {"success": True, "project_id": project.id, **project_data}
+        return jsonify(response), 201
     except Exception as e:
         db.session.rollback()
         return error_response("Failed to create project", 500)
@@ -91,18 +64,9 @@ def get_project(project_id):
     project = Project.query.filter_by(id=project_id, user_id=user.id).first()
     if not project:
         return error_response("Project not found", 404)
-    return (
-        jsonify(
-            {
-                "id": project.id,
-                "name": project.name,
-                "description": project.description,
-                "created_at": project.created_at.isoformat(),
-                "updated_at": project.updated_at.isoformat(),
-            }
-        ),
-        200,
-    )
+    project_data = serialize_project(project)
+    response = {"success": True, "project_id": project.id, **project_data}
+    return jsonify(response), 200
 
 
 # --- Update Project ---
@@ -111,33 +75,26 @@ def get_project(project_id):
 def update_project(project_id):
     """Update an existing project."""
     user = get_current_user()
-    project = Project.query.filter_by(id=project_id, user_id=user.id).first()
+    project = Project.query.filter_by(id=project_id).first()
     if not project:
         return error_response("Project not found", 404)
+    if project.user_id != user.id:
+        return error_response("Not authorized", 403)
     if not request.is_json:
         return error_response("Request must be JSON", 400)
     data = request.get_json()
-    name = data.get("name")
+    name, err = validate_project_name(data)
     description = data.get("description")
-    if not name or not name.strip():
-        return error_response("Project name is required", 400)
+    if err:
+        return error_response(err, 400)
     try:
-        project.name = name.strip()
+        project.name = name
         if description is not None:
             project.description = description.strip()
         db.session.commit()
-        return (
-            jsonify(
-                {
-                    "id": project.id,
-                    "name": project.name,
-                    "description": project.description,
-                    "created_at": project.created_at.isoformat(),
-                    "updated_at": project.updated_at.isoformat(),
-                }
-            ),
-            200,
-        )
+        project_data = serialize_project(project)
+        response = {"success": True, "project_id": project.id, **project_data}
+        return jsonify(response), 200
     except Exception as e:
         db.session.rollback()
         return error_response("Failed to update project", 500)
@@ -149,13 +106,19 @@ def update_project(project_id):
 def delete_project(project_id):
     """Delete an existing project and all its tasks."""
     user = get_current_user()
-    project = Project.query.filter_by(id=project_id, user_id=user.id).first()
+    project = Project.query.filter_by(id=project_id).first()
     if not project:
         return error_response("Project not found", 404)
+    if project.user_id != user.id:
+        return error_response("Not authorized", 403)
     try:
         db.session.delete(project)
         db.session.commit()
-        return jsonify({"message": "Project deleted successfully"}), 200
+        return jsonify({
+            "success": True,
+            "project_id": project.id,
+            "message": "Project deleted successfully"
+        }), 200
     except Exception as e:
         db.session.rollback()
         return error_response("Failed to delete project", 500)

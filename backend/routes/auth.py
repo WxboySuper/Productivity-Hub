@@ -7,8 +7,10 @@ import bleach
 from email_utils import render_password_reset_email, send_email
 from email_validator import EmailNotValidError, validate_email
 from flask import Blueprint, current_app, jsonify, request, session
-from models import PasswordResetToken, User, db, logger
-from utils import (
+from models.password_reset_token import PasswordResetToken
+from models.user import User
+from models import db, logger
+from helpers.auth_helpers import (
     error_response,
     generate_csrf_token,
     get_current_user,
@@ -60,8 +62,7 @@ def register():
     if not is_strong_password(password):
         logger.error("Weak password provided.")
         return error_response(
-            "Password must be at least 8 characters long and include "
-            "uppercase, lowercase, numbers, and special characters.",
+            {"password": "Password must be at least 8 characters long and include uppercase, lowercase, numbers, and special characters."},
             400,
         )
     try:
@@ -73,10 +74,19 @@ def register():
         db.session.rollback()
         logger.error("User registration failed: %s", e)
         if "UNIQUE constraint failed" in str(e):
-            return error_response("Username or email already exists", 400)
+            if "user.username" in str(e):
+                return error_response({"username": "Username already exists"}, 400)
+            elif "user.email" in str(e):
+                return error_response({"email": "Email already exists"}, 400)
+            else:
+                return error_response({"username": "Username or email already exists"}, 400)
         return error_response("Registration failed", 500)
     logger.info("User %s registered successfully.", username)
-    return jsonify({"message": "User registered successfully"}), 201
+    return jsonify({
+        "success": True,
+        "message": "User registered successfully",
+        "user_id": user.id
+    }), 201
 
 
 @auth_bp.route("/api/login", methods=["POST"])
@@ -112,7 +122,7 @@ def login():
         password_valid = False
     if not user or not password_valid:
         logger.warning("Invalid login attempt for user: %s", username_or_email)
-        return error_response("Invalid username/email or password", 401)
+        return error_response("Invalid credentials", 401)
     session["user_id"] = user.id
     session.permanent = True
     session.modified = True
@@ -122,12 +132,15 @@ def login():
     return (
         jsonify(
             {
+                "success": True,
                 "message": "Login successful",
-                "session_debug": {
-                    "user_id": session.get("user_id"),
-                    "has_session_id": bool(session.get("_id")),
-                    "session_keys": list(session.keys()),
-                },
+                "user_id": user.id,
+                # Optionally include session_debug if needed for debugging:
+                # "session_debug": {
+                #     "user_id": session.get("user_id"),
+                #     "has_session_id": bool(session.get("_id")),
+                #     "session_keys": list(session.keys()),
+                # },
             }
         ),
         200,
@@ -139,7 +152,7 @@ def logout():
     logger.info("Logout endpoint accessed.")
     regenerate_session()
     logger.info("User logged out successfully.")
-    return jsonify({"message": "Logout successful"}), 200
+    return jsonify({"success": True, "message": "Logout successful"}), 200
 
 
 @auth_bp.route("/api/auth/check", methods=["GET"])
@@ -198,7 +211,7 @@ def get_profile():
         logger.warning(
             "Profile requested for missing user (unauthenticated or deleted)."
         )
-        return error_response("Authentication required", 401)
+        return error_response("Not authenticated", 401)
     logger.info("Returning profile for user: %s (ID: %s)", user.username, user.id)
     return (
         jsonify({"id": user.id, "username": user.username, "email": user.email}),
