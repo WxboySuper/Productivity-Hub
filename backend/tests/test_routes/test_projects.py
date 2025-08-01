@@ -30,7 +30,7 @@ def register_and_login(client, username=None, email=None, password="StrongPass1!
 
 # --- Project CRUD Tests ---
 def test_create_project_success(client):
-    user = register_and_login(client)
+    register_and_login(client)
     resp = client.post(
         PROJECTS_URL, json={"name": "Test Project", "description": "A test project."}
     )
@@ -41,14 +41,14 @@ def test_create_project_success(client):
 
 
 def test_create_project_missing_name(client):
-    user = register_and_login(client)
+    register_and_login(client)
     resp = client.post(PROJECTS_URL, json={"description": "No name."})
     assert resp.status_code == 400
     assert "name" in resp.get_json().get("error", "")
 
 
 def test_get_projects_list(client):
-    user = register_and_login(client)
+    register_and_login(client)
     # Create two projects
     client.post(PROJECTS_URL, json={"name": "Proj1", "description": "Desc1"})
     client.post(PROJECTS_URL, json={"name": "Proj2", "description": "Desc2"})
@@ -62,7 +62,7 @@ def test_get_projects_list(client):
 
 
 def test_get_project_by_id(client):
-    user = register_and_login(client)
+    register_and_login(client)
     resp = client.post(PROJECTS_URL, json={"name": "SingleProj", "description": "Desc"})
     project_id = resp.get_json()["project_id"]
     resp = client.get(f"{PROJECTS_URL}/{project_id}")
@@ -72,7 +72,7 @@ def test_get_project_by_id(client):
 
 
 def test_update_project_success(client):
-    user = register_and_login(client)
+    register_and_login(client)
     resp = client.post(PROJECTS_URL, json={"name": "ToUpdate", "description": "Desc"})
     project_id = resp.get_json()["project_id"]
     resp = client.put(
@@ -89,13 +89,13 @@ def test_update_project_success(client):
 
 def test_update_project_not_owner(client):
     # User1 creates project
-    user1 = register_and_login(
+    register_and_login(
         client, username="owner1", email="owner1@weatherboysuper.com"
     )
     resp = client.post(PROJECTS_URL, json={"name": "OwnerProj", "description": "Desc"})
     project_id = resp.get_json()["project_id"]
     # Switch to user2 by logging in as user2 (not a true logout)
-    user2 = register_and_login(
+    register_and_login(
         client, username="owner2", email="owner2@weatherboysuper.com"
     )
     resp = client.put(f"{PROJECTS_URL}/{project_id}", json={"name": "HackerProj"})
@@ -104,7 +104,7 @@ def test_update_project_not_owner(client):
 
 
 def test_delete_project_success(client):
-    user = register_and_login(client)
+    register_and_login(client)
     resp = client.post(PROJECTS_URL, json={"name": "ToDelete", "description": "Desc"})
     project_id = resp.get_json()["project_id"]
     resp = client.delete(f"{PROJECTS_URL}/{project_id}")
@@ -117,13 +117,13 @@ def test_delete_project_success(client):
 
 def test_delete_project_not_owner(client):
     # User1 creates project
-    user1 = register_and_login(
+    register_and_login(
         client, username="owner3", email="owner3@weatherboysuper.com"
     )
     resp = client.post(PROJECTS_URL, json={"name": "OwnerProj2", "description": "Desc"})
     project_id = resp.get_json()["project_id"]
     # Switch to user4 by logging in as user4 (not a true logout)
-    user2 = register_and_login(
+    register_and_login(
         client, username="owner4", email="owner4@weatherboysuper.com"
     )
     resp = client.delete(f"{PROJECTS_URL}/{project_id}")
