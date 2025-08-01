@@ -1,10 +1,3 @@
-# Debug: Print all registered routes at startup
-def print_routes():
-    print("\nRegistered routes:")
-    for rule in app.url_map.iter_rules():
-        print(f"{rule.methods} {rule}")
-
-
 # ========================
 # Imports
 # ========================
@@ -12,16 +5,28 @@ import logging
 import os
 import sys
 import warnings
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 
 from dotenv import load_dotenv
-from flask import Flask, jsonify, request
+from flask import Flask, request
 from flask_migrate import Migrate
-from models import Notification, Project, Task, db, logger
+from helpers.auth_helpers import error_response
+from models import db, logger
+from routes.admin import admin_bp
 from routes.auth import auth_bp
+from routes.misc import misc_bp
+from routes.notifications import notifications_bp
 from routes.projects import projects_bp
-from routes.tasks_routes import tasks_bp
-from utils import error_response, get_current_user, login_required
+from routes.settings import settings_bp
+from routes.tasks import tasks_bp
+
+
+# Debug: Print all registered routes at startup
+def print_routes():
+    print("\nRegistered routes:")
+    for rule in app.url_map.iter_rules():
+        print(f"{rule.methods} {rule}")
+
 
 # --- Environment Loading ---
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -65,6 +70,10 @@ def handle_404(e):
 app.register_blueprint(auth_bp)
 app.register_blueprint(projects_bp)
 app.register_blueprint(tasks_bp)
+app.register_blueprint(notifications_bp)
+app.register_blueprint(settings_bp)
+app.register_blueprint(admin_bp)
+app.register_blueprint(misc_bp)
 
 # Print all registered routes for debugging
 print_routes()
@@ -161,145 +170,6 @@ def home():
     """Home route."""
     logger.info("Home route accessed.")
     return "Welcome to the Productivity Hub Backend!"
-
-
-# ========================
-# Notification Endpoints
-# ========================
-
-
-@app.route("/api/notifications", methods=["GET"])
-@login_required
-def get_notifications():
-    """Get all notifications for the current user."""
-    logger.info("Notifications GET endpoint accessed.")
-    user = get_current_user()
-    notifications = (
-        Notification.query.filter_by(user_id=user.id)
-        .order_by(Notification.created_at.desc())
-        .all()
-    )
-
-    notifications_data = []
-    for notification in notifications:
-        notification_dict = {
-            "id": notification.id,
-            "title": notification.title,
-            "message": notification.message,
-            "read": notification.read,
-            "created_at": notification.created_at.isoformat(),
-            "task_id": notification.task_id,
-        }
-        # Include show_at if it exists
-        if notification.show_at:
-            notification_dict["show_at"] = notification.show_at.isoformat()
-        # Include snoozed_until if it exists
-        if hasattr(notification, "snoozed_until") and notification.snoozed_until:
-            notification_dict["snoozed_until"] = notification.snoozed_until.isoformat()
-
-        notifications_data.append(notification_dict)
-
-    logger.info(
-        "Returning %d notifications for user: %s",
-        len(notifications_data),
-        user.username,
-    )
-    return jsonify(notifications_data), 200
-
-
-# --- Dismiss Notification ---
-
-
-@app.route(
-    "/api/notifications/<int:notification_id>/dismiss",
-    methods=["POST"],
-)
-@login_required
-def dismiss_notification(notification_id):
-    """Mark a notification as read/dismissed."""
-    logger.info(
-        "Notification dismiss endpoint accessed for notification ID: %s",
-        notification_id,
-    )
-    user = get_current_user()
-
-    notification = Notification.query.filter_by(
-        id=notification_id, user_id=user.id
-    ).first()
-    if not notification:
-        logger.warning(
-            "Notification not found or doesn't belong to user: %s",
-            notification_id,
-        )
-        return jsonify({"error": "Notification not found"}), 404
-
-    notification.read = True
-    db.session.commit()
-
-    logger.info("Notification %s dismissed by user: %s", notification_id, user.username)
-    return jsonify({"success": True}), 200
-
-
-# --- Snooze Notification ---
-
-
-@app.route("/api/notifications/<int:notification_id>/snooze", methods=["POST"])
-@login_required
-def snooze_notification(notification_id):
-    """Snooze a notification for a specified duration."""
-    logger.info(
-        "Notification snooze endpoint accessed for notification ID: %s",
-        notification_id,
-    )
-    user = get_current_user()
-
-    notification = Notification.query.filter_by(
-        id=notification_id, user_id=user.id
-    ).first()
-    if not notification:
-        logger.warning(
-            "Notification not found or doesn't belong to user: %s",
-            notification_id,
-        )
-        return jsonify({"error": "Notification not found"}), 404
-
-    data = request.get_json()
-    if not data or "minutes" not in data:
-        return jsonify({"error": "Minutes parameter is required"}), 400
-
-    try:
-        minutes = int(data["minutes"])
-        if minutes <= 0:
-            return jsonify({"error": "Minutes must be positive"}), 400
-
-        # Calculate snooze time
-        snooze_until = datetime.now(timezone.utc) + timedelta(minutes=minutes)
-
-        # Update notification with snooze time
-        if not hasattr(notification, "snoozed_until"):
-            # If the column doesn't exist, we'll need to add it to the model
-            logger.warning("Notification model missing snoozed_until field")
-            return (
-                jsonify({"error": "Snooze functionality not available"}),
-                500,
-            )
-
-        notification.snoozed_until = snooze_until
-        db.session.commit()
-
-        logger.info(
-            "Notification %s snoozed for %d minutes by user: %s",
-            notification_id,
-            minutes,
-            user.username,
-        )
-        return (
-            jsonify({"success": True, "snoozed_until": snooze_until.isoformat()}),
-            200,
-        )
-
-    except (ValueError, TypeError):
-        return jsonify({"error": "Invalid minutes value"}), 400
 
 
 # ==================
