@@ -1,5 +1,7 @@
-from models import db
 from datetime import datetime, timezone
+
+from models import db
+
 
 class PasswordResetToken(db.Model):
     __tablename__ = "password_reset_tokens"

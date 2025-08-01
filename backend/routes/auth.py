@@ -7,9 +7,6 @@ import bleach
 from email_utils import render_password_reset_email, send_email
 from email_validator import EmailNotValidError, validate_email
 from flask import Blueprint, current_app, jsonify, request, session
-from models.password_reset_token import PasswordResetToken
-from models.user import User
-from models import db, logger
 from helpers.auth_helpers import (
     error_response,
     generate_csrf_token,
@@ -18,6 +15,9 @@ from helpers.auth_helpers import (
     login_required,
     regenerate_session,
 )
+from models import db, logger
+from models.password_reset_token import PasswordResetToken
+from models.user import User
 from werkzeug.security import check_password_hash
 
 auth_bp = Blueprint("auth", __name__)
@@ -62,7 +62,9 @@ def register():
     if not is_strong_password(password):
         logger.error("Weak password provided.")
         return error_response(
-            {"password": "Password must be at least 8 characters long and include uppercase, lowercase, numbers, and special characters."},
+            {
+                "password": "Password must be at least 8 characters long and include uppercase, lowercase, numbers, and special characters."
+            },
             400,
         )
     try:
@@ -79,14 +81,21 @@ def register():
             elif "user.email" in str(e):
                 return error_response({"email": "Email already exists"}, 400)
             else:
-                return error_response({"username": "Username or email already exists"}, 400)
+                return error_response(
+                    {"username": "Username or email already exists"}, 400
+                )
         return error_response("Registration failed", 500)
     logger.info("User %s registered successfully.", username)
-    return jsonify({
-        "success": True,
-        "message": "User registered successfully",
-        "user_id": user.id
-    }), 201
+    return (
+        jsonify(
+            {
+                "success": True,
+                "message": "User registered successfully",
+                "user_id": user.id,
+            }
+        ),
+        201,
+    )
 
 
 @auth_bp.route("/api/login", methods=["POST"])

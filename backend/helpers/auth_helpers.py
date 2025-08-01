@@ -1,18 +1,23 @@
 import re
 import secrets
 from functools import wraps
+
 from flask import jsonify, request, session
-from models.user import User
 from models import db, logger
+from models.user import User
+
 
 def error_response(message, code):
     logger.error(message)
     if code >= 500:
         return (
-            jsonify({"error": "An internal server error occurred. Please try again later."}),
+            jsonify(
+                {"error": "An internal server error occurred. Please try again later."}
+            ),
             code,
         )
     return jsonify({"error": message}), code
+
 
 def get_current_user():
     user_id = session.get("user_id")
@@ -27,6 +32,7 @@ def get_current_user():
     logger.info("No user_id in session.")
     return None
 
+
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -36,7 +42,9 @@ def login_required(f):
             logger.warning("Unauthorized access attempt.")
             return error_response("Not authenticated", 401)
         return f(*args, **kwargs)
+
     return decorated_function
+
 
 def is_strong_password(password):
     logger.debug("Checking password strength.")
@@ -58,6 +66,7 @@ def is_strong_password(password):
     logger.debug("Password is strong.")
     return True
 
+
 def generate_csrf_token():
     token = session.get("csrf_token")
     if token:
@@ -67,6 +76,7 @@ def generate_csrf_token():
     token = secrets.token_hex(16)
     session["csrf_token"] = token
     return token
+
 
 def regenerate_session():
     session.clear()

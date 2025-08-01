@@ -17,17 +17,17 @@ from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request
 from flask_migrate import Migrate
+from helpers.auth_helpers import error_response, get_current_user, login_required
+from models import db, logger
 from models.project import Project
 from models.task import Task
-from models import db, logger
-from routes.auth import auth_bp
-from routes.projects import projects_bp
-from routes.tasks import tasks_bp
-from routes.notifications import notifications_bp
-from routes.settings import settings_bp
 from routes.admin import admin_bp
+from routes.auth import auth_bp
 from routes.misc import misc_bp
-from helpers.auth_helpers import error_response, get_current_user, login_required
+from routes.notifications import notifications_bp
+from routes.projects import projects_bp
+from routes.settings import settings_bp
+from routes.tasks import tasks_bp
 
 # --- Environment Loading ---
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -171,8 +171,6 @@ def home():
     """Home route."""
     logger.info("Home route accessed.")
     return "Welcome to the Productivity Hub Backend!"
-
-
 
 
 # ==================

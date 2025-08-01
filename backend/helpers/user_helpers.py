@@ -2,6 +2,7 @@
 from models.project import Project
 from models.task import Task
 
+
 def validate_project_id(data, user=None):
     project_id = data.get("project_id")
     if project_id is None:
@@ -15,6 +16,7 @@ def validate_project_id(data, user=None):
         if not project:
             return None, "Invalid project ID"
     return project_id, None
+
 
 def validate_parent_id(data, user):
     parent_id = data.get("parent_id")

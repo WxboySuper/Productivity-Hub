@@ -1,6 +1,8 @@
 import pytest
-from backend import utils
 from flask import Flask
+
+from backend import utils
+
 
 def test_error_response_400():
     app = Flask(__name__)
@@ -8,6 +10,7 @@ def test_error_response_400():
         resp, code = utils.error_response("bad request", 400)
         assert code == 400
         assert resp.get_json()["error"] == "bad request"
+
 
 def test_error_response_500():
     app = Flask(__name__)

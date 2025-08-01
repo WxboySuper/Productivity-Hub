@@ -1,5 +1,6 @@
 from datetime import datetime
 
+
 def validate_title(data):
     title = data.get("title", "")
     if not isinstance(title, str) or not title.strip():
@@ -19,7 +20,8 @@ def parse_date(date_str, field_name):
 
 
 def _extract_task_fields(data, user):
-    from helpers.user_helpers import validate_project_id, validate_parent_id
+    from helpers.user_helpers import validate_parent_id, validate_project_id
+
     title, err = validate_title(data)
     if err:
         return None, err
@@ -141,6 +143,7 @@ def update_task_project(task, data, user):
         except (ValueError, TypeError):
             return "Invalid project ID"
         from models.project import Project
+
         project = Project.query.filter_by(id=project_id, user_id=user.id).first()
         if not project:
             return "Invalid project ID"

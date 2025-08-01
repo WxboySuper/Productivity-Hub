@@ -1,9 +1,9 @@
 from flask import Blueprint, jsonify, request
-from models.project import Project
-from models import db
-from utils import error_response
-from helpers.project_helpers import serialize_project, validate_project_name
 from helpers.auth_helpers import get_current_user, login_required
+from helpers.project_helpers import serialize_project, validate_project_name
+from models import db
+from models.project import Project
+from utils import error_response
 
 projects_bp = Blueprint("projects", __name__)
 
@@ -114,11 +114,16 @@ def delete_project(project_id):
     try:
         db.session.delete(project)
         db.session.commit()
-        return jsonify({
-            "success": True,
-            "project_id": project.id,
-            "message": "Project deleted successfully"
-        }), 200
+        return (
+            jsonify(
+                {
+                    "success": True,
+                    "project_id": project.id,
+                    "message": "Project deleted successfully",
+                }
+            ),
+            200,
+        )
     except Exception as e:
         db.session.rollback()
         return error_response("Failed to delete project", 500)

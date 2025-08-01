@@ -1,12 +1,14 @@
-from flask import Blueprint, jsonify, request
-from models.notification import Notification
-from models import db, logger
-from utils import error_response
-from helpers.auth_helpers import get_current_user, login_required
-from helpers.notification_helpers import serialize_notification, validate_snooze_minutes
 from datetime import datetime, timedelta, timezone
 
+from flask import Blueprint, jsonify, request
+from helpers.auth_helpers import get_current_user, login_required
+from helpers.notification_helpers import serialize_notification, validate_snooze_minutes
+from models import db, logger
+from models.notification import Notification
+from utils import error_response
+
 notifications_bp = Blueprint("notifications", __name__)
+
 
 @notifications_bp.route("/api/notifications", methods=["GET"])
 @login_required
@@ -19,7 +21,9 @@ def get_notifications():
         .all()
     )
 
-    notifications_data = [serialize_notification(notification) for notification in notifications]
+    notifications_data = [
+        serialize_notification(notification) for notification in notifications
+    ]
 
     logger.info(
         "Returning %d notifications for user: %s",
@@ -27,6 +31,7 @@ def get_notifications():
         user.username,
     )
     return jsonify(notifications_data), 200
+
 
 @notifications_bp.route(
     "/api/notifications/<int:notification_id>/dismiss",
@@ -56,7 +61,10 @@ def dismiss_notification(notification_id):
     logger.info("Notification %s dismissed by user: %s", notification_id, user.username)
     return jsonify({"success": True}), 200
 
-@notifications_bp.route("/api/notifications/<int:notification_id>/snooze", methods=["POST"])
+
+@notifications_bp.route(
+    "/api/notifications/<int:notification_id>/snooze", methods=["POST"]
+)
 @login_required
 def snooze_notification(notification_id):
     logger.info(

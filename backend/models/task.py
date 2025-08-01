@@ -1,5 +1,6 @@
 from models import db, task_dependencies, task_links
 
+
 class Task(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(120), nullable=False)
