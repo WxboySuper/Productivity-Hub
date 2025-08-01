@@ -25,7 +25,10 @@ class DummyProjectQuery:
         return self
 
     def first(self):
-        if self._filter_id == self.id_to_return and self._filter_user_id == self.user_id_to_return:
+        if (
+            self._filter_id == self.id_to_return
+            and self._filter_user_id == self.user_id_to_return
+        ):
             return DummyProject(self._filter_id, self._filter_user_id)
         return None
 
@@ -49,7 +52,10 @@ class DummyTaskQuery:
         return self
 
     def first(self):
-        if self._filter_id == self.id_to_return and self._filter_user_id == self.user_id_to_return:
+        if (
+            self._filter_id == self.id_to_return
+            and self._filter_user_id == self.user_id_to_return
+        ):
             return DummyTask(self._filter_id, self._filter_user_id)
         return None
 
