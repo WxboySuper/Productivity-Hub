@@ -78,12 +78,11 @@ def register():
         if "UNIQUE constraint failed" in str(e):
             if "user.username" in str(e):
                 return error_response({"username": "Username already exists"}, 400)
-            elif "user.email" in str(e):
+            if "user.email" in str(e):
                 return error_response({"email": "Email already exists"}, 400)
-            else:
-                return error_response(
-                    {"username": "Username or email already exists"}, 400
-                )
+            return error_response(
+                {"username": "Username or email already exists"}, 400
+            )
         return error_response("Registration failed", 500)
     logger.info("User %s registered successfully.", username)
     return (

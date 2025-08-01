@@ -114,13 +114,11 @@ def update_task_description(task, data):
         desc = data["description"]
         if desc is not None:
             task.description = str(desc).strip()
-    return None
 
 
 def update_task_completed(task, data):
     if "completed" in data:
         task.completed = bool(data["completed"])
-    return None
 
 
 def update_task_priority(task, data):
@@ -180,7 +178,6 @@ def update_task_start_date(task, data):
 def update_task_recurrence(task, data):
     if "recurrence" in data:
         task.recurrence = data["recurrence"]
-    return None
 
 
 def _validate_dates(start_date, due_date):

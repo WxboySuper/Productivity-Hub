@@ -1,4 +1,3 @@
-import pytest
 
 from backend import email_utils
 
@@ -13,25 +12,24 @@ def test_render_password_reset_email():
 
 # Patch smtplib to simulate sending
 import smtplib
-from unittest.mock import MagicMock, patch
 
 
 def test_send_email_success(monkeypatch):
     class DummySMTP:
         def __init__(self, *a, **k):
-            pass
+            raise NotImplementedError()
 
         def starttls(self):
-            pass
+            raise NotImplementedError()
 
         def login(self, u, p):
-            pass
+            raise NotImplementedError()
 
         def send_message(self, msg):
             self.sent = True
 
         def quit(self):
-            pass
+            raise NotImplementedError()
 
     monkeypatch.setattr(smtplib, "SMTP", lambda *a, **k: DummySMTP())
     result = email_utils.send_email("to@x.com", "Subject", "Body")
@@ -41,19 +39,20 @@ def test_send_email_success(monkeypatch):
 def test_send_email_failure(monkeypatch):
     class DummySMTP:
         def __init__(self, *a, **k):
-            pass
+            raise NotImplementedError()
 
         def starttls(self):
-            pass
+            raise NotImplementedError()
 
         def login(self, u, p):
-            pass
+            raise NotImplementedError()
 
-        def send_message(self, msg):
+        @staticmethod
+        def send_message(msg):
             raise Exception("fail")
 
         def quit(self):
-            pass
+            raise NotImplementedError()
 
     monkeypatch.setattr(smtplib, "SMTP", lambda *a, **k: DummySMTP())
     result = email_utils.send_email("to@x.com", "Subject", "Body")

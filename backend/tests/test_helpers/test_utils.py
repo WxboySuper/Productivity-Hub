@@ -1,4 +1,3 @@
-import pytest
 from flask import Flask
 
 from backend import utils

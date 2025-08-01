@@ -4,7 +4,6 @@ import uuid
 from datetime import datetime, timedelta, timezone
 
 import pytest
-from app import app as flask_app
 from app import db
 from models.notification import Notification
 from models.user import User

@@ -1,6 +1,4 @@
-"""
-Notification helper functions for Productivity Hub backend.
-"""
+"""Notification helper functions for Productivity Hub backend."""
 
 
 def serialize_notification(notification):

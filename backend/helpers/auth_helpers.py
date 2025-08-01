@@ -2,7 +2,7 @@ import re
 import secrets
 from functools import wraps
 
-from flask import jsonify, request, session
+from flask import jsonify, session
 from models import db, logger
 from models.user import User
 

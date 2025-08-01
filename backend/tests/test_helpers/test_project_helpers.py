@@ -1,4 +1,3 @@
-import pytest
 
 from backend.helpers import project_helpers
 

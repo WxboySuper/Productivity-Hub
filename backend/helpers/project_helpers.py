@@ -1,6 +1,4 @@
-"""
-Project helper functions for Productivity Hub backend.
-"""
+"""Project helper functions for Productivity Hub backend."""
 
 
 def serialize_project(project):

@@ -1,5 +1,4 @@
 import flask
-import pytest
 
 from backend.helpers import auth_helpers
 
@@ -12,13 +11,13 @@ class DummyLogger:
         self.messages.append(msg)
 
     def debug(self, msg, *a, **k):
-        pass
+        raise NotImplementedError()
 
     def info(self, msg, *a, **k):
-        pass
+        raise NotImplementedError()
 
     def warning(self, msg, *a, **k):
-        pass
+        raise NotImplementedError()
 
 
 def test_is_strong_password():

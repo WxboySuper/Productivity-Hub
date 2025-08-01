@@ -1,4 +1,3 @@
-import pytest
 
 from backend.helpers import user_helpers
 
@@ -21,8 +20,10 @@ class DummyProjectQuery:
         self.id_to_return = id_to_return
         self.user_id_to_return = user_id_to_return
 
-    def filter_by(self, id, user_id):
+    @staticmethod
+    def filter_by(id, user_id):
         class Result:
+            @staticmethod
             def first(inner_self):
                 if id == self.id_to_return and user_id == self.user_id_to_return:
                     return DummyProject(id, user_id)
@@ -44,8 +45,10 @@ class DummyTaskQuery:
         self.id_to_return = id_to_return
         self.user_id_to_return = user_id_to_return
 
-    def filter_by(self, id, user_id):
+    @staticmethod
+    def filter_by(id, user_id):
         class Result:
+            @staticmethod
             def first(inner_self):
                 if id == self.id_to_return and user_id == self.user_id_to_return:
                     return DummyTask(id, user_id)

@@ -2,26 +2,15 @@
 # Automated tests for user registration, login, logout, profile,
 # and CSRF/session logic. Covers both success and failure cases.
 
-import builtins
-import logging
-import re
 import secrets
-import time
-import uuid
-from datetime import datetime, timedelta, timezone
-from unittest.mock import MagicMock, patch
 
 import flask
-import pytest
 from app import app as flask_app
-from app import db
-from email_utils import send_email
 from helpers.auth_helpers import (
     generate_csrf_token,
     get_current_user,
     regenerate_session,
 )
-from models.notification import Notification
 from models.user import User
 
 # --- API Endpoint Constants (must be defined before use) ---

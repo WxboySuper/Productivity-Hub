@@ -5,7 +5,6 @@ from helpers.auth_helpers import get_current_user, login_required
 from helpers.notification_helpers import serialize_notification, validate_snooze_minutes
 from models import db, logger
 from models.notification import Notification
-from utils import error_response
 
 notifications_bp = Blueprint("notifications", __name__)
 

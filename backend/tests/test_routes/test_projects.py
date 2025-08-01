@@ -4,10 +4,6 @@ including validation, error handling, and ownership checks.
 """
 
 import secrets
-
-import pytest
-from app import app as flask_app
-from models.project import Project
 from models.user import User
 
 REGISTER_URL = "/api/register"

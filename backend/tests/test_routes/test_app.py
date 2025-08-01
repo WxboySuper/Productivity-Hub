@@ -1,6 +1,4 @@
-import pytest
-from app import app as flask_app
-from flask import Flask
+from flask import Flask, current_app
 
 
 def test_404_api_error_handler(client):
@@ -20,12 +18,6 @@ def test_home_route(client):
     resp = client.get("/")
     assert resp.status_code == 200
     assert b"Productivity Hub" in resp.data
-
-
-# CSRF protection: should block POST to protected endpoint without token
-
-import pytest
-from flask import current_app
 
 
 def test_csrf_protection_blocks(client):

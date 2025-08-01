@@ -1,4 +1,3 @@
-import pytest
 
 from backend.helpers import notification_helpers
 

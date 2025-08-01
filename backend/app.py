@@ -12,15 +12,13 @@ import logging
 import os
 import sys
 import warnings
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 
 from dotenv import load_dotenv
-from flask import Flask, jsonify, request
+from flask import Flask, request
 from flask_migrate import Migrate
-from helpers.auth_helpers import error_response, get_current_user, login_required
+from helpers.auth_helpers import error_response
 from models import db, logger
-from models.project import Project
-from models.task import Task
 from routes.admin import admin_bp
 from routes.auth import auth_bp
 from routes.misc import misc_bp
