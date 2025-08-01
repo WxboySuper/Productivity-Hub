@@ -1,4 +1,5 @@
 from flask import Flask, current_app
+import pytest
 
 
 def test_404_api_error_handler(client):

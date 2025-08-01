@@ -19,16 +19,15 @@ class DummyProjectQuery:
         self.id_to_return = id_to_return
         self.user_id_to_return = user_id_to_return
 
-    @staticmethod
-    def filter_by(id, user_id):
-        class Result:
-            @staticmethod
-            def first(inner_self):
-                if id == self.id_to_return and user_id == self.user_id_to_return:
-                    return DummyProject(id, user_id)
-                return None
+    def filter_by(self, id, user_id):
+        self._filter_id = id
+        self._filter_user_id = user_id
+        return self
 
-        return Result()
+    def first(self):
+        if self._filter_id == self.id_to_return and self._filter_user_id == self.user_id_to_return:
+            return DummyProject(self._filter_id, self._filter_user_id)
+        return None
 
 
 class DummyTask:
@@ -44,16 +43,15 @@ class DummyTaskQuery:
         self.id_to_return = id_to_return
         self.user_id_to_return = user_id_to_return
 
-    @staticmethod
-    def filter_by(id, user_id):
-        class Result:
-            @staticmethod
-            def first(inner_self):
-                if id == self.id_to_return and user_id == self.user_id_to_return:
-                    return DummyTask(id, user_id)
-                return None
+    def filter_by(self, id, user_id):
+        self._filter_id = id
+        self._filter_user_id = user_id
+        return self
 
-        return Result()
+    def first(self):
+        if self._filter_id == self.id_to_return and self._filter_user_id == self.user_id_to_return:
+            return DummyTask(self._filter_id, self._filter_user_id)
+        return None
 
 
 def test_validate_project_id(monkeypatch):
