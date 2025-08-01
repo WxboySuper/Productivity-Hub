@@ -1,10 +1,3 @@
-# Debug: Print all registered routes at startup
-def print_routes():
-    print("\nRegistered routes:")
-    for rule in app.url_map.iter_rules():
-        print(f"{rule.methods} {rule}")
-
-
 # ========================
 # Imports
 # ========================
@@ -26,6 +19,12 @@ from routes.notifications import notifications_bp
 from routes.projects import projects_bp
 from routes.settings import settings_bp
 from routes.tasks import tasks_bp
+
+# Debug: Print all registered routes at startup
+def print_routes():
+    print("\nRegistered routes:")
+    for rule in app.url_map.iter_rules():
+        print(f"{rule.methods} {rule}")
 
 # --- Environment Loading ---
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
