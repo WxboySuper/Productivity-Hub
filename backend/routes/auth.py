@@ -24,7 +24,7 @@ auth_bp = Blueprint("auth", __name__)
 
 
 @auth_bp.route("/api/register", methods=["POST"])
-def register():
+def register():  # skipcq: PY-R1000
     logger.info("Register endpoint accessed.")
     if not request.is_json:
         logger.error("Request must be JSON.")
