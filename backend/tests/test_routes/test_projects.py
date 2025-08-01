@@ -89,15 +89,11 @@ def test_update_project_success(client):
 
 def test_update_project_not_owner(client):
     # User1 creates project
-    register_and_login(
-        client, username="owner1", email="owner1@weatherboysuper.com"
-    )
+    register_and_login(client, username="owner1", email="owner1@weatherboysuper.com")
     resp = client.post(PROJECTS_URL, json={"name": "OwnerProj", "description": "Desc"})
     project_id = resp.get_json()["project_id"]
     # Switch to user2 by logging in as user2 (not a true logout)
-    register_and_login(
-        client, username="owner2", email="owner2@weatherboysuper.com"
-    )
+    register_and_login(client, username="owner2", email="owner2@weatherboysuper.com")
     resp = client.put(f"{PROJECTS_URL}/{project_id}", json={"name": "HackerProj"})
     assert resp.status_code == 403
     assert "Not authorized" in resp.get_json().get("error", "")
@@ -117,15 +113,11 @@ def test_delete_project_success(client):
 
 def test_delete_project_not_owner(client):
     # User1 creates project
-    register_and_login(
-        client, username="owner3", email="owner3@weatherboysuper.com"
-    )
+    register_and_login(client, username="owner3", email="owner3@weatherboysuper.com")
     resp = client.post(PROJECTS_URL, json={"name": "OwnerProj2", "description": "Desc"})
     project_id = resp.get_json()["project_id"]
     # Switch to user4 by logging in as user4 (not a true logout)
-    register_and_login(
-        client, username="owner4", email="owner4@weatherboysuper.com"
-    )
+    register_and_login(client, username="owner4", email="owner4@weatherboysuper.com")
     resp = client.delete(f"{PROJECTS_URL}/{project_id}")
     assert resp.status_code == 403
     assert "Not authorized" in resp.get_json().get("error", "")
