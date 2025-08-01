@@ -358,16 +358,6 @@ def test_update_task_empty_or_whitespace_title(auth_client):
     assert data["error"] == "Task title is required"
 
 
-
-
-
-
-
-
-
-
-
-
 # --- Task Update and JSON Requirement Tests ---
 
 
