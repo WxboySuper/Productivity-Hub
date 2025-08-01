@@ -4,6 +4,7 @@ including validation, error handling, and ownership checks.
 """
 
 import secrets
+
 from models.user import User
 
 REGISTER_URL = "/api/register"
