@@ -97,10 +97,7 @@ def test_update_project_not_owner(client):
     )
     resp = client.post(PROJECTS_URL, json={"name": "OwnerProj", "description": "Desc"})
     project_id = resp.get_json()["project_id"]
-    # User2 tries to update
-    client.post(
-        LOGIN_URL, json={"username": "owner1", "password": "StrongPass1!"}
-    )  # logout user1
+    # Switch to user2 by logging in as user2 (not a true logout)
     user2 = register_and_login(
         client, username="owner2", email="owner2@weatherboysuper.com"
     )
@@ -128,10 +125,7 @@ def test_delete_project_not_owner(client):
     )
     resp = client.post(PROJECTS_URL, json={"name": "OwnerProj2", "description": "Desc"})
     project_id = resp.get_json()["project_id"]
-    # User2 tries to delete
-    client.post(
-        LOGIN_URL, json={"username": "owner3", "password": "StrongPass1!"}
-    )  # logout user1
+    # Switch to user4 by logging in as user4 (not a true logout)
     user2 = register_and_login(
         client, username="owner4", email="owner4@weatherboysuper.com"
     )

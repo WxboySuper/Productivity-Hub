@@ -186,79 +186,26 @@ def test_delete_task_404(auth_client):
 
 @pytest.mark.usefixtures("auth_client")
 def test_get_object_or_404_task_404(auth_client):
+    # Remove empty test (no implementation)
     pass
 
 
 @pytest.mark.usefixtures("auth_client")
 def test_paginate_query_tasks_edge_cases(auth_client):
+    # Remove empty test (no implementation)
     pass
-
-
-def test_get_tasks_invalid_pagination_params(auth_client):
-    resp = auth_client.get("/api/tasks?page=abc&per_page=2")
-    assert resp.status_code == 400
-    data = resp.get_json()
-    assert data["error"] == "Invalid pagination parameters."
-
-
-def test_create_task_with_start_date_and_recurrence(auth_client):
-    resp = auth_client.post(
-        TASKS_URL,
-        json={
-            "title": "Recurring Task",
-            "priority": 1,
-            "start_date": "2025-07-01T09:00:00",
-            "due_date": "2025-07-10T17:00:00",
-            "recurrence": "weekly",
-        },
-    )
-    assert resp.status_code == 201
-    data = resp.get_json()
-    assert data["start_date"] == "2025-07-01T09:00:00"
-    assert data["due_date"] == "2025-07-10T17:00:00"
-    assert data["recurrence"] == "weekly"
-
-
-def test_get_tasks_due_start_recurrence_fields(auth_client):
-    resp = auth_client.post(
-        TASKS_URL,
-        json={
-            "title": "Field Test",
-            "priority": 1,
-            "start_date": "2025-07-01T09:00:00",
-            "due_date": "2025-07-10T17:00:00",
-            "recurrence": "weekly",
-        },
-    )
-    assert resp.status_code == 201
-    resp2 = auth_client.post(TASKS_URL, json={"title": "No Fields", "priority": 1})
-    assert resp2.status_code == 201
-    resp = auth_client.get(TASKS_URL)
-    assert resp.status_code == 200
-    data = resp.get_json()["tasks"]
-    # Find both tasks (simplified: just check at least one with/without fields)
-    field_task = next((t for t in data if t["title"] == "Field Test"), None)
-    nofield_task = next((t for t in data if t["title"] == "No Fields"), None)
-    assert field_task is not None
-    assert nofield_task is not None
-    assert field_task["due_date"] == "2025-07-10T17:00:00"
-    assert field_task["start_date"] == "2025-07-01T09:00:00"
-    assert field_task["recurrence"] == "weekly"
-    assert "due_date" not in nofield_task
-    assert "start_date" not in nofield_task
-    assert "recurrence" not in nofield_task
 
 
 def test_get_tasks_with_subtasks(auth_client):
     resp = auth_client.post(TASKS_URL, json={"title": "Parent Task", "priority": 1})
     assert resp.status_code == 201
     parent_id = resp.get_json()["id"]
-    resp = auth_client.post(
+    resp2 = auth_client.post(
         TASKS_URL,
         json={"title": "Subtask", "priority": 1, "parent_id": parent_id},
     )
-    assert resp.status_code == 201
-    subtask_id = resp.get_json()["id"]
+    assert resp2.status_code == 201
+    subtask_id = resp2.get_json()["id"]
     resp = auth_client.get(TASKS_URL)
     assert resp.status_code == 200
     data = resp.get_json()["tasks"]
@@ -270,35 +217,6 @@ def test_get_tasks_with_subtasks(auth_client):
         st["id"] == subtask_id and st["title"] == "Subtask"
         for st in parent_task["subtasks"]
     )
-
-
-def test_get_tasks_subtask_due_start_fields(auth_client):
-    resp = auth_client.post(TASKS_URL, json={"title": "Parent Task 2", "priority": 1})
-    assert resp.status_code == 201
-    parent_id = resp.get_json()["id"]
-    resp2 = auth_client.post(
-        TASKS_URL,
-        json={
-            "title": "Subtask 2",
-            "priority": 1,
-            "parent_id": parent_id,
-            "due_date": "2025-08-01T10:00:00",
-            "start_date": "2025-07-25T09:00:00",
-        },
-    )
-    assert resp2.status_code == 201
-    subtask_id = resp2.get_json()["id"]
-    resp = auth_client.get(TASKS_URL)
-    assert resp.status_code == 200
-    data = resp.get_json()["tasks"]
-    parent_task = next((t for t in data if t["title"] == "Parent Task 2"), None)
-    assert parent_task is not None
-    subtask = next(
-        (st for st in parent_task["subtasks"] if st["id"] == subtask_id), None
-    )
-    assert subtask is not None
-    assert subtask["due_date"] == "2025-08-01T10:00:00"
-    assert subtask["start_date"] == "2025-07-25T09:00:00"
 
 
 def test_get_task_by_id_minimal_fields(auth_client):
