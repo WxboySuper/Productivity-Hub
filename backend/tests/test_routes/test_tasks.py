@@ -358,104 +358,14 @@ def test_update_task_empty_or_whitespace_title(auth_client):
     assert data["error"] == "Task title is required"
 
 
-# --- Task Update and JSON Requirement Tests ---
-def test_update_task_description_and_completed_fields(auth_client):
-    resp = auth_client.post(
-        TASKS_URL,
-        json={
-            "title": "Update Desc",
-            "priority": 1,
-            "description": "Old desc",
-            "completed": False,
-        },
-    )
-    assert resp.status_code == 201
-    task_id = resp.get_json()["id"]
-    # Update description and completed
-    resp = auth_client.put(
-        f"{TASKS_URL}/{task_id}", json={"description": "New desc", "completed": True}
-    )
-    assert resp.status_code == 200
-    data = resp.get_json()
-    assert data["description"] == "New desc"
-    assert data["completed"] is True
 
 
-def test_update_task_remove_project_id(auth_client):
-    # Create a project and a task with project_id
-    resp_proj = auth_client.post(
-        "/api/projects", json={"name": "Proj for Remove", "description": "desc"}
-    )
-    assert resp_proj.status_code == 201
-    project_id = resp_proj.get_json()["id"]
-    resp = auth_client.post(
-        TASKS_URL,
-        json={"title": "Task with Proj", "priority": 1, "project_id": project_id},
-    )
-    assert resp.status_code == 201
-    task_id = resp.get_json()["id"]
-    # Remove project_id
-    resp = auth_client.put(f"{TASKS_URL}/{task_id}", json={"project_id": None})
-    assert resp.status_code == 200
-    data = resp.get_json()
-    assert data.get("project_id") is None
 
 
-def test_update_task_project_id_and_due_date(auth_client):
-    # Create two projects
-    resp_proj1 = auth_client.post(
-        "/api/projects", json={"name": "Proj1", "description": "desc1"}
-    )
-    resp_proj2 = auth_client.post(
-        "/api/projects", json={"name": "Proj2", "description": "desc2"}
-    )
-    project_id1 = resp_proj1.get_json()["id"]
-    project_id2 = resp_proj2.get_json()["id"]
-    # Create a task with project_id1
-    resp = auth_client.post(
-        TASKS_URL,
-        json={
-            "title": "Task to Move",
-            "priority": 1,
-            "project_id": project_id1,
-            "due_date": "2025-10-01T10:00:00",
-        },
-    )
-    assert resp.status_code == 201
-    task_id = resp.get_json()["id"]
-    # Update project_id and due_date
-    resp = auth_client.put(
-        f"{TASKS_URL}/{task_id}",
-        json={"project_id": project_id2, "due_date": "2025-11-01T10:00:00"},
-    )
-    assert resp.status_code == 200
-    data = resp.get_json()
-    assert data["project_id"] == project_id2
-    assert data["due_date"] == "2025-11-01T10:00:00"
 
 
-def test_update_task_start_date_field(auth_client):
-    resp = auth_client.post(TASKS_URL, json={"title": "Task Start Date", "priority": 1})
-    assert resp.status_code == 201
-    task_id = resp.get_json()["id"]
-    # Update start_date
-    resp = auth_client.put(
-        f"{TASKS_URL}/{task_id}", json={"start_date": "2025-12-01T08:00:00"}
-    )
-    assert resp.status_code == 200
-    data = resp.get_json()
-    assert data["start_date"] == "2025-12-01T08:00:00"
 
 
-def test_create_task_requires_json(auth_client):
-    resp = auth_client.post(
-        TASKS_URL,
-        data="title=NoJSON",
-        content_type="application/x-www-form-urlencoded",
-    )
-    assert resp.status_code == 400
-    data = resp.get_json()
-    assert "Request must be JSON" in data.get("error", "")
 
 
 # --- Task Update and JSON Requirement Tests ---
