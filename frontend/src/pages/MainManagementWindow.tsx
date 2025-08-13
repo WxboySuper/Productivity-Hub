@@ -141,6 +141,7 @@ function MainManagementWindow() {
     loading: projectsLoading,
     error: projectsError,
     refetch: refetchProjects,
+    deleteProject: deleteProjectHook,
   } = useProjects();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeView, setActiveView] = useState<"all" | "quick" | "projects">(
@@ -295,30 +296,25 @@ function MainManagementWindow() {
     setDeleteError(null);
   };
   const confirmDeleteProject = async () => {
-    /* v8 ignore next */
     if (!deleteProject) return;
     setDeleteLoading(true);
     setDeleteError(null);
     try {
-      const csrfToken = await ensureCsrfToken();
-      const response = await fetch(`/api/projects/${deleteProject.id}`, {
-        method: "DELETE",
-        credentials: "include",
-        headers: {
-          ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
-        },
-      });
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to delete project");
-      }
-      /* v8 ignore start */
-      await refetchProjects(); // Refetch projects from the hook
+      await deleteProjectHook(deleteProject.id);
       setDeleteProject(null);
       setSelectedProject(null);
-      /* v8 ignore stop */
-    } catch (err: unknown) {
-      setDeleteError(err instanceof Error ? err.message : "Unknown error");
+      showSuccess(
+        "Project deleted",
+        "The project has been successfully deleted.",
+      );
+    } catch (err) {
+      setDeleteError(
+        err instanceof Error ? err.message : "Failed to delete project",
+      );
+      showError(
+        "Deletion failed",
+        err instanceof Error ? err.message : "An unknown error occurred.",
+      );
     } finally {
       setDeleteLoading(false);
     }
@@ -1160,8 +1156,9 @@ function MainManagementWindow() {
                   ) => handleProjectDeleteButtonClickWrapper(project, e);
 
                   return (
-                    <button
+                    <div
                       key={project.id}
+                      role="button"
                       className="phub-item-card phub-hover-lift cursor-pointer"
                       onClick={handleProjectCardClick}
                       style={{
@@ -1204,7 +1201,7 @@ function MainManagementWindow() {
                           </button>
                         </div>
                       </div>
-                    </button>
+                    </div>
                   );
                 })}
               </div>
