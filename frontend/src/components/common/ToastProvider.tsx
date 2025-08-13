@@ -294,10 +294,12 @@ export function ToastProvider({ children }: ToastProviderProps) {
   };
 
   return (
-    <ToastContext.Provider value={contextValue}>
-      {children}
-      <ToastContainer toasts={toasts} onRemove={removeToast} />
-    </ToastContext.Provider>
+    <div data-testid="toast-provider">
+      <ToastContext.Provider value={contextValue}>
+        {children}
+        <ToastContainer toasts={toasts} onRemove={removeToast} />
+      </ToastContext.Provider>
+    </div>
   );
 }
 

@@ -3,7 +3,7 @@ import MainManagementWindow from "../MainManagementWindow";
 import { describe, it, vi, expect } from "vitest";
 import { AuthContext } from "../../auth";
 import { BackgroundProvider } from "../../context/BackgroundContext";
-import ToastProvider from "../../components/ToastProvider";
+import ToastProvider from "../../components/common/ToastProvider";
 
 vi.mock("../hooks/useProjects", () => ({
   default: () => ({
@@ -17,18 +17,21 @@ vi.mock("../hooks/useTasks", () => ({
   default: () => ({ tasks: [], loading: false, error: null, refetch: vi.fn() }),
 }));
 vi.mock("../../context/BackgroundContext", async () => {
-  const actual = await import("../../context/BackgroundContext");
+  const mockBackgroundContext = {
+    backgroundType: "creative-dots",
+    setBackgroundType: vi.fn(),
+  };
   return {
-    ...actual,
-    useBackground: () => ({
-      backgroundType: "default",
-      setBackgroundType: vi.fn(),
-    }),
+    __esModule: true,
+    BackgroundProvider: ({ children }: { children: React.ReactNode }) => (
+      <div data-testid="background-provider">{children}</div>
+    ),
+    useBackground: () => mockBackgroundContext,
   };
 });
 vi.mock("../../components/ToastProvider", async () => {
   const actual = await vi.importActual<
-    typeof import("../../components/ToastProvider")
+    typeof import("../../components/common/ToastProvider")
   >("../../components/ToastProvider");
   return {
     ...actual,

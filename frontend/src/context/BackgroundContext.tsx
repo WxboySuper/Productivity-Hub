@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState } from "react";
-import { BackgroundType } from "../components/Background";
+import { BackgroundType } from "../components/common/Background";
 
 interface BackgroundContextType {
   backgroundType: BackgroundType;
@@ -19,9 +19,11 @@ export function BackgroundProvider({
     useState<BackgroundType>("creative-dots");
 
   return (
-    <BackgroundContext.Provider value={{ backgroundType, setBackgroundType }}>
-      {children}
-    </BackgroundContext.Provider>
+    <div data-testid="background-provider">
+      <BackgroundContext.Provider value={{ backgroundType, setBackgroundType }}>
+        {children}
+      </BackgroundContext.Provider>
+    </div>
   );
 }
 

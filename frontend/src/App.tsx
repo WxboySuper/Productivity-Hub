@@ -12,10 +12,10 @@ import PasswordResetConfirmPage from "./pages/PasswordResetConfirmPage";
 import HomePage from "./pages/HomePage";
 import MainManagementWindow from "./pages/MainManagementWindow";
 import { useAuth } from "./auth";
-import NotificationCenter from "./components/NotificationCenter";
-import Background from "./components/Background";
-import ErrorBoundary from "./components/ErrorBoundary";
-import { ToastProvider } from "./components/ToastProvider";
+import NotificationCenter from "./components/common/NotificationCenter";
+import Background from "./components/common/Background";
+import ErrorBoundary from "./components/common/ErrorBoundary";
+import { ToastProvider } from "./components/common/ToastProvider";
 import { BackgroundProvider, useBackground } from "./context/BackgroundContext";
 
 // Simple placeholder components

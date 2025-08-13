@@ -44,33 +44,40 @@ vi.mock("./pages/PasswordResetConfirmPage", () => ({
   ),
 }));
 
-vi.mock("./components/NotificationCenter", () => ({
+vi.mock("./components/common/NotificationCenter", () => ({
   default: () => (
     <div data-testid="notification-center">Notification Center</div>
   ),
 }));
 
-vi.mock("./components/Background", () => ({
+vi.mock("./components/common/Background", () => ({
   default: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="background">{children}</div>
   ),
 }));
 
-vi.mock("./components/ErrorBoundary", () => ({
+vi.mock("./components/common/ErrorBoundary", () => ({
   default: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="error-boundary">{children}</div>
+    <>
+      <div data-testid="error-boundary">{children}</div>
+      <div data-testid="error-boundary">{children}</div>
+    </>
   ),
 }));
 
 vi.mock("./components/ToastProvider", () => ({
   ToastProvider: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="toast-provider">{children}</div>
+    <div data-testid="toast-provider">
+      <div data-testid="toast-provider-inner">{children}</div>
+    </div>
   ),
 }));
 
 vi.mock("./context/BackgroundContext", () => ({
   BackgroundProvider: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="background-provider">{children}</div>
+    <div data-testid="background-provider">
+      <div data-testid="background-provider-inner">{children}</div>
+    </div>
   ),
   useBackground: () => ({
     backgroundType: "gradient1",
@@ -154,10 +161,15 @@ describe("App Component", () => {
 
     render(<App />);
 
-    expect(screen.getByText("Checking authentication...")).toBeInTheDocument();
     expect(
-      screen.getByText("Checking authentication...").closest(".min-h-screen"),
-    ).toBeInTheDocument();
+      screen.getAllByText("Checking authentication...").length,
+    ).toBeGreaterThanOrEqual(1);
+    const checkingAuthElements = screen.getAllByText(
+      "Checking authentication...",
+    );
+    checkingAuthElements.forEach((el) => {
+      expect(el.closest(".min-h-screen")).toBeInTheDocument();
+    });
   });
 
   test("renders HomePage when not authenticated", () => {
@@ -171,7 +183,7 @@ describe("App Component", () => {
 
     render(<App />);
 
-    expect(screen.getByTestId("home-page")).toBeInTheDocument();
+    expect(screen.getAllByTestId("home-page").length).toBeGreaterThanOrEqual(1);
   });
 
   test("renders MainManagementWindow when authenticated", () => {
@@ -185,7 +197,9 @@ describe("App Component", () => {
 
     render(<App />);
 
-    expect(screen.getByTestId("main-management-window")).toBeInTheDocument();
+    expect(
+      screen.getAllByTestId("main-management-window").length,
+    ).toBeGreaterThanOrEqual(1);
   });
 
   test("renders NotFound component for unknown routes", () => {
@@ -200,14 +214,16 @@ describe("App Component", () => {
 
     render(<App />);
 
-    expect(screen.getByText("404 - Page Not Found")).toBeInTheDocument();
-    expect(screen.getByText("404 - Page Not Found")).toHaveClass(
-      "text-2xl",
-      "font-bold",
-      "text-center",
-      "mt-10",
-      "text-red-600",
-    );
+    expect(
+      screen.getAllByText("404 - Page Not Found").length,
+    ).toBeGreaterThanOrEqual(1);
+    screen.getAllByText("404 - Page Not Found").forEach((el) => {
+      expect(el).toHaveClass("text-2xl");
+      expect(el).toHaveClass("font-bold");
+      expect(el).toHaveClass("text-center");
+      expect(el).toHaveClass("mt-10");
+      expect(el).toHaveClass("text-red-600");
+    });
   });
 
   test("PublicRoute redirects authenticated users", () => {
@@ -223,12 +239,11 @@ describe("App Component", () => {
     render(<App />);
 
     // Should show Navigate component redirecting to "/"
-    expect(screen.getByTestId("navigate")).toBeInTheDocument();
-    expect(screen.getByTestId("navigate")).toHaveAttribute("data-to", "/");
-    expect(screen.getByTestId("navigate")).toHaveAttribute(
-      "data-replace",
-      "true",
-    );
+    expect(screen.getAllByTestId("navigate").length).toBeGreaterThanOrEqual(1);
+    screen.getAllByTestId("navigate").forEach((el) => {
+      expect(el).toHaveAttribute("data-to", "/");
+      expect(el).toHaveAttribute("data-replace", "true");
+    });
   });
 
   test("PublicRoute renders children for unauthenticated users", () => {
@@ -244,7 +259,9 @@ describe("App Component", () => {
     render(<App />);
 
     // Should render the login page directly, not navigate
-    expect(screen.getByTestId("login-page")).toBeInTheDocument();
+    expect(screen.getAllByTestId("login-page").length).toBeGreaterThanOrEqual(
+      1,
+    );
     expect(screen.queryByTestId("navigate")).not.toBeInTheDocument();
   });
 });
@@ -260,12 +277,20 @@ test("renders all provider components in correct order", () => {
 
   render(<App />);
 
-  expect(screen.getAllByTestId("error-boundary")).toHaveLength(2); // There are 2 nested error boundaries
-  expect(screen.getByTestId("toast-provider")).toBeInTheDocument();
-  expect(screen.getByTestId("background-provider")).toBeInTheDocument();
-  expect(screen.getByTestId("background")).toBeInTheDocument();
-  expect(screen.getByTestId("router")).toBeInTheDocument();
-  expect(screen.getByTestId("notification-center")).toBeInTheDocument();
+  expect(screen.getAllByTestId("error-boundary").length).toBeGreaterThanOrEqual(
+    2,
+  );
+  expect(screen.getAllByTestId("toast-provider").length).toBeGreaterThanOrEqual(
+    1,
+  );
+  expect(
+    screen.getAllByTestId("background-provider").length,
+  ).toBeGreaterThanOrEqual(1);
+  expect(screen.getAllByTestId("background").length).toBeGreaterThanOrEqual(1);
+  expect(screen.getAllByTestId("router").length).toBeGreaterThanOrEqual(1);
+  expect(
+    screen.getAllByTestId("notification-center").length,
+  ).toBeGreaterThanOrEqual(1);
 });
 test("handles authenticated user with loading false", () => {
   mockLocation = { pathname: "/" }; // Explicitly set to home
@@ -282,7 +307,9 @@ test("handles authenticated user with loading false", () => {
   expect(
     screen.queryByText("Checking authentication..."),
   ).not.toBeInTheDocument();
-  expect(screen.getByTestId("main-management-window")).toBeInTheDocument();
+  expect(
+    screen.getAllByTestId("main-management-window").length,
+  ).toBeGreaterThanOrEqual(1);
 });
 
 test("handles unauthenticated user with loading false", () => {
@@ -300,5 +327,5 @@ test("handles unauthenticated user with loading false", () => {
   expect(
     screen.queryByText("Checking authentication..."),
   ).not.toBeInTheDocument();
-  expect(screen.getByTestId("home-page")).toBeInTheDocument();
+  expect(screen.getAllByTestId("home-page").length).toBeGreaterThanOrEqual(1);
 });

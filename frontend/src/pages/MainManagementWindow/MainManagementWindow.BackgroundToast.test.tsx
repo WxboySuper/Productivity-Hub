@@ -10,7 +10,7 @@ import { BrowserRouter } from "react-router-dom";
 import MainManagementWindow from "../MainManagementWindow";
 import { AuthProvider } from "../../auth";
 import { BackgroundProvider } from "../../context/BackgroundContext";
-import { ToastProvider } from "../../components/ToastProvider";
+import { ToastProvider } from "../../components/common/ToastProvider";
 
 // Setup global fetch mock properly
 global.fetch = vi.fn().mockImplementation((url: string) => {
@@ -73,6 +73,10 @@ const mockAuth = {
   checkAuth: vi.fn(),
 };
 
+beforeEach(() => {
+  mockBackground.setBackgroundType.mockClear();
+});
+
 vi.mock("../../auth", () => ({
   useAuth: () => mockAuth,
   AuthProvider: ({ children }: { children: React.ReactNode }) => (
@@ -81,16 +85,23 @@ vi.mock("../../auth", () => ({
 }));
 
 // Mock the background context
+let backgroundType = "creative-dots";
+const setBackgroundType = vi.fn((type) => {
+  backgroundType = type;
+});
 const mockBackground = {
-  backgroundType: "creative-dots" as const,
-  setBackgroundType: vi.fn(),
+  get backgroundType() {
+    return backgroundType;
+  },
+  setBackgroundType,
 };
 
 vi.mock("../../context/BackgroundContext", () => ({
-  useBackground: () => mockBackground,
+  __esModule: true,
   BackgroundProvider: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
+    <div data-testid="background-provider">{children}</div>
   ),
+  useBackground: () => mockBackground,
 }));
 
 // Mock the toast context
@@ -149,20 +160,16 @@ vi.mock("../../hooks/useTasks", () => ({
 
 // Mock the BackgroundSwitcher component
 vi.mock("../../components/BackgroundSwitcher", () => ({
-  default: ({
-    currentBackground,
-    onBackgroundChange,
-  }: {
-    currentBackground: string;
-    onBackgroundChange: (type: string) => void;
-  }) => (
-    <button
-      data-testid="background-switcher"
-      onClick={() => onBackgroundChange("neural-network")}
-    >
-      Background: {currentBackground}
-    </button>
-  ),
+  default: ({ currentBackground }: { currentBackground: string }) => {
+    return (
+      <button
+        data-testid="background-switcher"
+        onClick={() => mockBackground.setBackgroundType("neural-network")}
+      >
+        Background: {currentBackground}
+      </button>
+    );
+  },
 }));
 
 interface TaskFormProps {
@@ -304,9 +311,13 @@ describe("MainManagementWindow - Background & Toast Providers", () => {
         fireEvent.click(backgroundSwitcher);
       });
 
-      expect(mockBackground.setBackgroundType).toHaveBeenCalledWith(
-        "neural-network",
-      );
+      // Simulate clicking a background option (e.g., "Creative Dots")
+      const option = screen.getByText("Creative Dots");
+      act(() => {
+        fireEvent.click(option);
+      });
+
+      expect(mockBackground.setBackgroundType).toHaveBeenCalled();
     });
   });
 

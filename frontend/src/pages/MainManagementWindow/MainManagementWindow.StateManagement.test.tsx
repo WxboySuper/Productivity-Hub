@@ -10,7 +10,7 @@ import { BrowserRouter } from "react-router-dom";
 import MainManagementWindow from "../MainManagementWindow";
 import { AuthProvider } from "../../auth";
 import { BackgroundProvider } from "../../context/BackgroundContext";
-import { ToastProvider } from "../../components/ToastProvider";
+import { ToastProvider } from "../../components/common/ToastProvider";
 
 // Setup global fetch mock properly
 global.fetch = vi.fn().mockImplementation((url: string) => {
@@ -87,6 +87,7 @@ const mockBackground = {
 };
 
 vi.mock("../../context/BackgroundContext", () => ({
+  __esModule: true,
   useBackground: () => mockBackground,
   BackgroundProvider: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>

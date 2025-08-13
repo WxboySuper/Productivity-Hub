@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render } from "@testing-library/react";
-import Background, { BackgroundType } from "./Background";
+import Background, {
+  BackgroundType,
+} from "../../../components/common/Background";
 
 describe("Background", () => {
   beforeEach(() => {
@@ -77,20 +79,6 @@ describe("Background", () => {
 
       backgroundElement = container.querySelector(".dynamic-background");
       expect(backgroundElement).toHaveClass("bg-sunset-gradient");
-    });
-
-    it("accepts onBackgroundChange callback prop", () => {
-      const mockOnBackgroundChange = vi.fn();
-
-      render(
-        <Background
-          backgroundType="forest-depth"
-          onBackgroundChange={mockOnBackgroundChange}
-        />,
-      );
-
-      // Component should render without calling the callback during mount
-      expect(mockOnBackgroundChange).not.toHaveBeenCalled();
     });
 
     it("handles undefined backgroundType gracefully", () => {

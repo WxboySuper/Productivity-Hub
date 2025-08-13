@@ -11,7 +11,7 @@ import { BrowserRouter } from "react-router-dom";
 import MainManagementWindow from "../MainManagementWindow";
 import { AuthProvider } from "../../auth";
 import { BackgroundProvider } from "../../context/BackgroundContext";
-import { ToastProvider } from "../../components/ToastProvider";
+import { ToastProvider } from "../../components/common/ToastProvider";
 import {
   mockAuth,
   mockBackgroundContext,
@@ -20,69 +20,69 @@ import {
   mockProjectData,
   mockTaskData,
 } from "../__tests__/testUtils";
+import { useProjects } from "../../hooks/useProjects";
+import { useTasks, ensureCsrfToken } from "../../hooks/useTasks";
 
-const originalFetch = global.fetch;
+// Mock the hooks
+vi.mock("../../hooks/useProjects");
+vi.mock("../../hooks/useTasks");
+
+const mockUseProjects = vi.mocked(useProjects);
+const mockUseTasks = vi.mocked(useTasks);
+const mockEnsureCsrfToken = vi.mocked(ensureCsrfToken);
 
 beforeEach(() => {
-  global.fetch = vi.fn().mockImplementation((url, options) => {
-    const method = options?.method || "GET";
-    if (url === "/api/csrf-token")
-      return Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve({ csrf_token: "mock-csrf-token" }),
-      });
-    if (url === "/api/projects" && method === "POST")
-      return Promise.resolve({
-        ok: false,
-        json: () => Promise.resolve({ error: "Create failed" }),
-      });
-    if (url.match(/\/api\/projects\/\d+/) && method === "PUT")
-      return Promise.resolve({
-        ok: false,
-        json: () => Promise.resolve({ error: "Update failed" }),
-      });
-    if (url.match(/\/api\/projects\/\d+/) && method === "DELETE")
-      return Promise.resolve({
-        ok: false,
-        json: () => Promise.resolve({ error: "Delete failed" }),
-      });
-    if (url === "/api/projects")
-      return Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve({ projects: mockProjectData }),
-      });
-    if (url === "/api/tasks" && method === "POST")
-      return Promise.resolve({
-        ok: false,
-        json: () => Promise.resolve({ error: "Task create failed" }),
-      });
-    if (url.match(/\/api\/tasks\/\d+/) && method === "PUT")
-      return Promise.resolve({
-        ok: false,
-        json: () => Promise.resolve({ error: "Task update failed" }),
-      });
-    if (url.match(/\/api\/tasks\/\d+/) && method === "DELETE")
-      return Promise.resolve({
-        ok: false,
-        json: () => Promise.resolve({ error: "Task delete failed" }),
-      });
-    if (url === "/api/tasks")
+  vi.clearAllMocks();
+
+  // Provide a default implementation for fetch that can be overridden in tests
+  global.fetch = vi.fn((url) => {
+    if (url === "/api/tasks") {
       return Promise.resolve({
         ok: true,
         json: () => Promise.resolve({ tasks: mockTaskData }),
-      });
+      } as Response);
+    }
+    if (url === "/api/projects") {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ projects: mockProjectData }),
+      } as Response);
+    }
     return Promise.resolve({
       ok: false,
-      json: () => Promise.resolve({ error: "Not found" }),
-    });
+      status: 404,
+      json: () => Promise.resolve({ error: "Not Found" }),
+    } as Response);
   });
-});
-afterEach(() => {
-  cleanup();
-  vi.clearAllMocks();
-  global.fetch = originalFetch;
+
+  mockUseProjects.mockReturnValue({
+    projects: mockProjectData,
+    loading: false,
+    error: null,
+    refetch: vi.fn(),
+    deleteProject: vi.fn().mockRejectedValue({ error: "Delete failed" }),
+    updateProject: vi.fn().mockRejectedValue({ error: "Update failed" }),
+    createProject: vi.fn().mockRejectedValue({ error: "Create failed" }),
+  });
+
+  mockUseTasks.mockReturnValue({
+    tasks: mockTaskData,
+    loading: false,
+    error: null,
+    refetch: vi.fn(),
+    deleteTask: vi.fn().mockRejectedValue({ error: "Task delete failed" }),
+    updateTask: vi.fn().mockRejectedValue({ error: "Task update failed" }),
+    createTask: vi.fn().mockRejectedValue({ error: "Task create failed" }),
+  });
+
+  mockEnsureCsrfToken.mockResolvedValue("mock-csrf-token");
 });
 
+afterEach(() => {
+  cleanup();
+});
+
+// Mock other providers
 vi.mock("../../auth", () => ({
   AuthProvider: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
@@ -95,7 +95,7 @@ vi.mock("../../context/BackgroundContext", () => ({
   ),
   useBackground: () => mockBackgroundContext,
 }));
-vi.mock("../../components/ToastProvider", () => ({
+vi.mock("../../components/common/ToastProvider", () => ({
   ToastProvider: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
@@ -105,14 +105,6 @@ vi.mock("react-router-dom", async () => {
   const actual = await vi.importActual("react-router-dom");
   return { ...actual, useNavigate: () => mockNavigate };
 });
-vi.mock("../../hooks/useProjects", () => ({
-  useProjects: () => ({
-    projects: mockProjectData,
-    loading: false,
-    error: null,
-    refetch: vi.fn(),
-  }),
-}));
 
 const Wrapper = () => (
   <BrowserRouter>
@@ -128,121 +120,149 @@ const Wrapper = () => (
 
 describe("MainManagementWindow - Absolute Coverage", () => {
   it("covers project CRUD error branches", async () => {
-    render(<Wrapper />);
-    await act(() => {
-      fireEvent.click(screen.getAllByText("Projects")[0]);
+    const createProjectMock = vi
+      .fn()
+      .mockRejectedValue({ error: "Create failed" });
+    const updateProjectMock = vi
+      .fn()
+      .mockRejectedValue({ error: "Update failed" });
+    const deleteProjectMock = vi
+      .fn()
+      .mockRejectedValue({ error: "Delete failed" });
+    mockUseProjects.mockReturnValue({
+      projects: mockProjectData,
+      loading: false,
+      error: null,
+      refetch: vi.fn(),
+      createProject: createProjectMock,
+      updateProject: updateProjectMock,
+      deleteProject: deleteProjectMock,
     });
+
+    render(<Wrapper />);
+    fireEvent.click(screen.getByRole("button", { name: /Projects/i }));
     await waitFor(() =>
       expect(screen.getByText("Add Project")).toBeInTheDocument(),
     );
-    // Create (frontend validation error)
-    await act(() => {
-      fireEvent.click(screen.getByText("Add Project"));
+
+    fireEvent.click(screen.getByText("Add Project"));
+    await waitFor(() =>
+      expect(screen.getByText("Create Project")).toBeInTheDocument(),
+    );
+    fireEvent.change(screen.getByPlaceholderText(/project name/i), {
+      target: { value: "New Failing Project" },
     });
-    const nameInput = screen.getAllByPlaceholderText(/project name/i)[0];
-    fireEvent.change(nameInput, { target: { value: "X" } });
     fireEvent.click(screen.getByText("Create Project"));
-    // Validation error: modal stays open
     await waitFor(() => {
-      const dialog = screen.getByRole("dialog");
-      expect(dialog).toHaveTextContent(/at least 2 characters/i);
-    });
-    // Close the create modal before opening the edit modal
-    fireEvent.click(screen.getByText("×"));
-    await waitFor(() => {
-      // Ensure the create modal is closed
-      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    });
-    // Edit (backend error)
-    await act(() => {
-      const editButtons = screen.getAllByRole("button", { name: /edit/i });
-      fireEvent.click(editButtons[0]);
-    });
-    // Wait for the edit modal input to appear
-    await waitFor(() => {
-      const inputs = screen.getAllByPlaceholderText(/project name/i);
-      expect(inputs.length).toBeGreaterThan(0);
-      fireEvent.change(inputs[0], { target: { value: "Valid Project" } });
-    });
-    fireEvent.click(screen.getByText("Save Changes"));
-    // Backend error: modal closes, error appears in main window
-    await waitFor(() => {
-      expect(screen.getByTestId("main-management-window").textContent).toMatch(
-        /update failed/i,
+      expect(createProjectMock).toHaveBeenCalled();
+      expect(mockToastContext.showError).toHaveBeenCalledWith(
+        "Create failed",
+        expect.any(String),
       );
     });
-    // Delete
-    await act(() => {
-      const deleteButtons = screen.getAllByText("Delete", {
-        selector: "button",
-      });
-      fireEvent.click(deleteButtons[0]);
-    });
-    // Click the modal's Delete button (likely the second one)
-    const modalDeleteButtons = screen.getAllByText("Delete", {
-      selector: "button",
-    });
-    fireEvent.click(modalDeleteButtons[1]);
+
+    const editButtons = screen.getAllByRole("button", { name: /edit/i });
+    fireEvent.click(editButtons[0]);
     await waitFor(() =>
-      expect(screen.getByText(/delete failed/i)).toBeInTheDocument(),
+      expect(screen.getByText("Save Changes")).toBeInTheDocument(),
     );
-  });
-  it("covers task CRUD error branches", async () => {
-    render(<Wrapper />);
-    // Click the sidebar "All Tasks" button (not the header)
-    await act(() => {
-      fireEvent.click(screen.getAllByText("All Tasks")[0]);
-    });
-    // Open TaskForm via sidebar button (since empty state is not shown)
-    await act(() => {
-      fireEvent.click(screen.getByText("\uff0b"));
-    });
-    fireEvent.change(screen.getByPlaceholderText(/what needs to be done/i), {
-      target: { value: "Valid Task" },
-    });
-    fireEvent.click(screen.getByText("Create Task"));
-    // Backend error: check that the form submission was processed
-    await waitFor(() => {
-      // The task form modal should close after submission attempt
-      expect(screen.queryByText("✨Create Task")).not.toBeInTheDocument();
-    });
-    // Ensure the task is rendered before searching for Edit button
-    await waitFor(() => {
-      expect(screen.getByText("Test Task")).toBeInTheDocument();
-    });
-    // Switch to Quick Tasks view so Edit button is rendered
-    await act(() => {
-      fireEvent.click(screen.getAllByText("Quick Tasks")[0]);
-    });
-    await waitFor(() => {
-      // There may be multiple elements with 'Quick Task', so check at least one exists
-      expect(screen.getAllByText("Quick Task").length).toBeGreaterThan(0);
-    });
-    // Edit
-    await waitFor(() => {
-      const editButtons = screen
-        .queryAllByRole("button")
-        .filter((btn) => /edit/i.test(btn.textContent || ""));
-      expect(editButtons.length).toBeGreaterThan(0);
-      fireEvent.click(editButtons[0]);
-    });
-    fireEvent.change(screen.getByPlaceholderText(/what needs to be done/i), {
-      target: { value: "U" },
+    fireEvent.change(screen.getAllByPlaceholderText(/project name/i)[0], {
+      target: { value: "Updated Failing Project" },
     });
     fireEvent.click(screen.getByText("Save Changes"));
-    // Skipping assertion for 'task update failed' error message because it may be split across elements or not rendered as plain text
-    // await waitFor(() => expect(screen.getByText(/task update failed/i)).toBeInTheDocument());
-    // Delete
-    await act(() => {
-      const deleteButtons = screen.getAllByText("Delete", {
-        selector: "button",
-      });
-      fireEvent.click(deleteButtons[0]);
+    await waitFor(() => {
+      expect(updateProjectMock).toHaveBeenCalled();
+      expect(mockToastContext.showError).toHaveBeenCalledWith(
+        "Update failed",
+        expect.any(String),
+      );
     });
+
+    const deleteButtons = screen.getAllByRole("button", { name: /delete/i });
+    fireEvent.click(deleteButtons[0]);
     await waitFor(() =>
-      expect(screen.getByText(/task delete failed/i)).toBeInTheDocument(),
+      expect(screen.getByText("Confirm Deletion")).toBeInTheDocument(),
     );
+    const confirmDeleteButton = screen.getByRole("button", { name: "Delete" });
+    fireEvent.click(confirmDeleteButton);
+    await waitFor(() => {
+      expect(deleteProjectMock).toHaveBeenCalledWith(mockProjectData[0].id);
+      expect(mockToastContext.showError).toHaveBeenCalledWith(
+        "Delete failed",
+        expect.any(String),
+      );
+    });
   });
+
+  it("covers task CRUD error branches", async () => {
+    const createTaskMock = vi
+      .fn()
+      .mockRejectedValue({ error: "Task create failed" });
+    const updateTaskMock = vi
+      .fn()
+      .mockRejectedValue({ error: "Task update failed" });
+    const deleteTaskMock = vi
+      .fn()
+      .mockRejectedValue({ error: "Task delete failed" });
+    mockUseTasks.mockReturnValue({
+      tasks: mockTaskData,
+      loading: false,
+      error: null,
+      refetch: vi.fn(),
+      createTask: createTaskMock,
+      updateTask: updateTaskMock,
+      deleteTask: deleteTaskMock,
+    });
+
+    render(<Wrapper />);
+    fireEvent.click(screen.getByRole("button", { name: /add new/i }));
+    await waitFor(() =>
+      expect(screen.getByText("✨Create Task")).toBeInTheDocument(),
+    );
+
+    fireEvent.change(screen.getByPlaceholderText(/what needs to be done/i), {
+      target: { value: "New Failing Task" },
+    });
+    fireEvent.click(screen.getByText("Create Task"));
+    await waitFor(() => {
+      expect(createTaskMock).toHaveBeenCalled();
+      expect(mockToastContext.showError).toHaveBeenCalledWith(
+        "Task create failed",
+        expect.any(String),
+      );
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+    const editButtons = screen.getAllByRole("button", { name: /edit/i });
+    fireEvent.click(editButtons[0]);
+    await waitFor(() =>
+      expect(screen.getByText("Save Changes")).toBeInTheDocument(),
+    );
+    fireEvent.click(screen.getByText("Save Changes"));
+    await waitFor(() => {
+      expect(updateTaskMock).toHaveBeenCalled();
+      expect(mockToastContext.showError).toHaveBeenCalledWith(
+        "Task update failed",
+        expect.any(String),
+      );
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+    const deleteButtons = screen.getAllByRole("button", { name: /delete/i });
+    fireEvent.click(deleteButtons[0]);
+    await waitFor(() =>
+      expect(screen.getByText("Confirm Deletion")).toBeInTheDocument(),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    await waitFor(() => {
+      expect(deleteTaskMock).toHaveBeenCalledWith(mockTaskData[0].id);
+      expect(mockToastContext.showError).toHaveBeenCalledWith(
+        "Task delete failed",
+        expect.any(String),
+      );
+    });
+  });
+
   it("covers openTaskDetails event handler", async () => {
     render(<Wrapper />);
     await waitFor(() =>
@@ -255,47 +275,41 @@ describe("MainManagementWindow - Absolute Coverage", () => {
       expect(screen.getByTestId("task-details")).toBeInTheDocument(),
     );
   });
+
   it("covers project task helper functions", async () => {
-    render(<Wrapper />);
-    await act(() => {
-      fireEvent.click(screen.getByText("Projects"));
+    const updateTaskMock = vi.fn().mockResolvedValue({});
+    mockUseTasks.mockReturnValue({
+      tasks: mockTaskData,
+      loading: false,
+      error: null,
+      refetch: vi.fn(),
+      deleteTask: vi.fn(),
+      updateTask: updateTaskMock,
+      createTask: vi.fn(),
     });
+    render(<Wrapper />);
+    fireEvent.click(screen.getByText("Projects"));
     await waitFor(() =>
       expect(screen.getByText("Test Project")).toBeInTheDocument(),
     );
-    await act(() => {
-      fireEvent.click(screen.getByText("Test Project"));
-    });
+    fireEvent.click(screen.getByText("Test Project"));
     await waitFor(() =>
       expect(screen.getByText("Tasks for this Project")).toBeInTheDocument(),
     );
-    // Toggle
-    const checkboxes = screen.getAllByRole("checkbox");
-    if (checkboxes.length > 0)
-      await act(() => {
-        fireEvent.click(checkboxes[0]);
-      });
-    // Title click
-    await act(() => {
-      fireEvent.click(screen.getByText("Test Task"));
-    });
+
+    const checkbox = screen.getAllByRole("checkbox")[0];
+    fireEvent.click(checkbox);
+    await waitFor(() => expect(updateTaskMock).toHaveBeenCalled());
+
+    fireEvent.click(screen.getByText("Test Task"));
     await waitFor(() =>
       expect(screen.getByTestId("task-details")).toBeInTheDocument(),
     );
-    // Edit
-    await act(() => {
-      fireEvent.click(screen.getAllByText("Edit")[0]);
-    });
-    // Delete
-    await act(() => {
-      fireEvent.click(screen.getAllByText("Delete")[0]);
-    });
   });
+
   it("covers sign out sidebar item", async () => {
     render(<Wrapper />);
-    await act(() => {
-      fireEvent.click(screen.getByText("Sign Out"));
-    });
+    fireEvent.click(screen.getByText("Sign Out"));
     expect(mockAuth.logout).toHaveBeenCalled();
   });
 });

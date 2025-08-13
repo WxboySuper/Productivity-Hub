@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { useAuth } from "../auth";
+import { useAuth } from "../../auth";
 
 interface Notification {
   id: number;

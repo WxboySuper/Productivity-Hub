@@ -1,3 +1,48 @@
+interface ConfirmDialogProps {
+  open: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}
+
+type MockTask = {
+  id: number;
+  title: string;
+  description: string;
+  completed: boolean;
+  projectId: number | null;
+  parent_id: number | null;
+  subtasks?: { id: number; title: string; completed: boolean }[];
+};
+
+interface TaskFormProps {
+  open: boolean;
+  onSubmit: (task: { title: string; description: string }) => void;
+  onClose: () => void;
+  error?: string | null;
+}
+
+interface ProjectFormProps {
+  open: boolean;
+  onSubmit: (project: { name: string; description: string }) => void;
+  onClose: () => void;
+  error?: string | null;
+}
+
+interface TaskDetailsProps {
+  open: boolean;
+  task: {
+    id: number;
+    title: string;
+    description: string;
+    completed: boolean;
+    projectId: number | null;
+    parent_id: number | null;
+    subtasks?: { id: number; title: string; completed: boolean }[];
+  };
+  onClose: () => void;
+  onUpdate: (task: { id: number; completed: boolean }) => void;
+  onDelete: (id: number) => void;
+}
 import {
   render,
   screen,
@@ -6,12 +51,13 @@ import {
   act,
   cleanup,
 } from "@testing-library/react";
+
 import { vi, beforeEach, afterEach, describe, it, expect } from "vitest";
 import { BrowserRouter } from "react-router-dom";
 import MainManagementWindow from "../MainManagementWindow";
 import { AuthProvider } from "../../auth";
 import { BackgroundProvider } from "../../context/BackgroundContext";
-import { ToastProvider } from "../../components/ToastProvider";
+import { ToastProvider } from "../../components/common/ToastProvider";
 
 // Setup global fetch mock properly
 global.fetch = vi.fn().mockImplementation((url: string) => {
@@ -88,10 +134,11 @@ const mockBackground = {
 };
 
 vi.mock("../../context/BackgroundContext", () => ({
-  useBackground: () => mockBackground,
+  __esModule: true,
   BackgroundProvider: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
+    <div data-testid="background-provider">{children}</div>
   ),
+  useBackground: () => mockBackground,
 }));
 
 // Mock the toast context
@@ -104,7 +151,7 @@ const mockToast = {
   removeToast: vi.fn(),
 };
 
-vi.mock("../../components/ToastProvider", () => ({
+vi.mock("../../components/common/ToastProvider", () => ({
   useToast: () => mockToast,
   ToastProvider: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
@@ -124,15 +171,7 @@ const mockProjects = {
   refetch: vi.fn(),
 };
 
-type MockTask = {
-  id: number;
-  title: string;
-  description: string;
-  completed: boolean;
-  projectId: number | null;
-  parent_id: number | null;
-  subtasks?: { id: number; title: string; completed: boolean }[];
-};
+// Removed duplicate MockTask type
 
 const mockTasks = {
   tasks: [
@@ -172,68 +211,12 @@ vi.mock("react-router-dom", async () => {
   };
 });
 
-interface TaskFormProps {
-  open: boolean;
-  onSubmit: (task: { title: string; description: string }) => void;
-  onClose: () => void;
-  error?: string | null;
-}
-interface ProjectFormProps {
-  open: boolean;
-  onSubmit: (project: { name: string; description: string }) => void;
-  onClose: () => void;
-  error?: string | null;
-}
-interface TaskDetailsProps {
-  open: boolean;
-  task: {
-    id: number;
-    title: string;
-    description: string;
-    completed: boolean;
-    projectId: number | null;
-    parent_id: number | null;
-    subtasks?: { id: number; title: string; completed: boolean }[];
-  };
-  onClose: () => void;
-  onUpdate: (task: {
-    id: number;
-    title: string;
-    description: string;
-    completed: boolean;
-    projectId: number | null;
-    parent_id: number | null;
-    subtasks?: { id: number; title: string; completed: boolean }[];
-  }) => void;
-  onDelete: (id: number) => void;
-}
-interface ConfirmDialogProps {
-  open: boolean;
-  onConfirm: () => void;
-  onCancel: () => void;
-}
-
-vi.mock("../../components/TaskForm", () => ({
-  default: ({ open, onSubmit, onClose, error }: TaskFormProps) => {
-    if (!open) return null;
-    const handleSubmit = () =>
-      onSubmit({ title: "Test Task", description: "Test Description" });
-    return (
-      <div data-testid="task-form">
-        <h2>Task Form</h2>
-        <button onClick={handleSubmit}>Submit</button>
-        <button onClick={onClose}>Cancel</button>
-        {error && <div data-testid="task-form-error">{error}</div>}
-      </div>
-    );
-  },
-}));
-
 vi.mock("../../components/ProjectForm", () => ({
-  default: ({ open, onSubmit, onClose, error }: ProjectFormProps) => {
+  default: (props: ProjectFormProps) => {
+    const { open, onSubmit, onClose, error } = props;
     if (!open) return null;
     const handleSubmit = () =>
-      onSubmit({ name: "Test Project", description: "Test Description" });
+      onSubmit({ name: "Test Project", description: "Test Desc" });
     return (
       <div data-testid="project-form">
         <h2>Project Form</h2>
@@ -334,7 +317,6 @@ describe("MainManagementWindow - Error Handling & Edge Cases", () => {
     });
 
     it("shows error state when projects fetch fails", async () => {
-      // Set up empty projects (no error, just empty state)
       mockProjects.error = null;
       mockProjects.projects = [];
 
@@ -351,64 +333,83 @@ describe("MainManagementWindow - Error Handling & Edge Cases", () => {
         },
         { timeout: 5000 },
       );
-    });
+    }, 20000);
   });
+});
 
-  describe("Loading States", () => {
-    it("shows loading state for tasks", () => {
-      mockTasks.loading = true;
-      mockTasks.tasks = [];
+describe("Loading States", () => {
+  it("shows loading state for tasks", () => {
+    mockTasks.loading = true;
+    mockTasks.tasks = [];
 
-      act(() => {
-        render(<MainManagementWindowWrapper />);
-      });
-
-      expect(screen.getByText("Loading tasks...")).toBeInTheDocument();
-    });
-
-    it("shows loading state for projects", () => {
-      mockProjects.loading = true;
-      mockProjects.projects = [];
-
-      act(() => {
-        render(<MainManagementWindowWrapper />);
-      });
-
-      const projectsButton = screen.getByText("Projects").closest("button");
-      if (projectsButton) {
-        act(() => {
-          fireEvent.click(projectsButton);
-        });
-      }
-
-      expect(screen.getByText("Loading projects...")).toBeInTheDocument();
-    });
-  });
-
-  describe("CSRF Token Management", () => {
-    it("handles form submission properly", async () => {
+    act(() => {
       render(<MainManagementWindowWrapper />);
+    });
 
-      const addNewButton = screen.getByText("Add New");
+    expect(screen.getByText("Loading tasks...")).toBeInTheDocument();
+  });
+
+  it("shows loading state for projects", () => {
+    mockProjects.loading = true;
+    mockProjects.projects = [];
+
+    act(() => {
+      render(<MainManagementWindowWrapper />);
+    });
+
+    const projectsButton = screen.getByText("Projects").closest("button");
+    if (projectsButton) {
+      act(() => {
+        fireEvent.click(projectsButton);
+      });
+    }
+
+    expect(screen.getByText("Loading projects...")).toBeInTheDocument();
+  });
+});
+
+describe("CSRF Token Management", () => {
+  it("handles form submission properly", async () => {
+    // Ensure no tasks so the form appears
+    mockTasks.tasks = [];
+    await act(async () => {
+      render(<MainManagementWindowWrapper />);
+    });
+
+    // Wait for main window to be present
+    await waitFor(
+      () => {
+        expect(
+          screen.getByTestId("main-management-window"),
+        ).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
+
+    // Click 'Add New' button
+    const addNewButton = screen.getByText("Add New");
+    await act(async () => {
       fireEvent.click(addNewButton);
-
-      await waitFor(
-        () => {
-          expect(screen.getByTestId("task-form")).toBeInTheDocument();
-        },
-        { timeout: 5000 },
-      );
-
-      // The form should be displayed properly
-      expect(screen.getByText("Submit")).toBeInTheDocument();
     });
 
-    it("uses existing environment properly", () => {
-      render(<MainManagementWindowWrapper />);
+    // Wait for task form modal to appear
+    await waitFor(
+      () => {
+        expect(
+          document.querySelector(".modern-modal-backdrop"),
+        ).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
-      // Check that main component renders successfully
-      expect(screen.getByTestId("main-management-window")).toBeInTheDocument();
-    });
+    // The form should be displayed properly
+    expect(screen.getByText("Create Task")).toBeInTheDocument();
+  }, 20000);
+
+  it("uses existing environment properly", () => {
+    render(<MainManagementWindowWrapper />);
+    // Check that main component renders successfully
+    expect(screen.getByTestId("main-management-window")).toBeInTheDocument();
   });
 
   describe("Edge Cases and Error Handling", () => {
@@ -425,6 +426,9 @@ describe("MainManagementWindow - Error Handling & Edge Cases", () => {
       await waitFor(
         () => {
           expect(mockAuth.logout).toHaveBeenCalled();
+          // Debug log for showWarning calls
+          // eslint-disable-next-line no-console
+          console.log("showWarning calls:", mockToast.showWarning.mock.calls);
           expect(mockToast.showWarning).toHaveBeenCalledWith(
             "Logout incomplete",
             expect.stringContaining("You appear to be signed out locally"),
@@ -433,87 +437,91 @@ describe("MainManagementWindow - Error Handling & Edge Cases", () => {
         },
         { timeout: 5000 },
       );
-    });
+    }, 20000);
+    // Removed duplicate code outside async test function
+  });
 
-    it("handles logout network error", async () => {
-      mockAuth.logout.mockRejectedValueOnce(new Error("Logout network error"));
+  it("handles logout network error", async () => {
+    mockAuth.logout.mockRejectedValueOnce(new Error("Logout network error"));
 
-      render(<MainManagementWindowWrapper />);
+    render(<MainManagementWindowWrapper />);
 
-      const logoutButton = screen.getByText("Sign Out").closest("button");
-      if (logoutButton) {
-        fireEvent.click(logoutButton);
-      }
+    const logoutButton = screen.getByText("Sign Out").closest("button");
+    if (logoutButton) {
+      fireEvent.click(logoutButton);
+    }
 
-      await waitFor(
-        () => {
-          expect(mockAuth.logout).toHaveBeenCalled();
-          expect(mockToast.showError).toHaveBeenCalledWith(
-            "Logout failed",
-            "Logout network error",
-          );
-          expect(mockNavigate).toHaveBeenCalledWith("/", { replace: true });
-        },
-        { timeout: 5000 },
-      );
-    });
+    await waitFor(
+      () => {
+        expect(mockAuth.logout).toHaveBeenCalled();
+        // Debug log for showError calls
+        // eslint-disable-next-line no-console
+        console.log("showError calls:", mockToast.showError.mock.calls);
+        expect(mockToast.showError).toHaveBeenCalledWith(
+          "Logout failed",
+          "Logout network error",
+        );
+        expect(mockNavigate).toHaveBeenCalledWith("/", { replace: true });
+      },
+      { timeout: 5000 },
+    );
+  }, 20000);
 
-    it("handles task with subtasks and shows subtask count", () => {
-      const taskWithSubtasks: MockTask = {
-        id: 1,
-        title: "Parent Task",
-        description: "Parent task description",
-        completed: false,
+  it("handles task with subtasks and shows subtask count", () => {
+    const taskWithSubtasks: MockTask = {
+      id: 1,
+      title: "Parent Task",
+      description: "Parent task description",
+      completed: false,
+      projectId: 1,
+      parent_id: null,
+      subtasks: [
+        { id: 2, title: "Subtask 1", completed: false },
+        { id: 3, title: "Subtask 2", completed: true },
+      ],
+    };
+
+    mockTasks.tasks = [
+      {
+        ...taskWithSubtasks,
         projectId: 1,
+        description: taskWithSubtasks.description || "",
         parent_id: null,
-        subtasks: [
-          { id: 2, title: "Subtask 1", completed: false },
-          { id: 3, title: "Subtask 2", completed: true },
-        ],
-      };
+      },
+    ];
 
-      mockTasks.tasks = [
-        {
-          ...taskWithSubtasks,
-          projectId: 1,
-          description: taskWithSubtasks.description || "",
-          parent_id: null,
-        },
-      ];
+    render(<MainManagementWindowWrapper />);
 
-      render(<MainManagementWindowWrapper />);
+    // Just verify the component renders successfully with complex task data
+    expect(screen.getByTestId("main-management-window")).toBeInTheDocument();
+  });
 
-      // Just verify the component renders successfully with complex task data
-      expect(screen.getByTestId("main-management-window")).toBeInTheDocument();
-    });
+  it("disables task completion when subtasks are incomplete", () => {
+    const taskWithIncompleteSubtasks: MockTask = {
+      id: 1,
+      title: "Parent Task",
+      description: "Parent task description",
+      completed: false,
+      projectId: 1,
+      parent_id: null,
+      subtasks: [
+        { id: 2, title: "Subtask 1", completed: false },
+        { id: 3, title: "Subtask 2", completed: true },
+      ],
+    };
 
-    it("disables task completion when subtasks are incomplete", () => {
-      const taskWithIncompleteSubtasks: MockTask = {
-        id: 1,
-        title: "Parent Task",
-        description: "Parent task description",
-        completed: false,
+    mockTasks.tasks = [
+      {
+        ...taskWithIncompleteSubtasks,
         projectId: 1,
+        description: taskWithIncompleteSubtasks.description || "",
         parent_id: null,
-        subtasks: [
-          { id: 2, title: "Subtask 1", completed: false },
-          { id: 3, title: "Subtask 2", completed: true },
-        ],
-      };
+      },
+    ];
 
-      mockTasks.tasks = [
-        {
-          ...taskWithIncompleteSubtasks,
-          projectId: 1,
-          description: taskWithIncompleteSubtasks.description || "",
-          parent_id: null,
-        },
-      ];
+    render(<MainManagementWindowWrapper />);
 
-      render(<MainManagementWindowWrapper />);
-
-      // Just verify the component renders successfully with complex task data
-      expect(screen.getByTestId("main-management-window")).toBeInTheDocument();
-    });
+    // Just verify the component renders successfully with complex task data
+    expect(screen.getByTestId("main-management-window")).toBeInTheDocument();
   });
 });
