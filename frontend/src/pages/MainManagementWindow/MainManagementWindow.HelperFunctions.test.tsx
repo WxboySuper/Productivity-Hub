@@ -87,10 +87,11 @@ const mockBackground = {
 };
 
 vi.mock("../../context/BackgroundContext", () => ({
-  useBackground: () => mockBackground,
+  __esModule: true,
   BackgroundProvider: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
+    <div data-testid="background-provider">{children}</div>
   ),
+  useBackground: () => mockBackground,
 }));
 
 // Mock the toast context

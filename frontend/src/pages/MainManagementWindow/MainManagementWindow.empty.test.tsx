@@ -17,13 +17,16 @@ vi.mock("../hooks/useTasks", () => ({
   default: () => ({ tasks: [], loading: false, error: null, refetch: vi.fn() }),
 }));
 vi.mock("../../context/BackgroundContext", async () => {
-  const actual = await import("../../context/BackgroundContext");
+  const mockBackgroundContext = {
+    backgroundType: "creative-dots",
+    setBackgroundType: vi.fn(),
+  };
   return {
-    ...actual,
-    useBackground: () => ({
-      backgroundType: "default",
-      setBackgroundType: vi.fn(),
-    }),
+    __esModule: true,
+    BackgroundProvider: ({ children }: { children: React.ReactNode }) => (
+      <div data-testid="background-provider">{children}</div>
+    ),
+    useBackground: () => mockBackgroundContext,
   };
 });
 vi.mock("../../components/ToastProvider", async () => {

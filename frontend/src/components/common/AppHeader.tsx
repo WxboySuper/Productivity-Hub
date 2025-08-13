@@ -7,7 +7,7 @@ interface AppHeaderProps {
 }
 
 const AppHeader: React.FC<AppHeaderProps> = ({ betaLabel, rightContent }) => (
-  <header className="w-full bg-white/80 shadow-sm py-4 px-8 flex items-center justify-between border-b border-blue-100 backdrop-blur-sm">
+  <header data-testid="app-header" className="w-full bg-white/80 shadow-sm py-4 px-8 flex items-center justify-between border-b border-blue-100 backdrop-blur-sm">
     <Link
       to="/"
       className="text-2xl font-extrabold text-blue-800 tracking-tight drop-shadow hover:underline focus:outline-none focus:ring-2 focus:ring-blue-400 rounded"

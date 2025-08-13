@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import "../styles/Background.css";
+import "../../styles/Background.css";
 
 export type BackgroundType =
   | "creative-dots"

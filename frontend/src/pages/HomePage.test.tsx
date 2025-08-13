@@ -26,7 +26,8 @@ describe("HomePage", () => {
     it("renders the main title and description", () => {
       render(<HomePageWrapper />);
 
-      expect(screen.getByText("Productivity Hub")).toBeInTheDocument();
+      // Use test id for main title to avoid ambiguous selector errors
+      expect(screen.getByTestId("main-title")).toBeInTheDocument();
       expect(
         screen.getByText(
           "Your all-in-one productivity assistant. Organize tasks, manage projects, and boost your workflow—all in one place.",
@@ -164,7 +165,7 @@ describe("HomePage", () => {
     it("applies gradient and glass effect classes", () => {
       render(<HomePageWrapper />);
 
-      const title = screen.getByText("Productivity Hub");
+      const title = screen.getByTestId("main-title");
       expect(title).toHaveClass("phub-text-gradient");
 
       const cardContainer = title.closest(".phub-glass");

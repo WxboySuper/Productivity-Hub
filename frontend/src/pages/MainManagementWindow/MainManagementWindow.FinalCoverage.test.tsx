@@ -121,6 +121,7 @@ vi.mock("../../auth", () => ({
 
 // Mock BackgroundProvider
 vi.mock("../../context/BackgroundContext", () => ({
+  __esModule: true,
   BackgroundProvider: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="background-provider">{children}</div>
   ),

@@ -6,9 +6,10 @@ import {
   act,
 } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach, Mock } from "vitest";
-import NotificationCenter from "./NotificationCenter";
+import NotificationCenter from "../../../components/common/NotificationCenter";
+import { AuthProvider } from "../../../auth";
 
-// Mock the auth hook
+// Mock the auth context and provider from src/auth.tsx
 const mockAuth = {
   isAuthenticated: true,
   isLoading: false,
@@ -18,10 +19,13 @@ const mockAuth = {
   register: vi.fn(),
   requestPasswordReset: vi.fn(),
   confirmPasswordReset: vi.fn(),
+  checkAuth: vi.fn(),
 };
 
-vi.mock("../auth", () => ({
+vi.mock("../../../auth", () => ({
+  __esModule: true,
   useAuth: () => mockAuth,
+  AuthProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
 // Mock global Notification API
@@ -148,16 +152,26 @@ describe("NotificationCenter", () => {
   describe("Authentication State", () => {
     it("should not render when user is not authenticated", () => {
       mockAuth.isAuthenticated = false;
-      const { container, unmount } = render(<NotificationCenter />);
-      // Should return null and render nothing
-      expect(container.innerHTML).toBe("");
+      const { container, unmount } = render(
+        <AuthProvider>
+          <NotificationCenter />
+        </AuthProvider>
+      );
+      // Should return an empty div from the mocked AuthProvider
+      expect(container.innerHTML).toBe("<div></div>");
       unmount(); // ensure full lifecycle
     });
 
     it("returns null and renders nothing when not authenticated", () => {
       mockAuth.isAuthenticated = false;
-      const { container } = render(<NotificationCenter />);
-      expect(container.firstChild).toBeNull();
+      const { container } = render(
+        <AuthProvider>
+          <NotificationCenter />
+        </AuthProvider>
+      );
+      // Should return an empty div from the mocked AuthProvider
+      expect(container.firstChild?.nodeName).toBe("DIV");
+      expect(container.firstChild?.childNodes.length).toBe(0);
     });
 
     it("should render notification center when user is authenticated", async () => {

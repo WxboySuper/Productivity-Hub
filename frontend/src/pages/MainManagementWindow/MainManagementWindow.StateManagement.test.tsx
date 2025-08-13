@@ -87,6 +87,7 @@ const mockBackground = {
 };
 
 vi.mock("../../context/BackgroundContext", () => ({
+  __esModule: true,
   useBackground: () => mockBackground,
   BackgroundProvider: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>

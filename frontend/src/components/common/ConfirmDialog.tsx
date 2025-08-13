@@ -1,5 +1,5 @@
 import { useRef, useEffect } from "react";
-import "../styles/ConfirmDialog.css";
+import "../../styles/ConfirmDialog.css";
 
 interface ConfirmDialogProps {
   open: boolean;

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { BackgroundType } from "./Background";
-import "../styles/Background.css";
+import "../../styles/Background.css";
 
 interface BackgroundSwitcherProps {
   currentBackground: BackgroundType;
@@ -96,6 +96,7 @@ const BackgroundSwitcher: React.FC<BackgroundSwitcherProps> = ({
   return (
     <div className={`relative ${className}`}>
       <button
+        data-testid="background-switcher"
         className="bg-white/90 border border-blue-200 rounded-lg p-2 shadow-lg hover:bg-blue-50 transition-all duration-200 hover:scale-105 backdrop-blur-sm"
         onClick={() => setIsOpen(!isOpen)}
         aria-label="Change background style"
