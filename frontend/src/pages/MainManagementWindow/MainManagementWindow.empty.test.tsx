@@ -3,7 +3,7 @@ import MainManagementWindow from "../MainManagementWindow";
 import { describe, it, vi, expect } from "vitest";
 import { AuthContext } from "../../auth";
 import { BackgroundProvider } from "../../context/BackgroundContext";
-import ToastProvider from "../../components/ToastProvider";
+import ToastProvider from "../../components/common/ToastProvider";
 
 vi.mock("../hooks/useProjects", () => ({
   default: () => ({
@@ -28,7 +28,7 @@ vi.mock("../../context/BackgroundContext", async () => {
 });
 vi.mock("../../components/ToastProvider", async () => {
   const actual = await vi.importActual<
-    typeof import("../../components/ToastProvider")
+    typeof import("../../components/common/ToastProvider")
   >("../../components/ToastProvider");
   return {
     ...actual,

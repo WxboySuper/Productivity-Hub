@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import AppHeader from "../components/AppHeader";
+import AppHeader from "../components/common/AppHeader";
 
 // Helper to read a cookie value by name
 function getCookie(name: string): string | null {

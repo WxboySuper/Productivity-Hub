@@ -3,9 +3,9 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import {
   BackgroundProvider,
   useBackground,
-} from "../context/BackgroundContext";
-import BackgroundSwitcher from "./BackgroundSwitcher";
-import { BackgroundType } from "./Background";
+} from "../../../context/BackgroundContext";
+import BackgroundSwitcher from "../../../components/common/BackgroundSwitcher";
+import { BackgroundType } from "../../../components/common/Background";
 
 // Test component to access context
 const TestBackgroundComponent = () => {

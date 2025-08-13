@@ -6,7 +6,7 @@ import {
   act,
 } from "@testing-library/react";
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { ToastProvider, useToast } from "./ToastProvider";
+import { ToastProvider, useToast } from "../../../components/common/ToastProvider";
 
 // Test component to trigger toast actions
 function TestComponent() {

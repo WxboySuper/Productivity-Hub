@@ -1,14 +1,14 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import AppHeader from "../components/AppHeader";
+import AppHeader from "../components/common/AppHeader";
 import TaskForm from "../components/TaskForm";
 import ProjectForm from "../components/ProjectForm";
-import ConfirmDialog from "../components/ConfirmDialog";
+import ConfirmDialog from "../components/common/ConfirmDialog";
 import TaskDetails from "../components/TaskDetails";
-import BackgroundSwitcher from "../components/BackgroundSwitcher";
+import BackgroundSwitcher from "../components/common/BackgroundSwitcher";
 import { useAuth } from "../auth";
 import { useBackground } from "../context/BackgroundContext";
-import { useToast } from "../components/ToastProvider";
+import { useToast } from "../components/common/ToastProvider";
 import { useProjects, type Project } from "../hooks/useProjects";
 import { ensureCsrfToken, type Task } from "../hooks/useTasks";
 import "../styles/ProjectForm.css";

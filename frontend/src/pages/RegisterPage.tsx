@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import AppHeader from "../components/AppHeader";
+import AppHeader from "../components/common/AppHeader";
 
 export default function RegisterPage() {
   const [form, setForm] = useState({

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import ConfirmDialog from "./ConfirmDialog";
+import ConfirmDialog from "../../../components/common/ConfirmDialog";
 
 describe("ConfirmDialog", () => {
   const mockOnConfirm = vi.fn();

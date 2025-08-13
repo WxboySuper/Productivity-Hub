@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth";
-import AppHeader from "../components/AppHeader";
+import AppHeader from "../components/common/AppHeader";
 
 export default function LoginPage() {
   const [form, setForm] = useState({

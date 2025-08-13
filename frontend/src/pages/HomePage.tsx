@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import AppHeader from "../components/AppHeader";
+import AppHeader from "../components/common/AppHeader";
 
 function HomePage() {
   return (

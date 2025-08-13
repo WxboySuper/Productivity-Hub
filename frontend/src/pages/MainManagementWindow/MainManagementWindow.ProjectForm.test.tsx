@@ -11,7 +11,7 @@ import { BrowserRouter } from "react-router-dom";
 import MainManagementWindow from "../MainManagementWindow";
 import { AuthProvider } from "../../auth";
 import { BackgroundProvider } from "../../context/BackgroundContext";
-import { ToastProvider } from "../../components/ToastProvider";
+import { ToastProvider } from "../../components/common/ToastProvider";
 
 // Mock useTasks with ensureCsrfToken for CSRF-dependent tests (not used for project creation, but keep for other tests)
 vi.mock("../../hooks/useTasks", () => ({
