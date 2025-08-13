@@ -142,12 +142,12 @@ describe("MainManagementWindow - Absolute Coverage", () => {
     render(<Wrapper />);
     fireEvent.click(screen.getByRole("button", { name: /Projects/i }));
     await waitFor(() =>
-      expect(screen.getByText("Add Project")).toBeInTheDocument()
+      expect(screen.getByText("Add Project")).toBeInTheDocument(),
     );
 
     fireEvent.click(screen.getByText("Add Project"));
     await waitFor(() =>
-      expect(screen.getByText("Create Project")).toBeInTheDocument()
+      expect(screen.getByText("Create Project")).toBeInTheDocument(),
     );
     fireEvent.change(screen.getByPlaceholderText(/project name/i), {
       target: { value: "New Failing Project" },
@@ -157,14 +157,14 @@ describe("MainManagementWindow - Absolute Coverage", () => {
       expect(createProjectMock).toHaveBeenCalled();
       expect(mockToastContext.showError).toHaveBeenCalledWith(
         "Create failed",
-        expect.any(String)
+        expect.any(String),
       );
     });
 
     const editButtons = screen.getAllByRole("button", { name: /edit/i });
     fireEvent.click(editButtons[0]);
     await waitFor(() =>
-      expect(screen.getByText("Save Changes")).toBeInTheDocument()
+      expect(screen.getByText("Save Changes")).toBeInTheDocument(),
     );
     fireEvent.change(screen.getAllByPlaceholderText(/project name/i)[0], {
       target: { value: "Updated Failing Project" },
@@ -174,14 +174,14 @@ describe("MainManagementWindow - Absolute Coverage", () => {
       expect(updateProjectMock).toHaveBeenCalled();
       expect(mockToastContext.showError).toHaveBeenCalledWith(
         "Update failed",
-        expect.any(String)
+        expect.any(String),
       );
     });
 
     const deleteButtons = screen.getAllByRole("button", { name: /delete/i });
     fireEvent.click(deleteButtons[0]);
     await waitFor(() =>
-      expect(screen.getByText("Confirm Deletion")).toBeInTheDocument()
+      expect(screen.getByText("Confirm Deletion")).toBeInTheDocument(),
     );
     const confirmDeleteButton = screen.getByRole("button", { name: "Delete" });
     fireEvent.click(confirmDeleteButton);
@@ -189,7 +189,7 @@ describe("MainManagementWindow - Absolute Coverage", () => {
       expect(deleteProjectMock).toHaveBeenCalledWith(mockProjectData[0].id);
       expect(mockToastContext.showError).toHaveBeenCalledWith(
         "Delete failed",
-        expect.any(String)
+        expect.any(String),
       );
     });
   });
@@ -217,7 +217,7 @@ describe("MainManagementWindow - Absolute Coverage", () => {
     render(<Wrapper />);
     fireEvent.click(screen.getByRole("button", { name: /add new/i }));
     await waitFor(() =>
-      expect(screen.getByText("✨Create Task")).toBeInTheDocument()
+      expect(screen.getByText("✨Create Task")).toBeInTheDocument(),
     );
 
     fireEvent.change(screen.getByPlaceholderText(/what needs to be done/i), {
@@ -228,7 +228,7 @@ describe("MainManagementWindow - Absolute Coverage", () => {
       expect(createTaskMock).toHaveBeenCalled();
       expect(mockToastContext.showError).toHaveBeenCalledWith(
         "Task create failed",
-        expect.any(String)
+        expect.any(String),
       );
     });
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
@@ -236,14 +236,14 @@ describe("MainManagementWindow - Absolute Coverage", () => {
     const editButtons = screen.getAllByRole("button", { name: /edit/i });
     fireEvent.click(editButtons[0]);
     await waitFor(() =>
-      expect(screen.getByText("Save Changes")).toBeInTheDocument()
+      expect(screen.getByText("Save Changes")).toBeInTheDocument(),
     );
     fireEvent.click(screen.getByText("Save Changes"));
     await waitFor(() => {
       expect(updateTaskMock).toHaveBeenCalled();
       expect(mockToastContext.showError).toHaveBeenCalledWith(
         "Task update failed",
-        expect.any(String)
+        expect.any(String),
       );
     });
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
@@ -251,14 +251,14 @@ describe("MainManagementWindow - Absolute Coverage", () => {
     const deleteButtons = screen.getAllByRole("button", { name: /delete/i });
     fireEvent.click(deleteButtons[0]);
     await waitFor(() =>
-      expect(screen.getByText("Confirm Deletion")).toBeInTheDocument()
+      expect(screen.getByText("Confirm Deletion")).toBeInTheDocument(),
     );
     fireEvent.click(screen.getByRole("button", { name: "Delete" }));
     await waitFor(() => {
       expect(deleteTaskMock).toHaveBeenCalledWith(mockTaskData[0].id);
       expect(mockToastContext.showError).toHaveBeenCalledWith(
         "Task delete failed",
-        expect.any(String)
+        expect.any(String),
       );
     });
   });
@@ -266,13 +266,13 @@ describe("MainManagementWindow - Absolute Coverage", () => {
   it("covers openTaskDetails event handler", async () => {
     render(<Wrapper />);
     await waitFor(() =>
-      expect(screen.getByText("Test Task")).toBeInTheDocument()
+      expect(screen.getByText("Test Task")).toBeInTheDocument(),
     );
     act(() => {
       window.dispatchEvent(new CustomEvent("openTaskDetails", { detail: 1 }));
     });
     await waitFor(() =>
-      expect(screen.getByTestId("task-details")).toBeInTheDocument()
+      expect(screen.getByTestId("task-details")).toBeInTheDocument(),
     );
   });
 
@@ -290,11 +290,11 @@ describe("MainManagementWindow - Absolute Coverage", () => {
     render(<Wrapper />);
     fireEvent.click(screen.getByText("Projects"));
     await waitFor(() =>
-      expect(screen.getByText("Test Project")).toBeInTheDocument()
+      expect(screen.getByText("Test Project")).toBeInTheDocument(),
     );
     fireEvent.click(screen.getByText("Test Project"));
     await waitFor(() =>
-      expect(screen.getByText("Tasks for this Project")).toBeInTheDocument()
+      expect(screen.getByText("Tasks for this Project")).toBeInTheDocument(),
     );
 
     const checkbox = screen.getAllByRole("checkbox")[0];
@@ -303,7 +303,7 @@ describe("MainManagementWindow - Absolute Coverage", () => {
 
     fireEvent.click(screen.getByText("Test Task"));
     await waitFor(() =>
-      expect(screen.getByTestId("task-details")).toBeInTheDocument()
+      expect(screen.getByTestId("task-details")).toBeInTheDocument(),
     );
   });
 

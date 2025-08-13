@@ -303,10 +303,18 @@ function MainManagementWindow() {
       await deleteProjectHook(deleteProject.id);
       setDeleteProject(null);
       setSelectedProject(null);
-      showSuccess("Project deleted", "The project has been successfully deleted.");
+      showSuccess(
+        "Project deleted",
+        "The project has been successfully deleted.",
+      );
     } catch (err) {
-      setDeleteError(err instanceof Error ? err.message : "Failed to delete project");
-      showError("Deletion failed", err instanceof Error ? err.message : "An unknown error occurred.");
+      setDeleteError(
+        err instanceof Error ? err.message : "Failed to delete project",
+      );
+      showError(
+        "Deletion failed",
+        err instanceof Error ? err.message : "An unknown error occurred.",
+      );
     } finally {
       setDeleteLoading(false);
     }
@@ -1148,52 +1156,52 @@ function MainManagementWindow() {
                   ) => handleProjectDeleteButtonClickWrapper(project, e);
 
                   return (
-                  <div
-                    key={project.id}
-                    role="button"
-                    className="phub-item-card phub-hover-lift cursor-pointer"
-                    onClick={handleProjectCardClick}
-                    style={{
-                      background: "none",
-                      border: "none",
-                      padding: 0,
-                      textAlign: "left",
-                      width: "100%",
-                    }}
-                    tabIndex={0}
-                    onKeyDown={handleProjectCardKeyDown}
-                    aria-label={`Select project ${project.name}`}
-                  >
-                    <div className="phub-item-content">
-                      <div className="phub-item-header">
-                        <span className="phub-item-icon">📂</span>
-                        <div className="phub-item-title">{project.name}</div>
-                      </div>
-                      {project.description && (
-                        <div className="phub-item-description">
-                          {project.description}
+                    <div
+                      key={project.id}
+                      role="button"
+                      className="phub-item-card phub-hover-lift cursor-pointer"
+                      onClick={handleProjectCardClick}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        padding: 0,
+                        textAlign: "left",
+                        width: "100%",
+                      }}
+                      tabIndex={0}
+                      onKeyDown={handleProjectCardKeyDown}
+                      aria-label={`Select project ${project.name}`}
+                    >
+                      <div className="phub-item-content">
+                        <div className="phub-item-header">
+                          <span className="phub-item-icon">📂</span>
+                          <div className="phub-item-title">{project.name}</div>
                         </div>
-                      )}
-                      <div className="phub-item-meta">
-                        <button
-                          className="phub-action-btn-secondary"
-                          onClick={handleEditButtonClick}
-                          style={{
-                            fontSize: "0.8rem",
-                            padding: "0.4rem 0.8rem",
-                          }}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          className="text-red-500 hover:text-red-700 px-2 py-1 rounded transition-colors"
-                          onClick={handleDeleteButtonClick}
-                        >
-                          Delete
-                        </button>
+                        {project.description && (
+                          <div className="phub-item-description">
+                            {project.description}
+                          </div>
+                        )}
+                        <div className="phub-item-meta">
+                          <button
+                            className="phub-action-btn-secondary"
+                            onClick={handleEditButtonClick}
+                            style={{
+                              fontSize: "0.8rem",
+                              padding: "0.4rem 0.8rem",
+                            }}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            className="text-red-500 hover:text-red-700 px-2 py-1 rounded transition-colors"
+                            onClick={handleDeleteButtonClick}
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
                   );
                 })}
               </div>

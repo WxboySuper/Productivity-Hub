@@ -190,9 +190,14 @@ describe("MainManagementWindow - Project Form & Management", () => {
         render(<MainManagementWindowWrapper />);
       });
 
-      await waitFor(() => {
-        expect(screen.getByTestId("main-management-window")).toBeInTheDocument();
-      }, { timeout: 5000 });
+      await waitFor(
+        () => {
+          expect(
+            screen.getByTestId("main-management-window"),
+          ).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
 
       const projectsBtn = screen
         .getAllByText("Projects")
@@ -203,14 +208,20 @@ describe("MainManagementWindow - Project Form & Management", () => {
         fireEvent.click(projectsBtn);
       }
 
-      await waitFor(() => {
-        const addProjectButton = screen.getByText("Add Project");
-        fireEvent.click(addProjectButton);
-      }, { timeout: 5000 });
+      await waitFor(
+        () => {
+          const addProjectButton = screen.getByText("Add Project");
+          fireEvent.click(addProjectButton);
+        },
+        { timeout: 5000 },
+      );
 
-      await waitFor(() => {
-        expect(screen.getByTestId("project-form")).toBeInTheDocument();
-      }, { timeout: 5000 });
+      await waitFor(
+        () => {
+          expect(screen.getByTestId("project-form")).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
     });
   });
   describe("Project Management", () => {
@@ -221,7 +232,7 @@ describe("MainManagementWindow - Project Form & Management", () => {
       ];
     });
 
-  it("handles project creation successfully", async () => {
+    it("handles project creation successfully", async () => {
       mockFetch.mockImplementation((url: string, options?: unknown) => {
         if (url === "/api/csrf-token") {
           return Promise.resolve({
@@ -265,9 +276,14 @@ describe("MainManagementWindow - Project Form & Management", () => {
         render(<MainManagementWindowWrapper />);
       });
 
-      await waitFor(() => {
-        expect(screen.getByTestId("main-management-window")).toBeInTheDocument();
-      }, { timeout: 5000 });
+      await waitFor(
+        () => {
+          expect(
+            screen.getByTestId("main-management-window"),
+          ).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
 
       const projectsBtn = screen
         .getAllByText("Projects")
@@ -278,14 +294,20 @@ describe("MainManagementWindow - Project Form & Management", () => {
         fireEvent.click(projectsBtn);
       }
 
-      await waitFor(() => {
-        const addProjectButton = screen.getByText("Add Project");
-        fireEvent.click(addProjectButton);
-      }, { timeout: 5000 });
+      await waitFor(
+        () => {
+          const addProjectButton = screen.getByText("Add Project");
+          fireEvent.click(addProjectButton);
+        },
+        { timeout: 5000 },
+      );
 
-      await waitFor(() => {
-        expect(screen.getByTestId("project-form")).toBeInTheDocument();
-      }, { timeout: 5000 });
+      await waitFor(
+        () => {
+          expect(screen.getByTestId("project-form")).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
 
       const createButton = screen.getByRole("button", {
         name: "Create Project",
@@ -295,7 +317,7 @@ describe("MainManagementWindow - Project Form & Management", () => {
       await waitFor(() => {
         expect(screen.getByText("New Project")).toBeInTheDocument();
       });
-  });
+    });
 
     it("closes project form when cancel is clicked", async () => {
       await act(() => {
@@ -345,85 +367,95 @@ describe("MainManagementWindow - Project Form & Management", () => {
         },
         { timeout: 5000 },
       );
-  });
+    });
 
-  it("handles project editing successfully", async () => {
-    mockFetch.mockImplementation((url) => {
-      if (url === "/api/csrf-token") {
+    it("handles project editing successfully", async () => {
+      mockFetch.mockImplementation((url) => {
+        if (url === "/api/csrf-token") {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ csrf_token: "test-token" }),
+          } as Response);
+        }
+        if (url === "/api/projects/1") {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ id: 1, name: "Updated Project" }),
+          } as Response);
+        }
+        // Default mock for other calls
         return Promise.resolve({
           ok: true,
-          json: () => Promise.resolve({ csrf_token: "test-token" }),
+          json: () => Promise.resolve({}),
         } as Response);
-      }
-      if (url === "/api/projects/1") {
-        return Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve({ id: 1, name: "Updated Project" }),
-        } as Response);
-      }
-      // Default mock for other calls
-      return Promise.resolve({ ok: true, json: () => Promise.resolve({}) } as Response);
-    });
+      });
 
-    await act(async () => {
-      render(<MainManagementWindowWrapper />);
-    });
+      await act(async () => {
+        render(<MainManagementWindowWrapper />);
+      });
 
-    // Navigate to projects view
-    const projectsBtn = screen
-      .getAllByText("Projects")
-      .find((button) => button.closest(".phub-sidebar-nav"))
-      ?.closest("button");
-    if (projectsBtn) fireEvent.click(projectsBtn);
+      // Navigate to projects view
+      const projectsBtn = screen
+        .getAllByText("Projects")
+        .find((button) => button.closest(".phub-sidebar-nav"))
+        ?.closest("button");
+      if (projectsBtn) fireEvent.click(projectsBtn);
 
-    // Find the project card and then the "Edit" button within it
-    const projectCard = await screen.findByText("Test Project").then(
-      (el) => el.closest(".phub-item-card") as HTMLElement
-    );
-    const editButton = within(projectCard).getByRole("button", {
-      name: /edit/i,
-    });
-    fireEvent.click(editButton);
+      // Find the project card and then the "Edit" button within it
+      const projectCard = await screen
+        .findByText("Test Project")
+        .then((el) => el.closest(".phub-item-card") as HTMLElement);
+      const editButton = within(projectCard).getByRole("button", {
+        name: /edit/i,
+      });
+      fireEvent.click(editButton);
 
-    // Verify the form opens in edit mode
-    const form = await screen.findByTestId("project-form");
-    expect(form).toBeInTheDocument();
-    expect(
-      within(form).getByRole("heading", { name: /edit project/i })
-    ).toBeInTheDocument();
+      // Verify the form opens in edit mode
+      const form = await screen.findByTestId("project-form");
+      expect(form).toBeInTheDocument();
+      expect(
+        within(form).getByRole("heading", { name: /edit project/i }),
+      ).toBeInTheDocument();
 
-    // Click the "Save Changes" button
-    const saveButton = within(form).getByRole("button", {
-      name: /save changes/i,
-    });
-    fireEvent.click(saveButton);
+      // Click the "Save Changes" button
+      const saveButton = within(form).getByRole("button", {
+        name: /save changes/i,
+      });
+      fireEvent.click(saveButton);
 
-    // Verify that fetch was called with the update request
-    await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledWith(
-        "/api/projects/1",
-        expect.objectContaining({
-          method: "PUT",
-          body: JSON.stringify({
-            name: "New Project",
-            description: "A new project",
+      // Verify that fetch was called with the update request
+      await waitFor(() => {
+        expect(mockFetch).toHaveBeenCalledWith(
+          "/api/projects/1",
+          expect.objectContaining({
+            method: "PUT",
+            body: JSON.stringify({
+              name: "New Project",
+              description: "A new project",
+            }),
           }),
-        })
-      );
+        );
+      });
     });
-  });
 
     it("handles project deletion confirmation", async () => {
       onConfirmSpy.mockClear();
       // Reset shared projects array before test using mock helper
-  // Reset internal reactive data
-  __projectsData = [{ id: 1, name: "Test Project", description: "Test Description" }];
+      // Reset internal reactive data
+      __projectsData = [
+        { id: 1, name: "Test Project", description: "Test Description" },
+      ];
 
       mockFetch.mockReset();
       // Initial projects fetch
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve({ projects: [{ id: 1, name: "Test Project", description: "Test Description" }] }),
+        json: () =>
+          Promise.resolve({
+            projects: [
+              { id: 1, name: "Test Project", description: "Test Description" },
+            ],
+          }),
       } as Response);
       // Initial tasks fetch
       mockFetch.mockResolvedValueOnce({
@@ -464,9 +496,9 @@ describe("MainManagementWindow - Project Form & Management", () => {
         expect(screen.getByText("Test Project")).toBeInTheDocument();
       });
 
-      const projectCard = await screen.findByText("Test Project").then(
-        (el) => el.closest(".phub-item-card") as HTMLElement
-      );
+      const projectCard = await screen
+        .findByText("Test Project")
+        .then((el) => el.closest(".phub-item-card") as HTMLElement);
       const deleteButton = within(projectCard).getByRole("button", {
         name: /delete/i,
       });
@@ -497,7 +529,7 @@ describe("MainManagementWindow - Project Form & Management", () => {
       expect(screen.queryByText("Test Project")).not.toBeInTheDocument();
     });
 
-  it("handles project creation error", async () => {
+    it("handles project creation error", async () => {
       // Set up fetch mock for project creation error
       mockFetch.mockImplementation((url: string, options?: unknown) => {
         if (url === "/api/csrf-token") {
@@ -584,7 +616,7 @@ describe("MainManagementWindow - Project Form & Management", () => {
       await waitFor(() => {
         const form = screen.getByTestId("project-form");
         expect(
-          within(form).getByText(/Project name already exists/i)
+          within(form).getByText(/Project name already exists/i),
         ).toBeInTheDocument();
       });
     });
