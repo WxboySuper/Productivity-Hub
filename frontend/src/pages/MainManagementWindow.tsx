@@ -141,6 +141,7 @@ function MainManagementWindow() {
     loading: projectsLoading,
     error: projectsError,
     refetch: refetchProjects,
+    deleteProject: deleteProjectHook,
   } = useProjects();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeView, setActiveView] = useState<"all" | "quick" | "projects">(
@@ -295,30 +296,17 @@ function MainManagementWindow() {
     setDeleteError(null);
   };
   const confirmDeleteProject = async () => {
-    /* v8 ignore next */
     if (!deleteProject) return;
     setDeleteLoading(true);
     setDeleteError(null);
     try {
-      const csrfToken = await ensureCsrfToken();
-      const response = await fetch(`/api/projects/${deleteProject.id}`, {
-        method: "DELETE",
-        credentials: "include",
-        headers: {
-          ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
-        },
-      });
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to delete project");
-      }
-      /* v8 ignore start */
-      await refetchProjects(); // Refetch projects from the hook
+      await deleteProjectHook(deleteProject.id);
       setDeleteProject(null);
       setSelectedProject(null);
-      /* v8 ignore stop */
-    } catch (err: unknown) {
-      setDeleteError(err instanceof Error ? err.message : "Unknown error");
+      showSuccess("Project deleted", "The project has been successfully deleted.");
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : "Failed to delete project");
+      showError("Deletion failed", err instanceof Error ? err.message : "An unknown error occurred.");
     } finally {
       setDeleteLoading(false);
     }
@@ -1160,51 +1148,52 @@ function MainManagementWindow() {
                   ) => handleProjectDeleteButtonClickWrapper(project, e);
 
                   return (
-                    <button
-                      key={project.id}
-                      className="phub-item-card phub-hover-lift cursor-pointer"
-                      onClick={handleProjectCardClick}
-                      style={{
-                        background: "none",
-                        border: "none",
-                        padding: 0,
-                        textAlign: "left",
-                        width: "100%",
-                      }}
-                      tabIndex={0}
-                      onKeyDown={handleProjectCardKeyDown}
-                      aria-label={`Select project ${project.name}`}
-                    >
-                      <div className="phub-item-content">
-                        <div className="phub-item-header">
-                          <span className="phub-item-icon">📂</span>
-                          <div className="phub-item-title">{project.name}</div>
-                        </div>
-                        {project.description && (
-                          <div className="phub-item-description">
-                            {project.description}
-                          </div>
-                        )}
-                        <div className="phub-item-meta">
-                          <button
-                            className="phub-action-btn-secondary"
-                            onClick={handleEditButtonClick}
-                            style={{
-                              fontSize: "0.8rem",
-                              padding: "0.4rem 0.8rem",
-                            }}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            className="text-red-500 hover:text-red-700 px-2 py-1 rounded transition-colors"
-                            onClick={handleDeleteButtonClick}
-                          >
-                            Delete
-                          </button>
-                        </div>
+                  <div
+                    key={project.id}
+                    role="button"
+                    className="phub-item-card phub-hover-lift cursor-pointer"
+                    onClick={handleProjectCardClick}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      padding: 0,
+                      textAlign: "left",
+                      width: "100%",
+                    }}
+                    tabIndex={0}
+                    onKeyDown={handleProjectCardKeyDown}
+                    aria-label={`Select project ${project.name}`}
+                  >
+                    <div className="phub-item-content">
+                      <div className="phub-item-header">
+                        <span className="phub-item-icon">📂</span>
+                        <div className="phub-item-title">{project.name}</div>
                       </div>
-                    </button>
+                      {project.description && (
+                        <div className="phub-item-description">
+                          {project.description}
+                        </div>
+                      )}
+                      <div className="phub-item-meta">
+                        <button
+                          className="phub-action-btn-secondary"
+                          onClick={handleEditButtonClick}
+                          style={{
+                            fontSize: "0.8rem",
+                            padding: "0.4rem 0.8rem",
+                          }}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="text-red-500 hover:text-red-700 px-2 py-1 rounded transition-colors"
+                          onClick={handleDeleteButtonClick}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                   );
                 })}
               </div>

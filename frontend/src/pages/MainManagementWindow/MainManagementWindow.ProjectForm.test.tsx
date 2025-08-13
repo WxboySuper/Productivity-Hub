@@ -6,6 +6,7 @@ import {
   waitFor,
   act,
   cleanup,
+  within,
 } from "@testing-library/react";
 
 import { vi, beforeEach, afterEach, describe, it, expect } from "vitest";
@@ -33,6 +34,10 @@ const __subscribers: Array<() => void> = [];
 function __notify() {
   __subscribers.forEach((fn) => fn());
 }
+
+// Define mock functions in an outer scope
+const mockUpdateProject = vi.fn();
+
 vi.mock("../../hooks/useProjects", () => {
   const React = require("react");
   return {
@@ -49,14 +54,28 @@ vi.mock("../../hooks/useProjects", () => {
       }, []);
       return {
         projects: __projectsData,
-        fetchProjects: vi.fn(),
+        refetch: vi.fn(async () => {
+          // Simulate refetching by adding the new project to the dataset
+          const newProject = {
+            id: 2,
+            name: "New Project",
+            description: "A new project",
+          };
+          if (!__projectsData.some((p) => p.name === newProject.name)) {
+            __projectsData.push(newProject);
+          }
+          __notify();
+        }),
         createProject: vi.fn(async (p: any) => {
           __projectsData = [...__projectsData, { id: Date.now(), ...p }];
           __notify();
         }),
-        updateProject: vi.fn(),
+        updateProject: mockUpdateProject,
         deleteProject: vi.fn(async (id: number) => {
-          __projectsData = __projectsData.filter((p) => p.id !== id);
+          const index = __projectsData.findIndex((p) => p.id === id);
+          if (index > -1) {
+            __projectsData.splice(index, 1);
+          }
           __notify();
         }),
       };
@@ -143,36 +162,10 @@ vi.mock("../../components/ProjectForm", () => ({
 }));
 
 // Mock the ConfirmDialog component
+// Do not mock ConfirmDialog, use the real component
+vi.unmock("../../components/common/ConfirmDialog");
 // Spy for onConfirm callback
 export const onConfirmSpy = vi.fn();
-vi.mock("../../components/ConfirmDialog", () => ({
-  default: ({
-    open,
-    title,
-    onConfirm,
-    onCancel,
-  }: {
-    open: boolean;
-    title: string;
-    onConfirm: () => void;
-    onCancel: () => void;
-  }) => {
-    const handleConfirmClick = () => {
-      onConfirmSpy();
-      onConfirm();
-    };
-    const handleCancelClick = () => {
-      onCancel();
-    };
-    return open ? (
-      <div data-testid="confirm-dialog">
-        <h2>{title}</h2>
-        <button onClick={handleConfirmClick}>Confirm</button>
-        <button onClick={handleCancelClick}>Cancel</button>
-      </div>
-    ) : null;
-  },
-}));
 
 const MainManagementWindowWrapper: React.FC = () => (
   <BrowserRouter>
@@ -221,6 +214,13 @@ describe("MainManagementWindow - Project Form & Management", () => {
     });
   });
   describe("Project Management", () => {
+    beforeEach(() => {
+      // Reset mock data before each test in this suite
+      __projectsData = [
+        { id: 1, name: "Test Project", description: "Test Description" },
+      ];
+    });
+
   it("handles project creation successfully", async () => {
       mockFetch.mockImplementation((url: string, options?: unknown) => {
         if (url === "/api/csrf-token") {
@@ -294,7 +294,7 @@ describe("MainManagementWindow - Project Form & Management", () => {
 
       await waitFor(() => {
         expect(screen.getByText("New Project")).toBeInTheDocument();
-      }, { timeout: 5000 });
+      });
   });
 
     it("closes project form when cancel is clicked", async () => {
@@ -347,51 +347,71 @@ describe("MainManagementWindow - Project Form & Management", () => {
       );
   });
 
-  it("handles project editing (placeholder - currently duplicates deletion flow)", async () => {
-      const projectsBtn = screen
-        .getAllByText("Projects")
-        .find((button) => button.closest(".phub-sidebar-nav"))
-        ?.closest("button");
-      expect(projectsBtn).toBeTruthy();
-      if (projectsBtn) {
-        await act(async () => {
-          fireEvent.click(projectsBtn);
-        });
+  it("handles project editing successfully", async () => {
+    mockFetch.mockImplementation((url) => {
+      if (url === "/api/csrf-token") {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ csrf_token: "test-token" }),
+        } as Response);
       }
-
-      await waitFor(() => {
-        expect(screen.getByText("Test Project")).toBeInTheDocument();
-      });
-
-      const deleteButton = await waitFor(() => screen.getByText("Delete"));
-      expect(deleteButton).toBeTruthy();
-      await act(async () => {
-        fireEvent.click(deleteButton);
-      });
-
-      // Use class selector for confirmation dialog
-      await waitFor(() => {
-        expect(document.querySelector('.phub-modal-backdrop')).toBeInTheDocument();
-      });
-
-      // Find the Delete button inside the modal and click it
-      const modal = document.querySelector('.phub-modal-backdrop');
-      expect(modal).toBeTruthy();
-      const confirmButton = modal?.querySelector('button');
-      expect(confirmButton).toBeTruthy();
-      if (confirmButton) {
-        await act(async () => {
-          fireEvent.click(confirmButton);
-        });
+      if (url === "/api/projects/1") {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ id: 1, name: "Updated Project" }),
+        } as Response);
       }
-
-      // Assert that onConfirmSpy was called
-      expect(onConfirmSpy).toHaveBeenCalled();
-
-      // Check that the dialog and project are gone
-      expect(document.querySelector('.phub-modal-backdrop')).not.toBeInTheDocument();
-      expect(screen.queryByText("Test Project")).not.toBeInTheDocument();
+      // Default mock for other calls
+      return Promise.resolve({ ok: true, json: () => Promise.resolve({}) } as Response);
     });
+
+    await act(async () => {
+      render(<MainManagementWindowWrapper />);
+    });
+
+    // Navigate to projects view
+    const projectsBtn = screen
+      .getAllByText("Projects")
+      .find((button) => button.closest(".phub-sidebar-nav"))
+      ?.closest("button");
+    if (projectsBtn) fireEvent.click(projectsBtn);
+
+    // Find the project card and then the "Edit" button within it
+    const projectCard = await screen.findByText("Test Project").then(
+      (el) => el.closest(".phub-item-card") as HTMLElement
+    );
+    const editButton = within(projectCard).getByRole("button", {
+      name: /edit/i,
+    });
+    fireEvent.click(editButton);
+
+    // Verify the form opens in edit mode
+    const form = await screen.findByTestId("project-form");
+    expect(form).toBeInTheDocument();
+    expect(
+      within(form).getByRole("heading", { name: /edit project/i })
+    ).toBeInTheDocument();
+
+    // Click the "Save Changes" button
+    const saveButton = within(form).getByRole("button", {
+      name: /save changes/i,
+    });
+    fireEvent.click(saveButton);
+
+    // Verify that fetch was called with the update request
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith(
+        "/api/projects/1",
+        expect.objectContaining({
+          method: "PUT",
+          body: JSON.stringify({
+            name: "New Project",
+            description: "A new project",
+          }),
+        })
+      );
+    });
+  });
 
     it("handles project deletion confirmation", async () => {
       onConfirmSpy.mockClear();
@@ -444,33 +464,36 @@ describe("MainManagementWindow - Project Form & Management", () => {
         expect(screen.getByText("Test Project")).toBeInTheDocument();
       });
 
-      const deleteButton = await waitFor(() => screen.getByText("Delete"));
-      expect(deleteButton).toBeTruthy();
+      const projectCard = await screen.findByText("Test Project").then(
+        (el) => el.closest(".phub-item-card") as HTMLElement
+      );
+      const deleteButton = within(projectCard).getByRole("button", {
+        name: /delete/i,
+      });
       await act(async () => {
         fireEvent.click(deleteButton);
       });
 
-      // Use class selector for confirmation dialog
-      await waitFor(() => {
-        expect(document.querySelector('.phub-modal-backdrop')).toBeInTheDocument();
+      // Wait for the real confirmation dialog
+      const dialog = await screen.findByRole("dialog", {
+        name: /delete project/i,
       });
 
-      // Find the Delete button inside the modal and click it
-      const modal = document.querySelector('.phub-modal-backdrop');
-      expect(modal).toBeTruthy();
-      const confirmButton = modal?.querySelector('button');
-      expect(confirmButton).toBeTruthy();
-      if (confirmButton) {
-        await act(async () => {
-          fireEvent.click(confirmButton);
-        });
-      }
+      // Click the "Delete" button inside the real dialog
+      const confirmButton = within(dialog).getByRole("button", {
+        name: "🗑️ Delete",
+      });
+      await act(async () => {
+        fireEvent.click(confirmButton);
+      });
 
-      // Assert that onConfirmSpy was called
-      expect(onConfirmSpy).toHaveBeenCalled();
+      // Assert that the project is deleted from the mock data
+      await waitFor(() => {
+        expect(__projectsData.find((p) => p.id === 1)).toBeUndefined();
+      });
 
       // Check that the dialog and project are gone
-      expect(document.querySelector('.phub-modal-backdrop')).not.toBeInTheDocument();
+      expect(screen.queryByTestId("confirm-dialog")).not.toBeInTheDocument();
       expect(screen.queryByText("Test Project")).not.toBeInTheDocument();
     });
 
@@ -557,10 +580,12 @@ describe("MainManagementWindow - Project Form & Management", () => {
         fireEvent.click(createButton);
       });
 
-      // Check for error message by text instead of test ID
+      // Check for the error message specifically within the form
       await waitFor(() => {
-
-        expect(screen.getByText(/Project name already exists/i)).toBeInTheDocument();
+        const form = screen.getByTestId("project-form");
+        expect(
+          within(form).getByText(/Project name already exists/i)
+        ).toBeInTheDocument();
       });
     });
   });
