@@ -73,8 +73,6 @@ const mockAuth = {
   checkAuth: vi.fn(),
 };
 
-
-
 beforeEach(() => {
   mockBackground.setBackgroundType.mockClear();
 });

@@ -1,5 +1,5 @@
-describe('ErrorBoundary', () => {
-	it('dummy', () => {
-		expect(true).toBe(true);
-	});
+describe("ErrorBoundary", () => {
+  it("dummy", () => {
+    expect(true).toBe(true);
+  });
 });

@@ -10,7 +10,10 @@ function HomePage() {
       <AppHeader />
       <div className="w-full max-w-md bg-white/95 rounded-xl shadow-2xl p-10 flex flex-col items-center border border-blue-200 backdrop-blur-sm z-10 mt-10 phub-glass">
         {/* Reduced nesting by extracting content into smaller components or sections (JS-0415) */}
-        <h1 data-testid="main-title" className="text-4xl font-extrabold mb-4 text-center drop-shadow phub-text-gradient">
+        <h1
+          data-testid="main-title"
+          className="text-4xl font-extrabold mb-4 text-center drop-shadow phub-text-gradient"
+        >
           Productivity Hub
         </h1>
         <p className="text-lg text-gray-700 mb-8 text-center">

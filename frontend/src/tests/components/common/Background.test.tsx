@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render } from "@testing-library/react";
-import Background, { BackgroundType } from "../../../components/common/Background";
+import Background, {
+  BackgroundType,
+} from "../../../components/common/Background";
 
 describe("Background", () => {
   beforeEach(() => {

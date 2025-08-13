@@ -1,5 +1,5 @@
-describe('TaskRelationshipsSection', () => {
-	it('dummy', () => {
-		expect(true).toBe(true);
-	});
+describe("TaskRelationshipsSection", () => {
+  it("dummy", () => {
+    expect(true).toBe(true);
+  });
 });

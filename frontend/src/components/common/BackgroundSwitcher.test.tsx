@@ -1,5 +1,5 @@
-describe('BackgroundSwitcher', () => {
-	it('dummy', () => {
-		expect(true).toBe(true);
-	});
+describe("BackgroundSwitcher", () => {
+  it("dummy", () => {
+    expect(true).toBe(true);
+  });
 });

@@ -1,5 +1,5 @@
-describe('useTasks', () => {
-	it('dummy', () => {
-		expect(true).toBe(true);
-	});
+describe("useTasks", () => {
+  it("dummy", () => {
+    expect(true).toBe(true);
+  });
 });

@@ -25,7 +25,9 @@ const mockAuth = {
 vi.mock("../../../auth", () => ({
   __esModule: true,
   useAuth: () => mockAuth,
-  AuthProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  AuthProvider: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
 }));
 
 // Mock global Notification API
@@ -155,7 +157,7 @@ describe("NotificationCenter", () => {
       const { container, unmount } = render(
         <AuthProvider>
           <NotificationCenter />
-        </AuthProvider>
+        </AuthProvider>,
       );
       // Should return an empty div from the mocked AuthProvider
       expect(container.innerHTML).toBe("<div></div>");
@@ -167,7 +169,7 @@ describe("NotificationCenter", () => {
       const { container } = render(
         <AuthProvider>
           <NotificationCenter />
-        </AuthProvider>
+        </AuthProvider>,
       );
       // Should return an empty div from the mocked AuthProvider
       expect(container.firstChild?.nodeName).toBe("DIV");

@@ -1,5 +1,5 @@
-describe('ToastProvider', () => {
-	it('dummy', () => {
-		expect(true).toBe(true);
-	});
+describe("ToastProvider", () => {
+  it("dummy", () => {
+    expect(true).toBe(true);
+  });
 });

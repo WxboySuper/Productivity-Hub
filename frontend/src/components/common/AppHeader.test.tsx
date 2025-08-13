@@ -1,5 +1,5 @@
-describe('AppHeader', () => {
-	it('dummy', () => {
-		expect(true).toBe(true);
-	});
+describe("AppHeader", () => {
+  it("dummy", () => {
+    expect(true).toBe(true);
+  });
 });

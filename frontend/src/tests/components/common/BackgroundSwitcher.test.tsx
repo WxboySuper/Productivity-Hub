@@ -27,16 +27,20 @@ let backgroundType: BackgroundType = "creative-dots";
 const setBackgroundType = vi.fn((type: BackgroundType) => {
   backgroundType = type;
 
-vi.mock("../../../context/BackgroundContext", () => ({
-  __esModule: true,
-  useBackground: () => {
-    if (typeof backgroundType === "undefined") {
-      throw new Error("useBackground must be used within a BackgroundProvider");
-    }
-    return { backgroundType, setBackgroundType };
-  },
-  BackgroundProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-}));
+  vi.mock("../../../context/BackgroundContext", () => ({
+    __esModule: true,
+    useBackground: () => {
+      if (typeof backgroundType === "undefined") {
+        throw new Error(
+          "useBackground must be used within a BackgroundProvider",
+        );
+      }
+      return { backgroundType, setBackgroundType };
+    },
+    BackgroundProvider: ({ children }: { children: React.ReactNode }) => (
+      <div>{children}</div>
+    ),
+  }));
 
   it("throws error when useBackground is used outside provider", () => {
     // Capture console error to avoid cluttering test output

@@ -1,5 +1,5 @@
-describe('ConfirmDialog', () => {
-	it('dummy', () => {
-		expect(true).toBe(true);
-	});
+describe("ConfirmDialog", () => {
+  it("dummy", () => {
+    expect(true).toBe(true);
+  });
 });

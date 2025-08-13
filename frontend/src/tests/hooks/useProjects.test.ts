@@ -1,5 +1,5 @@
-describe('useProjects', () => {
-	it('dummy', () => {
-		expect(true).toBe(true);
-	});
+describe("useProjects", () => {
+  it("dummy", () => {
+    expect(true).toBe(true);
+  });
 });
