@@ -198,11 +198,11 @@ function MainManagementWindow() {
     fetchTasks();
   }, [fetchTasks]);
 
-  const handleApiError = (err: unknown, contextMessage: string) => {
+  const handleApiError = useCallback((err: unknown, contextMessage: string) => {
     const message = err instanceof Error ? err.message : "Unknown error";
     setTaskFormError(message);
-    showError(message, contextMessage);
-  };
+    showError(contextMessage, message);
+  }, [setTaskFormError, showError]);
 
   // --- Handler functions for toggling and deleting tasks ---
   const handleToggleTask = useCallback(
