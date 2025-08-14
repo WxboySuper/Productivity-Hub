@@ -12,7 +12,6 @@ export function useProjects() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
 
   const fetchProjects = useCallback(async () => {
     setLoading(true);

@@ -202,7 +202,7 @@ function MainManagementWindow() {
     const message = err instanceof Error ? err.message : "Unknown error";
     setTaskFormError(message);
     showError(message, contextMessage);
-  }
+  };
 
   // --- Handler functions for toggling and deleting tasks ---
   const handleToggleTask = useCallback(
