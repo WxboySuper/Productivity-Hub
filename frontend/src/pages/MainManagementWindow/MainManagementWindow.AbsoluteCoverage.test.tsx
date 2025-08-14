@@ -386,9 +386,10 @@ describe("MainManagementWindow - Absolute Coverage", () => {
     const deleteButtons = screen.getAllByRole("button", { name: /delete/i });
     fireEvent.click(deleteButtons[0]);
     await waitFor(() => {
+      // Component calls showError(title, description) with context as title for deletes
       expect(mockToastContext.showError).toHaveBeenCalledWith(
+        "An error occurred while deleting the task.",
         "Task delete failed",
-        expect.any(String),
       );
     });
   });
