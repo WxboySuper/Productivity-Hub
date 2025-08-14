@@ -185,7 +185,7 @@ function MainManagementWindow() {
             : task.project_id,
       }));
       setTasks(normalizedTasks);
-    } catch (err) {
+    } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : "Unknown error";
       setTasksError(errorMessage);
     } finally {
@@ -197,6 +197,15 @@ function MainManagementWindow() {
   useEffect(() => {
     fetchTasks();
   }, [fetchTasks]);
+
+  const handleApiError = useCallback(
+    (err: unknown, contextMessage: string) => {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      setTaskFormError(message);
+      showError(contextMessage, message);
+    },
+    [setTaskFormError, showError],
+  );
 
   // --- Handler functions for toggling and deleting tasks ---
   const handleToggleTask = useCallback(
@@ -222,7 +231,7 @@ function MainManagementWindow() {
         }
         fetchTasks();
       } catch (err: unknown) {
-        setTaskFormError(err instanceof Error ? err.message : "Unknown error");
+        handleApiError(err, "An error occurred while updating the task.");
       } finally {
         setTaskFormLoading(false);
       }
@@ -248,7 +257,7 @@ function MainManagementWindow() {
       }
       fetchTasks();
     } catch (err: unknown) {
-      setTaskFormError(err instanceof Error ? err.message : "Unknown error");
+      handleApiError(err, "An error occurred while deleting the task.");
     } finally {
       setTaskFormLoading(false);
     }
@@ -351,7 +360,9 @@ function MainManagementWindow() {
       setEditTask(null);
       fetchTasks();
     } catch (err: unknown) {
-      setTaskFormError(err instanceof Error ? err.message : "Unknown error");
+      const message = err instanceof Error ? err.message : "Unknown error";
+      setTaskFormError(message);
+      showError(message, "An error occurred while creating the task.");
     } finally {
       setTaskFormLoading(false);
     }
@@ -395,7 +406,7 @@ function MainManagementWindow() {
         console.warn("Failed to fetch updated task details:", fetchError);
       }
     } catch (err: unknown) {
-      setTaskFormError(err instanceof Error ? err.message : "Unknown error");
+      handleApiError(err, "An error occurred while updating the task.");
     } finally {
       setTaskFormLoading(false);
     }
@@ -566,7 +577,7 @@ function MainManagementWindow() {
   };
   const handleProjectCardKeyDownWrapper = (
     project: Project,
-    e: React.KeyboardEvent<HTMLButtonElement>,
+    e: React.KeyboardEvent<HTMLDivElement>,
   ) => {
     /* v8 ignore start */
     if (e.key === "Enter" || e.key === " ") {
@@ -1142,7 +1153,7 @@ function MainManagementWindow() {
                   const handleProjectCardClick = () =>
                     handleProjectCardClickWrapper(project);
                   const handleProjectCardKeyDown = (
-                    e: React.KeyboardEvent<HTMLButtonElement>,
+                    e: React.KeyboardEvent<HTMLDivElement>,
                   ) => handleProjectCardKeyDownWrapper(project, e);
                   const handleEditButtonClick = (
                     e: React.MouseEvent<HTMLButtonElement>,
