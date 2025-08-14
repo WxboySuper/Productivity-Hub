@@ -104,7 +104,7 @@ const mockToast = {
   removeToast: vi.fn(),
 };
 
-vi.mock("../../../../components/ToastProvider", () => ({
+vi.mock("../../../../components/common/ToastProvider", () => ({
   useToast: () => mockToast,
   ToastProvider: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
@@ -160,7 +160,7 @@ interface TaskFormProps {
   error?: string | null;
 }
 
-vi.mock("../../components/TaskForm", () => ({
+vi.mock("../../../../components/TaskForm", () => ({
   default: ({ open, onSubmit, onClose, error }: TaskFormProps) => {
     if (!open) return null;
     const handleSubmit = () =>
@@ -184,7 +184,7 @@ interface ProjectFormProps {
   error?: string | null;
 }
 
-vi.mock("../../components/ProjectForm", () => ({
+vi.mock("../../../../components/ProjectForm", () => ({
   default: ({ open, onSubmit, onClose, error }: ProjectFormProps) => {
     if (!open) return null;
     const handleSubmit = () =>
@@ -223,7 +223,7 @@ interface TaskDetailsProps {
   onDelete: (id: number) => void;
 }
 
-vi.mock("../../components/TaskDetails", () => ({
+vi.mock("../../../../components/TaskDetails", () => ({
   default: ({ open, task, onClose, onUpdate, onDelete }: TaskDetailsProps) => {
     if (!open) return null;
     const handleToggleComplete = () =>
@@ -248,7 +248,7 @@ interface ConfirmDialogProps {
   onCancel: () => void;
 }
 
-vi.mock("../../components/ConfirmDialog", () => ({
+vi.mock("../../../../components/common/ConfirmDialog", () => ({
   default: ({ open, onConfirm, onCancel }: ConfirmDialogProps) => {
     if (!open) return null;
     return (

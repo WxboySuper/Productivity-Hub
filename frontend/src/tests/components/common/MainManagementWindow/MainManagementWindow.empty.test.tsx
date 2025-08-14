@@ -6,7 +6,7 @@ import { BackgroundProvider } from "../../../../context/BackgroundContext";
 import { ToastProvider } from "../../../../components/common/ToastProvider";
 
 vi.mock("../../../../hooks/useProjects", () => ({
-  default: () => ({
+  useProjects: () => ({
     projects: [],
     loading: false,
     error: null,
@@ -14,7 +14,8 @@ vi.mock("../../../../hooks/useProjects", () => ({
   }),
 }));
 vi.mock("../../../../hooks/useTasks", () => ({
-  default: () => ({ tasks: [], loading: false, error: null, refetch: vi.fn() }),
+  useTasks: () => ({ tasks: [], loading: false, error: null, refetch: vi.fn() }),
+  ensureCsrfToken: vi.fn(() => Promise.resolve("mock-csrf-token")),
 }));
 vi.mock("../../../../context/BackgroundContext", async () => {
   const mockBackgroundContext = {
