@@ -8,14 +8,14 @@ import {
 } from "@testing-library/react";
 import { afterEach, describe, it, expect, beforeEach, Mock, vi } from "vitest";
 import { BrowserRouter } from "react-router-dom";
-import MainManagementWindow from "../MainManagementWindow";
-import { AuthProvider } from "../../auth";
-import { BackgroundProvider } from "../../context/BackgroundContext";
-import { ToastProvider } from "../../components/common/ToastProvider";
+import MainManagementWindow from "../../../../pages/MainManagementWindow";
+import { AuthProvider } from "../../../../auth";
+import { BackgroundProvider } from "../../../../context/BackgroundContext";
+import { ToastProvider } from "../../../../components/common/ToastProvider";
 import { setupBeforeEach } from "../__tests__/testUtils";
 
 // Mock useProjects to always return the test project
-vi.mock("../../hooks/useProjects", () => ({
+vi.mock("../../../../hooks/useProjects", () => ({
   useProjects: () => ({
     projects: [{ id: 1, name: "Test Project" }],
     loading: false,

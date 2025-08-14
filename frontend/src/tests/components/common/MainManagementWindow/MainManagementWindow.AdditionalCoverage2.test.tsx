@@ -8,10 +8,10 @@ import {
 } from "@testing-library/react";
 import { beforeEach, afterEach, describe, it, expect, vi, Mock } from "vitest";
 import { BrowserRouter } from "react-router-dom";
-import MainManagementWindow from "../MainManagementWindow";
-import { AuthProvider } from "../../auth";
-import { BackgroundProvider } from "../../context/BackgroundContext";
-import { ToastProvider } from "../../components/common/ToastProvider";
+import MainManagementWindow from "../../../../pages/MainManagementWindow";
+import { AuthProvider } from "../../../../auth";
+import { BackgroundProvider } from "../../../../context/BackgroundContext";
+import { ToastProvider } from "../../../../components/common/ToastProvider";
 import {
   setupBeforeEach,
   mockAuth,
@@ -370,7 +370,9 @@ describe("MainManagementWindow - Additional Coverage", () => {
       });
 
       // If there are project tasks, test the toggle helper
-      const projectTasks = mockTaskData.filter((task) => task.projectId === 1);
+      const projectTasks = mockTaskData.filter(
+        (task: any) => task.projectId === 1,
+      );
       if (projectTasks.length > 0) {
         await waitFor(() => {
           expect(screen.getByText("Test Task")).toBeInTheDocument();
@@ -411,7 +413,9 @@ describe("MainManagementWindow - Additional Coverage", () => {
       });
 
       // If there are project tasks, test the title click helper
-      const projectTasks = mockTaskData.filter((task) => task.projectId === 1);
+      const projectTasks = mockTaskData.filter(
+        (task: any) => task.projectId === 1,
+      );
       if (projectTasks.length > 0) {
         await waitFor(() => {
           expect(screen.getByText("Test Task")).toBeInTheDocument();
@@ -455,7 +459,9 @@ describe("MainManagementWindow - Additional Coverage", () => {
       });
 
       // If there are project tasks, test the edit helper
-      const projectTasks = mockTaskData.filter((task) => task.projectId === 1);
+      const projectTasks = mockTaskData.filter(
+        (task: any) => task.projectId === 1,
+      );
       if (projectTasks.length > 0) {
         await waitFor(() => {
           expect(screen.getByText("Test Task")).toBeInTheDocument();
@@ -511,7 +517,9 @@ describe("MainManagementWindow - Additional Coverage", () => {
       });
 
       // If there are project tasks, test the delete helper
-      const projectTasks = mockTaskData.filter((task) => task.projectId === 1);
+      const projectTasks = mockTaskData.filter(
+        (task: any) => task.projectId === 1,
+      );
       if (projectTasks.length > 0) {
         await waitFor(() => {
           expect(screen.getByText("Test Task")).toBeInTheDocument();

@@ -8,10 +8,10 @@ import {
 } from "@testing-library/react";
 import { vi, beforeEach, afterEach, describe, it, expect } from "vitest";
 import { BrowserRouter } from "react-router-dom";
-import MainManagementWindow from "../MainManagementWindow";
-import { AuthProvider } from "../../auth";
-import { BackgroundProvider } from "../../context/BackgroundContext";
-import { ToastProvider } from "../../components/common/ToastProvider";
+import MainManagementWindow from "../../../../pages/MainManagementWindow";
+import { AuthProvider } from "../../../../auth";
+import { BackgroundProvider } from "../../../../context/BackgroundContext";
+import { ToastProvider } from "../../../../components/common/ToastProvider";
 import {
   setupFetchMock,
   setupBeforeEach,
@@ -25,7 +25,7 @@ import {
 setupFetchMock();
 
 // Mock AuthProvider
-vi.mock("../../auth", () => ({
+vi.mock("../../../../auth", () => ({
   AuthProvider: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="auth-provider">{children}</div>
   ),
@@ -33,7 +33,7 @@ vi.mock("../../auth", () => ({
 }));
 
 // Mock BackgroundProvider
-vi.mock("../../context/BackgroundContext", () => ({
+vi.mock("../../../../context/BackgroundContext", () => ({
   __esModule: true,
   BackgroundProvider: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="background-provider">{children}</div>
@@ -42,7 +42,7 @@ vi.mock("../../context/BackgroundContext", () => ({
 }));
 
 // Mock ToastProvider
-vi.mock("../../components/ToastProvider", () => ({
+vi.mock("../../../../components/ToastProvider", () => ({
   ToastProvider: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="toast-provider">{children}</div>
   ),

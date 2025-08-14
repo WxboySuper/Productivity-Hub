@@ -7,10 +7,10 @@ import {
 } from "@testing-library/react";
 import { vi, beforeEach, afterEach, describe, it, expect } from "vitest";
 import { BrowserRouter } from "react-router-dom";
-import MainManagementWindow from "../MainManagementWindow";
-import { AuthProvider } from "../../auth";
-import { BackgroundProvider } from "../../context/BackgroundContext";
-import { ToastProvider } from "../../components/common/ToastProvider";
+import MainManagementWindow from "../../../../pages/MainManagementWindow";
+import { AuthProvider } from "../../../../auth";
+import { BackgroundProvider } from "../../../../context/BackgroundContext";
+import { ToastProvider } from "../../../../components/common/ToastProvider";
 
 // Setup global fetch mock properly
 global.fetch = vi.fn().mockImplementation((url: string) => {
@@ -77,7 +77,7 @@ beforeEach(() => {
   mockBackground.setBackgroundType.mockClear();
 });
 
-vi.mock("../../auth", () => ({
+vi.mock("../../../../auth", () => ({
   useAuth: () => mockAuth,
   AuthProvider: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
@@ -96,7 +96,7 @@ const mockBackground = {
   setBackgroundType,
 };
 
-vi.mock("../../context/BackgroundContext", () => ({
+vi.mock("../../../../context/BackgroundContext", () => ({
   __esModule: true,
   BackgroundProvider: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="background-provider">{children}</div>
@@ -114,7 +114,7 @@ const mockToast = {
   removeToast: vi.fn(),
 };
 
-vi.mock("../../components/ToastProvider", () => ({
+vi.mock("../../../../components/common/ToastProvider", () => ({
   useToast: () => mockToast,
   ToastProvider: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
@@ -122,7 +122,7 @@ vi.mock("../../components/ToastProvider", () => ({
 }));
 
 // Mock hooks
-vi.mock("../../hooks/useProjects", () => ({
+vi.mock("../../../../hooks/useProjects", () => ({
   useProjects: () => ({
     projects: [
       { id: 1, name: "Test Project", description: "Test project description" },
@@ -136,9 +136,8 @@ vi.mock("../../hooks/useProjects", () => ({
   }),
 }));
 
-vi.mock("../../hooks/useTasks", () => ({
+vi.mock("../../../../hooks/useTasks", () => ({
   useTasks: () => ({
-    ensureCsrfToken: vi.fn(() => Promise.resolve("mocked_csrf_token")),
     tasks: [
       {
         id: 1,
@@ -156,21 +155,16 @@ vi.mock("../../hooks/useTasks", () => ({
     deleteTask: vi.fn(),
     refetch: vi.fn(),
   }),
+  ensureCsrfToken: vi.fn(() => Promise.resolve("mocked_csrf_token")),
 }));
 
-// Mock the BackgroundSwitcher component
-vi.mock("../../components/BackgroundSwitcher", () => ({
-  default: ({ currentBackground }: { currentBackground: string }) => {
-    return (
-      <button
-        data-testid="background-switcher"
-        onClick={() => mockBackground.setBackgroundType("neural-network")}
-      >
-        Background: {currentBackground}
-      </button>
-    );
-  },
-}));
+// Use the real BackgroundSwitcher component to allow clicking options like "Creative Dots"
+vi.mock("../../../../components/common/BackgroundSwitcher", async () => {
+  const actual = await vi.importActual(
+    "../../../../components/common/BackgroundSwitcher",
+  );
+  return actual as any;
+});
 
 interface TaskFormProps {
   open: boolean;
@@ -211,7 +205,7 @@ interface ConfirmDialogProps {
   onCancel: () => void;
 }
 
-vi.mock("../../components/TaskForm", () => ({
+vi.mock("../../../../components/TaskForm", () => ({
   default: ({ open, onSubmit, onClose, error }: TaskFormProps) => {
     if (!open) return null;
     const handleSubmit = () =>
@@ -228,7 +222,7 @@ vi.mock("../../components/TaskForm", () => ({
 }));
 
 // Mock the ProjectForm component
-vi.mock("../../components/ProjectForm", () => ({
+vi.mock("../../../../components/ProjectForm", () => ({
   default: ({ open, onSubmit, onClose, error }: ProjectFormProps) => {
     if (!open) return null;
     const handleSubmit = () =>
@@ -245,7 +239,7 @@ vi.mock("../../components/ProjectForm", () => ({
 }));
 
 // Mock the TaskDetails component
-vi.mock("../../components/TaskDetails", () => ({
+vi.mock("../../../../components/TaskDetails", () => ({
   default: (props: TaskDetailsProps) => {
     const { open, task, onClose, onUpdate, onDelete } = props;
     if (!open) return null;
@@ -265,7 +259,7 @@ vi.mock("../../components/TaskDetails", () => ({
 }));
 
 // Mock ConfirmDialog
-vi.mock("../../components/ConfirmDialog", () => ({
+vi.mock("../../../../components/common/ConfirmDialog", () => ({
   default: ({ open, onConfirm, onCancel }: ConfirmDialogProps) => {
     if (!open) return null;
     return (

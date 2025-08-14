@@ -7,10 +7,10 @@ import {
 } from "@testing-library/react";
 import { vi, beforeEach, afterEach, describe, it, expect } from "vitest";
 import { BrowserRouter } from "react-router-dom";
-import MainManagementWindow from "../MainManagementWindow";
-import { AuthProvider } from "../../auth";
-import { BackgroundProvider } from "../../context/BackgroundContext";
-import { ToastProvider } from "../../components/common/ToastProvider";
+import MainManagementWindow from "../../../../pages/MainManagementWindow";
+import { AuthProvider } from "../../../../auth";
+import { BackgroundProvider } from "../../../../context/BackgroundContext";
+import { ToastProvider } from "../../../../components/common/ToastProvider";
 
 // Setup global fetch mock properly
 global.fetch = vi.fn().mockImplementation((url: string) => {
@@ -73,7 +73,7 @@ const mockAuth = {
   checkAuth: vi.fn(),
 };
 
-vi.mock("../../auth", () => ({
+vi.mock("../../../../auth", () => ({
   useAuth: () => mockAuth,
   AuthProvider: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
@@ -86,7 +86,7 @@ const mockBackground = {
   setBackgroundType: vi.fn(),
 };
 
-vi.mock("../../context/BackgroundContext", () => ({
+vi.mock("../../../../context/BackgroundContext", () => ({
   __esModule: true,
   useBackground: () => mockBackground,
   BackgroundProvider: ({ children }: { children: React.ReactNode }) => (
@@ -104,7 +104,7 @@ const mockToast = {
   removeToast: vi.fn(),
 };
 
-vi.mock("../../components/ToastProvider", () => ({
+vi.mock("../../../../components/common/ToastProvider", () => ({
   useToast: () => mockToast,
   ToastProvider: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
@@ -143,11 +143,11 @@ const mockTasks = {
   refetch: vi.fn(),
 };
 
-vi.mock("../../hooks/useProjects", () => ({
+vi.mock("../../../../hooks/useProjects", () => ({
   useProjects: () => mockProjects,
 }));
 
-vi.mock("../../hooks/useTasks", () => ({
+vi.mock("../../../../hooks/useTasks", () => ({
   useTasks: () => mockTasks,
   ensureCsrfToken: vi.fn(() => Promise.resolve("mocked_csrf_token")),
 }));
@@ -160,7 +160,7 @@ interface TaskFormProps {
   error?: string | null;
 }
 
-vi.mock("../../components/TaskForm", () => ({
+vi.mock("../../../../components/TaskForm", () => ({
   default: ({ open, onSubmit, onClose, error }: TaskFormProps) => {
     if (!open) return null;
     const handleSubmit = () =>
@@ -184,7 +184,7 @@ interface ProjectFormProps {
   error?: string | null;
 }
 
-vi.mock("../../components/ProjectForm", () => ({
+vi.mock("../../../../components/ProjectForm", () => ({
   default: ({ open, onSubmit, onClose, error }: ProjectFormProps) => {
     if (!open) return null;
     const handleSubmit = () =>
@@ -223,7 +223,7 @@ interface TaskDetailsProps {
   onDelete: (id: number) => void;
 }
 
-vi.mock("../../components/TaskDetails", () => ({
+vi.mock("../../../../components/TaskDetails", () => ({
   default: ({ open, task, onClose, onUpdate, onDelete }: TaskDetailsProps) => {
     if (!open) return null;
     const handleToggleComplete = () =>
@@ -248,7 +248,7 @@ interface ConfirmDialogProps {
   onCancel: () => void;
 }
 
-vi.mock("../../components/ConfirmDialog", () => ({
+vi.mock("../../../../components/common/ConfirmDialog", () => ({
   default: ({ open, onConfirm, onCancel }: ConfirmDialogProps) => {
     if (!open) return null;
     return (

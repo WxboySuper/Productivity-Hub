@@ -1,22 +1,28 @@
 import { render, screen } from "@testing-library/react";
-import MainManagementWindow from "../MainManagementWindow";
+import MainManagementWindow from "../../../../pages/MainManagementWindow";
 import { describe, it, vi, expect } from "vitest";
-import { AuthContext } from "../../auth";
-import { BackgroundProvider } from "../../context/BackgroundContext";
-import ToastProvider from "../../components/common/ToastProvider";
+import { AuthContext } from "../../../../auth";
+import { BackgroundProvider } from "../../../../context/BackgroundContext";
+import { ToastProvider } from "../../../../components/common/ToastProvider";
 
-vi.mock("../hooks/useProjects", () => ({
-  default: () => ({
+vi.mock("../../../../hooks/useProjects", () => ({
+  useProjects: () => ({
     projects: [],
     loading: false,
     error: null,
     refetch: vi.fn(),
   }),
 }));
-vi.mock("../hooks/useTasks", () => ({
-  default: () => ({ tasks: [], loading: false, error: null, refetch: vi.fn() }),
+vi.mock("../../../../hooks/useTasks", () => ({
+  useTasks: () => ({
+    tasks: [],
+    loading: false,
+    error: null,
+    refetch: vi.fn(),
+  }),
+  ensureCsrfToken: vi.fn(() => Promise.resolve("mock-csrf-token")),
 }));
-vi.mock("../../context/BackgroundContext", async () => {
+vi.mock("../../../../context/BackgroundContext", async () => {
   const mockBackgroundContext = {
     backgroundType: "creative-dots",
     setBackgroundType: vi.fn(),
@@ -29,10 +35,10 @@ vi.mock("../../context/BackgroundContext", async () => {
     useBackground: () => mockBackgroundContext,
   };
 });
-vi.mock("../../components/ToastProvider", async () => {
+vi.mock("../../../../components/common/ToastProvider", async () => {
   const actual = await vi.importActual<
-    typeof import("../../components/common/ToastProvider")
-  >("../../components/ToastProvider");
+    typeof import("../../../../components/common/ToastProvider")
+  >("../../../../components/common/ToastProvider");
   return {
     ...actual,
     useToast: () => ({
@@ -52,9 +58,7 @@ vi.mock("react-router-dom", () => ({
     <a {...props}>{children}</a>
   )) as React.FC<React.PropsWithChildren<Record<string, unknown>>>,
 }));
-vi.mock("../hooks/useAuth", () => ({
-  default: () => ({ logout: vi.fn() }),
-}));
+// No need to mock useAuth directly; we provide AuthContext value below.
 
 const mockAuth = {
   isAuthenticated: false,
@@ -75,6 +79,7 @@ describe("MainManagementWindow empty states", () => {
         </BackgroundProvider>
       </AuthContext.Provider>,
     );
-    expect(screen.getByLabelText(/sidebar/i)).toBeInTheDocument();
+    // Sidebar is rendered as an <aside role="complementary">
+    expect(screen.getByRole("complementary")).toBeInTheDocument();
   });
 });

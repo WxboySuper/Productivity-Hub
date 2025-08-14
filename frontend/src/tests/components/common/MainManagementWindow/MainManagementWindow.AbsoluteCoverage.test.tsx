@@ -9,10 +9,10 @@ import {
 } from "@testing-library/react";
 import { vi, beforeEach, afterEach, describe, it, expect } from "vitest";
 import { BrowserRouter } from "react-router-dom";
-import MainManagementWindow from "../MainManagementWindow";
-import { AuthProvider } from "../../auth";
-import { BackgroundProvider } from "../../context/BackgroundContext";
-import { ToastProvider } from "../../components/common/ToastProvider";
+import MainManagementWindow from "../../../../pages/MainManagementWindow";
+import { AuthProvider } from "../../../../auth";
+import { BackgroundProvider } from "../../../../context/BackgroundContext";
+import { ToastProvider } from "../../../../components/common/ToastProvider";
 import {
   mockAuth,
   mockBackgroundContext,
@@ -20,13 +20,13 @@ import {
   mockNavigate,
   mockProjectData,
   mockTaskData,
-} from "../../tests/components/common/__tests__/testUtils";
-import { useProjects } from "../../hooks/useProjects";
-import { useTasks, ensureCsrfToken } from "../../hooks/useTasks";
+} from "../__tests__/testUtils";
+import { useProjects } from "../../../../hooks/useProjects";
+import { useTasks, ensureCsrfToken } from "../../../../hooks/useTasks";
 
 // Mock the hooks
-vi.mock("../../hooks/useProjects");
-vi.mock("../../hooks/useTasks");
+vi.mock("../../../../hooks/useProjects");
+vi.mock("../../../../hooks/useTasks");
 
 const mockUseProjects = vi.mocked(useProjects);
 const mockUseTasks = vi.mocked(useTasks);
@@ -62,8 +62,6 @@ beforeEach(() => {
     error: null,
     refetch: vi.fn(),
     deleteProject: vi.fn().mockRejectedValue({ error: "Delete failed" }),
-    updateProject: vi.fn().mockRejectedValue({ error: "Update failed" }),
-    createProject: vi.fn().mockRejectedValue({ error: "Create failed" }),
   } as any);
 
   mockUseTasks.mockReturnValue({
@@ -84,19 +82,19 @@ afterEach(() => {
 });
 
 // Mock other providers
-vi.mock("../../auth", () => ({
+vi.mock("../../../../auth", () => ({
   AuthProvider: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
   useAuth: () => mockAuth,
 }));
-vi.mock("../../context/BackgroundContext", () => ({
+vi.mock("../../../../context/BackgroundContext", () => ({
   BackgroundProvider: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
   useBackground: () => mockBackgroundContext,
 }));
-vi.mock("../../components/common/ToastProvider", () => ({
+vi.mock("../../../../components/common/ToastProvider", () => ({
   ToastProvider: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
@@ -168,12 +166,6 @@ describe("MainManagementWindow - Absolute Coverage", () => {
         }),
       );
     });
-    const createProjectMock = vi
-      .fn()
-      .mockRejectedValue({ error: "Create failed" });
-    const updateProjectMock = vi
-      .fn()
-      .mockRejectedValue({ error: "Update failed" });
     const deleteProjectMock = vi
       .fn()
       .mockRejectedValue({ error: "Delete failed" });
@@ -182,8 +174,6 @@ describe("MainManagementWindow - Absolute Coverage", () => {
       loading: false,
       error: null,
       refetch: vi.fn(),
-      createProject: createProjectMock,
-      updateProject: updateProjectMock,
       deleteProject: deleteProjectMock,
     } as any);
 
