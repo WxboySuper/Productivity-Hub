@@ -62,8 +62,6 @@ beforeEach(() => {
     error: null,
     refetch: vi.fn(),
     deleteProject: vi.fn().mockRejectedValue({ error: "Delete failed" }),
-    updateProject: vi.fn().mockRejectedValue({ error: "Update failed" }),
-    createProject: vi.fn().mockRejectedValue({ error: "Create failed" }),
   } as any);
 
   mockUseTasks.mockReturnValue({
@@ -168,12 +166,6 @@ describe("MainManagementWindow - Absolute Coverage", () => {
         }),
       );
     });
-    const createProjectMock = vi
-      .fn()
-      .mockRejectedValue({ error: "Create failed" });
-    const updateProjectMock = vi
-      .fn()
-      .mockRejectedValue({ error: "Update failed" });
     const deleteProjectMock = vi
       .fn()
       .mockRejectedValue({ error: "Delete failed" });
@@ -182,8 +174,6 @@ describe("MainManagementWindow - Absolute Coverage", () => {
       loading: false,
       error: null,
       refetch: vi.fn(),
-      createProject: createProjectMock,
-      updateProject: updateProjectMock,
       deleteProject: deleteProjectMock,
     } as any);
 
