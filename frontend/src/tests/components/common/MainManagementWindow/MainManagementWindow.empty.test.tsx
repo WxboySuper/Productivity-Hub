@@ -73,7 +73,7 @@ describe("MainManagementWindow empty states", () => {
         </BackgroundProvider>
       </AuthContext.Provider>,
     );
-  // Sidebar is rendered as an <aside role="complementary">
-  expect(screen.getByRole("complementary")).toBeInTheDocument();
+    // Sidebar is rendered as an <aside role="complementary">
+    expect(screen.getByRole("complementary")).toBeInTheDocument();
   });
 });
