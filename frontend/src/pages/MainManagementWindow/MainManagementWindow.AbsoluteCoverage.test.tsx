@@ -185,7 +185,7 @@ describe("MainManagementWindow - Absolute Coverage", () => {
       createProject: createProjectMock,
       updateProject: updateProjectMock,
       deleteProject: deleteProjectMock,
-    });
+    } as any);
 
     render(<Wrapper />);
     fireEvent.click(screen.getByRole("button", { name: /Projects/i }));
