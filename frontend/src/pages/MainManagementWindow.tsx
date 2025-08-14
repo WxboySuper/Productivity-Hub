@@ -185,7 +185,7 @@ function MainManagementWindow() {
             : task.project_id,
       }));
       setTasks(normalizedTasks);
-    } catch (err) {
+    } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : "Unknown error";
       setTasksError(errorMessage);
     } finally {
