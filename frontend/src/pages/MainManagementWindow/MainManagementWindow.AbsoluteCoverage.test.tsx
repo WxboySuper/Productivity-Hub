@@ -272,7 +272,7 @@ describe("MainManagementWindow - Absolute Coverage", () => {
         return Promise.resolve(
           new Response(JSON.stringify({ error: "Task create failed" }), {
             status: 400,
-            headers: { "Content-Type": "application/json" },
+      if (url && url.includes("/api/tasks") && (method === "PUT" || method === "PATCH")) {
           }),
         );
       }
@@ -328,7 +328,12 @@ describe("MainManagementWindow - Absolute Coverage", () => {
       expect(screen.getByText("📝 New Task")).toBeInTheDocument(),
     );
 
-    fireEvent.change(screen.getByPlaceholderText(/what needs to be done/i), {
+    // Submit the form directly (some submit buttons live outside the form
+    // markup). This ensures the TaskForm onSubmit handler runs in tests.
+    const dialog = screen.getByRole("dialog");
+    const form = dialog.querySelector("form") as HTMLFormElement | null;
+    if (!form) throw new Error("Task form not found in dialog");
+    fireEvent.submit(form);
       target: { value: "New Failing Task" },
     });
     // Submit the form directly (some submit buttons live outside the form
@@ -358,8 +363,10 @@ describe("MainManagementWindow - Absolute Coverage", () => {
       const dialogs = screen.getAllByRole("dialog");
       expect(dialogs.length).toBeGreaterThan(0);
     });
-    const editDialogs = screen.getAllByRole("dialog");
-    const editDialog = editDialogs[editDialogs.length - 1];
+    if (!editForm) throw new Error("Edit Task form not found in dialog");
+    const editForm = editDialog.querySelector("form") as HTMLFormElement | null;
+    if (!editForm) throw new Error("Edit Task form not found in dialog");
+    fireEvent.submit(editForm);
     const editInput = within(editDialog).getByPlaceholderText(
       /what needs to be done/i,
     ) as HTMLInputElement;
@@ -376,7 +383,8 @@ describe("MainManagementWindow - Absolute Coverage", () => {
         within(editDialog).getByText("Task update failed"),
       ).toBeInTheDocument();
     });
-    {
+    const detailsPanelNode = screen.getByTestId("task-details");
+    fireEvent.click(within(detailsPanelNode).getByText("Close"));
       const dialogs = screen.getAllByRole("dialog");
       const editDialog = dialogs[dialogs.length - 1];
       const cancelBtn = within(editDialog).getByLabelText("Cancel Task");
