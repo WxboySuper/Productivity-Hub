@@ -11,10 +11,10 @@ import {
 
 import { vi, beforeEach, afterEach, describe, it, expect } from "vitest";
 import { BrowserRouter } from "react-router-dom";
-import MainManagementWindow from "../MainManagementWindow";
-import { AuthProvider } from "../../auth";
-import { BackgroundProvider } from "../../context/BackgroundContext";
-import { ToastProvider } from "../../components/common/ToastProvider";
+import MainManagementWindow from "../../../../pages/MainManagementWindow";
+import { AuthProvider } from "../../../../auth";
+import { BackgroundProvider } from "../../../../context/BackgroundContext";
+import { ToastProvider } from "../../../../components/common/ToastProvider";
 
 import React from "react";
 // Add global fetch mock
@@ -38,7 +38,7 @@ function __notify() {
 // Define mock functions in an outer scope
 const mockUpdateProject = vi.fn();
 
-vi.mock("../../hooks/useProjects", () => {
+vi.mock("../../../../hooks/useProjects", () => {
   const React = require("react");
   return {
     __esModule: true,
@@ -94,7 +94,7 @@ const mockBackgroundContext = {
   setBackgroundType: vi.fn(),
 };
 
-vi.mock("../../context/BackgroundContext", () => ({
+vi.mock("../../../../context/BackgroundContext", () => ({
   __esModule: true,
   BackgroundProvider: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="background-provider">{children}</div>
@@ -110,7 +110,7 @@ const mockToastContext = {
   showInfo: vi.fn(),
 };
 
-vi.mock("../../components/ToastProvider", () => ({
+vi.mock("../../../../components/ToastProvider", () => ({
   ToastProvider: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="toast-provider">{children}</div>
   ),
@@ -128,7 +128,7 @@ vi.mock("react-router-dom", async () => {
 });
 
 // Mock the ProjectForm component
-vi.mock("../../components/ProjectForm", () => ({
+vi.mock("../../../../components/ProjectForm", () => ({
   default: ({
     onCreate,
     onClose,
@@ -163,7 +163,7 @@ vi.mock("../../components/ProjectForm", () => ({
 
 // Mock the ConfirmDialog component
 // Do not mock ConfirmDialog, use the real component
-vi.unmock("../../components/common/ConfirmDialog");
+vi.unmock("../../../../components/common/ConfirmDialog");
 // Spy for onConfirm callback
 export const onConfirmSpy = vi.fn();
 
