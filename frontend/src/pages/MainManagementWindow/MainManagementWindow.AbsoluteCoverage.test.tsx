@@ -275,7 +275,11 @@ describe("MainManagementWindow - Absolute Coverage", () => {
           }),
         );
       }
-      if (url && url.includes("/api/tasks") && (method === "PUT" || method === "PATCH")) {
+      if (
+        url &&
+        url.includes("/api/tasks") &&
+        (method === "PUT" || method === "PATCH")
+      ) {
         return Promise.resolve(
           new Response(JSON.stringify({ error: "Task update failed" }), {
             status: 400,
@@ -320,11 +324,17 @@ describe("MainManagementWindow - Absolute Coverage", () => {
 
     // Create (fail)
     fireEvent.click(screen.getByRole("button", { name: /add new/i }));
-    await waitFor(() => expect(screen.getByText("📝 New Task")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByText("📝 New Task")).toBeInTheDocument(),
+    );
     const createDialog = screen.getByRole("dialog");
-    const titleInput = within(createDialog).getByPlaceholderText(/what needs to be done/i);
+    const titleInput = within(createDialog).getByPlaceholderText(
+      /what needs to be done/i,
+    );
     fireEvent.change(titleInput, { target: { value: "New Failing Task" } });
-    const createForm = createDialog.querySelector("form") as HTMLFormElement | null;
+    const createForm = createDialog.querySelector(
+      "form",
+    ) as HTMLFormElement | null;
     if (!createForm) throw new Error("Task form not found in dialog");
     fireEvent.submit(createForm);
     await waitFor(() => {
@@ -338,14 +348,20 @@ describe("MainManagementWindow - Absolute Coverage", () => {
 
     // Open details and edit (edit path surfaces inline error)
     fireEvent.click(screen.getByLabelText("View details for Test Task"));
-    await waitFor(() => expect(screen.getByTestId("task-details")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId("task-details")).toBeInTheDocument(),
+    );
     const detailsPanel = screen.getByTestId("task-details");
     fireEvent.click(within(detailsPanel).getByLabelText("Edit Task"));
     // Wait for the edit dialog and work within it
-    await waitFor(() => expect(screen.getAllByRole("dialog").length).toBeGreaterThan(0));
+    await waitFor(() =>
+      expect(screen.getAllByRole("dialog").length).toBeGreaterThan(0),
+    );
     const editDialogs = screen.getAllByRole("dialog");
     const editDialog = editDialogs[editDialogs.length - 1];
-    const editInput = within(editDialog).getByPlaceholderText(/what needs to be done/i) as HTMLInputElement;
+    const editInput = within(editDialog).getByPlaceholderText(
+      /what needs to be done/i,
+    ) as HTMLInputElement;
     // clear then type new title
     fireEvent.change(editInput, { target: { value: "" } });
     fireEvent.change(editInput, { target: { value: "Updated Failing Task" } });
@@ -355,7 +371,9 @@ describe("MainManagementWindow - Absolute Coverage", () => {
     await waitFor(() => {
       const dialogs = screen.getAllByRole("dialog");
       const latest = dialogs[dialogs.length - 1];
-      expect(within(latest).getByText("Task update failed")).toBeInTheDocument();
+      expect(
+        within(latest).getByText("Task update failed"),
+      ).toBeInTheDocument();
     });
     // Cancel edit
     const latestDialogs = screen.getAllByRole("dialog");
