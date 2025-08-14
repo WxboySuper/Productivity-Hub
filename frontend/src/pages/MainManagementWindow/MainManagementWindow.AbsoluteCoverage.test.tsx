@@ -226,8 +226,12 @@ describe("MainManagementWindow - Absolute Coverage", () => {
     const deleteButtons = screen.getAllByRole("button", { name: /delete/i });
     fireEvent.click(deleteButtons[0]);
     // Wait for the real confirmation dialog rendered by ConfirmDialog
-    const dialog = await screen.findByRole("dialog", { name: /delete project/i });
-    const confirmDeleteButton = within(dialog).getByRole("button", { name: /delete/i });
+    const dialog = await screen.findByRole("dialog", {
+      name: /delete project/i,
+    });
+    const confirmDeleteButton = within(dialog).getByRole("button", {
+      name: /delete/i,
+    });
     fireEvent.click(confirmDeleteButton);
     await waitFor(() => {
       // Title for project deletion failures is "Deletion failed" in the component
@@ -248,7 +252,7 @@ describe("MainManagementWindow - Absolute Coverage", () => {
     const deleteTaskMock = vi
       .fn()
       .mockRejectedValue({ error: "Task delete failed" });
-  mockUseTasks.mockReturnValue({
+    mockUseTasks.mockReturnValue({
       tasks: mockTaskData,
       loading: false,
       error: null,
@@ -256,7 +260,7 @@ describe("MainManagementWindow - Absolute Coverage", () => {
       createTask: createTaskMock,
       updateTask: updateTaskMock,
       deleteTask: deleteTaskMock,
-  } as any);
+    } as any);
 
     // Make the component's network calls for create/update/delete fail
     // so the UI error branch (toast) is exercised. We keep GET /api/tasks
@@ -272,7 +276,11 @@ describe("MainManagementWindow - Absolute Coverage", () => {
           }),
         );
       }
-  if (url && url.includes("/api/tasks") && (method === "PUT" || method === "PATCH")) {
+      if (
+        url &&
+        url.includes("/api/tasks") &&
+        (method === "PUT" || method === "PATCH")
+      ) {
         return Promise.resolve(
           new Response(JSON.stringify({ error: "Task update failed" }), {
             status: 400,
@@ -323,12 +331,12 @@ describe("MainManagementWindow - Absolute Coverage", () => {
     fireEvent.change(screen.getByPlaceholderText(/what needs to be done/i), {
       target: { value: "New Failing Task" },
     });
-  // Submit the form directly (some submit buttons live outside the form
-  // markup). This ensures the TaskForm onSubmit handler runs in tests.
-  const dialog = screen.getByRole("dialog");
-  const form = dialog.querySelector("form") as HTMLFormElement | null;
-  if (!form) throw new Error("Task form not found in dialog");
-  fireEvent.submit(form);
+    // Submit the form directly (some submit buttons live outside the form
+    // markup). This ensures the TaskForm onSubmit handler runs in tests.
+    const dialog = screen.getByRole("dialog");
+    const form = dialog.querySelector("form") as HTMLFormElement | null;
+    if (!form) throw new Error("Task form not found in dialog");
+    fireEvent.submit(form);
     await waitFor(() => {
       // The component performs its own fetch for task creation; ensure the
       // user-visible error was shown instead of relying on the hook mock.
@@ -337,7 +345,7 @@ describe("MainManagementWindow - Absolute Coverage", () => {
         expect.any(String),
       );
     });
-  fireEvent.click(screen.getByLabelText("Cancel Task"));
+    fireEvent.click(screen.getByLabelText("Cancel Task"));
 
     fireEvent.click(screen.getByLabelText("View details for Test Task"));
     await waitFor(() =>
@@ -357,9 +365,9 @@ describe("MainManagementWindow - Absolute Coverage", () => {
     ) as HTMLInputElement;
     fireEvent.change(editInput, { target: { value: "" } });
     fireEvent.change(editInput, { target: { value: "Updated Failing Task" } });
-  const editForm = editDialog.querySelector("form") as HTMLFormElement | null;
-  if (!editForm) throw new Error("Edit Task form not found in dialog");
-  fireEvent.submit(editForm);
+    const editForm = editDialog.querySelector("form") as HTMLFormElement | null;
+    if (!editForm) throw new Error("Edit Task form not found in dialog");
+    fireEvent.submit(editForm);
     await waitFor(() => {
       // TaskDetails edit flow surfaces inline error in the form
       const dialogs = screen.getAllByRole("dialog");
@@ -375,11 +383,11 @@ describe("MainManagementWindow - Absolute Coverage", () => {
       fireEvent.click(cancelBtn);
     }
     // Close the task details modal to return to the list view
-  const detailsPanelNode = screen.getByTestId("task-details");
-  fireEvent.click(within(detailsPanelNode).getByText("Close"));
+    const detailsPanelNode = screen.getByTestId("task-details");
+    fireEvent.click(within(detailsPanelNode).getByText("Close"));
 
-  const deleteButtons = screen.getAllByRole("button", { name: /delete/i });
-  fireEvent.click(deleteButtons[0]);
+    const deleteButtons = screen.getAllByRole("button", { name: /delete/i });
+    fireEvent.click(deleteButtons[0]);
     await waitFor(() => {
       // The component handles deletion internally; assert the toast error
       // is displayed to the user.

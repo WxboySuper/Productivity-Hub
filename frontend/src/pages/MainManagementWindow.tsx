@@ -222,10 +222,10 @@ function MainManagementWindow() {
         }
         fetchTasks();
       } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Unknown error";
-      setTaskFormError(message);
-      // show a user-visible toast for task update failures
-      showError(message, "An error occurred while updating the task.");
+        const message = err instanceof Error ? err.message : "Unknown error";
+        setTaskFormError(message);
+        // show a user-visible toast for task update failures
+        showError(message, "An error occurred while updating the task.");
       } finally {
         setTaskFormLoading(false);
       }
