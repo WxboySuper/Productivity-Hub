@@ -14,7 +14,12 @@ vi.mock("../../../../hooks/useProjects", () => ({
   }),
 }));
 vi.mock("../../../../hooks/useTasks", () => ({
-  useTasks: () => ({ tasks: [], loading: false, error: null, refetch: vi.fn() }),
+  useTasks: () => ({
+    tasks: [],
+    loading: false,
+    error: null,
+    refetch: vi.fn(),
+  }),
   ensureCsrfToken: vi.fn(() => Promise.resolve("mock-csrf-token")),
 }));
 vi.mock("../../../../context/BackgroundContext", async () => {
