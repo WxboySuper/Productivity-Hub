@@ -222,7 +222,10 @@ function MainManagementWindow() {
         }
         fetchTasks();
       } catch (err: unknown) {
-        setTaskFormError(err instanceof Error ? err.message : "Unknown error");
+      const message = err instanceof Error ? err.message : "Unknown error";
+      setTaskFormError(message);
+      // show a user-visible toast for task update failures
+      showError(message, "An error occurred while updating the task.");
       } finally {
         setTaskFormLoading(false);
       }
@@ -248,7 +251,10 @@ function MainManagementWindow() {
       }
       fetchTasks();
     } catch (err: unknown) {
-      setTaskFormError(err instanceof Error ? err.message : "Unknown error");
+      const message = err instanceof Error ? err.message : "Unknown error";
+      setTaskFormError(message);
+      // surface toast for delete failures
+      showError(message, "An error occurred while deleting the task.");
     } finally {
       setTaskFormLoading(false);
     }
@@ -351,7 +357,9 @@ function MainManagementWindow() {
       setEditTask(null);
       fetchTasks();
     } catch (err: unknown) {
-      setTaskFormError(err instanceof Error ? err.message : "Unknown error");
+      const message = err instanceof Error ? err.message : "Unknown error";
+      setTaskFormError(message);
+      showError(message, "An error occurred while creating the task.");
     } finally {
       setTaskFormLoading(false);
     }
@@ -395,7 +403,9 @@ function MainManagementWindow() {
         console.warn("Failed to fetch updated task details:", fetchError);
       }
     } catch (err: unknown) {
-      setTaskFormError(err instanceof Error ? err.message : "Unknown error");
+      const message = err instanceof Error ? err.message : "Unknown error";
+      setTaskFormError(message);
+      showError(message, "An error occurred while updating the task.");
     } finally {
       setTaskFormLoading(false);
     }
