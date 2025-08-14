@@ -198,6 +198,12 @@ function MainManagementWindow() {
     fetchTasks();
   }, [fetchTasks]);
 
+  const handleApiError = (err: unknown, contextMessage: string) => {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    setTaskFormError(message);
+    showError(message, contextMessage);
+  }
+
   // --- Handler functions for toggling and deleting tasks ---
   const handleToggleTask = useCallback(
     async (id: number) => {
@@ -222,10 +228,7 @@ function MainManagementWindow() {
         }
         fetchTasks();
       } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : "Unknown error";
-        setTaskFormError(message);
-        // show a user-visible toast for task update failures
-        showError(message, "An error occurred while updating the task.");
+        handleApiError(err, "An error occurred while updating the task.");
       } finally {
         setTaskFormLoading(false);
       }
@@ -251,10 +254,7 @@ function MainManagementWindow() {
       }
       fetchTasks();
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Unknown error";
-      setTaskFormError(message);
-      // surface toast for delete failures
-      showError(message, "An error occurred while deleting the task.");
+      handleApiError(err, "An error occurred while deleting the task.");
     } finally {
       setTaskFormLoading(false);
     }
@@ -403,9 +403,7 @@ function MainManagementWindow() {
         console.warn("Failed to fetch updated task details:", fetchError);
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Unknown error";
-      setTaskFormError(message);
-      showError(message, "An error occurred while updating the task.");
+      handleApiError(err, "An error occurred while updating the task.");
     } finally {
       setTaskFormLoading(false);
     }
@@ -576,7 +574,7 @@ function MainManagementWindow() {
   };
   const handleProjectCardKeyDownWrapper = (
     project: Project,
-    e: React.KeyboardEvent<HTMLButtonElement>,
+    e: React.KeyboardEvent<HTMLDivElement>,
   ) => {
     /* v8 ignore start */
     if (e.key === "Enter" || e.key === " ") {
@@ -1152,7 +1150,7 @@ function MainManagementWindow() {
                   const handleProjectCardClick = () =>
                     handleProjectCardClickWrapper(project);
                   const handleProjectCardKeyDown = (
-                    e: React.KeyboardEvent<HTMLButtonElement>,
+                    e: React.KeyboardEvent<HTMLDivElement>,
                   ) => handleProjectCardKeyDownWrapper(project, e);
                   const handleEditButtonClick = (
                     e: React.MouseEvent<HTMLButtonElement>,
