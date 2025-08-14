@@ -243,15 +243,16 @@ describe("MainManagementWindow - Absolute Coverage", () => {
   });
 
   it("covers task CRUD error branches", async () => {
-    const createTaskMock = vi
-      .fn()
-      .mockRejectedValue({ error: "Task create failed" });
-    const updateTaskMock = vi
-      .fn()
-      .mockRejectedValue({ error: "Task update failed" });
-    const deleteTaskMock = vi
-      .fn()
-      .mockRejectedValue({ error: "Task delete failed" });
+    const createTaskMock = vi.fn().mockRejectedValue({
+      error: "Task create failed",
+    });
+    const updateTaskMock = vi.fn().mockRejectedValue({
+      error: "Task update failed",
+    });
+    const deleteTaskMock = vi.fn().mockRejectedValue({
+      error: "Task delete failed",
+    });
+
     mockUseTasks.mockReturnValue({
       tasks: mockTaskData,
       loading: false,
@@ -262,9 +263,7 @@ describe("MainManagementWindow - Absolute Coverage", () => {
       deleteTask: deleteTaskMock,
     } as any);
 
-    // Make the component's network calls for create/update/delete fail
-    // so the UI error branch (toast) is exercised. We keep GET /api/tasks
-    // working so the initial list renders.
+    // Mock network for task create/update/delete failures while preserving GETs
     global.fetch = vi.fn((input: any, init?: any) => {
       const url = typeof input === "string" ? input : input?.url;
       const method = (init && init.method) || "GET";
@@ -272,15 +271,11 @@ describe("MainManagementWindow - Absolute Coverage", () => {
         return Promise.resolve(
           new Response(JSON.stringify({ error: "Task create failed" }), {
             status: 400,
-      if (url && url.includes("/api/tasks") && (method === "PUT" || method === "PATCH")) {
+            headers: { "Content-Type": "application/json" },
           }),
         );
       }
-      if (
-        url &&
-        url.includes("/api/tasks") &&
-        (method === "PUT" || method === "PATCH")
-      ) {
+      if (url && url.includes("/api/tasks") && (method === "PUT" || method === "PATCH")) {
         return Promise.resolve(
           new Response(JSON.stringify({ error: "Task update failed" }), {
             status: 400,
@@ -296,7 +291,7 @@ describe("MainManagementWindow - Absolute Coverage", () => {
           }),
         );
       }
-      // Default GET handlers
+      // Keep GET handlers working
       if (url === "/api/tasks") {
         return Promise.resolve(
           new Response(JSON.stringify({ tasks: mockTaskData }), {
@@ -322,83 +317,57 @@ describe("MainManagementWindow - Absolute Coverage", () => {
     });
 
     render(<Wrapper />);
-    fireEvent.click(screen.getByRole("button", { name: /add new/i }));
-    // Wait for the modal title instead of the button text
-    await waitFor(() =>
-      expect(screen.getByText("📝 New Task")).toBeInTheDocument(),
-    );
 
-    // Submit the form directly (some submit buttons live outside the form
-    // markup). This ensures the TaskForm onSubmit handler runs in tests.
-    const dialog = screen.getByRole("dialog");
-    const form = dialog.querySelector("form") as HTMLFormElement | null;
-    if (!form) throw new Error("Task form not found in dialog");
-    fireEvent.submit(form);
-      target: { value: "New Failing Task" },
-    });
-    // Submit the form directly (some submit buttons live outside the form
-    // markup). This ensures the TaskForm onSubmit handler runs in tests.
-    const dialog = screen.getByRole("dialog");
-    const form = dialog.querySelector("form") as HTMLFormElement | null;
-    if (!form) throw new Error("Task form not found in dialog");
-    fireEvent.submit(form);
+    // Create (fail)
+    fireEvent.click(screen.getByRole("button", { name: /add new/i }));
+    await waitFor(() => expect(screen.getByText("📝 New Task")).toBeInTheDocument());
+    const createDialog = screen.getByRole("dialog");
+    const titleInput = within(createDialog).getByPlaceholderText(/what needs to be done/i);
+    fireEvent.change(titleInput, { target: { value: "New Failing Task" } });
+    const createForm = createDialog.querySelector("form") as HTMLFormElement | null;
+    if (!createForm) throw new Error("Task form not found in dialog");
+    fireEvent.submit(createForm);
     await waitFor(() => {
-      // The component performs its own fetch for task creation; ensure the
-      // user-visible error was shown instead of relying on the hook mock.
       expect(mockToastContext.showError).toHaveBeenCalledWith(
         "Task create failed",
         expect.any(String),
       );
     });
-    fireEvent.click(screen.getByLabelText("Cancel Task"));
+    // Close create dialog
+    fireEvent.click(within(createDialog).getByLabelText("Cancel Task"));
 
+    // Open details and edit (edit path surfaces inline error)
     fireEvent.click(screen.getByLabelText("View details for Test Task"));
-    await waitFor(() =>
-      expect(screen.getByTestId("task-details")).toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.getByTestId("task-details")).toBeInTheDocument());
     const detailsPanel = screen.getByTestId("task-details");
     fireEvent.click(within(detailsPanel).getByLabelText("Edit Task"));
-    // Wait for the edit dialog to appear and interact strictly within it
-    await waitFor(() => {
-      const dialogs = screen.getAllByRole("dialog");
-      expect(dialogs.length).toBeGreaterThan(0);
-    });
-    if (!editForm) throw new Error("Edit Task form not found in dialog");
-    const editForm = editDialog.querySelector("form") as HTMLFormElement | null;
-    if (!editForm) throw new Error("Edit Task form not found in dialog");
-    fireEvent.submit(editForm);
-    const editInput = within(editDialog).getByPlaceholderText(
-      /what needs to be done/i,
-    ) as HTMLInputElement;
+    // Wait for the edit dialog and work within it
+    await waitFor(() => expect(screen.getAllByRole("dialog").length).toBeGreaterThan(0));
+    const editDialogs = screen.getAllByRole("dialog");
+    const editDialog = editDialogs[editDialogs.length - 1];
+    const editInput = within(editDialog).getByPlaceholderText(/what needs to be done/i) as HTMLInputElement;
+    // clear then type new title
     fireEvent.change(editInput, { target: { value: "" } });
     fireEvent.change(editInput, { target: { value: "Updated Failing Task" } });
     const editForm = editDialog.querySelector("form") as HTMLFormElement | null;
     if (!editForm) throw new Error("Edit Task form not found in dialog");
     fireEvent.submit(editForm);
     await waitFor(() => {
-      // TaskDetails edit flow surfaces inline error in the form
       const dialogs = screen.getAllByRole("dialog");
-      const editDialog = dialogs[dialogs.length - 1];
-      expect(
-        within(editDialog).getByText("Task update failed"),
-      ).toBeInTheDocument();
+      const latest = dialogs[dialogs.length - 1];
+      expect(within(latest).getByText("Task update failed")).toBeInTheDocument();
     });
-    const detailsPanelNode = screen.getByTestId("task-details");
-    fireEvent.click(within(detailsPanelNode).getByText("Close"));
-      const dialogs = screen.getAllByRole("dialog");
-      const editDialog = dialogs[dialogs.length - 1];
-      const cancelBtn = within(editDialog).getByLabelText("Cancel Task");
-      fireEvent.click(cancelBtn);
-    }
-    // Close the task details modal to return to the list view
-    const detailsPanelNode = screen.getByTestId("task-details");
-    fireEvent.click(within(detailsPanelNode).getByText("Close"));
+    // Cancel edit
+    const latestDialogs = screen.getAllByRole("dialog");
+    const latestEditDialog = latestDialogs[latestDialogs.length - 1];
+    fireEvent.click(within(latestEditDialog).getByLabelText("Cancel Task"));
+    // Close details panel
+    fireEvent.click(within(detailsPanel).getByText("Close"));
 
+    // Delete from list (fail)
     const deleteButtons = screen.getAllByRole("button", { name: /delete/i });
     fireEvent.click(deleteButtons[0]);
     await waitFor(() => {
-      // The component handles deletion internally; assert the toast error
-      // is displayed to the user.
       expect(mockToastContext.showError).toHaveBeenCalledWith(
         "Task delete failed",
         expect.any(String),
