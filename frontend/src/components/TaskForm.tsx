@@ -109,7 +109,6 @@ function ModalContent({
   return (
     <div
       className="modern-form-container"
-
       role="dialog"
       aria-modal="true"
       ref={modalRef}
@@ -502,7 +501,9 @@ function TaskFormContent(props: {
         {/* Compact row for key fields */}
         <div className="modern-section compact-grid">
           <div className="modern-field">
-            <label className="modern-label" htmlFor="task-project">Project</label>
+            <label className="modern-label" htmlFor="task-project">
+              Project
+            </label>
             <select
               id="task-project"
               className="modern-select"
@@ -511,13 +512,15 @@ function TaskFormContent(props: {
             >
               <option value="">No project</option>
               {props.projects.map((p) => (
-                <option key={p.id} value={p.id}>{p.name}</option>
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
               ))}
             </select>
           </div>
           <div className="modern-field">
             <div className="modern-label">Priority</div>
-            <div className="modern-chip-row" style={{overflowX: 'auto'}}>
+            <div className="modern-chip-row" style={{ overflowX: "auto" }}>
               {props.priorities.map((p) => (
                 <button
                   key={p.value}
@@ -559,7 +562,9 @@ function TaskFormContent(props: {
         {props.activeTab === "details" && (
           <div className="modern-tab-panel">
             <div className="modern-section">
-              <label className="modern-label" htmlFor="task-description">Description</label>
+              <label className="modern-label" htmlFor="task-description">
+                Description
+              </label>
               <textarea
                 id="task-description"
                 className="modern-textarea"
@@ -576,7 +581,9 @@ function TaskFormContent(props: {
           <div className="modern-tab-panel">
             <div className="modern-section-grid">
               <div className="modern-field">
-                <label className="modern-label" htmlFor="task-start-date">Start</label>
+                <label className="modern-label" htmlFor="task-start-date">
+                  Start
+                </label>
                 <input
                   id="task-start-date"
                   className="modern-input"
@@ -586,7 +593,9 @@ function TaskFormContent(props: {
                 />
               </div>
               <div className="modern-field">
-                <label className="modern-label" htmlFor="task-due-date">Due</label>
+                <label className="modern-label" htmlFor="task-due-date">
+                  Due
+                </label>
                 <input
                   id="task-due-date"
                   className="modern-input"
@@ -613,7 +622,13 @@ function TaskFormContent(props: {
                     onChange={props.handleNewSubtaskTitleChange}
                     onKeyDown={props.handleNewSubtaskKeyDown}
                   />
-                  <button type="button" className="modern-btn" onClick={props.handleAddSubtask}>Add</button>
+                  <button
+                    type="button"
+                    className="modern-btn"
+                    onClick={props.handleAddSubtask}
+                  >
+                    Add
+                  </button>
                 </div>
                 <SubtasksList
                   subtasks={props.subtasks}
@@ -650,7 +665,9 @@ function TaskFormContent(props: {
           <div className="modern-tab-panel">
             <div className="modern-section-grid">
               <div className="modern-field">
-                <label className="modern-label" htmlFor="task-reminder-enabled">Reminder</label>
+                <label className="modern-label" htmlFor="task-reminder-enabled">
+                  Reminder
+                </label>
                 <input
                   id="task-reminder-enabled"
                   type="checkbox"
@@ -660,7 +677,9 @@ function TaskFormContent(props: {
                 />
               </div>
               <div className="modern-field">
-                <label className="modern-label" htmlFor="task-reminder-time">Reminder time</label>
+                <label className="modern-label" htmlFor="task-reminder-time">
+                  Reminder time
+                </label>
                 <input
                   id="task-reminder-time"
                   className="modern-input"
@@ -872,8 +891,8 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
         reminders: false,
         relationships: false,
       });
-  // Reset tab to Details on open
-  setActiveTab("details");
+      // Reset tab to Details on open
+      setActiveTab("details");
     }
   }, [open]); // Remove initialValues from dependency array
 
@@ -1122,8 +1141,8 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
 
   // Stable props for TaskFormContent
   const taskFormContentProps = {
-  activeTab,
-  onTabChange: setActiveTab,
+    activeTab,
+    onTabChange: setActiveTab,
     error,
     fieldErrors,
     title,

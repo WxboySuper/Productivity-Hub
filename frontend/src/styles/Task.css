@@ -269,7 +269,12 @@
   font-size: 1.125rem;
   font-weight: 600;
   border: none;
-  background: rgba(243, 244, 246, 0.9); /* use surface-primary with slight transparency */
+  background: rgba(
+    243,
+    244,
+    246,
+    0.9
+  ); /* use surface-primary with slight transparency */
   border-radius: var(--modern-radius);
   padding: var(--modern-space-lg);
   color: var(--modern-text-primary);
@@ -870,8 +875,8 @@
   .compact-grid {
     /* Give the Priority column a bit more room to prevent wrapping */
     grid-template-columns: minmax(260px, 1fr) minmax(440px, 1.3fr);
-  /* Add a little extra horizontal space between Project and Priority */
-  column-gap: var(--modern-space-xl);
+    /* Add a little extra horizontal space between Project and Priority */
+    column-gap: var(--modern-space-xl);
   }
 }
 

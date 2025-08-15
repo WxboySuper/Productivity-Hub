@@ -29,9 +29,7 @@ describe("TaskForm - submit wiring and fields", () => {
     ).toBeInTheDocument();
 
     // Open Details tab and assert Description textarea
-    await userEvent.click(
-      screen.getByRole("button", { name: /^details$/i }),
-    );
+    await userEvent.click(screen.getByRole("button", { name: /^details$/i }));
     expect(screen.getByLabelText(/description/i)).toBeInTheDocument();
 
     // Project select is in the compact row (always visible)
@@ -49,9 +47,7 @@ describe("TaskForm - submit wiring and fields", () => {
     expect(screen.getByTitle("Critical")).toBeInTheDocument();
 
     // Reminders toggle and time on Reminders tab
-    await userEvent.click(
-      screen.getByRole("button", { name: /^reminders$/i }),
-    );
+    await userEvent.click(screen.getByRole("button", { name: /^reminders$/i }));
     expect(screen.getByLabelText(/reminder$/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/reminder time/i)).toBeInTheDocument();
   });
