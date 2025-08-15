@@ -1,6 +1,6 @@
 import { renderHook, act, waitFor } from "@testing-library/react";
 import { vi, beforeEach, afterEach, describe, it, expect } from "vitest";
-import { useTasks } from "../../hooks/useTasks";
+import { useTasks } from "@/hooks/useTasks";
 
 // Mock fetch globally
 global.fetch = vi.fn();
