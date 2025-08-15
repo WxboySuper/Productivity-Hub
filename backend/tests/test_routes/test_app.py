@@ -1,6 +1,3 @@
-import pytest
-
-
 def test_404_api_error_handler(client):
     resp = client.get("/api/nonexistent")
     assert resp.status_code == 404
