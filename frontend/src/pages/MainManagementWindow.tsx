@@ -1073,7 +1073,7 @@ function MainManagementWindow() {
         </div>
         {tasksLoading && <div className="phub-loading">Loading tasks...</div>}
         {tasksError && <div className="phub-error">⚠️ {tasksError}</div>}
-        {!tasksLoading && !tasksError && quickTasks.length === 0 ? (
+        {!tasksLoading && !tasksError && quickTasks.length === 0 && (
           <div className="phub-empty-state">
             <div className="phub-empty-icon">⚡</div>
             <h3 className="phub-empty-title">No quick tasks found</h3>
@@ -1085,7 +1085,8 @@ function MainManagementWindow() {
               Add Quick Task
             </button>
           </div>
-        ) : (
+        )}
+        {!tasksLoading && !tasksError && quickTasks.length > 0 && (
           <div className="space-y-4">
             {quickTasks.map((task) => (
               <QuickTaskCard key={task.id} task={task} />
