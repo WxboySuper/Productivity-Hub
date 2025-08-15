@@ -66,11 +66,11 @@ describe("TaskForm - submit wiring and fields", () => {
 
     // Enter a title so the submit button is enabled
     const title = screen.getByPlaceholderText(/what needs to be done\?/i);
-  await userEvent.type(title, "Test task");
+    await userEvent.type(title, "Test task");
 
-    // Click Create Task button (outside form but associated via form attribute)
-  const createBtns = screen.getAllByRole("button", { name: /create task/i });
-  await userEvent.click(createBtns[createBtns.length - 1]);
+        // Click Create Task button (outside form but associated via form attribute)
+    const createBtns = screen.getAllByRole("button", { name: /create task/i });
+    await userEvent.click(createBtns[createBtns.length - 1]);
 
     expect(onSubmit).toHaveBeenCalledTimes(1);
     const submitted = onSubmit.mock.calls[0][0];
