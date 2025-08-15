@@ -29,7 +29,9 @@ async function fetchLatestRelease(): Promise<ReleaseData> {
   try {
     const res = await fetch(DEFAULT_JSON_URL, { cache: "no-store" });
     if (res.ok) return (await res.json()) as ReleaseData;
-  } catch {}
+	} catch (err) {
+		console.error("Failed to fetch static release data:", err);
+	}
 
   const res2 = await fetch(FALLBACK_API_URL, { cache: "no-store" });
   if (res2.ok) return (await res2.json()) as ReleaseData;
