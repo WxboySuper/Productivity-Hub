@@ -15,8 +15,14 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ collapsed, onCollapse, items }) => (
-  <aside className={`phub-sidebar ${collapsed ? "phub-sidebar-collapsed" : ""}`}>
-    <button className="phub-sidebar-toggle" onClick={items[0].onClick} style={{ marginBottom: "1rem" }}>
+  <aside
+    className={`phub-sidebar ${collapsed ? "phub-sidebar-collapsed" : ""}`}
+  >
+    <button
+      className="phub-sidebar-toggle"
+      onClick={items[0].onClick}
+      style={{ marginBottom: "1rem" }}
+    >
       {items[0].icon} {!collapsed && items[0].label}
     </button>
     <button
@@ -37,7 +43,14 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onCollapse, items }) => (
       aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
     >
       {collapsed ? (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2.5">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#3b82f6"
+          strokeWidth="2.5"
+        >
           <polyline points="9,18 15,12 9,6"></polyline>
         </svg>
       ) : (
@@ -53,7 +66,11 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onCollapse, items }) => (
           >
             <polyline points="15,18 9,12 15,6"></polyline>
           </svg>
-          <span style={{ color: "#3b82f6", fontSize: "0.875rem", fontWeight: 600 }}>Collapse</span>
+          <span
+            style={{ color: "#3b82f6", fontSize: "0.875rem", fontWeight: 600 }}
+          >
+            Collapse
+          </span>
         </>
       )}
     </button>
@@ -74,7 +91,9 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onCollapse, items }) => (
           }
         >
           {item.icon}
-          {!collapsed && <span className="phub-sidebar-label">{item.label}</span>}
+          {!collapsed && (
+            <span className="phub-sidebar-label">{item.label}</span>
+          )}
         </button>
       ))}
     </nav>

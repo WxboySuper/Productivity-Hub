@@ -14,11 +14,27 @@ export interface ProjectTasksViewProps {
   onAddTask: () => void;
 }
 
-const ProjectTasksView: React.FC<ProjectTasksViewProps> = ({ tasks, selectedProject, loading, error, onToggle, onOpen, onEdit, onDelete, onAddTask }) => {
-  const projectTasks = tasks.filter((t) => t.projectId === selectedProject.id && t.parent_id === null);
+const ProjectTasksView: React.FC<ProjectTasksViewProps> = ({
+  tasks,
+  selectedProject,
+  loading,
+  error,
+  onToggle,
+  onOpen,
+  onEdit,
+  onDelete,
+  onAddTask,
+}) => {
+  const projectTasks = tasks.filter(
+    (t) => t.projectId === selectedProject.id && t.parent_id === null,
+  );
 
   const isTaskCheckboxDisabled = (task: Task): boolean =>
-    Boolean(task.subtasks && task.subtasks.length > 0 && task.subtasks.some((st) => !st.completed));
+    Boolean(
+      task.subtasks &&
+        task.subtasks.length > 0 &&
+        task.subtasks.some((st) => !st.completed),
+    );
   const getTaskCheckboxTitle = (task: Task): string =>
     isTaskCheckboxDisabled(task) ? "Complete all subtasks first" : "";
 
@@ -27,7 +43,9 @@ const ProjectTasksView: React.FC<ProjectTasksViewProps> = ({ tasks, selectedProj
       <div className="phub-empty-state">
         <div className="phub-empty-icon">📝</div>
         <h3 className="phub-empty-title">No tasks for this project</h3>
-        <p className="phub-empty-subtitle">Add a task to start making progress on this project!</p>
+        <p className="phub-empty-subtitle">
+          Add a task to start making progress on this project!
+        </p>
         <button className="phub-action-btn" onClick={onAddTask}>
           <span>📝</span>
           Add Task
@@ -71,20 +89,31 @@ const ProjectTasksView: React.FC<ProjectTasksViewProps> = ({ tasks, selectedProj
               >
                 {task.title}
               </button>
-              <button className="phub-action-btn-secondary" onClick={() => onEdit(task)} style={{ padding: "0.5rem", fontSize: "0.8rem" }}>
+              <button
+                className="phub-action-btn-secondary"
+                onClick={() => onEdit(task)}
+                style={{ padding: "0.5rem", fontSize: "0.8rem" }}
+              >
                 Edit
               </button>
               <button
                 className="px-2 py-1 rounded transition-colors font-semibold"
                 onClick={() => onDelete(task.id)}
-                style={{ background: "linear-gradient(135deg, #ef4444, #dc2626)", color: "white", border: "1px solid #dc2626" }}
+                style={{
+                  background: "linear-gradient(135deg, #ef4444, #dc2626)",
+                  color: "white",
+                  border: "1px solid #dc2626",
+                }}
               >
                 Delete
               </button>
             </div>
             <div className="phub-item-meta">
               {task.subtasks && task.subtasks.length > 0 && (
-                <span className="phub-item-badge">📝 {task.subtasks.length} subtask{task.subtasks.length > 1 ? "s" : ""}</span>
+                <span className="phub-item-badge">
+                  📝 {task.subtasks.length} subtask
+                  {task.subtasks.length > 1 ? "s" : ""}
+                </span>
               )}
             </div>
           </div>

@@ -26,7 +26,11 @@ export const AllTasksView: React.FC<AllTasksViewProps> = ({
   const topLevelTasks = tasks.filter((t) => t.parent_id === null);
 
   const isTaskCheckboxDisabled = (task: Task): boolean =>
-    Boolean(task.subtasks && task.subtasks.length > 0 && task.subtasks.some((st) => !st.completed));
+    Boolean(
+      task.subtasks &&
+        task.subtasks.length > 0 &&
+        task.subtasks.some((st) => !st.completed),
+    );
   const getTaskCheckboxTitle = (task: Task): string =>
     isTaskCheckboxDisabled(task) ? "Complete all subtasks first" : "";
 
@@ -49,7 +53,13 @@ export const AllTasksView: React.FC<AllTasksViewProps> = ({
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") onOpen(task);
             }}
-            style={{ background: "none", border: "none", padding: 0, margin: 0, textAlign: "left" }}
+            style={{
+              background: "none",
+              border: "none",
+              padding: 0,
+              margin: 0,
+              textAlign: "left",
+            }}
             aria-label={`View details for ${task.title}`}
           >
             {task.title}
@@ -73,7 +83,10 @@ export const AllTasksView: React.FC<AllTasksViewProps> = ({
               : "⚡ Quick Task"}
           </span>
           {task.subtasks && task.subtasks.length > 0 && (
-            <span className="phub-item-badge">📝 {task.subtasks.length} subtask{task.subtasks.length > 1 ? "s" : ""}</span>
+            <span className="phub-item-badge">
+              📝 {task.subtasks.length} subtask
+              {task.subtasks.length > 1 ? "s" : ""}
+            </span>
           )}
         </div>
       </div>
@@ -92,7 +105,9 @@ export const AllTasksView: React.FC<AllTasksViewProps> = ({
         <div className="phub-empty-state">
           <div className="phub-empty-icon">📋</div>
           <h3 className="phub-empty-title">No tasks found</h3>
-          <p className="phub-empty-subtitle">Start by adding a new task to get productive!</p>
+          <p className="phub-empty-subtitle">
+            Start by adding a new task to get productive!
+          </p>
           {onAddFirstTask && (
             <button className="phub-action-btn" onClick={onAddFirstTask}>
               <span>✨</span>
