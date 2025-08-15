@@ -15,7 +15,7 @@ def test_get_latest_release_success(client, monkeypatch):
         def __init__(self):
             self.called = False
 
-        def __call__(self, path, mode='r'):
+        def __call__(self, path, mode="r"):
             self.called = True
             return io.StringIO(mock_json)
 
@@ -30,26 +30,33 @@ def test_get_latest_release_success(client, monkeypatch):
 
 def test_get_latest_release_file_not_found(client, monkeypatch):
     """Test the endpoint when the whats-new.json file is not found."""
-    def mock_open_raises_error(path, mode='r'):
+
+    def mock_open_raises_error(path, mode="r"):
         raise FileNotFoundError
 
     monkeypatch.setattr("builtins.open", mock_open_raises_error)
 
     resp = client.get("/api/releases/latest")
     assert resp.status_code == 500
-    assert "Failed to load latest release data: file not found" == resp.get_json()["error"]
+    assert (
+        "Failed to load latest release data: file not found" == resp.get_json()["error"]
+    )
 
 
 def test_get_latest_release_json_decode_error(client, monkeypatch):
     """Test the endpoint when the whats-new.json file is malformed."""
-    def mock_open_invalid_json(path, mode='r'):
+
+    def mock_open_invalid_json(path, mode="r"):
         return io.StringIO("invalid json")
 
     monkeypatch.setattr("builtins.open", mock_open_invalid_json)
 
     resp = client.get("/api/releases/latest")
     assert resp.status_code == 500
-    assert "Failed to load latest release data: JSON decode error" == resp.get_json()["error"]
+    assert (
+        "Failed to load latest release data: JSON decode error"
+        == resp.get_json()["error"]
+    )
 
 
 def test_get_latest_release_uses_env_var(client, monkeypatch):
@@ -64,7 +71,7 @@ def test_get_latest_release_uses_env_var(client, monkeypatch):
         def __init__(self):
             self.called_path = None
 
-        def __call__(self, path, mode='r'):
+        def __call__(self, path, mode="r"):
             self.called_path = path
             return io.StringIO(mock_json)
 
