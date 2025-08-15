@@ -101,7 +101,9 @@ export default function WhatsNew() {
       const releaseData = await fetchLatestRelease();
       setData(releaseData);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Unable to load release info");
+      setError(
+        err instanceof Error ? err.message : "Unable to load release info",
+      );
     } finally {
       setLoading(false);
     }
