@@ -29,6 +29,7 @@ def test_get_latest_release_file_not_found(client, monkeypatch):
     """Test the endpoint when the whats-new.json file is not found."""
 
     def mock_open_raises_error(path, mode="r"):
+        """Mock open function that raises FileNotFoundError."""
         raise FileNotFoundError
 
     monkeypatch.setattr("builtins.open", mock_open_raises_error)
