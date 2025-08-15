@@ -77,6 +77,7 @@ def test_get_latest_release_uses_env_var(client, monkeypatch):
             return io.StringIO(mock_json)
 
     spy = OpenSpy()
+    spy.return_value = io.StringIO(mock_json)
     monkeypatch.setattr("builtins.open", spy)
 
     resp = client.get("/api/releases/latest")
