@@ -1,6 +1,9 @@
 import AppHeader from "../components/common/AppHeader";
 import WhatsNew from "../components/common/WhatsNew";
 
+/**
+ * Page component for displaying What\'s New release notes.
+ */
 export default function WhatsNewPage() {
   return (
     <main

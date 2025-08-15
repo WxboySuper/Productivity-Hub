@@ -24,6 +24,10 @@ type ReleaseData = {
 const DEFAULT_JSON_URL = "/whats-new.json"; // Vite serves public/ at root
 const FALLBACK_API_URL = "/api/releases/latest";
 
+/**
+ * Fetch the latest release data for the What\'s New page.
+ * Tries the static JSON first, then falls back to the backend endpoint.
+ */
 async function fetchLatestRelease(): Promise<ReleaseData> {
   // Try static JSON first (fast/local), then fallback to backend endpoint
   try {
@@ -39,6 +43,9 @@ async function fetchLatestRelease(): Promise<ReleaseData> {
   throw new Error("Failed to fetch release data");
 }
 
+/**
+ * Collapsible changelog section (e.g., Added, Changed, Fixed).
+ */
 function Section({
   id,
   title,
@@ -79,6 +86,9 @@ function Section({
   );
 }
 
+/**
+ * What\'s New component. Displays release highlights and the full changelog.
+ */
 export default function WhatsNew() {
   const [data, setData] = useState<ReleaseData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -88,10 +98,10 @@ export default function WhatsNew() {
     setLoading(true);
     setError(null);
     try {
-      const d = await fetchLatestRelease();
-      setData(d);
-    } catch (e: any) {
-      setError(e?.message || "Unable to load release info");
+      const releaseData = await fetchLatestRelease();
+      setData(releaseData);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Unable to load release info");
     } finally {
       setLoading(false);
     }
@@ -103,13 +113,13 @@ export default function WhatsNew() {
   }, []);
 
   const title =
-    data?.title || (data?.version ? `Release ${data.version}` : "What's New");
+    data?.title || (data?.version ? `Release ${data.version}` : "What’s New");
   const formattedDate = useMemo(() => {
     if (!data?.date) return null;
-    const d = new Date(data.date);
-    return isNaN(d.valueOf())
+    const parsedDate = new Date(data.date);
+    return isNaN(parsedDate.valueOf())
       ? data.date
-      : d.toLocaleDateString(undefined, {
+      : parsedDate.toLocaleDateString(undefined, {
           year: "numeric",
           month: "short",
           day: "numeric",
@@ -137,7 +147,7 @@ export default function WhatsNew() {
           role="alert"
           className="bg-red-50 border border-red-200 text-red-800 rounded-lg p-4 shadow"
         >
-          <p className="font-semibold mb-2">Failed to load What's New</p>
+          <p className="font-semibold mb-2">Failed to load What&apos;s New</p>
           <p className="mb-4 text-sm">{error}</p>
           <button
             onClick={load}
@@ -157,7 +167,6 @@ export default function WhatsNew() {
 
   return (
     <section
-      role="region"
       aria-labelledby="whatsnew-title"
       className="max-w-6xl mx-auto p-4 sm:p-6"
       data-testid="whats-new"
@@ -244,9 +253,9 @@ export default function WhatsNew() {
             Highlights
           </h2>
           <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {data.user_highlights.map((h, idx) => (
+            {data.user_highlights.map((h) => (
               <li
-                key={idx}
+                key={h}
                 className="bg-white/90 dark:bg-gray-800 border border-blue-100 dark:border-gray-700 rounded-lg shadow p-4"
               >
                 <span className="text-gray-800 dark:text-gray-100">{h}</span>
