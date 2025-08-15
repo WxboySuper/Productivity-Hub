@@ -45,6 +45,7 @@ def test_get_latest_release_json_decode_error(client, monkeypatch):
     """Test the endpoint when the whats-new.json file is malformed."""
 
     def mock_open_invalid_json(path, mode="r"):
+        """Mock open function that returns invalid JSON."""
         return io.StringIO("invalid json")
 
     monkeypatch.setattr("builtins.open", mock_open_invalid_json)
