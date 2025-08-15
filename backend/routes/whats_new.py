@@ -1,7 +1,8 @@
-from flask import Blueprint, json, requests, jsonify
+from flask import Blueprint, json, jsonify, requests
 from utils import error_response
 
 whats_new_bp = Blueprint("whats_new", __name__)
+
 
 @whats_new_bp.route("/api/releases/latest")
 def get_latest_release():

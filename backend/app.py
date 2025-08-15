@@ -1,12 +1,12 @@
 # ========================
 # Imports
 # ========================
-from hashlib import new
 import logging
 import os
 import sys
 import warnings
 from datetime import timedelta
+from hashlib import new
 
 from dotenv import load_dotenv
 from flask import Flask, request
@@ -104,6 +104,7 @@ logger.info("SQLAlchemy is set up.")
 # Helper Functions
 # =================
 
+
 # --- Database Initialization ---
 def init_db():
     """
@@ -156,6 +157,7 @@ def csrf_protect():
 # ==============
 # Home Route
 # ==============
+
 
 @app.route("/")
 def home():
