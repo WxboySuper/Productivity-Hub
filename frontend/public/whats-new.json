@@ -1,0 +1,46 @@
+{
+  "version": "0.12.0-beta",
+  "date": "2025-07-25",
+  "title": "v0.12.0-beta Release Highlights",
+  "added": [
+    "Dynamic backgrounds (10 creative themes), sidebar navigation, and modern card-based layouts",
+    "Multiple form design systems (Creative, Productivity Focused, Modern, etc.)",
+    "Toast notification system and improved notification center with persistent scheduling (UTC support)",
+    "Advanced form components: floating labels, animated inputs, priority selectors, expandable sections",
+    "Modular component library for consistent UI development",
+    "Automated accessibility tests (axe-core) and ARIA improvements",
+    "441 passing frontend tests; backend coverage >95%",
+    "Persistent notification scheduling and new API endpoints for task dependencies",
+    "End-of-version checklist template and personal change tracking system"
+  ],
+  "changed": [
+    "Major UI/UX redesign: responsive layout, unified backgrounds, enhanced typography, progressive disclosure for forms",
+    "Authentication and security: robust CSRF handling, session management, secure logout, authentication guards",
+    "Comprehensive error handling: React ErrorBoundary, standardized API error responses, improved user feedback",
+    "Notification/reminder logic now uses UTC consistently",
+    "All major flows, accessibility, and coverage requirements tracked in checklists and roadmap",
+    "Documentation updated for all new features, test patterns, migration notes, and best practices"
+  ],
+  "fixed": [
+    "Color contrast and focus management improvements for accessibility",
+    "Keyboard navigation and tab order fixes",
+    "Date precision fix for notification scheduling",
+    "Closed all single-line/component coverage gaps in ProjectForm, PasswordResetConfirmPage, LoginPage, useTasks",
+    "Addressed moderate/complex coverage gaps in NotificationCenter, TaskForm, TaskDetails, MainManagementWindow"
+  ],
+  "refactored": [
+    "Component structure and test organization for maintainability and speed",
+    "CSS architecture: modular stylesheets for each component type",
+    "Authentication context refactored for robust auth state management",
+    "Refactored and stabilized test infrastructure"
+  ],
+  "apiChangeSummary": [
+    "No breaking API changes; all new/changed endpoints and models are documented in docs/API.md",
+    "Persistent notification scheduling and new endpoints for task dependencies"
+  ],
+  "breakingChanges": [
+    "Component API and CSS classes updated for new design system",
+    "Authentication flow enhancements may require re-login",
+    "Notification system enhanced with new security measures"
+  ]
+}
