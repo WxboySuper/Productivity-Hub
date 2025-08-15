@@ -548,7 +548,11 @@ function TaskFormContent(props: {
                 onChange={props.handleNewSubtaskTitleChange}
                 onKeyDown={props.handleNewSubtaskKeyDown}
               />
-              <button type="button" className="modern-btn" onClick={props.handleAddSubtask}>
+              <button
+                type="button"
+                className="modern-btn"
+                onClick={props.handleAddSubtask}
+              >
                 Add
               </button>
             </div>
@@ -591,7 +595,11 @@ function TaskFormContent(props: {
 
         {/* Relationships (optional advanced) */}
         <div className="modern-section">
-          <button type="button" className="modern-section-toggle" onClick={props.onToggleExpand}>
+          <button
+            type="button"
+            className="modern-section-toggle"
+            onClick={props.onToggleExpand}
+          >
             Task Relationships
           </button>
           {props.expandedSectionsRelationships && (
@@ -689,7 +697,9 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
   // Move conditional return to top to avoid hook mismatch
   if (!open) return null;
   // Stable form id for associating external submit button
-  const formIdRef = useRef<string>(`task-form-${Math.random().toString(36).slice(2)}`);
+  const formIdRef = useRef<string>(
+    `task-form-${Math.random().toString(36).slice(2)}`,
+  );
 
   /* v8 ignore next: Defensive fallback for initial values, covered by tests */
   const initialValues: TaskFormValues = rawInitialValues || { title: "" };

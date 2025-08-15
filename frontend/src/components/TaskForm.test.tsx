@@ -221,8 +221,8 @@ describe("TaskForm", () => {
 
   it("handles priority selection", async () => {
     render(<TaskFormWrapper />);
-  // Use title to avoid matching the backdrop button that inherits text
-  const highPriorityButton = screen.queryByTitle("High");
+    // Use title to avoid matching the backdrop button that inherits text
+    const highPriorityButton = screen.queryByTitle("High");
     if (highPriorityButton) fireEvent.click(highPriorityButton);
     await waitFor(() => {
       const priorityPopup = screen.queryByText(
@@ -691,7 +691,9 @@ describe("TaskForm 100% coverage", () => {
           Boolean(element) &&
           content.includes(section.charAt(0).toUpperCase() + section.slice(1)),
       );
-      const button = matches.find((el) => el.tagName.toLowerCase() === "button");
+      const button = matches.find(
+        (el) => el.tagName.toLowerCase() === "button",
+      );
       if (button) fireEvent.click(button as HTMLElement);
     });
   });
@@ -731,9 +733,9 @@ describe("TaskForm 100% coverage", () => {
 
   it("handles priority chip click", () => {
     render(<TaskFormWrapper />);
-  const highPriorityButton = screen.queryByTitle("High");
+    const highPriorityButton = screen.queryByTitle("High");
     if (highPriorityButton) fireEvent.click(highPriorityButton);
-  const chip = screen.queryByTitle("High");
+    const chip = screen.queryByTitle("High");
     if (chip) fireEvent.click(chip);
   });
 
