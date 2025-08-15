@@ -75,8 +75,8 @@ function Section({
       </summary>
       <div id={`${id}-content`} className="px-4 pb-4">
         <ul className="list-disc pl-6 space-y-2">
-          {items.map((it, idx) => (
-            <li key={idx} className="text-gray-800 dark:text-gray-200">
+          {items.map((it) => (
+            <li key={it} className="text-gray-800 dark:text-gray-200">
               {it}
             </li>
           ))}
@@ -94,6 +94,9 @@ export default function WhatsNew() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  /**
+   * Load the latest release information from static JSON with API fallback.
+   */
   const load = async () => {
     setLoading(true);
     setError(null);
@@ -219,8 +222,8 @@ export default function WhatsNew() {
                 </div>
                 {Array.isArray(h.details) && h.details.length > 0 && (
                   <ul className="list-disc pl-5 space-y-1 text-gray-800 dark:text-gray-200">
-                    {h.details.map((d, i) => (
-                      <li key={i}>{d}</li>
+                    {h.details.map((d) => (
+                      <li key={d}>{d}</li>
                     ))}
                   </ul>
                 )}
@@ -229,9 +232,9 @@ export default function WhatsNew() {
                     <span className="text-sm font-medium text-gray-600 dark:text-gray-300 mr-2">
                       Learn more:
                     </span>
-                    {h.links.map((lnk, i) => (
+                    {h.links.map((lnk) => (
                       <a
-                        key={`${h.id}-link-${i}`}
+                        key={`${h.id}-link-${lnk.href || lnk.label}`}
                         href={lnk.href}
                         target="_self"
                         rel="noopener"
