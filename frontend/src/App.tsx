@@ -10,6 +10,7 @@ import LoginPage from "./pages/LoginPage";
 import PasswordResetRequestPage from "./pages/PasswordResetRequestPage";
 import PasswordResetConfirmPage from "./pages/PasswordResetConfirmPage";
 import HomePage from "./pages/HomePage";
+import WhatsNewPage from "./pages/WhatsNewPage";
 import MainManagementWindow from "./pages/MainManagementWindow";
 import { useAuth } from "./auth";
 import NotificationCenter from "./components/common/NotificationCenter";
@@ -53,6 +54,7 @@ function AppRoutes() {
         path="/"
         element={isAuthenticated ? <MainManagementWindow /> : <HomePage />}
       />
+      <Route path="/whats-new" element={<WhatsNewPage />} />
       <Route
         path="/login"
         element={

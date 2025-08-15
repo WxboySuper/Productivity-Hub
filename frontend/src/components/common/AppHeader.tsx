@@ -6,6 +6,9 @@ interface AppHeaderProps {
   rightContent?: React.ReactNode;
 }
 
+/**
+ * Application header with navigation and optional beta label.
+ */
 const AppHeader: React.FC<AppHeaderProps> = ({ betaLabel, rightContent }) => (
   <header
     data-testid="app-header"
@@ -23,6 +26,12 @@ const AppHeader: React.FC<AppHeaderProps> = ({ betaLabel, rightContent }) => (
           {betaLabel}
         </span>
       )}
+      <Link
+        to="/whats-new"
+        className="text-sm font-medium text-blue-700 hover:text-blue-900 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-2 py-1"
+      >
+        What&apos;s New
+      </Link>
       {rightContent}
     </div>
   </header>
