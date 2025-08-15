@@ -475,7 +475,7 @@ function TaskFormContent(props: {
           <select
             id="task-project"
             className="modern-select"
-            value={props.projectId as any}
+            value={props.projectId}
             onChange={props.handleProjectChange}
           >
             <option value="">No project</option>
