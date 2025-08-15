@@ -6,7 +6,6 @@ import os
 import sys
 import warnings
 from datetime import timedelta
-from hashlib import new
 
 from dotenv import load_dotenv
 from flask import Flask, request
