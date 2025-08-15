@@ -16,4 +16,4 @@ def test_error_response_500():
     with app.app_context():
         resp, code = utils.error_response("something failed", 500)
         assert code == 500
-        assert "internal server error" in resp.get_json()["error"]
+        assert "something failed" == resp.get_json()["error"]
