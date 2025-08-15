@@ -3,9 +3,6 @@
 import io
 import json
 
-import pytest
-
-
 def test_get_latest_release_success(client, monkeypatch):
     """Test successfully getting the latest release data."""
     mock_data = {"version": "1.0.0", "notes": ["Initial release"]}
