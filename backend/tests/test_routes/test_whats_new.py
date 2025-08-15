@@ -9,6 +9,7 @@ def test_get_latest_release_success(client, monkeypatch):
     mock_json = json.dumps(mock_data)
 
     class OpenSpy:
+        """Spy to check if open was called with the correct path."""
         def __init__(self):
             self.called = False
 
@@ -67,6 +68,7 @@ def test_get_latest_release_uses_env_var(client, monkeypatch):
     mock_json = json.dumps(mock_data)
 
     class OpenSpy:
+        """Spy to check if open was called with the correct path."""
         def __init__(self):
             self.called_path = None
 
