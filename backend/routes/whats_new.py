@@ -1,4 +1,4 @@
-from flask import Blueprint, json, jsonify, requests
+from flask import Blueprint, json, jsonify
 from utils import error_response
 
 whats_new_bp = Blueprint("whats_new", __name__)
