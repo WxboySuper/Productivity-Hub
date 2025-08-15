@@ -1010,24 +1010,21 @@ function MainManagementWindow() {
                 type="checkbox"
                 checked={task.completed}
                 onChange={handleCheckboxChange}
-                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                className="mr-3 w-5 h-5 accent-blue-600"
                 disabled={isTaskCheckboxDisabled(task)}
                 title={getTaskCheckboxTitle(task)}
               />
               <button
-                className="phub-item-title cursor-pointer flex-1"
+                className={`phub-item-title cursor-pointer ${task.completed ? "line-through opacity-60" : ""}`}
                 onClick={handleTitleButtonClick}
                 tabIndex={0}
                 onKeyDown={handleTitleButtonKeyDown}
                 style={{
-                  textDecoration: task.completed ? "line-through" : "none",
-                  opacity: task.completed ? 0.6 : 1,
                   background: "none",
                   border: "none",
                   padding: 0,
                   margin: 0,
                   textAlign: "left",
-                  width: "100%",
                 }}
                 aria-label={`View details for ${task.title}`}
               >
@@ -1053,6 +1050,7 @@ function MainManagementWindow() {
               </button>
             </div>
             <div className="phub-item-meta">
+              <span className="phub-item-badge">⚡ Quick Task</span>
               {task.subtasks && task.subtasks.length > 0 && (
                 /* v8 ignore start */
                 <span className="phub-item-badge">
@@ -1068,30 +1066,26 @@ function MainManagementWindow() {
     };
 
     content = (
-      <>
-        <div className="phub-content-section" aria-live="polite">
-          <div className="phub-section-header">
-            <h2 className="phub-section-title">Quick Tasks</h2>
-            <p className="phub-section-subtitle">
-              Your rapid-fire action items
-            </p>
-          </div>
-          {tasksLoading && <div className="phub-loading">Loading tasks...</div>}
-          {tasksError && <div className="phub-error">⚠️ {tasksError}</div>}
-          {!tasksLoading && !tasksError && quickTasks.length === 0 ? (
-            <div className="phub-empty-state">
-              <div className="phub-empty-icon">⚡</div>
-              <h3 className="phub-empty-title">No quick tasks found</h3>
-              <p className="phub-empty-subtitle">
-                Add a quick task for something you need to do soon!
-              </p>
-              <button className="phub-action-btn" onClick={handleAddNewTask}>
-                <span>⚡</span>
-                Add Quick Task
-              </button>
-            </div>
-          ) : null}
+      <div className="phub-content-section" aria-live="polite">
+        <div className="phub-section-header">
+          <h2 className="phub-section-title">Quick Tasks</h2>
+          <p className="phub-section-subtitle">Your rapid-fire action items</p>
         </div>
+        {tasksLoading && <div className="phub-loading">Loading tasks...</div>}
+        {tasksError && <div className="phub-error">⚠️ {tasksError}</div>}
+        {!tasksLoading && !tasksError && quickTasks.length === 0 && (
+          <div className="phub-empty-state">
+            <div className="phub-empty-icon">⚡</div>
+            <h3 className="phub-empty-title">No quick tasks found</h3>
+            <p className="phub-empty-subtitle">
+              Add a quick task for something you need to do soon!
+            </p>
+            <button className="phub-action-btn" onClick={handleAddNewTask}>
+              <span>⚡</span>
+              Add Quick Task
+            </button>
+          </div>
+        )}
         {!tasksLoading && !tasksError && quickTasks.length > 0 && (
           <div className="space-y-4">
             {quickTasks.map((task) => (
@@ -1099,7 +1093,7 @@ function MainManagementWindow() {
             ))}
           </div>
         )}
-      </>
+      </div>
     );
   } else if (activeView === "projects") {
     // Only show top-level project tasks (parent_id == null)
