@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";
 import { vi, describe, it, expect, beforeEach, Mock } from "vitest";
-import PasswordResetConfirmPage from "./PasswordResetConfirmPage";
+import PasswordResetConfirmPage from "../../pages/PasswordResetConfirmPage";
 
 // Mock components and dependencies
 vi.mock("../components/AppHeader", () => ({
