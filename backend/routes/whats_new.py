@@ -2,7 +2,6 @@ import json
 import os
 
 from flask import Blueprint, jsonify
-
 from utils import error_response
 
 whats_new_bp = Blueprint("whats_new", __name__)
