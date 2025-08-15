@@ -3,6 +3,7 @@
 import io
 import json
 
+
 def test_get_latest_release_success(client, monkeypatch):
     """Test successfully getting the latest release data."""
     mock_data = {"version": "1.0.0", "notes": ["Initial release"]}
@@ -10,6 +11,7 @@ def test_get_latest_release_success(client, monkeypatch):
 
     class OpenSpy:
         """Spy to check if open was called with the correct path."""
+
         def __init__(self):
             self.called = False
 
@@ -69,6 +71,7 @@ def test_get_latest_release_uses_env_var(client, monkeypatch):
 
     class OpenSpy:
         """Spy to check if open was called with the correct path."""
+
         def __init__(self):
             self.called_path = None
 
