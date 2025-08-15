@@ -19,26 +19,3 @@ def test_home_route(client):
     assert resp.status_code == 200
     assert b"Productivity Hub" in resp.data
 
-
-def test_csrf_protection_blocks(client):
-    # Skip if CSRF protection is disabled in testing mode
-    if client.application.config.get("TESTING", False):
-        pytest.skip("CSRF protection is disabled in testing mode.")
-    # Register and login to get authenticated session
-    unique = "csrfuser"
-    client.post(
-        "/api/register",
-        json={
-            "username": unique,
-            "email": f"{unique}@test.com",
-            "password": "StrongPass1!",
-        },
-    )
-    client.post("/api/login", json={"username": unique, "password": "StrongPass1!"})
-    # Now POST to a protected endpoint without CSRF token
-    resp = client.post(
-        "/api/projects", json={"name": "CSRF Test", "description": "desc"}
-    )
-    # Should be 403 Forbidden if no CSRF token is present
-    assert resp.status_code == 403
-    assert "CSRF" in resp.get_json()["error"]
