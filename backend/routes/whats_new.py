@@ -7,7 +7,7 @@ whats_new_bp = Blueprint("whats_new", __name__)
 
 @whats_new_bp.route("/api/releases/latest")
 def get_latest_release():
-    """Backup endpoint for getting the latest release changelog json in case vite fails"""
+    """Backup endpoint to get the latest release changelog json in case vite fails"""
     try:
         whats_new_path = os.environ.get(
             "WHATS_NEW_JSON_PATH",
