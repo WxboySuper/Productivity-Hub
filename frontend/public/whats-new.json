@@ -2,10 +2,48 @@
   "version": "0.12.0-beta",
   "date": "2025-07-25",
   "title": "v0.12.0-beta Release Highlights",
-  "user_highlights": [
-    "Major UI/UX redesign with dynamic themes and modern layouts",
-    "Introduced new dynamic backgrounds",
-    "Improved toast notification system"
+  "highlights": [
+    {
+      "id": "ui-ux-redesign",
+      "title": "Major UI/UX redesign with dynamic themes and modern layouts",
+      "description": "A ground-up refresh of the interface focused on clarity, speed, and accessibility. The layout adapts fluidly across breakpoints, typography is standardized for readability, and progressive disclosure keeps complex forms approachable. Dynamic themes allow the workspace to match your mood or environment without sacrificing contrast ratios.",
+      "details": [
+        "Responsive shell with sidebar navigation and card-based content areas",
+        "Unified background system that harmonizes with light/dark themes",
+        "Improved focus states, spacing rhythm, and semantic headings for A11y"
+      ],
+      "links": [
+        { "label": "Design system overview", "href": "/docs/ui-design-system" },
+        { "label": "Accessibility improvements", "href": "/docs/error-handling-system#a11y" }
+      ]
+    },
+    {
+      "id": "dynamic-backgrounds",
+      "title": "Introduced new dynamic backgrounds",
+      "description": "Ten creative, performance-friendly backgrounds give each workspace a distinct personality. Backgrounds are opt-in, theme-aware, and can be toggled per-user. They work seamlessly with the redesigned shell and avoid visual noise that could impact focus.",
+      "details": [
+        "10 curated themes with subtle motion (reduced motion honored)",
+        "Accessible color palettes with WCAG AA contrast targets",
+        "Instant preview with safe fallbacks for low-power devices"
+      ],
+      "links": [
+        { "label": "Backgrounds guide", "href": "/docs/ui-design-system#backgrounds" }
+      ]
+    },
+    {
+      "id": "toast-notifications",
+      "title": "Improved toast notification system",
+      "description": "Notifications are now more informative and less intrusive. The system supports types (info/success/warning/error), auto-dismiss with sensible defaults, and manual dismissal for persistent messages. Messages are keyboard-navigable and screen-reader friendly.",
+      "details": [
+        "Consistent placement with stack management and safe area awareness",
+        "ARIA roles, labels, and focus management for assistive tech",
+        "Hooks and utilities for easy integration across forms and flows"
+      ],
+      "links": [
+        { "label": "Notifications patterns", "href": "/docs/ui-design-system#notifications" },
+        { "label": "API usage", "href": "/docs/API#notifications" }
+      ]
+    }
   ],
   "added": [
     "Dynamic backgrounds (10 creative themes), sidebar navigation, and modern card-based layouts",
