@@ -12,6 +12,14 @@
   --modern-warning: #f59e0b;
   --modern-error: #ef4444;
 
+  /* Surfaces & Borders (added) */
+  /* Slightly darken whites to a gentle light gray for less glare */
+  --modern-surface-primary: #f3f4f6; /* gray-100 */
+  --modern-surface-secondary: #eef2f7; /* custom light gray between 100-200 */
+  --modern-surface-tertiary: #e5e7eb; /* gray-200 */
+  --modern-border: #e2e8f0; /* gray-200 */
+  --modern-accent: var(--modern-primary);
+
   /* Grays */
   --modern-gray-50: #f8fafc;
   --modern-gray-100: #f1f5f9;
@@ -89,14 +97,20 @@
 }
 
 .modern-form-container {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 30%, #e2e8f0 100%);
+  /* Soften overall surface and widen modal for single-row priority chips */
+  background: linear-gradient(
+    135deg,
+    var(--modern-surface-primary) 0%,
+    var(--modern-surface-secondary) 40%,
+    var(--modern-gray-200) 100%
+  );
   border-radius: var(--modern-radius-xl);
   box-shadow:
     0 25px 50px -12px rgba(0, 0, 0, 0.25),
     0 0 0 1px rgba(255, 255, 255, 0.8),
     inset 0 1px 0 rgba(255, 255, 255, 0.9);
   width: 100%;
-  max-width: 800px; /* Increased from 600px to 800px */
+  max-width: 960px; /* Widened to keep Priority chips on a single row */
   max-height: 90vh; /* Smaller max height to prevent overflow */
   display: flex;
   flex-direction: column;
@@ -110,7 +124,8 @@
 .modern-form-content {
   flex: 1;
   overflow-y: auto;
-  padding: 0;
+  /* Add safe padding so sticky footer doesn't overlap the last row */
+  padding: 0 0 96px 0; /* footer height (~64px) + extra breathing room */
   position: relative;
   z-index: auto; /* Remove high z-index that might interfere */
 }
@@ -143,7 +158,8 @@
 
 /* === HEADER === */
 .modern-form-header {
-  padding: var(--modern-space-xl);
+  /* Increase padding so the header "info bar" feels full height */
+  padding: calc(var(--modern-space-xl) + 0.25rem) var(--modern-space-xl);
   background: linear-gradient(
     135deg,
     var(--modern-primary) 0%,
@@ -154,6 +170,8 @@
   position: relative;
   text-align: center;
   overflow: hidden;
+  /* Ensure header never looks squashed */
+  min-height: 88px;
 }
 
 /* Animated header background */
@@ -251,7 +269,7 @@
   font-size: 1.125rem;
   font-weight: 600;
   border: none;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(243, 244, 246, 0.9); /* use surface-primary with slight transparency */
   border-radius: var(--modern-radius);
   padding: var(--modern-space-lg);
   color: var(--modern-text-primary);
@@ -306,7 +324,7 @@
   align-items: center;
   gap: var(--modern-space-md);
   padding: var(--modern-space-md);
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(243, 244, 246, 0.85);
   border: 2px solid rgba(37, 99, 235, 0.1);
   border-radius: var(--modern-radius);
   cursor: pointer;
@@ -325,7 +343,7 @@
     0 4px 6px -1px rgba(0, 0, 0, 0.1),
     0 0 0 3px rgba(37, 99, 235, 0.1);
   transform: translateY(-1px);
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(243, 244, 246, 0.95);
 }
 
 .modern-inline-field.active {
@@ -382,7 +400,7 @@
 /* === EXPANDABLE SECTIONS === */
 .modern-expandable {
   border-bottom: 1px solid rgba(37, 99, 235, 0.1);
-  background: rgba(255, 255, 255, 0.5);
+  background: rgba(243, 244, 246, 0.5);
   position: relative;
 }
 
@@ -392,7 +410,7 @@
   gap: var(--modern-space-md);
   padding: var(--modern-space-lg) var(--modern-space-xl);
   cursor: pointer;
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(243, 244, 246, 0.6);
   border: none;
   width: 100%;
   text-align: left;
@@ -444,7 +462,7 @@
 .modern-expandable-content {
   display: none;
   padding: 0 var(--modern-space-xl) var(--modern-space-lg);
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(243, 244, 246, 0.8);
   backdrop-filter: blur(2px);
   position: relative;
 }
@@ -462,13 +480,22 @@
   display: block;
 }
 
+/* Alias for components using modern-label */
+.modern-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--modern-text-primary);
+  margin-bottom: var(--modern-space-sm);
+  display: block;
+}
+
 .modern-input {
   width: 100%;
   padding: var(--modern-space-md);
   border: 2px solid var(--modern-gray-200);
   border-radius: var(--modern-radius);
   font-size: 0.875rem;
-  background: white;
+  background: var(--modern-surface-secondary);
   color: var(--modern-text-primary);
   transition: var(--modern-transition);
   font-family: inherit;
@@ -486,11 +513,55 @@
   color: var(--modern-text-placeholder);
 }
 
+/* Textarea and Select used in TaskForm */
+.modern-textarea {
+  width: 100%;
+  padding: var(--modern-space-md);
+  border: 2px solid var(--modern-gray-200);
+  border-radius: var(--modern-radius);
+  font-size: 0.875rem;
+  background: var(--modern-surface-secondary);
+  color: var(--modern-text-primary);
+  transition: var(--modern-transition);
+  font-family: inherit;
+  resize: vertical;
+}
+
+.modern-textarea:focus {
+  outline: none;
+  border-color: var(--modern-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.modern-select {
+  width: 100%;
+  padding: var(--modern-space-md);
+  border: 2px solid var(--modern-gray-200);
+  border-radius: var(--modern-radius);
+  font-size: 0.875rem;
+  background: var(--modern-surface-secondary);
+  color: var(--modern-text-primary);
+  transition: var(--modern-transition);
+  font-family: inherit;
+}
+
+.modern-select:focus {
+  outline: none;
+  border-color: var(--modern-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.modern-checkbox {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--modern-primary);
+}
+
 /* === PRIORITY SELECTOR === */
 .modern-priority-selector {
   display: flex;
   gap: var(--modern-space-sm);
-  flex-wrap: wrap;
+  flex-wrap: wrap; /* mobile default */
 }
 
 .modern-priority-chip {
@@ -521,6 +592,54 @@
   box-shadow: var(--modern-shadow);
 }
 
+/* Generic chip styles used by TaskForm priority section */
+.modern-chip-row {
+  display: flex;
+  gap: var(--modern-space-sm);
+  flex-wrap: wrap; /* mobile */
+  /* Remove input-like chrome; keep alignment via min-height */
+  padding: 0;
+  border: none;
+  background: transparent;
+  align-items: center;
+  min-height: 42px;
+}
+
+/* Keep priority chips on a single row on larger screens */
+@media (min-width: 640px) {
+  .modern-chip-row {
+    flex-wrap: nowrap;
+  }
+}
+
+.modern-chip {
+  display: flex;
+  align-items: center;
+  gap: var(--modern-space-xs);
+  padding: var(--modern-space-sm) var(--modern-space-md);
+  border: 1px solid var(--modern-gray-200);
+  border-radius: var(--modern-radius);
+  background: var(--modern-surface-secondary);
+  cursor: pointer;
+  transition: var(--modern-transition);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--modern-text-primary);
+}
+
+.modern-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--modern-shadow);
+}
+
+.modern-chip.selected {
+  color: white;
+  background: var(--modern-primary);
+  border-color: var(--modern-primary);
+  transform: translateY(-1px);
+  box-shadow: var(--modern-shadow);
+}
+
 /* Priority-specific colors */
 .modern-priority-chip[data-priority="low"].selected {
   background: var(--modern-success) !important;
@@ -544,7 +663,7 @@
   gap: var(--modern-space-md);
   padding: var(--modern-space-md);
   border-radius: var(--modern-radius);
-  background: var(--modern-gray-50);
+  background: var(--modern-surface-secondary);
   margin-bottom: var(--modern-space-sm);
   transition: var(--modern-transition);
 }
@@ -589,12 +708,24 @@
   color: white;
 }
 
+/* Subtasks editor wrappers */
+.modern-subtasks-editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--modern-space-sm);
+}
+
+.modern-subtask-new {
+  display: flex;
+  gap: var(--modern-space-sm);
+}
+
 /* === FORM ACTIONS === */
 .modern-form-actions {
   display: flex;
   gap: var(--modern-space-md);
   padding: var(--modern-space-xl);
-  background: white;
+  background: var(--modern-surface-primary);
   border-top: 1px solid var(--modern-gray-100);
   position: sticky;
   bottom: 0;
@@ -644,6 +775,121 @@
 
 .modern-btn.loading {
   position: relative;
+}
+
+/* Generic sections used by TaskForm */
+.modern-section {
+  /* Slightly tighter vertical padding and softer background */
+  padding: var(--modern-space-md) var(--modern-space-xl);
+  background: var(--modern-surface-secondary);
+  border-bottom: 1px solid var(--modern-gray-100);
+}
+
+.modern-section-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--modern-space-lg);
+  padding: var(--modern-space-md) var(--modern-space-xl);
+  background: var(--modern-surface-secondary);
+  border-bottom: 1px solid var(--modern-gray-100);
+}
+
+@media (min-width: 640px) {
+  .modern-section-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.modern-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--modern-space-sm);
+}
+
+/* Align labels and controls visually across compact-grid */
+.compact-grid .modern-field .modern-label {
+  margin-bottom: var(--modern-space-xs);
+}
+
+.compact-grid .modern-field .modern-select,
+.compact-grid .modern-field .modern-chip-row {
+  /* keep control heights visually aligned */
+  min-height: 42px;
+}
+
+/* === TABS (for TaskForm) === */
+.modern-tabs {
+  display: flex;
+  gap: var(--modern-space-sm);
+  padding: var(--modern-space-md) var(--modern-space-xl) var(--modern-space-sm);
+  background: var(--modern-surface-secondary);
+  border-bottom: 1px solid var(--modern-gray-100);
+  overflow-x: auto; /* Allow scrolling when many tabs exist */
+  flex-wrap: nowrap; /* Keep tabs on a single row */
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on mobile */
+}
+
+.modern-tab {
+  appearance: none;
+  border: 1px solid var(--modern-gray-200);
+  background: var(--modern-surface-primary);
+  color: var(--modern-text-primary);
+  padding: var(--modern-space-sm) var(--modern-space-md);
+  border-radius: var(--modern-radius) var(--modern-radius) 0 0;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: var(--modern-transition);
+  flex: none; /* Prevent shrinking when tabs overflow horizontally */
+}
+
+.modern-tab:hover {
+  background: var(--modern-gray-50);
+  transform: translateY(-1px);
+}
+
+.modern-tab.active {
+  background: var(--modern-primary);
+  color: white;
+  border-color: var(--modern-primary);
+}
+
+.modern-tab-panel {
+  /* Reduce extra vertical whitespace inside panels */
+  padding: var(--modern-space-md) 0 var(--modern-space-lg);
+}
+
+/* Compact grid for Project + Priority row */
+.compact-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--modern-space-lg);
+}
+
+@media (min-width: 640px) {
+  .compact-grid {
+    /* Give the Priority column a bit more room to prevent wrapping */
+    grid-template-columns: minmax(260px, 1fr) minmax(440px, 1.3fr);
+  /* Add a little extra horizontal space between Project and Priority */
+  column-gap: var(--modern-space-xl);
+  }
+}
+
+.modern-section-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--modern-space-sm);
+  padding: var(--modern-space-sm) var(--modern-space-md);
+  background: var(--modern-gray-100);
+  border: 1px solid var(--modern-gray-200);
+  border-radius: var(--modern-radius);
+  cursor: pointer;
+  transition: var(--modern-transition);
+}
+
+.modern-section-toggle:hover {
+  background: var(--modern-gray-200);
+  transform: translateY(-1px);
 }
 
 /* === ERROR STATES === */
