@@ -1,6 +1,54 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import type React from "react";
+import type { Project } from "../hooks/useProjects";
 import TaskRelationshipsSection from "./TaskRelationshipsSection";
 import "../styles/Task.css";
+
+// Types and interfaces (hoisted for clarity)
+interface Subtask {
+  id?: number;
+  title: string;
+  completed: boolean;
+  isNew?: boolean;
+}
+
+export interface TaskFormValues {
+  id?: number;
+  title: string;
+  description?: string;
+  due_date?: string;
+  priority?: number;
+  project_id?: number | string;
+  projectId?: number | string;
+  completed?: boolean;
+  subtasks?: Subtask[];
+  start_date?: string;
+  recurrence?: string;
+  blocked_by?: number[];
+  blocking?: number[];
+  linked_tasks?: number[];
+  reminder_enabled?: boolean;
+  reminder_time?: string;
+}
+
+interface DependencyTask {
+  id: number;
+  title: string;
+  projectId?: number;
+  // Add other fields if needed
+}
+
+interface TaskFormModalProps {
+  open: boolean;
+  onClose: () => void;
+  onSubmit: (task: TaskFormValues) => void;
+  loading?: boolean;
+  error?: string | null;
+  projects: Project[];
+  initialValues?: TaskFormValues;
+  editMode?: boolean;
+  allTasks?: DependencyTask[];
+}
 
 // StickyActions subcomponent to flatten modal tree
 function StickyActions({
@@ -364,6 +412,9 @@ function TaskFormHeader({
 
 // Modal Form Content Subcomponent
 function TaskFormContent(props: {
+  // layout
+  activeTab: string;
+  onTabChange: (tab: string) => void;
   error?: string | null;
   fieldErrors: Record<string, string>;
   title: string;
@@ -420,24 +471,19 @@ function TaskFormContent(props: {
   onRemoveBlocking: (id: number) => void;
   onRemoveLinked: (id: number) => void;
 }) {
-  // ...existing code...
-  // This function will render the form content, using props for all handlers and state
-  // ...existing code...
-  // For brevity, the implementation will be similar to the original form content, but flattened
-  // ...existing code...
   return (
-    // Honestly just don't have time to fix it right now
+    // Don't have time to mess with JSX
     // skipcq: JS-0415
     <div className="modern-form-content">
       <div className="modern-form-body">
-        {/* Error Display */}
         {props.error && (
           <div className="modern-error">
             <span>⚠️</span>
             {props.error}
           </div>
         )}
-        {/* Hero Title Input - Todoist Style */}
+
+        {/* Hero Title Input - Always visible */}
         <div className="modern-hero-section">
           <input
             type="text"
@@ -447,235 +493,212 @@ function TaskFormContent(props: {
             onChange={props.handleTitleChange}
           />
           {props.fieldErrors.title && (
-            /* v8 ignore next 8 */
             <div className="modern-error">
               <span>⚠️</span>
               {props.fieldErrors.title}
             </div>
           )}
         </div>
-        {/* Details section */}
-        <div className="modern-section">
-          <label className="modern-label" htmlFor="task-description">
-            Description
-          </label>
-          <textarea
-            id="task-description"
-            className="modern-textarea"
-            placeholder="Add more details"
-            value={props.description}
-            onChange={props.handleDescriptionChange}
-            rows={3}
-          />
-        </div>
 
-        {/* Project selection */}
-        <div className="modern-section">
-          <label className="modern-label" htmlFor="task-project">
-            Project
-          </label>
-          <select
-            id="task-project"
-            className="modern-select"
-            value={props.projectId}
-            onChange={props.handleProjectChange}
-          >
-            <option value="">No project</option>
-            {props.projects.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Scheduling */}
-        <div className="modern-section-grid">
+        {/* Compact row for key fields */}
+        <div className="modern-section compact-grid">
           <div className="modern-field">
-            <label className="modern-label" htmlFor="task-start-date">
-              Start
+            <label className="modern-label" htmlFor="task-project">
+              Project
             </label>
-            <input
-              id="task-start-date"
-              className="modern-input"
-              type="datetime-local"
-              value={props.startDate}
-              onChange={props.handleStartDateChange}
-            />
+            <select
+              id="task-project"
+              className="modern-select"
+              value={props.projectId}
+              onChange={props.handleProjectChange}
+            >
+              <option value="">No project</option>
+              {props.projects.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="modern-field">
-            <label className="modern-label" htmlFor="task-due-date">
-              Due
-            </label>
-            <input
-              id="task-due-date"
-              className="modern-input"
-              type="datetime-local"
-              value={props.dueDate}
-              onChange={props.handleDueDateChange}
-            />
-          </div>
-        </div>
-
-        {/* Priority */}
-        <div className="modern-section">
-          <div className="modern-label">Priority</div>
-          <div className="modern-chip-row">
-            {props.priorities.map((p) => (
-              <button
-                key={p.value}
-                type="button"
-                className={`modern-chip ${props.priority === p.value ? "selected" : ""}`}
-                onClick={() => props.handlePriorityChipClick(p.value)}
-                aria-pressed={props.priority === p.value}
-                title={p.label}
-              >
-                <span style={{ marginRight: 6 }}>{p.icon}</span>
-                {p.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Subtasks */}
-        <div className="modern-section">
-          <div className="modern-label">Subtasks</div>
-          <div className="modern-subtasks-editor">
-            <div className="modern-subtask-new">
-              <input
-                type="text"
-                className="modern-input"
-                placeholder="Add a subtask"
-                value={props.newSubtaskTitle}
-                onChange={props.handleNewSubtaskTitleChange}
-                onKeyDown={props.handleNewSubtaskKeyDown}
-              />
-              <button
-                type="button"
-                className="modern-btn"
-                onClick={props.handleAddSubtask}
-              >
-                Add
-              </button>
+            <div className="modern-label">Priority</div>
+            <div className="modern-chip-row" style={{ overflowX: "auto" }}>
+              {props.priorities.map((p) => (
+                <button
+                  key={p.value}
+                  type="button"
+                  className={`modern-chip ${props.priority === p.value ? "selected" : ""}`}
+                  onClick={() => props.handlePriorityChipClick(p.value)}
+                  aria-pressed={props.priority === p.value}
+                  title={p.label}
+                >
+                  <span style={{ marginRight: 6 }}>{p.icon}</span>
+                  {p.label}
+                </button>
+              ))}
             </div>
-            <SubtasksList
-              subtasks={props.subtasks}
-              handleToggleSubtaskChange={props.handleToggleSubtaskChange}
-              handleRemoveSubtaskClick={props.handleRemoveSubtaskClick}
-            />
           </div>
         </div>
 
-        {/* Reminders */}
-        <div className="modern-section-grid">
-          <div className="modern-field">
-            <label className="modern-label" htmlFor="task-reminder-enabled">
-              Reminder
-            </label>
-            <input
-              id="task-reminder-enabled"
-              type="checkbox"
-              className="modern-checkbox"
-              checked={props.reminderEnabled}
-              onChange={props.handleReminderEnabledChange}
-            />
-          </div>
-          <div className="modern-field">
-            <label className="modern-label" htmlFor="task-reminder-time">
-              Reminder time
-            </label>
-            <input
-              id="task-reminder-time"
-              className="modern-input"
-              type="datetime-local"
-              value={props.reminderTime}
-              onChange={props.handleReminderTimeChange}
-              disabled={!props.reminderEnabled}
-            />
-          </div>
+        {/* Tabs */}
+        <div className="modern-tabs">
+          {[
+            { key: "details", label: "Details" },
+            { key: "scheduling", label: "Scheduling" },
+            { key: "subtasks", label: "Subtasks" },
+            { key: "relationships", label: "Relationships" },
+            { key: "reminders", label: "Reminders" },
+          ].map((t) => (
+            <button
+              type="button"
+              key={t.key}
+              className={`modern-tab ${props.activeTab === t.key ? "active" : ""}`}
+              onClick={() => props.onTabChange(t.key)}
+            >
+              {t.label}
+            </button>
+          ))}
         </div>
 
-        {/* Relationships (optional advanced) */}
-        <div className="modern-section">
-          <button
-            type="button"
-            className="modern-section-toggle"
-            onClick={props.onToggleExpand}
-          >
-            Task Relationships
-          </button>
-          {props.expandedSectionsRelationships && (
-            <props.TaskRelationshipsSection
-              expanded={props.expandedSectionsRelationships}
-              blockedBy={props.blockedBy}
-              blocking={props.blocking}
-              linkedTasks={props.linkedTasks}
-              onBlockedByClick={props.onBlockedByClick}
-              onBlockingClick={props.onBlockingClick}
-              onLinkedClick={props.onLinkedClick}
-              onRemoveBlockedBy={props.onRemoveBlockedBy}
-              onRemoveBlocking={props.onRemoveBlocking}
-              onRemoveLinked={props.onRemoveLinked}
-              allTasks={props.allTasks}
-              onToggleExpand={props.onToggleExpand}
-            />
-          )}
-        </div>
+        {/* Tab Panels */}
+        {props.activeTab === "details" && (
+          <div className="modern-tab-panel">
+            <div className="modern-section">
+              <label className="modern-label" htmlFor="task-description">
+                Description
+              </label>
+              <textarea
+                id="task-description"
+                className="modern-textarea"
+                placeholder="Add more details"
+                value={props.description}
+                onChange={props.handleDescriptionChange}
+                rows={6}
+              />
+            </div>
+          </div>
+        )}
+
+        {props.activeTab === "scheduling" && (
+          <div className="modern-tab-panel">
+            <div className="modern-section-grid">
+              <div className="modern-field">
+                <label className="modern-label" htmlFor="task-start-date">
+                  Start
+                </label>
+                <input
+                  id="task-start-date"
+                  className="modern-input"
+                  type="datetime-local"
+                  value={props.startDate}
+                  onChange={props.handleStartDateChange}
+                />
+              </div>
+              <div className="modern-field">
+                <label className="modern-label" htmlFor="task-due-date">
+                  Due
+                </label>
+                <input
+                  id="task-due-date"
+                  className="modern-input"
+                  type="datetime-local"
+                  value={props.dueDate}
+                  onChange={props.handleDueDateChange}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {props.activeTab === "subtasks" && (
+          // Don't have time to mess with JSX
+          // skipcq: JS-0415
+          <div className="modern-tab-panel">
+            <div className="modern-section">
+              <div className="modern-label">Subtasks</div>
+              <div className="modern-subtasks-editor">
+                <div className="modern-subtask-new">
+                  <input
+                    type="text"
+                    className="modern-input"
+                    placeholder="Add a subtask"
+                    value={props.newSubtaskTitle}
+                    onChange={props.handleNewSubtaskTitleChange}
+                    onKeyDown={props.handleNewSubtaskKeyDown}
+                  />
+                  <button
+                    type="button"
+                    className="modern-btn"
+                    onClick={props.handleAddSubtask}
+                  >
+                    Add
+                  </button>
+                </div>
+                <SubtasksList
+                  subtasks={props.subtasks}
+                  handleToggleSubtaskChange={props.handleToggleSubtaskChange}
+                  handleRemoveSubtaskClick={props.handleRemoveSubtaskClick}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {props.activeTab === "relationships" && (
+          <div className="modern-tab-panel">
+            <div className="modern-section">
+              <props.TaskRelationshipsSection
+                expanded={props.expandedSectionsRelationships}
+                blockedBy={props.blockedBy}
+                blocking={props.blocking}
+                linkedTasks={props.linkedTasks}
+                onBlockedByClick={props.onBlockedByClick}
+                onBlockingClick={props.onBlockingClick}
+                onLinkedClick={props.onLinkedClick}
+                onRemoveBlockedBy={props.onRemoveBlockedBy}
+                onRemoveBlocking={props.onRemoveBlocking}
+                onRemoveLinked={props.onRemoveLinked}
+                allTasks={props.allTasks}
+                onToggleExpand={props.onToggleExpand}
+              />
+            </div>
+          </div>
+        )}
+
+        {props.activeTab === "reminders" && (
+          <div className="modern-tab-panel">
+            <div className="modern-section-grid">
+              <div className="modern-field">
+                <label className="modern-label" htmlFor="task-reminder-enabled">
+                  Reminder
+                </label>
+                <input
+                  id="task-reminder-enabled"
+                  type="checkbox"
+                  className="modern-checkbox"
+                  checked={props.reminderEnabled}
+                  onChange={props.handleReminderEnabledChange}
+                />
+              </div>
+              <div className="modern-field">
+                <label className="modern-label" htmlFor="task-reminder-time">
+                  Reminder time
+                </label>
+                <input
+                  id="task-reminder-time"
+                  className="modern-input"
+                  type="datetime-local"
+                  value={props.reminderTime}
+                  onChange={props.handleReminderTimeChange}
+                  disabled={!props.reminderEnabled}
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
-}
-
-// Extracted component for Dependency Selection Popup
-
-interface Project {
-  id: number;
-  name: string;
-}
-
-interface Subtask {
-  id?: number;
-  title: string;
-  completed: boolean;
-  isNew?: boolean;
-}
-
-export interface TaskFormValues {
-  id?: number;
-  title: string;
-  description?: string;
-  due_date?: string;
-  priority?: number;
-  project_id?: number | string;
-  projectId?: number | string;
-  completed?: boolean;
-  subtasks?: Subtask[];
-  start_date?: string;
-  recurrence?: string;
-  blocked_by?: number[];
-  blocking?: number[];
-  linked_tasks?: number[];
-  reminder_enabled?: boolean;
-  reminder_time?: string;
-}
-
-interface TaskFormModalProps {
-  open: boolean;
-  onClose: () => void;
-  onSubmit: (task: TaskFormValues) => void;
-  loading?: boolean;
-  error?: string | null;
-  projects: Project[];
-  initialValues?: TaskFormValues;
-  editMode?: boolean;
-  allTasks?: DependencyTask[];
-}
-
-interface DependencyTask {
-  id: number;
-  title: string;
-  projectId?: number;
-  // Add other fields if needed
 }
 
 const priorities = [
@@ -781,6 +804,9 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
     relationships: false,
   });
 
+  // Tabs state
+  const [activeTab, setActiveTab] = useState<string>("details");
+
   // Advanced fields state
   // ...existing code...
 
@@ -869,6 +895,8 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
         reminders: false,
         relationships: false,
       });
+      // Reset tab to Details on open
+      setActiveTab("details");
     }
   }, [open]); // Remove initialValues from dependency array
 
@@ -1117,6 +1145,8 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
 
   // Stable props for TaskFormContent
   const taskFormContentProps = {
+    activeTab,
+    onTabChange: setActiveTab,
     error,
     fieldErrors,
     title,

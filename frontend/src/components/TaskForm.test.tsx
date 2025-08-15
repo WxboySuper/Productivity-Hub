@@ -4,6 +4,18 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";
 import TaskForm, { toggleSubtask } from "./TaskForm";
 
+// Helper to get a tab button by its label while avoiding the backdrop role=button
+const getTab = (label: string | RegExp) => {
+  const matcher =
+    typeof label === "string" ? new RegExp(`^${label}$`, "i") : label;
+  const candidates = screen.getAllByRole("button", { name: matcher });
+  const tab = candidates.find((el) =>
+    (el as HTMLElement).classList.contains("modern-tab"),
+  ) as HTMLElement | undefined;
+  expect(tab).toBeTruthy();
+  return tab as HTMLElement;
+};
+
 // Types
 interface Subtask {
   id?: number;
@@ -133,6 +145,8 @@ describe("TaskForm", () => {
 
   it("covers fallback branch in dependency popup filtering (lines 677-678)", async () => {
     render(<TaskFormWrapper />);
+    // Open Relationships tab first, then expand the section
+    fireEvent.click(getTab(/^relationships$/i));
     fireEvent.click(screen.getByText("Task Relationships"));
     // Open dependency popup for blocked-by
     await waitFor(() => {
@@ -194,42 +208,30 @@ describe("TaskForm", () => {
 
   it("expands and collapses sections", async () => {
     render(<TaskFormWrapper />);
-    const descriptionButton = screen.queryByText(
-      (content, element) =>
-        Boolean(element) && content.includes("Description & Details"),
-    );
-    if (descriptionButton) {
-      fireEvent.click(descriptionButton);
-      await waitFor(() => {
-        expect(descriptionButton).toBeInTheDocument();
-      });
-    }
+    // Click the Details tab and assert Description textarea is visible
+    fireEvent.click(getTab(/^details$/i));
+    await waitFor(() => {
+      expect(screen.getByLabelText(/description/i)).toBeInTheDocument();
+    });
   });
 
   it("handles subtask management", async () => {
     render(<TaskFormWrapper />);
-    // Use function matcher for split/wrapped text
-    const subtasksButton = screen.queryByText(
-      (content, element) => Boolean(element) && content.includes("Subtasks"),
-    );
-    if (subtasksButton) fireEvent.click(subtasksButton);
+    // Open Subtasks tab
+    fireEvent.click(getTab(/^subtasks$/i));
     await waitFor(() => {
-      const subtaskInput = screen.queryByLabelText("Add Subtask");
+      const subtaskInput = screen.queryByPlaceholderText(/add a subtask/i);
       if (subtaskInput) expect(subtaskInput).toBeInTheDocument();
     });
   });
 
   it("handles priority selection", async () => {
     render(<TaskFormWrapper />);
-    // Use title to avoid matching the backdrop button that inherits text
-    const highPriorityButton = screen.queryByTitle("High");
-    if (highPriorityButton) fireEvent.click(highPriorityButton);
+    // Click High priority chip and ensure it is selected via aria-pressed
+    const highPriorityButton = screen.getByTitle("High");
+    fireEvent.click(highPriorityButton);
     await waitFor(() => {
-      const priorityPopup = screen.queryByText(
-        (content, element) =>
-          Boolean(element) && content.includes("Set Priority"),
-      );
-      if (priorityPopup) expect(priorityPopup).toBeInTheDocument();
+      expect(highPriorityButton).toHaveAttribute("aria-pressed", "true");
     });
   });
 
@@ -257,56 +259,43 @@ describe("TaskForm", () => {
 
   it("handles date selection", async () => {
     render(<TaskFormWrapper />);
-    // Use function matcher for split/wrapped text
-    const dueDateButton = screen.queryByText(
-      (content, element) => Boolean(element) && content.includes("No due date"),
-    );
-    if (dueDateButton) fireEvent.click(dueDateButton);
+    // Open Scheduling tab and check for start/due inputs
+    fireEvent.click(getTab(/^scheduling$/i));
     await waitFor(() => {
-      const dateInput = screen.queryByLabelText("Select Date");
-      if (dateInput) expect(dateInput).toBeInTheDocument();
+      expect(screen.getByLabelText(/start/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/due/i)).toBeInTheDocument();
     });
   });
 
   it("handles project selection", async () => {
     render(<TaskFormWrapper />);
-    // Use function matcher for split/wrapped text
-    const projectButton = screen.queryByText(
-      (content, element) => Boolean(element) && content.includes("Quick Task"),
-    );
-    if (projectButton) fireEvent.click(projectButton);
+    // Interact with Project select in the compact row
+    const projectSelect = screen.getByLabelText(
+      /project/i,
+    ) as HTMLSelectElement;
+    fireEvent.change(projectSelect, { target: { value: "2" } });
     await waitFor(() => {
-      const projectPopup = screen.queryByText(
-        (content, element) =>
-          Boolean(element) && content.includes("Select Project"),
-      );
-      if (projectPopup) expect(projectPopup).toBeInTheDocument();
+      expect(projectSelect.value).toBe("2");
     });
   });
 
   it("handles advanced scheduling fields", async () => {
     render(<TaskFormWrapper />);
-    // Use function matcher for split/wrapped text
-    const dueDateButton = screen.queryByText(
-      (content, element) => Boolean(element) && content.includes("No due date"),
-    );
-    if (dueDateButton) fireEvent.click(dueDateButton);
+    // Open Scheduling tab and verify fields are present
+    fireEvent.click(getTab(/^scheduling$/i));
     await waitFor(() => {
-      const advancedFields = screen.queryByLabelText("Advanced Scheduling");
-      if (advancedFields) expect(advancedFields).toBeInTheDocument();
+      expect(screen.getByLabelText(/start/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/due/i)).toBeInTheDocument();
     });
   });
 
   it("handles reminder settings", async () => {
     render(<TaskFormWrapper />);
-    // Use function matcher for split/wrapped text
-    const remindersButton = screen.queryByText(
-      (content, element) => Boolean(element) && content.includes("Reminders"),
-    );
-    if (remindersButton) fireEvent.click(remindersButton);
+    // Open Reminders tab
+    fireEvent.click(getTab(/^reminders$/i));
     await waitFor(() => {
-      const reminderInput = screen.queryByLabelText("Add Reminder");
-      if (reminderInput) expect(reminderInput).toBeInTheDocument();
+      expect(screen.getByLabelText(/reminder$/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/reminder time/i)).toBeInTheDocument();
     });
   });
 
@@ -317,6 +306,7 @@ describe("TaskForm", () => {
       { id: 3, title: "Task 3", completed: false, project_id: null },
     ];
     render(<TaskFormWrapper allTasks={tasksWithDeps} />);
+    fireEvent.click(getTab(/^relationships$/i));
     fireEvent.click(screen.getByText("Task Relationships"));
     await waitFor(() => {
       // Use function matcher for split/wrapped text
@@ -348,39 +338,30 @@ describe("TaskForm", () => {
 
   it("handles subtask removal", async () => {
     render(<TaskFormWrapper />);
-    // Expand subtasks section and add a subtask first
-    const subtasksButton = screen.queryByText(
-      (content, element) => Boolean(element) && content.includes("Subtasks"),
-    );
-    if (subtasksButton) fireEvent.click(subtasksButton);
+    // Open Subtasks tab
+    fireEvent.click(screen.getByRole("button", { name: /^subtasks$/i }));
     await waitFor(() => {
-      const subtaskInput = screen.queryByLabelText("Add Subtask");
+      const subtaskInput = screen.queryByPlaceholderText(/add a subtask/i);
       if (subtaskInput) expect(subtaskInput).toBeInTheDocument();
     });
   });
 
   it("handles subtask toggle completion", async () => {
     render(<TaskFormWrapper />);
-    // Expand subtasks section and add a subtask first
-    const subtasksButton = screen.queryByText(
-      (content, element) => Boolean(element) && content.includes("Subtasks"),
-    );
-    if (subtasksButton) fireEvent.click(subtasksButton);
+    // Open Subtasks tab
+    fireEvent.click(screen.getByRole("button", { name: /^subtasks$/i }));
     await waitFor(() => {
-      const subtaskInput = screen.queryByLabelText("Add Subtask");
+      const subtaskInput = screen.queryByPlaceholderText(/add a subtask/i);
       if (subtaskInput) expect(subtaskInput).toBeInTheDocument();
     });
   });
 
   it("handles empty/invalid subtask addition", async () => {
     render(<TaskFormWrapper />);
-    // Expand subtasks section
-    const subtasksButton = screen.queryByText(
-      (content, element) => Boolean(element) && content.includes("Subtasks"),
-    );
-    if (subtasksButton) fireEvent.click(subtasksButton);
+    // Open Subtasks tab
+    fireEvent.click(screen.getByRole("button", { name: /^subtasks$/i }));
     await waitFor(() => {
-      const subtaskInput = screen.queryByLabelText("Add Subtask");
+      const subtaskInput = screen.queryByPlaceholderText(/add a subtask/i);
       if (subtaskInput) expect(subtaskInput).toBeInTheDocument();
     });
   });
@@ -397,14 +378,10 @@ describe("TaskForm", () => {
         editMode
       />,
     );
-    // Open relationships section first
-    const relationshipsButton =
-      screen.queryByLabelText("Task Relationships") ||
-      screen.queryByText(
-        (content, element) =>
-          Boolean(element) && content.includes("Task Relationships"),
-      );
-    if (relationshipsButton) fireEvent.click(relationshipsButton);
+    // Open Relationships tab first, then expand section
+    fireEvent.click(getTab(/^relationships$/i));
+    const relationshipsButton = screen.getByText("Task Relationships");
+    fireEvent.click(relationshipsButton);
     const button =
       screen.queryByLabelText("Linked Tasks") ||
       screen.queryByText(
@@ -446,14 +423,10 @@ describe("TaskForm", () => {
         editMode
       />,
     );
-    // Open relationships section first
-    const relationshipsButton =
-      screen.queryByLabelText("Task Relationships") ||
-      screen.queryByText(
-        (content, element) =>
-          Boolean(element) && content.includes("Task Relationships"),
-      );
-    if (relationshipsButton) fireEvent.click(relationshipsButton);
+    // Open Relationships tab first, then expand section
+    fireEvent.click(getTab(/^relationships$/i));
+    const relationshipsButton = screen.getByText("Task Relationships");
+    fireEvent.click(relationshipsButton);
     const blockingButton =
       screen.queryByLabelText("Blocking") ||
       screen.queryByText(
@@ -528,6 +501,7 @@ describe("TaskForm", () => {
         editMode
       />,
     );
+    fireEvent.click(getTab(/^relationships$/i));
     fireEvent.click(screen.getByText("Task Relationships"));
     const relationshipsButton = screen.queryByLabelText("Blocked By");
     if (relationshipsButton) fireEvent.click(relationshipsButton);
@@ -541,50 +515,38 @@ describe("TaskForm", () => {
 
   it("covers handleRelationshipsExpand (lines 636-640)", () => {
     render(<TaskFormWrapper />);
-    const relationshipsButton = screen.queryByText(
-      (content, element) =>
-        Boolean(element) && content.includes("Task Relationships"),
-    );
-    if (relationshipsButton) {
-      fireEvent.click(relationshipsButton);
-      fireEvent.click(relationshipsButton); // Toggle twice
-      expect(relationshipsButton).toBeInTheDocument();
-    }
+    fireEvent.click(getTab(/^relationships$/i));
+    const relationshipsButton = screen.getByText("Task Relationships");
+    fireEvent.click(relationshipsButton);
+    fireEvent.click(relationshipsButton); // Toggle twice
+    expect(relationshipsButton).toBeInTheDocument();
   });
 });
 
 describe("TaskForm extra coverage", () => {
   it("toggles all sections", () => {
     render(<TaskFormWrapper />);
-    [
-      "Description & Details",
-      "Subtasks",
-      "Scheduling",
-      "Reminders",
-      "Task Relationships",
-      "Quick Task",
-      "High",
-    ].forEach((label) => {
-      const button = screen.queryByText(
-        (content, element) => Boolean(element) && content.includes(label),
-      );
-      if (button) fireEvent.click(button);
-    });
+    // Click through tab buttons
+    ["Details", "Subtasks", "Scheduling", "Reminders", "Relationships"].forEach(
+      (tab) => {
+        fireEvent.click(getTab(new RegExp(`^${tab}$`, "i")));
+      },
+    );
+    // Also click the High priority chip
+    const highChip = screen.queryByTitle("High");
+    if (highChip) fireEvent.click(highChip);
   });
 
   it("handles add/remove/toggle subtasks", () => {
     render(<TaskFormWrapper />);
-    // Expand subtasks section first
-    const subtasksButton = screen.queryByText(
-      (content, element) => Boolean(element) && content.includes("Subtasks"),
-    );
-    if (subtasksButton) fireEvent.click(subtasksButton);
-    const subtaskInput = screen.queryByPlaceholderText("Add Subtask");
+    // Open Subtasks tab first
+    fireEvent.click(getTab(/^subtasks$/i));
+    const subtaskInput = screen.queryByPlaceholderText(/add a subtask/i);
     if (subtaskInput) {
       fireEvent.change(subtaskInput, { target: { value: "Subtask 1" } });
       fireEvent.keyDown(subtaskInput, { key: "Enter" });
       // Remove subtask
-      const removeBtn = screen.queryByRole("button", { name: "×" });
+      const removeBtn = screen.queryByRole("button", { name: "🗑️" });
       if (removeBtn) fireEvent.click(removeBtn);
       // Toggle subtask completion
       const subtaskToggle = screen.queryByRole("checkbox");
@@ -594,12 +556,10 @@ describe("TaskForm extra coverage", () => {
 
   it("handles dependency popup logic", () => {
     render(<TaskFormWrapper />);
-    // Expand relationships section first
-    const relationshipsButton = screen.queryByText(
-      (content, element) =>
-        Boolean(element) && content.includes("Task Relationships"),
-    );
-    if (relationshipsButton) fireEvent.click(relationshipsButton);
+    // Open Relationships tab and expand section first
+    fireEvent.click(getTab(/^relationships$/i));
+    const relationshipsButton = screen.getByText("Task Relationships");
+    fireEvent.click(relationshipsButton);
     ["Blocked By", "Blocking", "Linked Tasks"].forEach((label) => {
       const depButton = screen.queryByLabelText(label);
       if (depButton) fireEvent.click(depButton);
@@ -618,22 +578,17 @@ describe("TaskForm extra coverage", () => {
 
   it("covers handleRelationshipsExpand and handleToggleSection", () => {
     render(<TaskFormWrapper />);
-    // Expand relationships section
-    const relationshipsButton = screen.queryByText(
-      (content, element) =>
-        Boolean(element) && content.includes("Task Relationships"),
-    );
-    if (relationshipsButton) fireEvent.click(relationshipsButton);
-    // Toggle a generic section
-    const detailsButton = screen.queryByText(
-      (content, element) =>
-        Boolean(element) && content.includes("Description & Details"),
-    );
-    if (detailsButton) fireEvent.click(detailsButton);
+    // Open Relationships tab and expand section
+    fireEvent.click(getTab(/^relationships$/i));
+    const relationshipsButton = screen.getByText("Task Relationships");
+    fireEvent.click(relationshipsButton);
+    // Switch to Details tab
+    fireEvent.click(getTab(/^details$/i));
   });
 
   it("covers handlePopupOverlayKeyDown for Enter and Space", () => {
     render(<TaskFormWrapper />);
+    fireEvent.click(getTab(/^relationships$/i));
     fireEvent.click(screen.getByText("Task Relationships"));
     const relationshipsButton = screen.queryByLabelText("Blocked By");
     if (relationshipsButton) fireEvent.click(relationshipsButton);
@@ -646,6 +601,7 @@ describe("TaskForm extra coverage", () => {
 
   it("covers popup overlay keydown for Escape and unrelated key", () => {
     render(<TaskFormWrapper />);
+    fireEvent.click(getTab(/^relationships$/i));
     fireEvent.click(screen.getByText("Task Relationships"));
     const relationshipsButton = screen.queryByLabelText("Blocked By");
     if (relationshipsButton) fireEvent.click(relationshipsButton);
@@ -658,14 +614,10 @@ describe("TaskForm extra coverage", () => {
 
   it("covers toggling relationships section multiple times", () => {
     render(<TaskFormWrapper />);
-    const relationshipsButton = screen.queryByText(
-      (content, element) =>
-        Boolean(element) && content.includes("Task Relationships"),
-    );
-    if (relationshipsButton) {
-      fireEvent.click(relationshipsButton);
-      fireEvent.click(relationshipsButton);
-    }
+    fireEvent.click(getTab(/^relationships$/i));
+    const relationshipsButton = screen.getByText("Task Relationships");
+    fireEvent.click(relationshipsButton);
+    fireEvent.click(relationshipsButton);
   });
 });
 
@@ -677,34 +629,20 @@ describe("TaskForm 100% coverage", () => {
 
   it("handles section toggling", () => {
     render(<TaskFormWrapper />);
-    [
-      "details",
-      "subtasks",
-      "scheduling",
-      "reminders",
-      "relationships",
-      "project",
-      "priority",
-    ].forEach((section) => {
-      const matches = screen.queryAllByText(
-        (content, element) =>
-          Boolean(element) &&
-          content.includes(section.charAt(0).toUpperCase() + section.slice(1)),
-      );
-      const button = matches.find(
-        (el) => el.tagName.toLowerCase() === "button",
-      );
-      if (button) fireEvent.click(button as HTMLElement);
-    });
+    ["details", "subtasks", "scheduling", "reminders", "relationships"].forEach(
+      (section) => {
+        const btn = screen.getByRole("button", {
+          name: new RegExp(`^${section}$`, "i"),
+        });
+        fireEvent.click(btn);
+      },
+    );
   });
 
   it("handles add subtask with only whitespace", () => {
     render(<TaskFormWrapper />);
-    const subtasksButton = screen.queryByText(
-      (content, element) => Boolean(element) && content.includes("Subtasks"),
-    );
-    if (subtasksButton) fireEvent.click(subtasksButton);
-    const subtaskInput = screen.queryByPlaceholderText("Add Subtask");
+    fireEvent.click(getTab(/^subtasks$/i));
+    const subtaskInput = screen.queryByPlaceholderText(/add a subtask/i);
     if (subtaskInput) {
       fireEvent.change(subtaskInput, { target: { value: "   " } });
       fireEvent.keyDown(subtaskInput, { key: "Enter" });
@@ -715,6 +653,7 @@ describe("TaskForm 100% coverage", () => {
 
   it("handles popup overlay keydown", () => {
     render(<TaskFormWrapper />);
+    fireEvent.click(getTab(/^relationships$/i));
     fireEvent.click(screen.getByText("Task Relationships"));
     const relationshipsButton = screen.queryByLabelText("Blocked By");
     if (relationshipsButton) fireEvent.click(relationshipsButton);
@@ -724,6 +663,7 @@ describe("TaskForm 100% coverage", () => {
 
   it("handles popup overlay click", () => {
     render(<TaskFormWrapper />);
+    fireEvent.click(getTab(/^relationships$/i));
     fireEvent.click(screen.getByText("Task Relationships"));
     const relationshipsButton = screen.queryByLabelText("Blocked By");
     if (relationshipsButton) fireEvent.click(relationshipsButton);
@@ -751,6 +691,7 @@ describe("TaskForm 100% coverage", () => {
         editMode
       />,
     );
+    fireEvent.click(getTab(/^relationships$/i));
     fireEvent.click(screen.getByText("Task Relationships"));
     const relationshipsButton = screen.queryByLabelText("Blocked By");
     if (relationshipsButton) fireEvent.click(relationshipsButton);

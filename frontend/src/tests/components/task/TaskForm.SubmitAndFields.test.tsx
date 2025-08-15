@@ -9,7 +9,7 @@ const projects = [
 ];
 
 describe("TaskForm - submit wiring and fields", () => {
-  it("renders key fields in create mode (title, description, project, dates, priority, reminders)", () => {
+  it("renders key fields in create mode (title, description, project, dates, priority, reminders)", async () => {
     render(
       <TaskForm
         open
@@ -28,13 +28,17 @@ describe("TaskForm - submit wiring and fields", () => {
       screen.getByPlaceholderText(/what needs to be done\?/i),
     ).toBeInTheDocument();
 
-    // Description textarea
+    // Open Details tab and assert Description textarea
+    await userEvent.click(screen.getByRole("button", { name: /^details$/i }));
     expect(screen.getByLabelText(/description/i)).toBeInTheDocument();
 
-    // Project select
+    // Project select is in the compact row (always visible)
     expect(screen.getByLabelText(/project/i)).toBeInTheDocument();
 
-    // Start/Due datetime inputs
+    // Start/Due datetime inputs on Scheduling tab
+    await userEvent.click(
+      screen.getByRole("button", { name: /^scheduling$/i }),
+    );
     expect(screen.getByLabelText(/start/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/due/i)).toBeInTheDocument();
 
@@ -42,7 +46,8 @@ describe("TaskForm - submit wiring and fields", () => {
     expect(screen.getByTitle("Low")).toBeInTheDocument();
     expect(screen.getByTitle("Critical")).toBeInTheDocument();
 
-    // Reminders toggle and time
+    // Reminders toggle and time on Reminders tab
+    await userEvent.click(screen.getByRole("button", { name: /^reminders$/i }));
     expect(screen.getByLabelText(/reminder$/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/reminder time/i)).toBeInTheDocument();
   });
