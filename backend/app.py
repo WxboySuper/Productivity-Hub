@@ -1,6 +1,7 @@
 # ========================
 # Imports
 # ========================
+from hashlib import new
 import logging
 import os
 import sys
@@ -14,11 +15,10 @@ from helpers.auth_helpers import error_response
 from models import db, logger
 from routes.admin import admin_bp
 from routes.auth import auth_bp
-from routes.misc import misc_bp
 from routes.notifications import notifications_bp
 from routes.projects import projects_bp
-from routes.settings import settings_bp
 from routes.tasks import tasks_bp
+from routes.whats_new import whats_new_bp
 
 
 # Debug: Print all registered routes at startup
@@ -66,14 +66,17 @@ def handle_404(e):
     return e
 
 
+# ==================
+# Blueprints
+# ==================
+
 # Register blueprints after app is created
 app.register_blueprint(auth_bp)
 app.register_blueprint(projects_bp)
 app.register_blueprint(tasks_bp)
 app.register_blueprint(notifications_bp)
-app.register_blueprint(settings_bp)
 app.register_blueprint(admin_bp)
-app.register_blueprint(misc_bp)
+app.register_blueprint(whats_new_bp)
 
 # Print all registered routes for debugging
 print_routes()
@@ -96,14 +99,11 @@ migrate = Migrate(app, db)
 
 logger.info("SQLAlchemy is set up.")
 
-# =========================
-# Configuration & App Setup
-# =========================
 
-
-##
+# =================
 # Helper Functions
-##
+# =================
+
 # --- Database Initialization ---
 def init_db():
     """
@@ -153,28 +153,15 @@ def csrf_protect():
             return error_response("Invalid or missing CSRF token", 403)
 
 
-def _validate_and_update_task_fields(task, data, user):
-    """Validate and update task fields. Returns error string or None."""
-
-
-##
-# Route Definitions
-##
-
-
-app.before_request(csrf_protect)  # Register CSRF protection as a before_request handler
-
+# ==============
+# Home Route
+# ==============
 
 @app.route("/")
 def home():
     """Home route."""
     logger.info("Home route accessed.")
     return "Welcome to the Productivity Hub Backend!"
-
-
-# ==================
-# Project Endpoints
-# ==================
 
 
 if __name__ == "__main__":  # pragma: no cover
