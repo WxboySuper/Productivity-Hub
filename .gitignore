@@ -30,7 +30,6 @@ Thumbs.db
 .vscode
 .qodo
 .qodo/*
-create-random-branch.ps1
 
 # db
 */productivity_hub.db
@@ -41,3 +40,6 @@ backend/productivity_hub.db-journal
 docs/personal-docs/*
 docs/personal-docs
 */app.backup.py
+
+# Scripts
+scripts/*
