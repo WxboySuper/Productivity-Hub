@@ -38,9 +38,9 @@ describe("TaskForm - submit wiring and fields", () => {
     expect(screen.getByLabelText(/start/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/due/i)).toBeInTheDocument();
 
-  // Priority chips (use title to avoid ambiguous role/name collisions)
-  expect(screen.getByTitle("Low")).toBeInTheDocument();
-  expect(screen.getByTitle("Critical")).toBeInTheDocument();
+    // Priority chips (use title to avoid ambiguous role/name collisions)
+    expect(screen.getByTitle("Low")).toBeInTheDocument();
+    expect(screen.getByTitle("Critical")).toBeInTheDocument();
 
     // Reminders toggle and time
     expect(screen.getByLabelText(/reminder$/i)).toBeInTheDocument();
@@ -66,11 +66,11 @@ describe("TaskForm - submit wiring and fields", () => {
 
     // Enter a title so the submit button is enabled
     const title = screen.getByPlaceholderText(/what needs to be done\?/i);
-  await userEvent.type(title, "Test task");
+    await userEvent.type(title, "Test task");
 
     // Click Create Task button (outside form but associated via form attribute)
-  const createBtns = screen.getAllByRole("button", { name: /create task/i });
-  await userEvent.click(createBtns[createBtns.length - 1]);
+    const createBtns = screen.getAllByRole("button", { name: /create task/i });
+    await userEvent.click(createBtns[createBtns.length - 1]);
 
     expect(onSubmit).toHaveBeenCalledTimes(1);
     const submitted = onSubmit.mock.calls[0][0];
