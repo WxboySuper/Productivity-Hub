@@ -54,7 +54,7 @@ function AppRoutes() {
         path="/"
         element={isAuthenticated ? <MainManagementWindow /> : <HomePage />}
       />
-  <Route path="/whats-new" element={<WhatsNewPage />} />
+      <Route path="/whats-new" element={<WhatsNewPage />} />
       <Route
         path="/login"
         element={

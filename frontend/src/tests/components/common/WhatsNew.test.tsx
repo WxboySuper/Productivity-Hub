@@ -43,13 +43,15 @@ describe("WhatsNew", () => {
     // Heading loads after fetch
     await waitFor(() =>
       expect(
-        screen.getByRole("heading", { name: /v0.12.0-beta release highlights/i })
+        screen.getByRole("heading", {
+          name: /v0.12.0-beta release highlights/i,
+        }),
       ).toBeInTheDocument(),
     );
 
     // Specific Highlights section heading (avoid matching the H1 which includes the word 'Highlights')
     expect(
-      screen.getByRole("heading", { level: 2, name: /^highlights$/i })
+      screen.getByRole("heading", { level: 2, name: /^highlights$/i }),
     ).toBeInTheDocument();
     // At least one highlight item
     expect(
@@ -65,9 +67,13 @@ describe("WhatsNew", () => {
 
   it("falls back to API when local JSON fails", async () => {
     const notOkRes = { ok: false, status: 404 } as unknown as Response;
-    const okRes = { ok: true, json: vi.fn().mockResolvedValue(mockRelease) } as unknown as Response;
+    const okRes = {
+      ok: true,
+      json: vi.fn().mockResolvedValue(mockRelease),
+    } as unknown as Response;
 
-    const fetchMock = vi.fn()
+    const fetchMock = vi
+      .fn()
       .mockResolvedValueOnce(notOkRes) // first call to /whats-new.json fails
       .mockResolvedValueOnce(okRes); // second call to /api/releases/latest succeeds
     vi.stubGlobal("fetch", fetchMock);
@@ -76,7 +82,7 @@ describe("WhatsNew", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByRole("heading", { name: /v0.12.0-beta/i })
+        screen.getByRole("heading", { name: /v0.12.0-beta/i }),
       ).toBeInTheDocument(),
     );
 
@@ -85,9 +91,13 @@ describe("WhatsNew", () => {
 
   it("shows error then retries successfully", async () => {
     const notOkRes = { ok: false, status: 500 } as unknown as Response;
-    const okRes = { ok: true, json: vi.fn().mockResolvedValue(mockRelease) } as unknown as Response;
+    const okRes = {
+      ok: true,
+      json: vi.fn().mockResolvedValue(mockRelease),
+    } as unknown as Response;
 
-    const fetchMock = vi.fn()
+    const fetchMock = vi
+      .fn()
       .mockResolvedValueOnce(notOkRes)
       .mockResolvedValueOnce(notOkRes)
       // After clicking retry, succeed
@@ -97,16 +107,16 @@ describe("WhatsNew", () => {
 
     render(<WhatsNew />);
 
-    await waitFor(() =>
-      expect(screen.getByRole("alert")).toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.getByRole("alert")).toBeInTheDocument());
 
-    const retry = screen.getByRole("button", { name: /retry loading what's new/i });
+    const retry = screen.getByRole("button", {
+      name: /retry loading what's new/i,
+    });
     fireEvent.click(retry);
 
     await waitFor(() =>
       expect(
-        screen.getByRole("heading", { name: /v0.12.0-beta/i })
+        screen.getByRole("heading", { name: /v0.12.0-beta/i }),
       ).toBeInTheDocument(),
     );
   });
