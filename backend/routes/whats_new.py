@@ -15,5 +15,7 @@ def get_latest_release():
         )
         with open(whats_new_path) as f:
             return jsonify(json.load(f))
-    except:
-        return error_response("Failed to load latest release data", 500)
+    except FileNotFoundError:
+        return error_response("Failed to load latest release data: file not found", 500)
+    except json.JSONDecodeError:
+        return error_response("Failed to load latest release data: JSON decode error", 500)
