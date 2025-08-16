@@ -882,11 +882,9 @@ const TaskDetails: React.FC<TaskDetailsModalProps> = ({
     setEditFormLoading(true);
     setEditFormError(null);
 
-    // Capture a snapshot BEFORE any optimistic update so we can roll back on error
-    const snapshot: Task | null = options?.optimistic ? { ...localTask } : null;
-
     try {
       // Optimistic UI update for status toggles
+      const snapshot = options?.optimistic ? { ...localTask } : null;
       if (options?.optimistic && snapshot) {
         setLocalTask({ ...snapshot, ...updatedTask });
       }
@@ -928,11 +926,11 @@ const TaskDetails: React.FC<TaskDetailsModalProps> = ({
         err instanceof Error ? err.message : "Unknown error";
       setEditFormError(finalErrorMessage);
       // Roll back optimistic change on error
-      if (options?.optimistic && snapshot) {
-        setLocalTask(snapshot);
+      if (options?.optimistic) {
+        setLocalTask((prev) => prev); // no-op to ensure state update sequence
+        // Re-fetch to ensure consistency
+        window.dispatchEvent(new CustomEvent("tasksShouldRefetch"));
       }
-      // Also re-fetch to ensure consistency with server state
-      window.dispatchEvent(new CustomEvent("tasksShouldRefetch"));
     } finally {
       setEditFormLoading(false);
     }
