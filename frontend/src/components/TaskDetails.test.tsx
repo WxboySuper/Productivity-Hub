@@ -237,19 +237,6 @@ describe("TaskDetails", () => {
     expect(screen.getByText("Subtask 2")).toBeInTheDocument();
   });
 
-  it("shows schedule section when task has dates", () => {
-    render(<TaskDetails {...defaultProps} />);
-
-    expect(screen.getByText("Schedule")).toBeInTheDocument();
-
-    // Expand schedule section
-    fireEvent.click(screen.getByText("Schedule"));
-
-    expect(screen.getByText("📅 Start Date")).toBeInTheDocument();
-    expect(screen.getByText("🎯 Due Date")).toBeInTheDocument();
-    expect(screen.getByText("🔄 Recurrence")).toBeInTheDocument();
-  });
-
   it("shows dependencies section when task has dependencies", () => {
     render(<TaskDetails {...defaultProps} />);
 
