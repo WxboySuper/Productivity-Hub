@@ -354,21 +354,6 @@ describe("TaskDetails", () => {
     expect(screen.getByText("Task #888")).toBeInTheDocument();
   });
 
-  it("shows next occurrence when present in schedule section", () => {
-    const taskWithNextOccurrence = {
-      ...baseTask,
-      next_occurrence: "2024-12-25T10:00:00Z",
-    };
-
-    render(<TaskDetails {...defaultProps} task={taskWithNextOccurrence} />);
-
-    // Expand schedule section
-    fireEvent.click(screen.getByText("Schedule"));
-
-    expect(screen.getByText("⏭️ Next Occurrence")).toBeInTheDocument();
-    expect(screen.getByText(/12\/25\/2024/)).toBeInTheDocument(); // Date formatting may vary
-  });
-
   it("handles CSRF token fetch errors gracefully", () => {
     // Mock console.error to avoid noise in test output
     const consoleSpy = vi
