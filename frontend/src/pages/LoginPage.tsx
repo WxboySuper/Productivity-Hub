@@ -39,7 +39,7 @@ export default function LoginPage() {
           setError(data.error || "Login failed.");
         } else {
           setForm({ usernameOrEmail: "", password: "" });
-          login("session"); // Use a dummy value to mark as logged in
+          login();
           setTimeout(() => {
             navigate("/", { replace: true });
           }, 800);
@@ -85,7 +85,10 @@ export default function LoginPage() {
               <span className="font-semibold">{error}</span>
             </div>
           )}
-          <label className="block font-medium mb-4" htmlFor="usernameOrEmail">
+          <label
+            className="block font-medium mb-4 w-full"
+            htmlFor="usernameOrEmail"
+          >
             Username or Email
             <input
               className="w-full border rounded px-4 py-3 text-base mt-1"
@@ -99,7 +102,7 @@ export default function LoginPage() {
               placeholder="Enter your username or email"
             />
           </label>
-          <label className="block font-medium mb-6" htmlFor="password">
+          <label className="block font-medium mb-4 w-full" htmlFor="password">
             Password
             <input
               className="w-full border rounded px-4 py-3 text-base mt-1"
