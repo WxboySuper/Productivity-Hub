@@ -110,7 +110,7 @@
     0 0 0 1px rgba(255, 255, 255, 0.8),
     inset 0 1px 0 rgba(255, 255, 255, 0.9);
   width: 100%;
-  max-width: 960px; /* Widened to keep Priority chips on a single row */
+  max-width: 1240px; /* Wider so Status and Priority fit side-by-side comfortably */
   max-height: 90vh; /* Smaller max height to prevent overflow */
   display: flex;
   flex-direction: column;
@@ -311,15 +311,15 @@
 /* === QUICK ACTIONS GRID === */
 .modern-quick-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--modern-space-md);
-  padding: 0 var(--modern-space-xl) var(--modern-space-xl);
+  grid-template-columns: 1fr;
+  gap: var(--modern-space-lg);
+  padding: 0 0 var(--modern-space-xl); /* remove side padding to free horizontal space */
   min-width: 0; /* Allow grid items to shrink */
 }
 
 @media (min-width: 640px) {
   .modern-quick-grid {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: 2fr 1fr; /* give Status (left) even more room than Priority */
   }
 }
 
@@ -927,13 +927,16 @@
   align-items: center;
   gap: var(--modern-space-sm);
   padding: var(--modern-space-md);
-  background: var(--modern-gray-50);
-  border: 1px solid var(--modern-gray-200);
+  background: var(--modern-surface-primary);
+  border: 1px solid var(--modern-border);
   border-radius: var(--modern-radius);
   transition: var(--modern-transition);
+  min-width: 0; /* allow content to shrink within grid */
+  overflow: hidden; /* prevent inner controls from overflowing rounded corners */
 }
 
-.modern-detail-chip:hover {
+/* Only actionable chips get hover affordances */
+.modern-detail-chip.actionable:hover {
   background: var(--modern-gray-100);
   border-color: var(--modern-gray-300);
 }
@@ -941,6 +944,8 @@
 .modern-detail-chip-icon {
   font-size: 1.2rem;
   flex-shrink: 0;
+  width: 1.5rem; /* normalize width so label aligns across chips */
+  text-align: center;
 }
 
 .modern-detail-chip-content {
@@ -967,6 +972,11 @@
   text-overflow: ellipsis;
 }
 
+/* Informational chip variant (Priority, etc) */
+.modern-detail-chip.info {
+  cursor: default;
+}
+
 .modern-progress-bar {
   width: 100%;
   height: 8px;
@@ -988,9 +998,9 @@
 
 .modern-description-content {
   padding: var(--modern-space-lg);
-  background: var(--modern-gray-50);
+  background: var(--modern-surface-primary);
   border-radius: var(--modern-radius);
-  border: 1px solid var(--modern-gray-200);
+  border: 1px solid var(--modern-border);
   color: var(--modern-text-secondary);
   line-height: 1.6;
   white-space: pre-wrap;
@@ -1007,8 +1017,8 @@
   align-items: center;
   gap: var(--modern-space-md);
   padding: var(--modern-space-md);
-  background: var(--modern-gray-50);
-  border: 1px solid var(--modern-gray-200);
+  background: var(--modern-surface-primary);
+  border: 1px solid var(--modern-border);
   border-radius: var(--modern-radius);
   transition: var(--modern-transition);
 }
@@ -1039,9 +1049,21 @@
   justify-content: space-between;
   align-items: center;
   padding: var(--modern-space-md);
-  background: var(--modern-gray-50);
-  border: 1px solid var(--modern-gray-200);
+  background: var(--modern-surface-primary);
+  border: 1px solid var(--modern-border);
   border-radius: var(--modern-radius);
+}
+
+/* Actionable chips (e.g., Status chip with toggle) */
+.modern-detail-chip.actionable {
+  cursor: pointer;
+  user-select: none;
+}
+.modern-detail-chip.actionable:hover {
+  background: var(--modern-surface-secondary);
+  border-color: var(--modern-primary);
+  transform: translateY(-1px);
+  box-shadow: var(--modern-shadow);
 }
 
 .modern-schedule-label {

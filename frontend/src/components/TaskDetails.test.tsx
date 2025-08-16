@@ -427,32 +427,23 @@ describe("TaskDetails", () => {
       });
 
       // Verify CSRF token call
-      expect(global.fetch).toHaveBeenNthCalledWith(
-        1,
-        "http://localhost:3000/api/csrf-token",
-        {
-          method: "GET",
-          credentials: "include",
-        },
-      );
+      expect(global.fetch).toHaveBeenNthCalledWith(1, "/api/csrf-token", {
+        credentials: "include",
+      });
 
       // Verify task update call
-      expect(global.fetch).toHaveBeenNthCalledWith(
-        2,
-        "http://localhost:3000/api/tasks/1",
-        {
-          method: "PUT",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRF-Token": "mock-csrf-token",
-          },
-          body: JSON.stringify({
-            title: "Updated Task",
-            description: "Updated description",
-          }),
+      expect(global.fetch).toHaveBeenNthCalledWith(2, "/api/tasks/1", {
+        method: "PUT",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": "mock-csrf-token",
         },
-      );
+        body: JSON.stringify({
+          title: "Updated Task",
+          description: "Updated description",
+        }),
+      });
 
       // Verify onEdit callback was called
       expect(mockOnEdit).toHaveBeenCalledTimes(1);
@@ -494,21 +485,17 @@ describe("TaskDetails", () => {
       });
 
       // Verify task update call was made without CSRF token
-      expect(global.fetch).toHaveBeenNthCalledWith(
-        2,
-        "http://localhost:3000/api/tasks/1",
-        {
-          method: "PUT",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            title: "Updated Task",
-            description: "Updated description",
-          }),
+      expect(global.fetch).toHaveBeenNthCalledWith(2, "/api/tasks/1", {
+        method: "PUT",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+        body: JSON.stringify({
+          title: "Updated Task",
+          description: "Updated description",
+        }),
+      });
 
       expect(mockOnEdit).toHaveBeenCalledTimes(1);
     });
@@ -548,21 +535,17 @@ describe("TaskDetails", () => {
       );
 
       // Verify task update call was made without CSRF token
-      expect(global.fetch).toHaveBeenNthCalledWith(
-        2,
-        "http://localhost:3000/api/tasks/1",
-        {
-          method: "PUT",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            title: "Updated Task",
-            description: "Updated description",
-          }),
+      expect(global.fetch).toHaveBeenNthCalledWith(2, "/api/tasks/1", {
+        method: "PUT",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+        body: JSON.stringify({
+          title: "Updated Task",
+          description: "Updated description",
+        }),
+      });
 
       expect(mockOnEdit).toHaveBeenCalledTimes(1);
       consoleSpy.mockRestore();

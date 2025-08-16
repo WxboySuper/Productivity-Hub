@@ -198,6 +198,25 @@ function MainManagementWindow() {
     fetchTasks();
   }, [fetchTasks]);
 
+  // Listen for refetch events dispatched by detail modals
+  // Only trigger a refetch here; update selectedTask in a separate effect when tasks change
+  useEffect(() => {
+    const handler = () => {
+      fetchTasks();
+    };
+    window.addEventListener("tasksShouldRefetch", handler);
+    return () => window.removeEventListener("tasksShouldRefetch", handler);
+  }, [fetchTasks]);
+
+  // When tasks (or projects) change, sync the selectedTask with the latest data
+  useEffect(() => {
+    if (!selectedTask) return;
+    const latest = tasks.find((t) => t.id === selectedTask.id);
+    if (latest) {
+      setSelectedTask(getTaskWithProject(latest));
+    }
+  }, [tasks, projects, selectedTask?.id]);
+
   const handleApiError = useCallback(
     (err: unknown, contextMessage: string) => {
       const message = err instanceof Error ? err.message : "Unknown error";
