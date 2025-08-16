@@ -159,7 +159,9 @@ describe("TaskDetails", () => {
     expect(screen.getByText("Test Task")).toBeInTheDocument();
     expect(screen.getByText("📁 Test Project")).toBeInTheDocument();
     expect(screen.getByText("Medium")).toBeInTheDocument(); // Priority
-    expect(screen.getByText("In Progress")).toBeInTheDocument(); // Status
+  // There are multiple occurrences of the phrase "In Progress" (status label and selected option),
+  // assert that at least one is present to verify status without over-constraining the DOM.
+  expect(screen.getAllByText("In Progress").length).toBeGreaterThan(0); // Status
   });
 
   it("shows completed status for completed tasks", () => {
@@ -167,7 +169,9 @@ describe("TaskDetails", () => {
     render(<TaskDetails {...defaultProps} task={completedTask} />);
 
     expect(screen.getAllByText("✅").length).toBeGreaterThan(0);
-    expect(screen.getByText("Completed")).toBeInTheDocument();
+  // There are multiple occurrences of the word "Completed" (status label and selected option),
+  // assert that at least one is present to verify completed state without over-constraining the DOM.
+  expect(screen.getAllByText("Completed").length).toBeGreaterThan(0);
   });
 
   it("displays subtask progress correctly", () => {
