@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import TaskForm from "./TaskForm";
+import { ensureCsrfToken as getCsrfToken } from "../hooks/useTasks";
+import TaskForm, { TaskFormValues } from "./TaskForm";
 import "../styles/Task.css";
 
 // ModalBackdrop: handles backdrop click, keyboard accessibility, and wraps children
@@ -51,11 +52,6 @@ function TaskDetailsHeader({
   setShowEditForm: (open: boolean) => void;
   onClose: () => void;
 }) {
-  function handleEditClick() {
-    /* v8 ignore start */
-    setShowEditForm(true);
-  }
-  /* v8 ignore stop */
   return (
     <div className="modern-form-header">
       <div
@@ -77,13 +73,6 @@ function TaskDetailsHeader({
         </div>
       </div>
       <div style={{ display: "flex", gap: "var(--modern-space-sm)" }}>
-        <button
-          className="modern-btn modern-btn-secondary"
-          onClick={handleEditClick}
-          type="button"
-        >
-          ✏️ Edit
-        </button>
         <button
           className="modern-close-btn"
           onClick={onClose}
@@ -401,14 +390,69 @@ function TaskDescriptionSection({
 }
 // TaskOverviewSection: displays status, priority, progress, due date, and progress bar
 // Individual chip components for overview grid
-function StatusChip({ completed }: { completed: boolean }) {
+type StatusState = "todo" | "in_progress" | "completed";
+
+function StatusSelector({
+  status,
+  onSelect,
+}: {
+  status: StatusState;
+  onSelect: (s: StatusState) => void;
+}) {
+  const options: Array<{ key: StatusState; icon: string; label: string }> = [
+    { key: "todo", icon: "⭕", label: "To Do" },
+    { key: "in_progress", icon: "⏳", label: "In Progress" },
+    { key: "completed", icon: "✅", label: "Completed" },
+  ];
   return (
-    <div className="modern-detail-chip">
-      <div className="modern-detail-chip-icon">{completed ? "✅" : "⭕"}</div>
-      <div className="modern-detail-chip-content">
+    <div
+      className="modern-detail-chip"
+      aria-label="Task status selector"
+      style={{ overflow: "hidden" }}
+    >
+      <div className="modern-detail-chip-icon">
+        {status === "completed" ? "✅" : status === "in_progress" ? "⏳" : "⭕"}
+      </div>
+      <div className="modern-detail-chip-content" style={{ width: "100%" }}>
         <div className="modern-detail-chip-label">Status</div>
-        <div className="modern-detail-chip-value">
-          {completed ? "Completed" : "In Progress"}
+        <div className="modern-detail-chip-value" style={{ marginBottom: 6 }}>
+          {status === "completed" ? "Completed" : status === "in_progress" ? "In Progress" : "To Do"}
+        </div>
+        <div
+          role="radiogroup"
+          aria-label="Select status"
+          style={{ display: "flex", gap: 6, width: "100%", flexWrap: "nowrap" }}
+        >
+          {options.map((opt) => {
+            const selected = status === opt.key;
+            return (
+              <button
+                key={opt.key}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                onClick={() => onSelect(opt.key)}
+                title={opt.label}
+                style={{
+                  flex: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 6,
+                  padding: "8px 12px",
+                  height: 36,
+                  borderRadius: 9999,
+                  border: "1px solid var(--modern-border, #e5e7eb)",
+                  background: selected ? "#e5e7eb" : "#ffffff",
+                  color: "var(--modern-text, #111827)",
+                  cursor: "pointer",
+                }}
+              >
+                <span style={{ width: 18, textAlign: "center" }}>{opt.icon}</span>
+                <span style={{ fontSize: 12, whiteSpace: "nowrap" }}>{opt.label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>
@@ -417,7 +461,7 @@ function StatusChip({ completed }: { completed: boolean }) {
 
 function PriorityChip({ icon, label }: { icon: string; label: string }) {
   return (
-    <div className="modern-detail-chip">
+  <div className="modern-detail-chip info">
       <div className="modern-detail-chip-icon">{icon}</div>
       <div className="modern-detail-chip-content">
         <div className="modern-detail-chip-label">Priority</div>
@@ -461,12 +505,15 @@ function DueDateChip({ due_date }: { due_date: string }) {
   );
 }
 function TaskOverviewSection({
+  status,
   task,
   currentPriority,
   completedSubtasks,
   totalSubtasks,
   progressPercentage,
+  onSelectStatus,
 }: {
+  status: StatusState;
   task: Task;
   currentPriority: {
     value: number;
@@ -477,14 +524,12 @@ function TaskOverviewSection({
   completedSubtasks: number;
   totalSubtasks: number;
   progressPercentage: number;
+  onSelectStatus: (next: StatusState) => void;
 }) {
   return (
     <div className="modern-hero-section">
-      <div
-        className="modern-quick-grid"
-        style={{ gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))" }}
-      >
-        <StatusChip completed={task.completed} />
+      <div className="modern-quick-grid">
+        <StatusSelector status={status} onSelect={onSelectStatus} />
         <PriorityChip
           icon={currentPriority.icon}
           label={currentPriority.label}
@@ -542,6 +587,37 @@ interface Project {
   name: string;
 }
 
+// Helper to adapt TaskFormValues to Partial<Task> for API updates
+function mapFormValuesToTaskUpdate(values: TaskFormValues): Partial<Task> {
+  return {
+    id: values.id,
+    title: values.title,
+    description: values.description,
+    due_date: values.due_date,
+    start_date: values.start_date,
+    priority: values.priority,
+    project_id:
+      typeof values.project_id === "string"
+        ? values.project_id
+          ? Number(values.project_id)
+          : undefined
+        : values.project_id,
+    completed: values.completed,
+    subtasks: values.subtasks
+      ?.filter((st) => typeof st.id === "number")
+      .map((st) => ({
+        id: st.id as number,
+        title: st.title,
+        completed: st.completed,
+      })),
+    recurrence: values.recurrence,
+    blocked_by: values.blocked_by,
+    blocking: values.blocking,
+    reminder_enabled: values.reminder_enabled,
+    reminder_time: values.reminder_time,
+  };
+}
+
 interface TaskDetailsModalContentProps {
   task: Task;
   parentTask: { id: number; title: string } | null;
@@ -560,10 +636,10 @@ interface TaskDetailsModalContentProps {
   showEditForm: boolean;
   editFormLoading: boolean;
   editFormError: string | null;
-  handleTaskUpdate: (updatedTask: {
-    title: string;
-    description: string;
-  }) => void;
+  handleTaskUpdate: (
+    updatedTask: Partial<Task>,
+    options?: { source?: "status" | "form"; optimistic?: boolean },
+  ) => void;
   onClose: () => void;
   tasks: Task[];
   projects: Project[];
@@ -609,6 +685,28 @@ function TaskDetailsModalContent({
   function handleCloseEditForm() {
     setShowEditForm(false);
   }
+  // Derive tri-state status from available fields
+  const status: StatusState = task.completed
+    ? "completed"
+    : task.start_date
+      ? "in_progress"
+      : "todo";
+
+  // Explicit selection from menu
+  const handleSelectStatus = (next: StatusState) => {
+    const update: Partial<Task> = {};
+    update.completed = next === "completed";
+    if (next === "in_progress") {
+      update.start_date = new Date().toISOString();
+    } else if (next === "todo") {
+      // Use null to clear value so backend unsets it (undefined might be ignored)
+      (update as any).start_date = null;
+    } else {
+      // Keep start_date as-is when marking completed
+      // no-op
+    }
+    handleTaskUpdate(update, { source: "status", optimistic: true });
+  };
   return (
     <div
       className="modern-form-container"
@@ -627,11 +725,13 @@ function TaskDetailsModalContent({
         <div className="modern-form-body">
           {/* Overview Section - Always Visible */}
           <TaskOverviewSection
+            status={status}
             task={task}
             currentPriority={currentPriority}
             completedSubtasks={completedSubtasks}
             totalSubtasks={totalSubtasks}
             progressPercentage={progressPercentage}
+            onSelectStatus={handleSelectStatus}
           />
           {/* Description - Expandable */}
           <TaskDescriptionSection
@@ -647,15 +747,7 @@ function TaskDetailsModalContent({
             expanded={expandedSections.subtasks}
             toggle={handleToggleSubtasks}
           />
-          {/* Schedule - Expandable */}
-          <TaskScheduleSection
-            start_date={task.start_date}
-            due_date={task.due_date}
-            recurrence={task.recurrence}
-            next_occurrence={task.next_occurrence}
-            expanded={expandedSections.schedule}
-            toggle={handleToggleSchedule}
-          />
+          {/* Schedule intentionally hidden per UX feedback */}
           {/* Dependencies - Expandable */}
           <TaskDependenciesSection
             blockedByTasks={blockedByTasks}
@@ -672,22 +764,8 @@ function TaskDetailsModalContent({
           />
         </div>
       </div>
-      {/* Actions */}
+  {/* Actions */}
       <TaskDetailsActions onClose={onClose} setShowEditForm={setShowEditForm} />
-      {/* Edit Form Modal */}
-      {showEditForm && (
-        <TaskForm
-          open={showEditForm}
-          onClose={handleCloseEditForm}
-          onSubmit={handleTaskUpdate}
-          loading={editFormLoading}
-          error={editFormError}
-          projects={projects}
-          allTasks={tasks}
-          initialValues={task}
-          editMode
-        />
-      )}
     </div>
   );
 }
@@ -776,47 +854,49 @@ const TaskDetails: React.FC<TaskDetailsModalProps> = ({
     }
   }, [open, task]);
 
-  // Helper function to ensure CSRF token
-  const ensureCsrfToken = async () => {
-    try {
-      const response = await fetch(
-        `${process.env.REACT_APP_API_URL}/api/csrf-token`,
-        {
-          method: "GET",
-          credentials: "include",
-        },
-      );
-      if (response.ok) {
-        const data = await response.json();
-        return data.csrf_token;
-      }
-    } catch (error) {
-      console.error("Failed to fetch CSRF token:", error);
+  // local copy of the task so UI can reflect updates immediately
+  const [localTask, setLocalTask] = useState(task || null);
+
+  // Keep localTask in sync when the selected task changes or when modal opens
+  useEffect(() => {
+    if (open && task) {
+      setLocalTask(task);
     }
-    return null;
-  };
+  }, [open, task]);
 
   // Handle task update
-  const handleTaskUpdate = async (updatedTask: Partial<Task>) => {
-    if (!task) return;
+  const handleTaskUpdate = async (
+    updatedTask: Partial<Task>,
+    options?: { source?: "status" | "form"; optimistic?: boolean },
+  ) => {
+    if (!localTask) return;
 
     setEditFormLoading(true);
     setEditFormError(null);
 
     try {
-      const csrfToken = await ensureCsrfToken();
-      const response = await fetch(
-        `${process.env.REACT_APP_API_URL}/api/tasks/${task.id}`,
-        {
-          method: "PUT",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-            ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
-          },
-          body: JSON.stringify(updatedTask),
+      // Optimistic UI update for status toggles
+      const snapshot = options?.optimistic ? { ...localTask } : null;
+      if (options?.optimistic && snapshot) {
+        setLocalTask({ ...snapshot, ...updatedTask });
+      }
+      let csrfToken: string | null = null;
+      try {
+        csrfToken = await getCsrfToken();
+      } catch (err) {
+        // Mirror previous behavior: log and proceed without token
+        console.error("Failed to fetch CSRF token:", err);
+        csrfToken = null;
+      }
+      const response = await fetch(`/api/tasks/${localTask.id}`, {
+        method: "PUT",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
         },
-      );
+        body: JSON.stringify(updatedTask),
+      });
 
       if (!response.ok) {
         const data = await response.json();
@@ -824,13 +904,25 @@ const TaskDetails: React.FC<TaskDetailsModalProps> = ({
         throw new Error(errorMessage);
       }
 
-      // Success - close form and call callback
+      // Success - close form, notify parent to refetch and optionally sync localTask
       setShowEditForm(false);
-      if (onEdit) onEdit();
+      if (!options?.optimistic) {
+        setLocalTask((prev) => (prev ? { ...prev, ...updatedTask } : prev));
+      }
+      // Notify parent (MainManagementWindow) to refetch tasks
+      window.dispatchEvent(new CustomEvent("tasksShouldRefetch"));
+      // Only trigger external edit flow when update came from the embedded form
+      if (options?.source === "form" && onEdit) onEdit();
     } catch (err: unknown) {
       const finalErrorMessage =
         err instanceof Error ? err.message : "Unknown error";
       setEditFormError(finalErrorMessage);
+      // Roll back optimistic change on error
+      if (options?.optimistic) {
+        setLocalTask((prev) => prev); // no-op to ensure state update sequence
+        // Re-fetch to ensure consistency
+        window.dispatchEvent(new CustomEvent("tasksShouldRefetch"));
+      }
     } finally {
       setEditFormLoading(false);
     }
@@ -843,31 +935,31 @@ const TaskDetails: React.FC<TaskDetailsModalProps> = ({
     }));
   };
 
-  if (!open || !task) return null;
+  if (!open || !localTask) return null;
 
   const currentPriority =
-    priorities.find((p) => p.value === task.priority) || priorities[1];
+    priorities.find((p) => p.value === localTask.priority) || priorities[1];
   const completedSubtasks =
-    task.subtasks?.filter((st) => st.completed).length || 0;
-  const totalSubtasks = task.subtasks?.length || 0;
+    localTask.subtasks?.filter((st) => st.completed).length || 0;
+  const totalSubtasks = localTask.subtasks?.length || 0;
   const progressPercentage =
     totalSubtasks > 0 ? (completedSubtasks / totalSubtasks) * 100 : 0;
 
   // Get dependency task names
   const blockedByTasks =
-    task.blocked_by
+    localTask.blocked_by
       ?.map((id) => tasks.find((t) => t.id === id)?.title || `Task #${id}`)
       .filter(Boolean) || [];
   const blockingTasks =
-    task.blocking
+    localTask.blocking
       ?.map((id) => tasks.find((t) => t.id === id)?.title || `Task #${id}`)
       .filter(Boolean) || [];
 
   return (
     <>
-      <ModalBackdrop onClose={onClose}>
+  <ModalBackdrop onClose={onClose}>
         <TaskDetailsModalContent
-          task={task}
+      task={localTask}
           parentTask={parentTask ?? null}
           currentPriority={currentPriority}
           completedSubtasks={completedSubtasks}
@@ -889,16 +981,20 @@ const TaskDetails: React.FC<TaskDetailsModalProps> = ({
       </ModalBackdrop>
 
       {/* Edit Form Modal */}
-      {showEditForm && (
+    {showEditForm && (
         <TaskForm
           open={showEditForm}
           onClose={() => setShowEditForm(false)}
-          onSubmit={handleTaskUpdate}
+          onSubmit={(vals) =>
+            handleTaskUpdate(mapFormValuesToTaskUpdate(vals), {
+              source: "form",
+            })
+          }
           loading={editFormLoading}
           error={editFormError}
           projects={projects}
           allTasks={tasks}
-          initialValues={task}
+      initialValues={localTask}
           editMode
         />
       )}

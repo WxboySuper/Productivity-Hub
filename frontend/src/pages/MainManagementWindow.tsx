@@ -198,6 +198,21 @@ function MainManagementWindow() {
     fetchTasks();
   }, [fetchTasks]);
 
+  // Listen for refetch events dispatched by detail modals
+  useEffect(() => {
+    const handler = () => {
+      fetchTasks();
+      // If a task is currently selected, try to sync it with latest data
+      setSelectedTask((prev) => {
+        if (!prev) return prev;
+        const latest = tasks.find((t) => t.id === prev.id);
+        return latest ? getTaskWithProject(latest) : prev;
+      });
+    };
+    window.addEventListener("tasksShouldRefetch", handler);
+    return () => window.removeEventListener("tasksShouldRefetch", handler);
+  }, [fetchTasks, tasks]);
+
   const handleApiError = useCallback(
     (err: unknown, contextMessage: string) => {
       const message = err instanceof Error ? err.message : "Unknown error";
