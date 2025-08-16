@@ -319,7 +319,7 @@
 
 @media (min-width: 640px) {
   .modern-quick-grid {
-  grid-template-columns: 2fr 1fr; /* give Status (left) even more room than Priority */
+    grid-template-columns: 2fr 1fr; /* give Status (left) even more room than Priority */
   }
 }
 

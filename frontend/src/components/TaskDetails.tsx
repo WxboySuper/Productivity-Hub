@@ -416,7 +416,11 @@ function StatusSelector({
       <div className="modern-detail-chip-content" style={{ width: "100%" }}>
         <div className="modern-detail-chip-label">Status</div>
         <div className="modern-detail-chip-value" style={{ marginBottom: 6 }}>
-          {status === "completed" ? "Completed" : status === "in_progress" ? "In Progress" : "To Do"}
+          {status === "completed"
+            ? "Completed"
+            : status === "in_progress"
+              ? "In Progress"
+              : "To Do"}
         </div>
         <div
           role="radiogroup"
@@ -448,8 +452,12 @@ function StatusSelector({
                   cursor: "pointer",
                 }}
               >
-                <span style={{ width: 18, textAlign: "center" }}>{opt.icon}</span>
-                <span style={{ fontSize: 12, whiteSpace: "nowrap" }}>{opt.label}</span>
+                <span style={{ width: 18, textAlign: "center" }}>
+                  {opt.icon}
+                </span>
+                <span style={{ fontSize: 12, whiteSpace: "nowrap" }}>
+                  {opt.label}
+                </span>
               </button>
             );
           })}
@@ -461,7 +469,7 @@ function StatusSelector({
 
 function PriorityChip({ icon, label }: { icon: string; label: string }) {
   return (
-  <div className="modern-detail-chip info">
+    <div className="modern-detail-chip info">
       <div className="modern-detail-chip-icon">{icon}</div>
       <div className="modern-detail-chip-content">
         <div className="modern-detail-chip-label">Priority</div>
@@ -764,7 +772,7 @@ function TaskDetailsModalContent({
           />
         </div>
       </div>
-  {/* Actions */}
+      {/* Actions */}
       <TaskDetailsActions onClose={onClose} setShowEditForm={setShowEditForm} />
     </div>
   );
@@ -957,9 +965,9 @@ const TaskDetails: React.FC<TaskDetailsModalProps> = ({
 
   return (
     <>
-  <ModalBackdrop onClose={onClose}>
+      <ModalBackdrop onClose={onClose}>
         <TaskDetailsModalContent
-      task={localTask}
+          task={localTask}
           parentTask={parentTask ?? null}
           currentPriority={currentPriority}
           completedSubtasks={completedSubtasks}
@@ -981,7 +989,7 @@ const TaskDetails: React.FC<TaskDetailsModalProps> = ({
       </ModalBackdrop>
 
       {/* Edit Form Modal */}
-    {showEditForm && (
+      {showEditForm && (
         <TaskForm
           open={showEditForm}
           onClose={() => setShowEditForm(false)}
@@ -994,7 +1002,7 @@ const TaskDetails: React.FC<TaskDetailsModalProps> = ({
           error={editFormError}
           projects={projects}
           allTasks={tasks}
-      initialValues={localTask}
+          initialValues={localTask}
           editMode
         />
       )}
