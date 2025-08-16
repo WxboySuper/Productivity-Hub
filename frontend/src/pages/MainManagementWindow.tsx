@@ -166,6 +166,19 @@ function MainManagementWindow() {
 
   const [editTask, setEditTask] = useState<Task | null>(null); // Track task being edited
 
+  // --- Helper functions that use state/hooks ---
+  const getTaskWithProject = (task: Task) => {
+    const projectId =
+      typeof task.projectId !== "undefined" ? task.projectId : task.project_id;
+    const project = projects.find((p) => p.id === projectId);
+    return {
+      ...task,
+      projectName: project ? project.name : undefined,
+      projectId,
+      project_id: projectId,
+    };
+  };
+
   // Local fetchTasks implementation (copied from useTasks.ts)
   const fetchTasks = useCallback(async () => {
     setTasksLoading(true);
@@ -211,7 +224,7 @@ function MainManagementWindow() {
     };
     window.addEventListener("tasksShouldRefetch", handler);
     return () => window.removeEventListener("tasksShouldRefetch", handler);
-  }, [fetchTasks, tasks]);
+  }, [fetchTasks, tasks, getTaskWithProject]);
 
   const handleApiError = useCallback(
     (err: unknown, contextMessage: string) => {
@@ -279,17 +292,7 @@ function MainManagementWindow() {
   }, []);
 
   // --- Helper functions that use state/hooks ---
-  const getTaskWithProject = (task: Task) => {
-    const projectId =
-      typeof task.projectId !== "undefined" ? task.projectId : task.project_id;
-    const project = projects.find((p) => p.id === projectId);
-    return {
-      ...task,
-      projectName: project ? project.name : undefined,
-      projectId,
-      project_id: projectId,
-    };
-  };
+  /* This function is now defined earlier in the component */
 
   const openTaskForm = (task: Task | null = null) => {
     setEditTask(task ? getTaskWithProject(task) : null);

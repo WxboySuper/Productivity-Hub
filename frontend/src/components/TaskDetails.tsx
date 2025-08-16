@@ -44,7 +44,6 @@ function ModalBackdrop({
 function TaskDetailsHeader({
   task,
   parentTask,
-  setShowEditForm,
   onClose,
 }: {
   task: Task;
@@ -229,75 +228,7 @@ function TaskDependenciesSection({
     </div>
   );
 }
-// TaskScheduleSection: displays schedule info in an expandable section
-function TaskScheduleSection({
-  start_date,
-  due_date,
-  recurrence,
-  next_occurrence,
-  expanded,
-  toggle,
-}: {
-  start_date?: string;
-  due_date?: string;
-  recurrence?: string;
-  next_occurrence?: string;
-  expanded: boolean;
-  toggle: () => void;
-}) {
-  if (!(due_date || start_date || recurrence)) return null;
-  function handleToggle() {
-    toggle();
-  }
-  return (
-    <div className="modern-expandable">
-      <button
-        type="button"
-        className={`modern-expandable-header ${expanded ? "expanded" : ""}`}
-        onClick={handleToggle}
-      >
-        <span className="modern-expandable-icon">▶️</span>
-        <h3 className="modern-expandable-title">Schedule</h3>
-      </button>
-      <div
-        className={`modern-expandable-content ${expanded ? "expanded" : ""}`}
-      >
-        <div className="modern-schedule-grid">
-          {start_date && (
-            <div className="modern-schedule-item">
-              <span className="modern-schedule-label">📅 Start Date</span>
-              <span className="modern-schedule-value">
-                {new Date(start_date).toLocaleString()}
-              </span>
-            </div>
-          )}
-          {due_date && (
-            <div className="modern-schedule-item">
-              <span className="modern-schedule-label">🎯 Due Date</span>
-              <span className="modern-schedule-value">
-                {new Date(due_date).toLocaleString()}
-              </span>
-            </div>
-          )}
-          {recurrence && (
-            <div className="modern-schedule-item">
-              <span className="modern-schedule-label">🔄 Recurrence</span>
-              <span className="modern-schedule-value">{recurrence}</span>
-            </div>
-          )}
-          {next_occurrence && (
-            <div className="modern-schedule-item">
-              <span className="modern-schedule-label">⏭️ Next Occurrence</span>
-              <span className="modern-schedule-value">
-                {new Date(next_occurrence).toLocaleString()}
-              </span>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
+
 // TaskSubtasksSection: displays subtasks in an expandable section
 function TaskSubtasksSection({
   subtasks,
@@ -665,13 +596,8 @@ function TaskDetailsModalContent({
   expandedSections,
   toggleSection,
   setShowEditForm,
-  showEditForm,
-  editFormLoading,
-  editFormError,
   handleTaskUpdate,
   onClose,
-  tasks,
-  projects,
   blockedByTasks,
   blockingTasks,
 }: TaskDetailsModalContentProps) {
@@ -681,17 +607,11 @@ function TaskDetailsModalContent({
   function handleToggleSubtasks() {
     toggleSection("subtasks");
   }
-  function handleToggleSchedule() {
-    toggleSection("schedule");
-  }
   function handleToggleDependencies() {
     toggleSection("dependencies");
   }
   function handleToggleReminders() {
     toggleSection("reminders");
-  }
-  function handleCloseEditForm() {
-    setShowEditForm(false);
   }
   // Derive tri-state status from available fields
   const status: StatusState = task.completed
@@ -708,6 +628,7 @@ function TaskDetailsModalContent({
       update.start_date = new Date().toISOString();
     } else if (next === "todo") {
       // Use null to clear value so backend unsets it (undefined might be ignored)
+      // skipcq: 0323
       (update as any).start_date = null;
     } else {
       // Keep start_date as-is when marking completed
