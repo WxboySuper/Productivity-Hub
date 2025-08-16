@@ -628,7 +628,7 @@ function TaskDetailsModalContent({
       update.start_date = new Date().toISOString();
     } else if (next === "todo") {
       // Use null to clear value so backend unsets it (undefined might be ignored)
-      // skipcq: 0323
+      // skipcq: JS-0323
       (update as any).start_date = null;
     } else {
       // Keep start_date as-is when marking completed
