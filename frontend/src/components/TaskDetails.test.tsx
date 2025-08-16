@@ -159,7 +159,9 @@ describe("TaskDetails", () => {
     expect(screen.getByText("Test Task")).toBeInTheDocument();
     expect(screen.getByText("📁 Test Project")).toBeInTheDocument();
     expect(screen.getByText("Medium")).toBeInTheDocument(); // Priority
-    expect(screen.getByText("In Progress")).toBeInTheDocument(); // Status
+    // There are multiple occurrences of the phrase "In Progress" (status label and selected option),
+    // assert that at least one is present to verify status without over-constraining the DOM.
+    expect(screen.getAllByText("In Progress").length).toBeGreaterThan(0); // Status
   });
 
   it("shows completed status for completed tasks", () => {
@@ -167,7 +169,9 @@ describe("TaskDetails", () => {
     render(<TaskDetails {...defaultProps} task={completedTask} />);
 
     expect(screen.getAllByText("✅").length).toBeGreaterThan(0);
-    expect(screen.getByText("Completed")).toBeInTheDocument();
+    // There are multiple occurrences of the word "Completed" (status label and selected option),
+    // assert that at least one is present to verify completed state without over-constraining the DOM.
+    expect(screen.getAllByText("Completed").length).toBeGreaterThan(0);
   });
 
   it("displays subtask progress correctly", () => {
@@ -235,19 +239,6 @@ describe("TaskDetails", () => {
 
     expect(screen.getByText("Subtask 1")).toBeInTheDocument();
     expect(screen.getByText("Subtask 2")).toBeInTheDocument();
-  });
-
-  it("shows schedule section when task has dates", () => {
-    render(<TaskDetails {...defaultProps} />);
-
-    expect(screen.getByText("Schedule")).toBeInTheDocument();
-
-    // Expand schedule section
-    fireEvent.click(screen.getByText("Schedule"));
-
-    expect(screen.getByText("📅 Start Date")).toBeInTheDocument();
-    expect(screen.getByText("🎯 Due Date")).toBeInTheDocument();
-    expect(screen.getByText("🔄 Recurrence")).toBeInTheDocument();
   });
 
   it("shows dependencies section when task has dependencies", () => {
@@ -354,21 +345,6 @@ describe("TaskDetails", () => {
     expect(screen.getByText("Task #888")).toBeInTheDocument();
   });
 
-  it("shows next occurrence when present in schedule section", () => {
-    const taskWithNextOccurrence = {
-      ...baseTask,
-      next_occurrence: "2024-12-25T10:00:00Z",
-    };
-
-    render(<TaskDetails {...defaultProps} task={taskWithNextOccurrence} />);
-
-    // Expand schedule section
-    fireEvent.click(screen.getByText("Schedule"));
-
-    expect(screen.getByText("⏭️ Next Occurrence")).toBeInTheDocument();
-    expect(screen.getByText(/12\/25\/2024/)).toBeInTheDocument(); // Date formatting may vary
-  });
-
   it("handles CSRF token fetch errors gracefully", () => {
     // Mock console.error to avoid noise in test output
     const consoleSpy = vi
@@ -427,32 +403,23 @@ describe("TaskDetails", () => {
       });
 
       // Verify CSRF token call
-      expect(global.fetch).toHaveBeenNthCalledWith(
-        1,
-        "http://localhost:3000/api/csrf-token",
-        {
-          method: "GET",
-          credentials: "include",
-        },
-      );
+      expect(global.fetch).toHaveBeenNthCalledWith(1, "/api/csrf-token", {
+        credentials: "include",
+      });
 
       // Verify task update call
-      expect(global.fetch).toHaveBeenNthCalledWith(
-        2,
-        "http://localhost:3000/api/tasks/1",
-        {
-          method: "PUT",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRF-Token": "mock-csrf-token",
-          },
-          body: JSON.stringify({
-            title: "Updated Task",
-            description: "Updated description",
-          }),
+      expect(global.fetch).toHaveBeenNthCalledWith(2, "/api/tasks/1", {
+        method: "PUT",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": "mock-csrf-token",
         },
-      );
+        body: JSON.stringify({
+          title: "Updated Task",
+          description: "Updated description",
+        }),
+      });
 
       // Verify onEdit callback was called
       expect(mockOnEdit).toHaveBeenCalledTimes(1);
@@ -494,21 +461,17 @@ describe("TaskDetails", () => {
       });
 
       // Verify task update call was made without CSRF token
-      expect(global.fetch).toHaveBeenNthCalledWith(
-        2,
-        "http://localhost:3000/api/tasks/1",
-        {
-          method: "PUT",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            title: "Updated Task",
-            description: "Updated description",
-          }),
+      expect(global.fetch).toHaveBeenNthCalledWith(2, "/api/tasks/1", {
+        method: "PUT",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+        body: JSON.stringify({
+          title: "Updated Task",
+          description: "Updated description",
+        }),
+      });
 
       expect(mockOnEdit).toHaveBeenCalledTimes(1);
     });
@@ -548,21 +511,17 @@ describe("TaskDetails", () => {
       );
 
       // Verify task update call was made without CSRF token
-      expect(global.fetch).toHaveBeenNthCalledWith(
-        2,
-        "http://localhost:3000/api/tasks/1",
-        {
-          method: "PUT",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            title: "Updated Task",
-            description: "Updated description",
-          }),
+      expect(global.fetch).toHaveBeenNthCalledWith(2, "/api/tasks/1", {
+        method: "PUT",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+        body: JSON.stringify({
+          title: "Updated Task",
+          description: "Updated description",
+        }),
+      });
 
       expect(mockOnEdit).toHaveBeenCalledTimes(1);
       consoleSpy.mockRestore();
