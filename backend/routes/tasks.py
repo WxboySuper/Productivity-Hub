@@ -100,7 +100,9 @@ def create_task():
                     if st_id is not None:
                         try:
                             st_id = int(st_id)
-                            subtask = Task.query.filter_by(id=st_id, user_id=user.id).first()
+                            subtask = Task.query.filter_by(
+                                id=st_id, user_id=user.id
+                            ).first()
                         except (ValueError, TypeError):
                             subtask = None
                     if subtask is None:
@@ -179,7 +181,9 @@ def update_task(task_id):
                 if st_id is not None:
                     try:
                         st_id = int(st_id)
-                        subtask = Task.query.filter_by(id=st_id, user_id=user.id).first()
+                        subtask = Task.query.filter_by(
+                            id=st_id, user_id=user.id
+                        ).first()
                     except (ValueError, TypeError):
                         subtask = None
                 if subtask is None:
