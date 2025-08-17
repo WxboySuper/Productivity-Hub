@@ -214,17 +214,21 @@ function MainManagementWindow() {
   // Listen for refetch events dispatched by detail modals
   useEffect(() => {
     const handler = () => {
+      // Just trigger a refetch; selection sync will happen when tasks update
       fetchTasks();
-      // If a task is currently selected, try to sync it with latest data
-      setSelectedTask((prev) => {
-        if (!prev) return prev;
-        const latest = tasks.find((t) => t.id === prev.id);
-        return latest ? getTaskWithProject(latest) : prev;
-      });
     };
     window.addEventListener("tasksShouldRefetch", handler);
     return () => window.removeEventListener("tasksShouldRefetch", handler);
-  }, [fetchTasks, tasks, getTaskWithProject]);
+  }, [fetchTasks]);
+
+  // When tasks list updates, keep selectedTask in sync with latest data
+  useEffect(() => {
+    if (!selectedTask) return;
+    const latest = tasks.find((t) => t.id === selectedTask.id);
+    if (latest) {
+      setSelectedTask(getTaskWithProject(latest));
+    }
+  }, [tasks, selectedTask, getTaskWithProject]);
 
   const handleApiError = useCallback(
     (err: unknown, contextMessage: string) => {
@@ -355,7 +359,7 @@ function MainManagementWindow() {
   };
 
   // Add this function above handleTaskFormSubmit
-  const handleCreateTask = async (task: Task) => {
+  const handleCreateTask = async (task: any) => {
     /* v8 ignore start */
     setTaskFormLoading(true);
     setTaskFormError(null);
@@ -388,7 +392,7 @@ function MainManagementWindow() {
   /* v8 ignore stop */
 
   // After editing a task, re-open the details modal for the updated task
-  const handleUpdateTask = async (task: Task) => {
+  const handleUpdateTask = async (task: any) => {
     /* v8 ignore start */
     if (!editTask) return;
     setTaskFormLoading(true);
@@ -431,45 +435,51 @@ function MainManagementWindow() {
   };
   /* v8 ignore stop */
 
-  // Add handler functions for TaskForm onSubmit
-  function handleTaskFormSubmit(task: TaskFormValues) {
-    // Accept projectId as string | number | undefined
-    /* v8 ignore start */
-    const completed = task.completed ?? false;
-    let projectId: number | undefined;
-    if (task.projectId !== undefined) {
-      if (typeof task.projectId === "string") {
-        const parsed = parseInt(task.projectId, 10);
-        projectId = isNaN(parsed) ? undefined : parsed;
-      } else if (typeof task.projectId === "number") {
-        projectId = task.projectId;
-      }
-    } else if (task.project_id !== undefined) {
-      if (typeof task.project_id === "string") {
-        const parsed = parseInt(task.project_id, 10);
-        projectId = isNaN(parsed) ? undefined : parsed;
-      } else if (typeof task.project_id === "number") {
-        projectId = task.project_id;
-      }
-    }
+  // Map TaskFormValues to API payload (aligns with TaskDetails mapping)
+  function mapFormValuesToApiPayload(values: TaskFormValues) {
+    const project_id =
+      values.project_id !== undefined
+        ? typeof values.project_id === "string"
+          ? values.project_id
+            ? Number(values.project_id)
+            : undefined
+          : values.project_id
+        : values.projectId !== undefined
+          ? typeof values.projectId === "string"
+            ? values.projectId
+              ? Number(values.projectId)
+              : undefined
+            : values.projectId
+          : undefined;
 
-    // Only include allowed fields for TaskFormValues
-    const safeTask: Task = {
-      id: typeof task.id === "number" ? task.id : 0, // fallback to 0 if undefined, or handle as needed
-      title: task.title ?? "",
-      description: task.description ?? "", // Ensure description is present
-      completed,
-      projectId,
-      // Only assign subtasks if they are of type Task[]
-      ...(Array.isArray(task.subtasks)
-        ? { subtasks: task.subtasks as Task[] }
-        : {}),
+    return {
+      // id is not required by backend for create/update (path has it for update)
+      title: values.title?.trim() ?? "",
+      description: values.description ?? "",
+      due_date: values.due_date,
+      start_date: values.start_date,
+      priority: values.priority,
+      project_id,
+      completed: values.completed ?? false,
+      subtasks: values.subtasks
+        ?.filter((st) => typeof st.id === "number")
+        .map((st) => ({ id: st.id as number, title: st.title, completed: st.completed })),
+      recurrence: values.recurrence,
+      blocked_by: values.blocked_by,
+      blocking: values.blocking,
+      linked_tasks: values.linked_tasks,
+      reminder_enabled: values.reminder_enabled,
+      reminder_time: values.reminder_time,
     };
+  }
 
+  // Add handler functions for TaskForm onSubmit
+  function handleTaskFormSubmit(formValues: TaskFormValues) {
+    const payload = mapFormValuesToApiPayload(formValues);
     if (editTask) {
-      handleUpdateTask(safeTask);
+      handleUpdateTask(payload);
     } else {
-      handleCreateTask(safeTask);
+      handleCreateTask(payload);
     }
   }
   /* v8 ignore stop */

@@ -75,6 +75,11 @@ def create_task():
             task.start_date = fields["start_date"]
         if fields["recurrence"]:
             task.recurrence = fields["recurrence"]
+        # Reminders
+        if "reminder_enabled" in fields:
+            task.reminder_enabled = bool(fields["reminder_enabled"])  # type: ignore[attr-defined]
+        if fields.get("reminder_time") is not None:
+            task.reminder_time = fields["reminder_time"]  # type: ignore[attr-defined]
         db.session.add(task)
         db.session.commit()
         return jsonify(_serialize_task(task)), 201

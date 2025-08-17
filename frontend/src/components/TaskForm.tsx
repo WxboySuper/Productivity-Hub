@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import type React from "react";
 import type { Project } from "../hooks/useProjects";
 import TaskRelationshipsSection from "./TaskRelationshipsSection";
@@ -1218,13 +1219,14 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
     projects,
   };
 
-  return (
+  return createPortal(
     <div
       className="modern-modal-backdrop"
       role="button"
       tabIndex={0}
       onClick={handleBackdropClick}
       onKeyDown={handleBackdropKeyDown}
+      style={{ zIndex: 10000 }}
     >
       <ModalContent modalRef={modalRef}>
         <TaskFormHeader editMode={editMode} onClose={onClose} />
@@ -1241,7 +1243,8 @@ const TaskForm: React.FC<TaskFormModalProps> = ({
           formId={formIdRef.current}
         />
       </ModalContent>
-    </div>
+    </div>,
+    document.body,
   );
 };
 

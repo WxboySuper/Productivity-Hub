@@ -781,7 +781,7 @@ const TaskDetails: React.FC<TaskDetailsModalProps> = ({
       setEditFormError(null);
       setEditFormLoading(false);
     }
-  }, [open, task]);
+  }, [open]);
 
   // local copy of the task so UI can reflect updates immediately
   const [localTask, setLocalTask] = useState(task || null);
@@ -832,16 +832,15 @@ const TaskDetails: React.FC<TaskDetailsModalProps> = ({
         const errorMessage = data.error || "Failed to update task";
         throw new Error(errorMessage);
       }
+      // Parse server-updated task to reflect canonical values immediately
+      const serverTask = (await response.json()) as Task;
 
-      // Success - close form, notify parent to refetch and optionally sync localTask
+      // Success - close form, notify parent to refetch and sync localTask with server
       setShowEditForm(false);
-      if (!options?.optimistic) {
-        setLocalTask((prev) => (prev ? { ...prev, ...updatedTask } : prev));
-      }
+      setLocalTask((prev) => (prev ? { ...prev, ...serverTask } : serverTask));
       // Notify parent (MainManagementWindow) to refetch tasks
       window.dispatchEvent(new CustomEvent("tasksShouldRefetch"));
-      // Only trigger external edit flow when update came from the embedded form
-      if (options?.source === "form" && onEdit) onEdit();
+  // Keep details view open after saving from embedded form
     } catch (err: unknown) {
       const finalErrorMessage =
         err instanceof Error ? err.message : "Unknown error";

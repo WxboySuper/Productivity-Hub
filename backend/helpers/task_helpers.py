@@ -36,10 +36,19 @@ def _extract_task_fields(data, user):
     due_date_str = data.get("due_date")
     start_date_str = data.get("start_date")
     recurrence = data.get("recurrence")
+    # Reminders
+    reminder_enabled = data.get("reminder_enabled")
+    if reminder_enabled is None:
+        # Default to True (model default) unless explicitly provided
+        reminder_enabled = True
+    reminder_time_str = data.get("reminder_time")
     due_date, err = parse_date(due_date_str, "due_date")
     if err:
         return None, err
     start_date, err = parse_date(start_date_str, "start_date")
+    if err:
+        return None, err
+    reminder_time, err = parse_date(reminder_time_str, "reminder_time")
     if err:
         return None, err
     if start_date and due_date and start_date > due_date:
@@ -53,6 +62,8 @@ def _extract_task_fields(data, user):
         "due_date": due_date,
         "start_date": start_date,
         "recurrence": recurrence,
+        "reminder_enabled": bool(reminder_enabled),
+        "reminder_time": reminder_time,
     }, None
 
 
@@ -75,6 +86,13 @@ def _serialize_task(task):
         d["start_date"] = task.start_date.isoformat()
     if task.recurrence:
         d["recurrence"] = task.recurrence
+    # Always include reminder_enabled to give frontend a definitive value
+    try:
+        d["reminder_enabled"] = bool(task.reminder_enabled)
+    except Exception:
+        d["reminder_enabled"] = True
+    if getattr(task, "reminder_time", None):
+        d["reminder_time"] = task.reminder_time.isoformat()
     return d
 
 
@@ -88,6 +106,8 @@ def _validate_and_update_task_fields(task, data, user):
         lambda: update_task_due_date(task, data),
         lambda: update_task_start_date(task, data),
         lambda: update_task_recurrence(task, data),
+        lambda: update_task_reminder_enabled(task, data),
+        lambda: update_task_reminder_time(task, data),
     ]:
         err = updater()
         if err:
@@ -178,6 +198,25 @@ def update_task_start_date(task, data):
 def update_task_recurrence(task, data):
     if "recurrence" in data:
         task.recurrence = data["recurrence"]
+
+
+def update_task_reminder_enabled(task, data):
+    if "reminder_enabled" in data:
+        task.reminder_enabled = bool(data["reminder_enabled"])  # type: ignore[attr-defined]
+    return None
+
+
+def update_task_reminder_time(task, data):
+    if "reminder_time" in data:
+        rt_str = data["reminder_time"]
+        if rt_str:
+            try:
+                task.reminder_time = datetime.fromisoformat(rt_str)  # type: ignore[attr-defined]
+            except Exception:
+                return "Invalid reminder_time format"
+        else:
+            task.reminder_time = None  # type: ignore[attr-defined]
+    return None
 
 
 def _validate_dates(start_date, due_date):
