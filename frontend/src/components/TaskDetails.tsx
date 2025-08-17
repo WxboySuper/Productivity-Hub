@@ -840,7 +840,7 @@ const TaskDetails: React.FC<TaskDetailsModalProps> = ({
       setLocalTask((prev) => (prev ? { ...prev, ...serverTask } : serverTask));
       // Notify parent (MainManagementWindow) to refetch tasks
       window.dispatchEvent(new CustomEvent("tasksShouldRefetch"));
-  // Keep details view open after saving from embedded form
+      // Keep details view open after saving from embedded form
     } catch (err: unknown) {
       const finalErrorMessage =
         err instanceof Error ? err.message : "Unknown error";

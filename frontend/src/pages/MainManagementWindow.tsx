@@ -463,7 +463,11 @@ function MainManagementWindow() {
       completed: values.completed ?? false,
       subtasks: values.subtasks
         ?.filter((st) => typeof st.id === "number")
-        .map((st) => ({ id: st.id as number, title: st.title, completed: st.completed })),
+        .map((st) => ({
+          id: st.id as number,
+          title: st.title,
+          completed: st.completed,
+        })),
       recurrence: values.recurrence,
       blocked_by: values.blocked_by,
       blocking: values.blocking,
