@@ -41,6 +41,8 @@ def _extract_task_fields(data, user):
     if reminder_enabled is None:
         # Default to True (model default) unless explicitly provided
         reminder_enabled = True
+    # Default to True (model default) unless explicitly provided
+    # Do not override the model's default here
     reminder_time_str = data.get("reminder_time")
     due_date, err = parse_date(due_date_str, "due_date")
     if err:
@@ -89,7 +91,7 @@ def _serialize_task(task):
     # Always include reminder_enabled to give frontend a definitive value
     try:
         d["reminder_enabled"] = bool(task.reminder_enabled)
-    except Exception:
+    except AttributeError:
         d["reminder_enabled"] = True
     if getattr(task, "reminder_time", None):
         d["reminder_time"] = task.reminder_time.isoformat()
@@ -212,7 +214,7 @@ def update_task_reminder_time(task, data):
         if rt_str:
             try:
                 task.reminder_time = datetime.fromisoformat(rt_str)  # type: ignore[attr-defined]
-            except Exception:
+            except (ValueError, TypeError):
                 return "Invalid reminder_time format"
         else:
             task.reminder_time = None  # type: ignore[attr-defined]

@@ -359,7 +359,7 @@ function MainManagementWindow() {
   };
 
   // Add this function above handleTaskFormSubmit
-  const handleCreateTask = async (task: any) => {
+  const handleCreateTask = async (task: TaskFormValues) => {
     /* v8 ignore start */
     setTaskFormLoading(true);
     setTaskFormError(null);
