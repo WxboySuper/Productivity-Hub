@@ -461,13 +461,17 @@ function MainManagementWindow() {
       priority: values.priority,
       project_id,
       completed: values.completed ?? false,
-      subtasks: values.subtasks
-        ?.filter((st) => typeof st.id === "number")
-        .map((st) => ({
-          id: st.id as number,
+      // Allow new subtasks without an id; backend will create them
+      subtasks: values.subtasks?.map((st) => {
+        const base = {
           title: st.title,
           completed: st.completed,
-        })),
+        } as { id?: number; title: string; completed: boolean };
+        if (typeof st.id === "number") {
+          base.id = st.id;
+        }
+        return base;
+      }),
       recurrence: values.recurrence,
       blocked_by: values.blocked_by,
       blocking: values.blocking,

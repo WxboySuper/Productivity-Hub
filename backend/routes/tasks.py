@@ -81,8 +81,52 @@ def create_task():
         if fields.get("reminder_time") is not None:
             task.reminder_time = fields["reminder_time"]  # type: ignore[attr-defined]
         db.session.add(task)
+        # Flush to assign an ID before creating subtasks
+        db.session.flush()
+
+        # Create or attach subtasks if provided
+        try:
+            subtasks_data = data.get("subtasks") or []
+            if isinstance(subtasks_data, list):
+                for st in subtasks_data:
+                    if not isinstance(st, dict):
+                        continue
+                    st_title = str(st.get("title", "")).strip()
+                    if not st_title:
+                        continue
+                    st_completed = bool(st.get("completed", False))
+                    st_id = st.get("id")
+                    subtask = None
+                    if st_id is not None:
+                        try:
+                            st_id = int(st_id)
+                            subtask = Task.query.filter_by(id=st_id, user_id=user.id).first()
+                        except (ValueError, TypeError):
+                            subtask = None
+                    if subtask is None:
+                        subtask = Task(
+                            title=st_title,
+                            user_id=user.id,
+                            project_id=task.project_id,
+                            parent_id=task.id,
+                            completed=st_completed,
+                            priority=task.priority,
+                        )
+                        db.session.add(subtask)
+                    else:
+                        # Update existing and re-parent under this task
+                        subtask.title = st_title
+                        subtask.completed = st_completed
+                        subtask.parent_id = task.id
+                        subtask.project_id = task.project_id
+        except Exception:
+            # Ignore malformed subtasks payloads without failing task creation
+            pass
+
         db.session.commit()
-        return jsonify(_serialize_task(task)), 201
+        task_dict = _serialize_task(task)
+        task_dict["subtasks"] = [_serialize_task(subtask) for subtask in task.subtasks]
+        return jsonify(task_dict), 201
     except Exception as e:
         db.session.rollback()
         return error_response("Failed to create task", 500)
@@ -119,8 +163,46 @@ def update_task(task_id):
         err = _validate_and_update_task_fields(task, data, user)
         if err:
             return error_response(err, 400)
+
+        # Upsert subtasks if provided
+        if isinstance(data.get("subtasks"), list):
+            for st in data.get("subtasks", []):
+                if not isinstance(st, dict):
+                    continue
+                st_title = str(st.get("title", "")).strip()
+                if not st_title:
+                    continue
+                st_completed = bool(st.get("completed", False))
+                st_id = st.get("id")
+                subtask = None
+                # Only allow updating subtasks owned by the user
+                if st_id is not None:
+                    try:
+                        st_id = int(st_id)
+                        subtask = Task.query.filter_by(id=st_id, user_id=user.id).first()
+                    except (ValueError, TypeError):
+                        subtask = None
+                if subtask is None:
+                    # Create a new subtask under this task
+                    subtask = Task(
+                        title=st_title,
+                        user_id=user.id,
+                        project_id=task.project_id,
+                        parent_id=task.id,
+                        completed=st_completed,
+                        priority=task.priority,
+                    )
+                    db.session.add(subtask)
+                else:
+                    # Update existing and ensure it's under this parent
+                    subtask.title = st_title
+                    subtask.completed = st_completed
+                    subtask.parent_id = task.id
+                    subtask.project_id = task.project_id
+
         db.session.commit()
         task_dict = _serialize_task(task)
+        task_dict["subtasks"] = [_serialize_task(subtask) for subtask in task.subtasks]
         return jsonify(task_dict), 200
     except Exception as e:
         db.session.rollback()

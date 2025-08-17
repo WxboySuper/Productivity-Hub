@@ -527,7 +527,12 @@ interface Project {
 }
 
 // Helper to adapt TaskFormValues to Partial<Task> for API updates
-function mapFormValuesToTaskUpdate(values: TaskFormValues): Partial<Task> {
+// Wire DTO for updates: subtasks may omit id when creating new ones
+type TaskUpdateDto = Omit<Partial<Task>, "subtasks"> & {
+  subtasks?: Array<{ id?: number; title: string; completed: boolean }>;
+};
+
+function mapFormValuesToTaskUpdate(values: TaskFormValues): TaskUpdateDto {
   return {
     id: values.id,
     title: values.title,
@@ -542,13 +547,15 @@ function mapFormValuesToTaskUpdate(values: TaskFormValues): Partial<Task> {
           : undefined
         : values.project_id,
     completed: values.completed,
-    subtasks: values.subtasks
-      ?.filter((st) => typeof st.id === "number")
-      .map((st) => ({
-        id: st.id as number,
+    // Allow creating new subtasks without id; backend will create them
+    subtasks: values.subtasks?.map((st) => {
+      const dto: { id?: number; title: string; completed: boolean } = {
         title: st.title,
         completed: st.completed,
-      })),
+      };
+      if (typeof st.id === "number") dto.id = st.id;
+      return dto;
+    }),
     recurrence: values.recurrence,
     blocked_by: values.blocked_by,
     blocking: values.blocking,
@@ -576,7 +583,7 @@ interface TaskDetailsModalContentProps {
   editFormLoading: boolean;
   editFormError: string | null;
   handleTaskUpdate: (
-    updatedTask: Partial<Task>,
+    updatedTask: TaskUpdateDto,
     options?: { source?: "status" | "form"; optimistic?: boolean },
   ) => void;
   onClose: () => void;
@@ -795,7 +802,7 @@ const TaskDetails: React.FC<TaskDetailsModalProps> = ({
 
   // Handle task update
   const handleTaskUpdate = async (
-    updatedTask: Partial<Task>,
+    updatedTask: TaskUpdateDto,
     options?: { source?: "status" | "form"; optimistic?: boolean },
   ) => {
     if (!localTask) return;
@@ -807,7 +814,9 @@ const TaskDetails: React.FC<TaskDetailsModalProps> = ({
       // Optimistic UI update for status toggles
       const snapshot = options?.optimistic ? { ...localTask } : null;
       if (options?.optimistic && snapshot) {
-        setLocalTask({ ...snapshot, ...updatedTask });
+        // Avoid merging subtasks with optional ids into localTask type
+        const { subtasks: _omitSubtasks, ...rest } = updatedTask as any;
+        setLocalTask({ ...snapshot, ...rest });
       }
       let csrfToken: string | null = null;
       try {
