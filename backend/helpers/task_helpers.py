@@ -1,4 +1,5 @@
 from datetime import datetime
+
 from models.task import Task
 
 
@@ -204,7 +205,9 @@ def update_task_blocked_by(task, data, user):
             for task_id in blocked_by_ids:
                 if not isinstance(task_id, int):
                     return f"Invalid blocking task ID: {task_id}"
-                blocking_task = Task.query.filter_by(id=task_id, user_id=user.id).first()
+                blocking_task = Task.query.filter_by(
+                    id=task_id, user_id=user.id
+                ).first()
                 if not blocking_task:
                     return f"Blocking task not found: {task_id}"
                 if blocking_task.id == task.id:
@@ -283,7 +286,9 @@ def update_task_subtasks(task, data, user):
                 if not isinstance(subtask_data, dict) or "id" not in subtask_data:
                     continue
                 subtask_id = subtask_data["id"]
-                subtask = Task.query.filter_by(id=subtask_id, user_id=user.id, parent_id=task.id).first()
+                subtask = Task.query.filter_by(
+                    id=subtask_id, user_id=user.id, parent_id=task.id
+                ).first()
                 if subtask:
                     # Update subtask fields
                     if "title" in subtask_data:
