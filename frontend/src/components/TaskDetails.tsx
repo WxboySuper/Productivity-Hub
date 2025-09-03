@@ -742,7 +742,7 @@ const TaskDetails: React.FC<TaskDetailsModalProps> = ({
   open,
   onClose,
   task,
-  onEdit, // External edit callback - called from parent when needed
+  onEdit, // External edit callback - called from parent when needed // skipcq: JS-0356
   parentTask,
   tasks = [],
   projects = [],

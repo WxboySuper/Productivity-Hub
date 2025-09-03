@@ -52,7 +52,7 @@ interface TaskFormProps {
 // Mock TaskForm component
 
 import { useState, useEffect } from "react";
-vi.mock("./TaskForm", () => {
+vi.mock("../../components/TaskForm", () => {
   let storedOnSubmit: ((task: TaskUpdateData) => void) | null = null;
   return {
     default: ({ open, onSubmit, onClose, loading, error }: TaskFormProps) => {
