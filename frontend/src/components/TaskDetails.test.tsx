@@ -421,8 +421,8 @@ describe("TaskDetails", () => {
         }),
       });
 
-      // Verify onEdit callback was called
-      expect(mockOnEdit).toHaveBeenCalledTimes(1);
+      // Verify onEdit callback was NOT called for inline form submission
+      expect(mockOnEdit).toHaveBeenCalledTimes(0);
 
       // Verify form is closed (TaskForm should not be visible)
       await waitFor(() => {
@@ -473,7 +473,7 @@ describe("TaskDetails", () => {
         }),
       });
 
-      expect(mockOnEdit).toHaveBeenCalledTimes(1);
+      expect(mockOnEdit).toHaveBeenCalledTimes(0);
     });
 
     it("handles CSRF token network error and continues with task update", async () => {
@@ -523,7 +523,7 @@ describe("TaskDetails", () => {
         }),
       });
 
-      expect(mockOnEdit).toHaveBeenCalledTimes(1);
+      expect(mockOnEdit).toHaveBeenCalledTimes(0);
       consoleSpy.mockRestore();
     });
 
