@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 
-import TaskDetails from "./TaskDetails";
+import TaskDetails from "../../components/TaskDetails";
 
 // Define types for test data based on component interfaces
 interface Task {
