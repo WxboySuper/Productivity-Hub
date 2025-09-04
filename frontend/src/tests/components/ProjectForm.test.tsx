@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import ProjectForm from "./ProjectForm";
+import ProjectForm from "../../components/ProjectForm";
 
 const defaultProps = {
   onCreate: vi.fn(),

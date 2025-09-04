@@ -1,5 +1,7 @@
 from datetime import datetime
 
+from models.task import Task
+
 
 def validate_title(data):
     title = data.get("title", "")
@@ -68,6 +70,9 @@ def _serialize_task(task):
         "created_at": task.created_at.isoformat(),
         "updated_at": task.updated_at.isoformat(),
         "subtasks": [],
+        "blocked_by": [task.id for task in task.blocked_by] if task.blocked_by else [],
+        "blocking": [task.id for task in task.blocking] if task.blocking else [],
+        "reminder_enabled": task.reminder_enabled,
     }
     if task.due_date:
         d["due_date"] = task.due_date.isoformat()
@@ -75,6 +80,8 @@ def _serialize_task(task):
         d["start_date"] = task.start_date.isoformat()
     if task.recurrence:
         d["recurrence"] = task.recurrence
+    if task.reminder_time:
+        d["reminder_time"] = task.reminder_time.isoformat()
     return d
 
 
@@ -88,6 +95,11 @@ def _validate_and_update_task_fields(task, data, user):
         lambda: update_task_due_date(task, data),
         lambda: update_task_start_date(task, data),
         lambda: update_task_recurrence(task, data),
+        lambda: update_task_blocked_by(task, data, user),
+        lambda: update_task_blocking(task, data, user),
+        lambda: update_task_reminder_enabled(task, data),
+        lambda: update_task_reminder_time(task, data),
+        lambda: update_task_subtasks(task, data, user),
     ]:
         err = updater()
         if err:
@@ -178,6 +190,114 @@ def update_task_start_date(task, data):
 def update_task_recurrence(task, data):
     if "recurrence" in data:
         task.recurrence = data["recurrence"]
+
+
+def update_task_blocked_by(task, data, user):
+    """Update the tasks that block this task."""
+    if "blocked_by" in data:
+        blocked_by_ids = data["blocked_by"]
+        if blocked_by_ids is None:
+            # Clear all blocking relationships
+            task.blocked_by = []
+        elif isinstance(blocked_by_ids, list):
+            # Validate that all blocking task IDs exist and belong to the user
+            blocking_tasks = []
+            for task_id in blocked_by_ids:
+                if not isinstance(task_id, int):
+                    return f"Invalid blocking task ID: {task_id}"
+                blocking_task = Task.query.filter_by(
+                    id=task_id, user_id=user.id
+                ).first()
+                if not blocking_task:
+                    return f"Blocking task not found: {task_id}"
+                if blocking_task.id == task.id:
+                    return "Task cannot block itself"
+                blocking_tasks.append(blocking_task)
+            task.blocked_by = blocking_tasks
+        else:
+            return "blocked_by must be a list of task IDs"
+    return None
+
+
+def update_task_blocking(task, data, user):
+    """Update the tasks that this task blocks."""
+    if "blocking" in data:
+        blocking_ids = data["blocking"]
+        if blocking_ids is None:
+            # Clear all blocked relationships
+            task.blocking = []
+        elif isinstance(blocking_ids, list):
+            # Validate that all blocked task IDs exist and belong to the user
+            blocked_tasks = []
+            for task_id in blocking_ids:
+                if not isinstance(task_id, int):
+                    return f"Invalid blocked task ID: {task_id}"
+                blocked_task = Task.query.filter_by(id=task_id, user_id=user.id).first()
+                if not blocked_task:
+                    return f"Blocked task not found: {task_id}"
+                if blocked_task.id == task.id:
+                    return "Task cannot block itself"
+                blocked_tasks.append(blocked_task)
+            task.blocking = blocked_tasks
+        else:
+            return "blocking must be a list of task IDs"
+    return None
+
+
+def update_task_reminder_enabled(task, data):
+    """Update the reminder enabled flag."""
+    if "reminder_enabled" in data:
+        reminder_enabled = data["reminder_enabled"]
+        if isinstance(reminder_enabled, bool):
+            task.reminder_enabled = reminder_enabled
+        else:
+            return "reminder_enabled must be a boolean"
+    return None
+
+
+def update_task_reminder_time(task, data):
+    """Update the reminder time."""
+    if "reminder_time" in data:
+        reminder_time = data["reminder_time"]
+        if reminder_time is None:
+            task.reminder_time = None
+        elif isinstance(reminder_time, str):
+            try:
+                task.reminder_time = datetime.fromisoformat(reminder_time)
+            except Exception:
+                return "Invalid reminder_time format"
+        else:
+            return "reminder_time must be a valid ISO datetime string"
+    return None
+
+
+def update_task_subtasks(task, data, user):
+    """Update subtasks for this task."""
+    if "subtasks" in data:
+        subtasks_data = data["subtasks"]
+        if subtasks_data is None:
+            # Clear all subtasks by setting their parent_id to None
+            for subtask in task.subtasks:
+                subtask.parent_id = None
+        elif isinstance(subtasks_data, list):
+            # For simplicity, we'll just update existing subtasks
+            # Adding/removing subtasks should be done through separate endpoints
+            for subtask_data in subtasks_data:
+                if not isinstance(subtask_data, dict) or "id" not in subtask_data:
+                    continue
+                subtask_id = subtask_data["id"]
+                subtask = Task.query.filter_by(
+                    id=subtask_id, user_id=user.id, parent_id=task.id
+                ).first()
+                if subtask:
+                    # Update subtask fields
+                    if "title" in subtask_data:
+                        subtask.title = str(subtask_data["title"]).strip()
+                    if "completed" in subtask_data:
+                        subtask.completed = bool(subtask_data["completed"])
+        else:
+            return "subtasks must be a list"
+    return None
 
 
 def _validate_dates(start_date, due_date):

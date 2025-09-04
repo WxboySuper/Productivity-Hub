@@ -742,7 +742,7 @@ const TaskDetails: React.FC<TaskDetailsModalProps> = ({
   open,
   onClose,
   task,
-  onEdit,
+  onEdit, // External edit callback - called from parent when needed // skipcq: JS-0356
   parentTask,
   tasks = [],
   projects = [],
@@ -840,8 +840,8 @@ const TaskDetails: React.FC<TaskDetailsModalProps> = ({
       }
       // Notify parent (MainManagementWindow) to refetch tasks
       window.dispatchEvent(new CustomEvent("tasksShouldRefetch"));
-      // Only trigger external edit flow when update came from the embedded form
-      if (options?.source === "form" && onEdit) onEdit();
+      // Note: Don't trigger external edit flow for inline form submissions
+      // The inline form should just close and stay on the details view
     } catch (err: unknown) {
       const finalErrorMessage =
         err instanceof Error ? err.message : "Unknown error";

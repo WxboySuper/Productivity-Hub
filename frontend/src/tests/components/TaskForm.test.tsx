@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";
-import TaskForm, { toggleSubtask } from "./TaskForm";
+import TaskForm, { toggleSubtask } from "../../components/TaskForm";
 
 // Helper to get a tab button by its label while avoiding the backdrop role=button
 const getTab = (label: string | RegExp) => {

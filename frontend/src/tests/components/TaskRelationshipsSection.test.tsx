@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { vi } from "vitest";
-import TaskRelationshipsSection from "./TaskRelationshipsSection";
+import TaskRelationshipsSection from "../../components/TaskRelationshipsSection";
 
 describe("TaskRelationshipsSection", () => {
   const allTasks = [

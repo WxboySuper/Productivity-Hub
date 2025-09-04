@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 
-import TaskDetails from "./TaskDetails";
+import TaskDetails from "../../components/TaskDetails";
 
 // Define types for test data based on component interfaces
 interface Task {
@@ -52,7 +52,7 @@ interface TaskFormProps {
 // Mock TaskForm component
 
 import { useState, useEffect } from "react";
-vi.mock("./TaskForm", () => {
+vi.mock("../../components/TaskForm", () => {
   let storedOnSubmit: ((task: TaskUpdateData) => void) | null = null;
   return {
     default: ({ open, onSubmit, onClose, loading, error }: TaskFormProps) => {
@@ -421,8 +421,8 @@ describe("TaskDetails", () => {
         }),
       });
 
-      // Verify onEdit callback was called
-      expect(mockOnEdit).toHaveBeenCalledTimes(1);
+      // Verify onEdit callback was NOT called for inline form submission
+      expect(mockOnEdit).toHaveBeenCalledTimes(0);
 
       // Verify form is closed (TaskForm should not be visible)
       await waitFor(() => {
@@ -473,7 +473,7 @@ describe("TaskDetails", () => {
         }),
       });
 
-      expect(mockOnEdit).toHaveBeenCalledTimes(1);
+      expect(mockOnEdit).toHaveBeenCalledTimes(0);
     });
 
     it("handles CSRF token network error and continues with task update", async () => {
@@ -523,7 +523,7 @@ describe("TaskDetails", () => {
         }),
       });
 
-      expect(mockOnEdit).toHaveBeenCalledTimes(1);
+      expect(mockOnEdit).toHaveBeenCalledTimes(0);
       consoleSpy.mockRestore();
     });
 
