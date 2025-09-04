@@ -1,0 +1,40 @@
+[Unit]
+Description=Productivity Hub Backend Application
+After=network.target
+Wants=network.target
+
+[Service]
+Type=notify
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/productivity-hub/current/backend
+Environment=PATH=/var/www/productivity-hub/current/backend/venv/bin
+Environment=FLASK_ENV=production
+Environment=FLASK_DEBUG=0
+EnvironmentFile=/var/www/productivity-hub/current/backend/.env
+ExecStart=/var/www/productivity-hub/current/backend/venv/bin/gunicorn -c gunicorn.conf.py app:app
+ExecReload=/bin/kill -s HUP $MAINPID
+Restart=always
+RestartSec=3
+TimeoutStopSec=30
+
+# Security settings
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/www/productivity-hub/current/backend
+ReadWritePaths=/var/log/productivity-hub
+ReadWritePaths=/var/log/gunicorn
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictRealtime=true
+RestrictNamespaces=true
+
+# Process limits
+LimitNOFILE=65536
+LimitNPROC=4096
+
+[Install]
+WantedBy=multi-user.target
