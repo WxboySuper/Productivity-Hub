@@ -1,6 +1,7 @@
 # .gitignore
 # Python
 .venv/
+venv/
 __pycache__/
 */.pytest_cache/
 .pytest_cache/
@@ -26,6 +27,7 @@ Thumbs.db
 
 # Misc
 *.sqlite3
+*.db
 .vscode/*
 .vscode
 .qodo
@@ -41,5 +43,13 @@ docs/personal-docs/*
 docs/personal-docs
 */app.backup.py
 
-# Scripts
-scripts/*
+# Deployment artifacts
+logs/
+backups/
+ssl/
+
+# Docker
+.env.docker
+
+# Backup files
+*.bak
