@@ -5,6 +5,7 @@ This file contains practical testing steps to validate the deployment readiness 
 ## Prerequisites Testing
 
 ### 1. Test Backend Dependencies
+
 ```bash
 cd backend
 pip install -r ../requirements.txt
@@ -12,6 +13,7 @@ python -m pytest --tb=short  # Should pass all 89 tests
 ```
 
 ### 2. Test Frontend Build
+
 ```bash
 cd frontend
 npm install
@@ -21,6 +23,7 @@ npm run build  # Should create dist/ directory
 ## Script Testing
 
 ### 1. Test Production Startup Script
+
 ```bash
 # Test help
 ./scripts/start-production.sh --help
@@ -35,6 +38,7 @@ npm run build  # Should create dist/ directory
 ```
 
 ### 2. Test Deployment Script
+
 ```bash
 # Test help
 ./scripts/deploy.sh --help
@@ -45,6 +49,7 @@ export DEPLOY_HOST=your-server.com
 ```
 
 ### 3. Test Backup Script
+
 ```bash
 # Test help
 ./scripts/backup.sh --help
@@ -57,12 +62,14 @@ export APP_DIR=/tmp/test-app
 ## Configuration Testing
 
 ### 1. Test Nginx Configuration
+
 ```bash
 # Validate nginx config syntax
 nginx -t -c config/nginx/productivity-hub.conf
 ```
 
 ### 2. Test Environment Templates
+
 ```bash
 # Copy and verify environment templates
 cp config/env/production.env.template backend/.env
@@ -70,6 +77,7 @@ cp config/env/development.env.template backend/.env.dev
 ```
 
 ### 3. Test Gunicorn Configuration
+
 ```bash
 cd backend
 # Test config syntax
@@ -82,6 +90,7 @@ gunicorn -c gunicorn.conf.py --check-config app:app
 ## Docker Testing
 
 ### 1. Test Docker Build
+
 ```bash
 # Build image
 docker build -t productivity-hub .
@@ -91,6 +100,7 @@ docker run --rm productivity-hub gunicorn --version
 ```
 
 ### 2. Test Docker Compose
+
 ```bash
 # Copy environment
 cp .env.docker.template .env
@@ -103,10 +113,12 @@ docker-compose up --dry-run
 ## Security Testing
 
 ### 1. Test SSL Configuration
+
 - Verify certificate paths in nginx config
 - Test SSL settings with SSL Labs or similar
 
 ### 2. Test Environment Security
+
 - Ensure .env files are not in git
 - Verify secret key generation
 - Test HTTPS redirects
@@ -114,6 +126,7 @@ docker-compose up --dry-run
 ## Performance Testing
 
 ### 1. Test Application Performance
+
 ```bash
 # Start application
 ./scripts/start-production.sh start
@@ -127,6 +140,7 @@ ab -n 100 -c 10 http://localhost:5000/
 ```
 
 ### 2. Test Resource Usage
+
 - Monitor memory usage during startup
 - Check disk space requirements
 - Verify log rotation
@@ -134,7 +148,7 @@ ab -n 100 -c 10 http://localhost:5000/
 ## Deployment Validation Checklist
 
 - [ ] All 89 backend tests pass
-- [ ] Frontend builds successfully 
+- [ ] Frontend builds successfully
 - [ ] Production startup script works
 - [ ] Deployment script validates
 - [ ] Backup script creates backups
@@ -151,6 +165,7 @@ ab -n 100 -c 10 http://localhost:5000/
 ## Expected Results
 
 When all tests pass:
+
 - Backend: 89 tests should pass
 - Frontend: Build should complete without errors
 - Scripts: All scripts should show help and validate
@@ -161,6 +176,7 @@ When all tests pass:
 ## Troubleshooting
 
 Common issues and solutions:
+
 1. **Permission denied**: Run `chmod +x scripts/*.sh`
 2. **Import errors**: Install requirements: `pip install -r requirements.txt`
 3. **Node errors**: Install dependencies: `npm install`
