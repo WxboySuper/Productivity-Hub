@@ -1,8 +1,8 @@
 # Gunicorn configuration file for production deployment
 # Usage: gunicorn -c gunicorn.conf.py app:app
 
-import os
 import multiprocessing
+import os
 
 # Server socket
 bind = "0.0.0.0:5000"
@@ -47,4 +47,4 @@ if os.getenv("FLASK_DEBUG") == "1":
     reload = True
     loglevel = "debug"
     accesslog = "-"  # stdout
-    errorlog = "-"   # stderr
+    errorlog = "-"  # stderr

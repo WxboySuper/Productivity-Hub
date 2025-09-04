@@ -36,12 +36,14 @@ docker-compose up -d
 ## Prerequisites
 
 ### System Requirements
+
 - **Server**: Linux VPS (Ubuntu 20.04+ recommended)
 - **RAM**: Minimum 1GB, recommended 2GB+
 - **Storage**: Minimum 10GB free space
 - **CPU**: 1 core minimum, 2+ cores recommended
 
 ### Software Dependencies
+
 - **Python**: 3.9+
 - **Node.js**: 16+
 - **Git**: Latest version
@@ -226,6 +228,7 @@ sudo crontab -e
 ### 2. Custom Nginx Configuration
 
 The provided Nginx configuration includes:
+
 - SSL/TLS termination
 - Security headers
 - Rate limiting
@@ -234,6 +237,7 @@ The provided Nginx configuration includes:
 - API proxy to backend
 
 Edit `config/nginx/productivity-hub.conf` and update:
+
 - `server_name` to your domain
 - SSL certificate paths
 - Any custom security requirements
@@ -261,6 +265,7 @@ export DEPLOY_PATH=/var/www/productivity-hub
 ### 2. CI/CD Integration
 
 For automated deployments, add these environment variables to your CI/CD pipeline:
+
 - `DEPLOY_HOST`
 - `DEPLOY_USER`
 - `DEPLOY_PATH`
@@ -323,6 +328,7 @@ tail -f /var/log/nginx/productivity-hub-error.log
 ### 3. Performance Monitoring
 
 Consider adding:
+
 - **Monitoring**: New Relic, Datadog, or Prometheus
 - **Error Tracking**: Sentry
 - **Uptime Monitoring**: Pingdom or UptimeRobot
@@ -361,12 +367,14 @@ sudo systemctl reload nginx
 ### Common Issues
 
 1. **Port 5000 already in use**
+
    ```bash
    sudo lsof -i :5000
    sudo kill -9 <PID>
    ```
 
 2. **Permission denied errors**
+
    ```bash
    sudo chown -R productivity:productivity /var/www/productivity-hub
    chmod +x scripts/*.sh
