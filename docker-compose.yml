@@ -30,7 +30,7 @@ services:
     environment:
       POSTGRES_DB: productivity_hub
       POSTGRES_USER: productivity_user
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:

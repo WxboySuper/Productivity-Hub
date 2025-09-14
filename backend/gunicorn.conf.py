@@ -21,8 +21,24 @@ max_requests_jitter = 50
 
 # Logging
 loglevel = "info"
-accesslog = "/var/log/gunicorn/access.log"
-errorlog = "/var/log/gunicorn/error.log"
+
+# Use environment variables or defaults for log paths
+accesslog = os.getenv("GUNICORN_ACCESS_LOG", "/var/log/gunicorn/access.log")
+errorlog = os.getenv("GUNICORN_ERROR_LOG", "/var/log/gunicorn/error.log")
+
+# Ensure log directory exists if not logging to stdout/stderr
+for log_path in [accesslog, errorlog]:
+    if log_path not in ("-", None):
+        log_dir = os.path.dirname(log_path)
+        if log_dir and not os.path.exists(log_dir):
+            try:
+                os.makedirs(log_dir, exist_ok=True)
+            except Exception:
+                # Fallback to stdout/stderr if directory creation fails
+                if log_path == accesslog:
+                    accesslog = "-"
+                elif log_path == errorlog:
+                    errorlog = "-"
 
 # Process naming
 proc_name = "productivity-hub"

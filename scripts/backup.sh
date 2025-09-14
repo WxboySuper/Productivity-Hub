@@ -90,14 +90,32 @@ backup_config() {
     
     log "Creating configuration backup: $backup_file"
     
-    # Backup important config files (excluding sensitive data)
+    # List of config files to back up
+    local config_files=()
+    local files_to_check=(
+        "etc/nginx/sites-available/productivity-hub"
+        "etc/systemd/system/productivity-hub.service"
+    )
+    for f in "${files_to_check[@]}"; do
+        if [ -e "/$f" ]; then
+            config_files+=("/$f")
+            log "Including config file: /$f"
+        else
+            warn "Config file not found: /$f"
+        fi
+    done
+
+    if [ ${#config_files[@]} -eq 0 ]; then
+        warn "No configuration files found to back up. Skipping config backup."
+        return
+    fi
+
     tar -czf "$backup_file" \
         -C / \
         --exclude="*.key" \
         --exclude=".env" \
         --exclude="*password*" \
-        etc/nginx/sites-available/productivity-hub 2>/dev/null || true \
-        etc/systemd/system/productivity-hub.service 2>/dev/null || true
+        "${config_files[@]}"
     
     log "Configuration backup completed: $backup_file"
 }
