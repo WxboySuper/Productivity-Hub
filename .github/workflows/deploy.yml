@@ -344,8 +344,8 @@ jobs:
             if [ -f 'config/systemd/productivity-hub.service' ]; then
               sudo cp config/systemd/productivity-hub.service /etc/systemd/system/
               # Update paths in service file for actual deployment path
-              sudo sed -i 's|/var/www/productivity-hub|$DEPLOY_PATH|g' /etc/systemd/system/productivity-hub.service
-              sudo sed -i 's|User=productivity|User=$DEPLOY_USER|g' /etc/systemd/system/productivity-hub.service
+              sudo sed -i \"s|/var/www/productivity-hub|\$DEPLOY_PATH|g\" /etc/systemd/system/productivity-hub.service
+              sudo sed -i \"s|User=productivity|User=\$DEPLOY_USER|g\" /etc/systemd/system/productivity-hub.service
               sudo systemctl daemon-reload
               sudo systemctl enable productivity-hub
             fi
@@ -355,7 +355,7 @@ jobs:
               sudo cp config/nginx/productivity-hub.conf /etc/nginx/sites-available/
               # Update domain name for productivity.weatherboysuper.com
               sudo sed -i 's/your-domain.com/productivity.weatherboysuper.com/g' /etc/nginx/sites-available/productivity-hub.conf
-              sudo sed -i 's|/var/www/productivity-hub|$DEPLOY_PATH|g' /etc/nginx/sites-available/productivity-hub.conf
+              sudo sed -i \"s|/var/www/productivity-hub|\$DEPLOY_PATH|g\" /etc/nginx/sites-available/productivity-hub.conf
               sudo ln -sf /etc/nginx/sites-available/productivity-hub.conf /etc/nginx/sites-enabled/
               sudo nginx -t
             fi
