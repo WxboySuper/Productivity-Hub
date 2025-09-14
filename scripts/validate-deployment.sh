@@ -51,12 +51,19 @@ For Production Environment:
 □ PROD_DEPLOY_HOST        - Production server hostname/IP
 □ PROD_DEPLOY_USER        - SSH username for production server  
 □ PROD_DEPLOY_PATH        - Deployment path on production server
+
+Authentication (choose ONE):
+Option A - SSH Key Authentication (Recommended):
 □ SSH_PRIVATE_KEY         - SSH private key for server access
+
+Option B - SSH Password Authentication:
+□ PROD_SSH_PASSWORD       - SSH password for server access
 
 For Staging Environment (optional):
 □ STAGING_DEPLOY_HOST     - Staging server hostname/IP
 □ STAGING_DEPLOY_USER     - SSH username for staging server
 □ STAGING_DEPLOY_PATH     - Deployment path on staging server
+□ STAGING_SSH_PASSWORD    - SSH password for staging (if using password auth)
 
 Instructions to set up secrets:
 1. Go to your GitHub repository
@@ -68,6 +75,7 @@ Example values:
 - PROD_DEPLOY_USER: "ubuntu" or "productivity"
 - PROD_DEPLOY_PATH: "/var/www/productivity-hub"
 - SSH_PRIVATE_KEY: Your private SSH key content (keep the BEGIN/END lines)
+- PROD_SSH_PASSWORD: "your-ssh-password" (only if not using SSH keys)
 
 EOF
 }
@@ -224,7 +232,9 @@ validate_ssh_setup() {
     
     cat << 'EOF'
 
-🔑 SSH KEY SETUP GUIDE
+🔑 SSH AUTHENTICATION SETUP GUIDE
+
+OPTION 1: SSH Key Authentication (Recommended)
 
 1. Generate SSH key pair (if you don't have one):
    ssh-keygen -t rsa -b 4096 -f ~/.ssh/productivity_hub_deploy -N ""
@@ -239,7 +249,27 @@ validate_ssh_setup() {
    - Copy the content of ~/.ssh/productivity_hub_deploy
    - Add it as SSH_PRIVATE_KEY secret in GitHub
 
-5. Ensure your server has the required directory structure:
+OPTION 2: SSH Password Authentication
+
+1. Ensure SSH password authentication is enabled on your server:
+   sudo nano /etc/ssh/sshd_config
+   # Set: PasswordAuthentication yes
+   sudo systemctl restart ssh
+
+2. Test SSH connection with password:
+   ssh user@your-server.com
+
+3. Add password to GitHub Secrets:
+   - Add your SSH password as PROD_SSH_PASSWORD secret in GitHub
+
+FIRST DEPLOYMENT:
+For initial deployment to a fresh server, use the "First Deployment Setup" workflow:
+- Go to Actions → "First Deployment Setup"
+- This will install all required software and configure the server
+- After first deployment, use the regular "Deploy to VPS" workflow
+
+SERVER DIRECTORY STRUCTURE:
+The deployment will create:
    /var/www/productivity-hub/
    ├── releases/          (created automatically)
    ├── backups/           (created automatically)

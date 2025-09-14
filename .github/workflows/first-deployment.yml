@@ -1,0 +1,438 @@
+name: First Deployment Setup
+
+on:
+  workflow_dispatch:
+    inputs:
+      server_host:
+        description: 'Server hostname or IP address'
+        required: true
+        type: string
+      server_user:
+        description: 'SSH username for server access'
+        required: true
+        default: 'ubuntu'
+        type: string
+      deploy_path:
+        description: 'Deployment path on server'
+        required: true
+        default: '/var/www/productivity-hub'
+        type: string
+      domain_name:
+        description: 'Domain name for the application'
+        required: true
+        default: 'productivity.weatherboysuper.com'
+        type: string
+      setup_ssl:
+        description: 'Setup SSL certificates with Lets Encrypt'
+        required: false
+        default: true
+        type: boolean
+      ssh_password:
+        description: 'Use SSH password authentication (if no SSH key available)'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  actions: write
+
+env:
+  SETUP_LOG_FILE: first-deployment-$(date +%Y%m%d-%H%M%S).log
+
+jobs:
+  first-deployment:
+    name: First Deployment Setup
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up deployment environment
+        run: |
+          echo "DEPLOYMENT_TIMESTAMP=$(date +%Y%m%d-%H%M%S)" >> $GITHUB_ENV
+          echo "SERVER_HOST=${{ github.event.inputs.server_host }}" >> $GITHUB_ENV
+          echo "SERVER_USER=${{ github.event.inputs.server_user }}" >> $GITHUB_ENV
+          echo "DEPLOY_PATH=${{ github.event.inputs.deploy_path }}" >> $GITHUB_ENV
+          echo "DOMAIN_NAME=${{ github.event.inputs.domain_name }}" >> $GITHUB_ENV
+          
+          # Determine authentication method
+          if [ "${{ github.event.inputs.ssh_password }}" = "true" ]; then
+            echo "AUTH_METHOD=password" >> $GITHUB_ENV
+          else
+            echo "AUTH_METHOD=key" >> $GITHUB_ENV
+          fi
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          # Frontend dependencies
+          cd frontend
+          npm ci --only=production
+          cd ..
+          
+          # Backend dependencies
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm run build
+          
+          # Verify build output
+          if [ ! -d "dist" ] || [ -z "$(ls -A dist)" ]; then
+            echo "❌ Frontend build failed - dist directory is empty"
+            exit 1
+          fi
+          echo "✅ Frontend build completed successfully"
+
+      - name: Prepare backend deployment package
+        run: |
+          # Create deployment package directory
+          mkdir -p deployment-package/backend
+          
+          # Copy backend files (excluding development files)
+          rsync -av --exclude='*.pyc' --exclude='__pycache__' --exclude='tests/' \
+                --exclude='*.log' --exclude='.env' --exclude='venv/' \
+                backend/ deployment-package/backend/
+          
+          # Copy requirements
+          cp requirements.txt deployment-package/
+          
+          echo "✅ Backend deployment package prepared"
+
+      - name: Set up SSH authentication
+        run: |
+          if [ "$AUTH_METHOD" = "key" ]; then
+            echo "Setting up SSH key authentication..."
+            mkdir -p ~/.ssh
+            echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+            chmod 600 ~/.ssh/deploy_key
+            
+            # Add known hosts
+            ssh-keyscan -H $SERVER_HOST >> ~/.ssh/known_hosts 2>/dev/null || true
+            
+            # Test SSH connection
+            ssh -i ~/.ssh/deploy_key -o ConnectTimeout=10 -o StrictHostKeyChecking=no \
+                $SERVER_USER@$SERVER_HOST "echo 'SSH key connection successful'" || {
+              echo "❌ SSH key connection failed"
+              exit 1
+            }
+            echo "SSH_CMD=ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" >> $GITHUB_ENV
+            echo "RSYNC_SSH=ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" >> $GITHUB_ENV
+          
+          elif [ "$AUTH_METHOD" = "password" ]; then
+            echo "Setting up SSH password authentication..."
+            
+            # Install sshpass
+            sudo apt-get update
+            sudo apt-get install -y sshpass
+            
+            # Add known hosts
+            ssh-keyscan -H $SERVER_HOST >> ~/.ssh/known_hosts 2>/dev/null || true
+            
+            # Test SSH connection
+            sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no \
+                $SERVER_USER@$SERVER_HOST "echo 'SSH password connection successful'" || {
+              echo "❌ SSH password connection failed"
+              exit 1
+            }
+            echo "SSH_CMD=sshpass -p \"${{ secrets.SSH_PASSWORD }}\" ssh -o StrictHostKeyChecking=no" >> $GITHUB_ENV
+            echo "RSYNC_SSH=sshpass -p \"${{ secrets.SSH_PASSWORD }}\" ssh -o StrictHostKeyChecking=no" >> $GITHUB_ENV
+          
+          else
+            echo "❌ Unknown authentication method"
+            exit 1
+          fi
+
+      - name: Initial server setup
+        run: |
+          echo "🚀 Setting up server for first deployment..."
+          
+          $SSH_CMD $SERVER_USER@$SERVER_HOST "
+            # Update system packages
+            echo 'Updating system packages...'
+            sudo apt update && sudo apt upgrade -y
+            
+            # Install required packages
+            echo 'Installing required packages...'
+            sudo apt install -y python3 python3-pip python3-venv nodejs npm nginx git sqlite3 curl systemctl unzip
+            
+            # Install latest Node.js if version is old
+            NODE_VERSION=\$(node --version 2>/dev/null | cut -d'v' -f2 | cut -d'.' -f1)
+            if [ -z \"\$NODE_VERSION\" ] || [ \"\$NODE_VERSION\" -lt 18 ]; then
+              echo 'Installing Node.js 18...'
+              curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+              sudo apt-get install -y nodejs
+            fi
+            
+            # Create deployment directories
+            echo 'Creating deployment directories...'
+            sudo mkdir -p '$DEPLOY_PATH'
+            sudo mkdir -p '$DEPLOY_PATH/releases'
+            sudo mkdir -p '$DEPLOY_PATH/backups'
+            sudo mkdir -p /var/log/productivity-hub
+            
+            # Set up directory permissions
+            sudo chown -R $SERVER_USER:$SERVER_USER '$DEPLOY_PATH'
+            sudo chown -R $SERVER_USER:$SERVER_USER /var/log/productivity-hub
+            
+            # Configure firewall
+            echo 'Configuring firewall...'
+            sudo ufw allow ssh
+            sudo ufw allow 'Nginx Full'
+            sudo ufw --force enable
+            
+            echo '✅ Initial server setup completed'
+          "
+
+      - name: Deploy application files
+        run: |
+          echo "📦 Deploying application files..."
+          
+          # Create release directory
+          RELEASE_DIR="$DEPLOY_PATH/releases/release-$DEPLOYMENT_TIMESTAMP"
+          
+          $SSH_CMD $SERVER_USER@$SERVER_HOST "
+            mkdir -p '$RELEASE_DIR'
+            echo 'Release directory created: $RELEASE_DIR'
+          "
+          
+          # Deploy backend
+          rsync -avz -e "$RSYNC_SSH" \
+            deployment-package/backend/ $SERVER_USER@$SERVER_HOST:$RELEASE_DIR/backend/
+          
+          # Deploy frontend
+          rsync -avz -e "$RSYNC_SSH" \
+            frontend/dist/ $SERVER_USER@$SERVER_HOST:$RELEASE_DIR/frontend/dist/
+          
+          # Copy configuration and scripts
+          if [ "$AUTH_METHOD" = "key" ]; then
+            scp -i ~/.ssh/deploy_key requirements.txt $SERVER_USER@$SERVER_HOST:$RELEASE_DIR/
+            rsync -avz -e "ssh -i ~/.ssh/deploy_key" scripts/ $SERVER_USER@$SERVER_HOST:$RELEASE_DIR/scripts/
+            rsync -avz -e "ssh -i ~/.ssh/deploy_key" config/ $SERVER_USER@$SERVER_HOST:$RELEASE_DIR/config/
+          else
+            sshpass -p "${{ secrets.SSH_PASSWORD }}" scp requirements.txt $SERVER_USER@$SERVER_HOST:$RELEASE_DIR/
+            rsync -avz -e "sshpass -p \"${{ secrets.SSH_PASSWORD }}\" ssh" scripts/ $SERVER_USER@$SERVER_HOST:$RELEASE_DIR/scripts/
+            rsync -avz -e "sshpass -p \"${{ secrets.SSH_PASSWORD }}\" ssh" config/ $SERVER_USER@$SERVER_HOST:$RELEASE_DIR/config/
+          fi
+          
+          echo "RELEASE_DIR=$RELEASE_DIR" >> $GITHUB_ENV
+
+      - name: Setup application environment
+        run: |
+          echo "⚙️ Setting up application environment..."
+          
+          $SSH_CMD $SERVER_USER@$SERVER_HOST "
+            cd '$RELEASE_DIR'
+            
+            # Create Python virtual environment
+            cd backend
+            python3 -m venv venv
+            source venv/bin/activate
+            pip install --upgrade pip
+            pip install -r ../requirements.txt
+            cd ..
+            
+            # Create production .env file
+            cat > backend/.env << 'EOF'
+SECRET_KEY=\$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')
+FLASK_ENV=production
+FLASK_DEBUG=0
+DATABASE_URL=sqlite:///productivity_hub.db
+FRONTEND_BASE_URL=https://$DOMAIN_NAME
+EOF
+            
+            # Make scripts executable
+            chmod +x scripts/*.sh
+            
+            echo '✅ Application environment configured'
+          "
+
+      - name: Setup system services
+        run: |
+          echo "🔧 Setting up system services..."
+          
+          $SSH_CMD $SERVER_USER@$SERVER_HOST "
+            cd '$RELEASE_DIR'
+            
+            # Install systemd service
+            if [ -f 'config/systemd/productivity-hub.service' ]; then
+              sudo cp config/systemd/productivity-hub.service /etc/systemd/system/
+              # Update paths in service file
+              sudo sed -i 's|/var/www/productivity-hub|$DEPLOY_PATH|g' /etc/systemd/system/productivity-hub.service
+              sudo sed -i 's|User=productivity|User=$SERVER_USER|g' /etc/systemd/system/productivity-hub.service
+              sudo systemctl daemon-reload
+              sudo systemctl enable productivity-hub
+            fi
+            
+            # Setup nginx configuration
+            if [ -f 'config/nginx/productivity-hub.conf' ]; then
+              sudo cp config/nginx/productivity-hub.conf /etc/nginx/sites-available/
+              # Update domain name and paths
+              sudo sed -i 's/your-domain.com/$DOMAIN_NAME/g' /etc/nginx/sites-available/productivity-hub.conf
+              sudo sed -i 's|/var/www/productivity-hub|$DEPLOY_PATH|g' /etc/nginx/sites-available/productivity-hub.conf
+              
+              # Remove default nginx site if it exists
+              sudo rm -f /etc/nginx/sites-enabled/default
+              
+              # Enable our site
+              sudo ln -sf /etc/nginx/sites-available/productivity-hub.conf /etc/nginx/sites-enabled/
+              
+              # Test nginx configuration
+              sudo nginx -t
+            fi
+            
+            echo '✅ System services configured'
+          "
+
+      - name: Setup SSL certificates
+        if: ${{ github.event.inputs.setup_ssl == true }}
+        run: |
+          echo "🔒 Setting up SSL certificates..."
+          
+          $SSH_CMD $SERVER_USER@$SERVER_HOST "
+            # Install Certbot
+            sudo apt install -y certbot python3-certbot-nginx
+            
+            # Obtain SSL certificate
+            sudo certbot --nginx -d $DOMAIN_NAME --non-interactive --agree-tos --email admin@$DOMAIN_NAME
+            
+            # Set up auto-renewal
+            echo '0 12 * * * /usr/bin/certbot renew --quiet && /usr/sbin/nginx -s reload' | sudo crontab -
+            
+            echo '✅ SSL certificates configured'
+          "
+
+      - name: Activate deployment
+        run: |
+          echo "🚀 Activating deployment..."
+          
+          $SSH_CMD $SERVER_USER@$SERVER_HOST "
+            # Create symlink to current release
+            ln -sfn '$RELEASE_DIR' '$DEPLOY_PATH/current'
+            
+            # Start services
+            sudo systemctl start productivity-hub
+            sudo systemctl restart nginx
+            
+            # Enable services for auto-start
+            sudo systemctl enable productivity-hub
+            sudo systemctl enable nginx
+            
+            echo '✅ Deployment activated'
+          "
+
+      - name: Verify deployment
+        run: |
+          echo "✅ Verifying deployment..."
+          
+          # Wait for services to start
+          sleep 15
+          
+          # Test local connection
+          $SSH_CMD $SERVER_USER@$SERVER_HOST "
+            # Check service status
+            sudo systemctl is-active productivity-hub
+            sudo systemctl is-active nginx
+            
+            # Test local health check
+            for i in {1..5}; do
+              if curl -f http://localhost:5000/ >/dev/null 2>&1; then
+                echo '✅ Local health check passed'
+                break
+              fi
+              echo \"Health check attempt \$i failed, waiting...\"
+              sleep 5
+            done
+          "
+          
+          # Test external access (if SSL was setup)
+          if [ "${{ github.event.inputs.setup_ssl }}" = "true" ]; then
+            echo "Testing HTTPS access..."
+            if curl -f https://$DOMAIN_NAME/ >/dev/null 2>&1; then
+              echo "✅ HTTPS access verified"
+            else
+              echo "⚠️ HTTPS access test failed - may need DNS propagation time"
+            fi
+          else
+            echo "Testing HTTP access..."
+            if curl -f http://$DOMAIN_NAME/ >/dev/null 2>&1; then
+              echo "✅ HTTP access verified"
+            else
+              echo "⚠️ HTTP access test failed - check domain configuration"
+            fi
+          fi
+
+      - name: Setup GitHub Secrets
+        if: success()
+        run: |
+          echo "📝 Next steps for GitHub Secrets setup:"
+          echo ""
+          echo "Add these secrets to your GitHub repository for future deployments:"
+          echo ""
+          echo "PROD_DEPLOY_HOST: ${{ github.event.inputs.server_host }}"
+          echo "PROD_DEPLOY_USER: ${{ github.event.inputs.server_user }}"
+          echo "PROD_DEPLOY_PATH: ${{ github.event.inputs.deploy_path }}"
+          if [ "$AUTH_METHOD" = "password" ]; then
+            echo "PROD_SSH_PASSWORD: [Your SSH password]"
+          else
+            echo "SSH_PRIVATE_KEY: [Your SSH private key content]"
+          fi
+          echo ""
+          echo "After adding these secrets, you can use the regular 'Deploy to VPS' workflow."
+
+      - name: Create success notification
+        if: success()
+        run: |
+          echo "🎉 **First Deployment Successful!**
+
+          **Server Details:**
+          - Host: ${{ github.event.inputs.server_host }}
+          - User: ${{ github.event.inputs.server_user }}
+          - Deploy Path: ${{ github.event.inputs.deploy_path }}
+          - Domain: ${{ github.event.inputs.domain_name }}
+          - SSL Setup: ${{ github.event.inputs.setup_ssl }}
+          - Authentication: ${{ env.AUTH_METHOD }}
+
+          **What was setup:**
+          - ✅ Server packages installed and updated
+          - ✅ Application deployed to ${{ env.RELEASE_DIR }}
+          - ✅ Python virtual environment created
+          - ✅ System services configured (systemd + nginx)
+          - ✅ ${{ github.event.inputs.setup_ssl == 'true' && 'SSL certificates obtained and configured' || 'HTTP configuration ready' }}
+          - ✅ Firewall configured
+          - ✅ Services started and running
+
+          **Next Steps:**
+          1. Add the GitHub Secrets shown above for future deployments
+          2. Test your application at: ${{ github.event.inputs.setup_ssl == 'true' && 'https' || 'http' }}://${{ github.event.inputs.domain_name }}
+          3. Use the regular 'Deploy to VPS' workflow for updates
+
+          **First Deployment Time:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+          **Workflow Run:** https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          " > first_deployment_success.md
+          
+          cat first_deployment_success.md
+
+      - name: Cleanup SSH
+        if: always()
+        run: |
+          rm -f ~/.ssh/deploy_key
+          echo "SSH cleanup completed"

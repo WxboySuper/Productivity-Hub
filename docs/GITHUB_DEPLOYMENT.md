@@ -10,8 +10,12 @@ The deployment workflow provides:
 - **Atomic deployments** with backup & rollback safety
 - **Multi-environment support** (production, staging)
 - **Flexible deployment types** (full, backend-only, frontend-only)
+- **Incremental deployments** with file change detection
+- **SSH password authentication** support alongside SSH keys
+- **First deployment automation** for fresh server setup
 - **Automatic failure notifications** with issue creation
 - **Comprehensive logging** and monitoring
+- **Subdomain support** for productivity.weatherboysuper.com
 
 ## 📋 Prerequisites
 
@@ -21,26 +25,42 @@ The deployment workflow provides:
 - **Hardware**: 1GB RAM minimum (2GB recommended), 10GB free storage
 - **Software**: Python 3.9+, Node.js 18+, nginx, systemd, SQLite/PostgreSQL
 - **Network**: Ports 22 (SSH), 80 (HTTP), 443 (HTTPS) accessible
-- **User**: Deploy user with sudo privileges and SSH key-based authentication
+- **User**: Deploy user with sudo privileges and SSH authentication (key or password)
 
-### 2. GitHub Secrets Configuration
+### 2. Authentication Methods
+
+#### Option A: SSH Key Authentication (Recommended)
 
 Navigate to your repository → Settings → Secrets and variables → Actions, then add:
 
-#### Production Environment:
-
+**Production Environment:**
 - `PROD_DEPLOY_HOST` - Production server hostname/IP (e.g., "your-server.com")
 - `PROD_DEPLOY_USER` - SSH username (e.g., "ubuntu", "productivity")
 - `PROD_DEPLOY_PATH` - Deployment path (e.g., "/var/www/productivity-hub")
 - `SSH_PRIVATE_KEY` - SSH private key content for server access
 
-#### Staging Environment (Optional):
-
+**Staging Environment (Optional):**
 - `STAGING_DEPLOY_HOST` - Staging server hostname/IP
 - `STAGING_DEPLOY_USER` - SSH username for staging
 - `STAGING_DEPLOY_PATH` - Deployment path for staging
 
-### 3. SSH Key Setup
+#### Option B: SSH Password Authentication
+
+**Production Environment:**
+- `PROD_DEPLOY_HOST` - Production server hostname/IP
+- `PROD_DEPLOY_USER` - SSH username  
+- `PROD_DEPLOY_PATH` - Deployment path
+- `PROD_SSH_PASSWORD` - SSH password for server access
+
+**Staging Environment (Optional):**
+- `STAGING_DEPLOY_HOST` - Staging server hostname/IP
+- `STAGING_DEPLOY_USER` - SSH username for staging
+- `STAGING_DEPLOY_PATH` - Deployment path for staging
+- `STAGING_SSH_PASSWORD` - SSH password for staging server
+
+### 3. Authentication Setup
+
+#### SSH Key Setup (Recommended)
 
 ```bash
 # 1. Generate SSH key pair
@@ -56,9 +76,50 @@ ssh -i ~/.ssh/productivity_hub_deploy user@your-server.com "echo 'Success'"
 # Copy content of ~/.ssh/productivity_hub_deploy and add as SSH_PRIVATE_KEY
 ```
 
+#### SSH Password Setup
+
+```bash
+# 1. Ensure password authentication is enabled on server
+sudo nano /etc/ssh/sshd_config
+# Set: PasswordAuthentication yes
+sudo systemctl restart ssh
+
+# 2. Test connection
+ssh user@your-server.com
+
+# 3. Add password to GitHub Secrets as PROD_SSH_PASSWORD
+```
+
 ## 🎯 How to Deploy
 
-### Using GitHub Actions UI
+### First Deployment (Fresh Server)
+
+For a completely new server setup, use the **First Deployment Setup** workflow:
+
+1. Go to your repository on GitHub
+2. Navigate to **Actions** tab
+3. Find **"First Deployment Setup"** workflow
+4. Click **"Run workflow"**
+5. Configure server options:
+   - **Server Host**: Your server IP or hostname
+   - **Server User**: SSH username (e.g., "ubuntu")
+   - **Deploy Path**: Where to install the app (e.g., "/var/www/productivity-hub")
+   - **Domain Name**: productivity.weatherboysuper.com
+   - **Setup SSL**: Enable HTTPS with Let's Encrypt
+   - **SSH Password**: Use password authentication if no SSH key
+6. Click **"Run workflow"**
+
+This will automatically:
+- Install all required software (Python, Node.js, nginx, etc.)
+- Create deployment directories
+- Deploy the application
+- Configure system services
+- Setup SSL certificates (if requested)
+- Configure nginx for productivity.weatherboysuper.com
+
+### Regular Deployments (Updates)
+
+After first deployment, use the **Deploy to VPS** workflow:
 
 1. Go to your repository on GitHub
 2. Navigate to **Actions** tab
@@ -68,7 +129,9 @@ ssh -i ~/.ssh/productivity_hub_deploy user@your-server.com "echo 'Success'"
    - **Environment**: production or staging
    - **Branch/Tag**: Branch, tag, or commit to deploy
    - **Deployment Type**: full, backend-only, or frontend-only
+   - **Incremental Deploy**: Use incremental deployment (only changed files)
    - **Force Deploy**: Skip some safety checks (use carefully)
+   - **First Deployment**: Only use for brand new servers
 6. Click **"Run workflow"**
 
 ### Deployment Types
@@ -90,6 +153,21 @@ ssh -i ~/.ssh/productivity_hub_deploy user@your-server.com "echo 'Success'"
 - Deploys only frontend changes
 - Useful for UI updates, styling changes
 - Fastest deployment option
+
+### Deployment Modes
+
+#### Incremental Deployment (Default)
+
+- Only uploads files that have changed since last deployment
+- Uses rsync with checksums for efficient transfers
+- Significantly faster for minor updates
+- Recommended for most deployments
+
+#### Full Deployment
+
+- Uploads all files regardless of changes
+- Useful for major updates or when file integrity is questioned
+- Takes longer but ensures complete synchronization
 
 ## 🛡️ Safety Features
 

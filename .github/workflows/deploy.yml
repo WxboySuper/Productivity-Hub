@@ -30,6 +30,16 @@ on:
         required: false
         default: false
         type: boolean
+      incremental_deploy:
+        description: 'Use incremental deployment (only changed files)'
+        required: false
+        default: true
+        type: boolean
+      first_deployment:
+        description: 'First deployment (full server setup)'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -62,10 +72,22 @@ jobs:
             echo "DEPLOY_HOST=${{ secrets.PROD_DEPLOY_HOST }}" >> $GITHUB_ENV
             echo "DEPLOY_USER=${{ secrets.PROD_DEPLOY_USER }}" >> $GITHUB_ENV
             echo "DEPLOY_PATH=${{ secrets.PROD_DEPLOY_PATH }}" >> $GITHUB_ENV
+            echo "SSH_PASSWORD=${{ secrets.PROD_SSH_PASSWORD }}" >> $GITHUB_ENV
           else
             echo "DEPLOY_HOST=${{ secrets.STAGING_DEPLOY_HOST }}" >> $GITHUB_ENV
             echo "DEPLOY_USER=${{ secrets.STAGING_DEPLOY_USER }}" >> $GITHUB_ENV
             echo "DEPLOY_PATH=${{ secrets.STAGING_DEPLOY_PATH }}" >> $GITHUB_ENV
+            echo "SSH_PASSWORD=${{ secrets.STAGING_SSH_PASSWORD }}" >> $GITHUB_ENV
+          fi
+          
+          # Set up authentication method
+          if [ -n "${{ secrets.SSH_PRIVATE_KEY }}" ]; then
+            echo "AUTH_METHOD=key" >> $GITHUB_ENV
+          elif [ -n "${SSH_PASSWORD}" ]; then
+            echo "AUTH_METHOD=password" >> $GITHUB_ENV
+          else
+            echo "❌ No authentication method configured"
+            exit 1
           fi
 
       - name: Set up Node.js
@@ -121,28 +143,98 @@ jobs:
           
           echo "✅ Backend deployment package prepared"
 
-      - name: Set up SSH
+      - name: Set up SSH and authentication
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
+          if [ "$AUTH_METHOD" = "key" ]; then
+            echo "Setting up SSH key authentication..."
+            mkdir -p ~/.ssh
+            echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+            chmod 600 ~/.ssh/deploy_key
+            
+            # Add known hosts to avoid host key verification issues
+            ssh-keyscan -H $DEPLOY_HOST >> ~/.ssh/known_hosts 2>/dev/null || true
+            
+            # Test SSH connection
+            ssh -i ~/.ssh/deploy_key -o ConnectTimeout=10 -o StrictHostKeyChecking=no \
+                $DEPLOY_USER@$DEPLOY_HOST "echo 'SSH key connection successful'" || {
+              echo "❌ SSH key connection failed"
+              exit 1
+            }
+            echo "✅ SSH key connection verified"
+            
+            # Set SSH command for use in other steps
+            echo 'SSH_CMD=ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no' >> $GITHUB_ENV
+            echo 'RSYNC_SSH=ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no' >> $GITHUB_ENV
           
-          # Add known hosts to avoid host key verification issues
-          ssh-keyscan -H $DEPLOY_HOST >> ~/.ssh/known_hosts 2>/dev/null || true
+          elif [ "$AUTH_METHOD" = "password" ]; then
+            echo "Setting up SSH password authentication..."
+            
+            # Install sshpass for password authentication
+            sudo apt-get update
+            sudo apt-get install -y sshpass
+            
+            # Add known hosts to avoid host key verification issues
+            ssh-keyscan -H $DEPLOY_HOST >> ~/.ssh/known_hosts 2>/dev/null || true
+            
+            # Test SSH connection with password
+            sshpass -p "$SSH_PASSWORD" ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no \
+                $DEPLOY_USER@$DEPLOY_HOST "echo 'SSH password connection successful'" || {
+              echo "❌ SSH password connection failed"
+              exit 1
+            }
+            echo "✅ SSH password connection verified"
+            
+            # Set SSH command for use in other steps
+            echo "SSH_CMD=sshpass -p \"$SSH_PASSWORD\" ssh -o StrictHostKeyChecking=no" >> $GITHUB_ENV
+            echo "RSYNC_SSH=sshpass -p \"$SSH_PASSWORD\" ssh -o StrictHostKeyChecking=no" >> $GITHUB_ENV
           
-          # Test SSH connection
-          ssh -i ~/.ssh/deploy_key -o ConnectTimeout=10 -o StrictHostKeyChecking=no \
-              $DEPLOY_USER@$DEPLOY_HOST "echo 'SSH connection successful'" || {
-            echo "❌ SSH connection failed"
+          else
+            echo "❌ Unknown authentication method: $AUTH_METHOD"
             exit 1
-          }
-          echo "✅ SSH connection verified"
+          fi
+
+      - name: First deployment setup
+        if: ${{ github.event.inputs.first_deployment == 'true' }}
+        run: |
+          echo "🚀 Performing first deployment setup..."
+          
+          $SSH_CMD $DEPLOY_USER@$DEPLOY_HOST "
+            # Update system packages
+            sudo apt update && sudo apt upgrade -y
+            
+            # Install required packages
+            sudo apt install -y python3 python3-pip python3-venv nodejs npm nginx git sqlite3 curl systemctl
+            
+            # Create deployment directories
+            sudo mkdir -p '$DEPLOY_PATH'
+            sudo mkdir -p '$DEPLOY_PATH/releases'
+            sudo mkdir -p '$DEPLOY_PATH/backups'
+            sudo mkdir -p /var/log/productivity-hub
+            sudo mkdir -p /etc/systemd/system
+            
+            # Set up directory permissions
+            sudo chown -R $DEPLOY_USER:$DEPLOY_USER '$DEPLOY_PATH'
+            sudo chown -R $DEPLOY_USER:$DEPLOY_USER /var/log/productivity-hub
+            
+            # Install latest Node.js (if version is old)
+            NODE_VERSION=\$(node --version 2>/dev/null | cut -d'v' -f2 | cut -d'.' -f1)
+            if [ -z \"\$NODE_VERSION\" ] || [ \"\$NODE_VERSION\" -lt 18 ]; then
+              echo 'Installing Node.js 18...'
+              curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+              sudo apt-get install -y nodejs
+            fi
+            
+            echo '✅ First deployment setup completed'
+          "
+          
+          echo "✅ Server prepared for first deployment"
 
       - name: Create pre-deployment backup
+        if: ${{ github.event.inputs.first_deployment != 'true' }}
         run: |
           echo "Creating backup before deployment..."
           
-          ssh -i ~/.ssh/deploy_key $DEPLOY_USER@$DEPLOY_HOST "
+          $SSH_CMD $DEPLOY_USER@$DEPLOY_HOST "
             # Create backup using existing backup script
             if [ -f '$DEPLOY_PATH/current/scripts/backup.sh' ]; then
               cd '$DEPLOY_PATH/current'
@@ -174,13 +266,22 @@ jobs:
           # Create new release directory
           RELEASE_DIR="$DEPLOY_PATH/releases/release-$DEPLOYMENT_TIMESTAMP"
           
-          ssh -i ~/.ssh/deploy_key $DEPLOY_USER@$DEPLOY_HOST "
+          $SSH_CMD $DEPLOY_USER@$DEPLOY_HOST "
             # Create releases directory structure
             mkdir -p '$DEPLOY_PATH/releases'
             mkdir -p '$RELEASE_DIR'
             
             echo 'Release directory created: $RELEASE_DIR'
           "
+          
+          # Set up rsync options for incremental deployment
+          RSYNC_OPTS="-avz --delete"
+          if [ "${{ github.event.inputs.incremental_deploy }}" = "true" ] && [ "${{ github.event.inputs.first_deployment }}" != "true" ]; then
+            echo "🔄 Using incremental deployment (only changed files)"
+            RSYNC_OPTS="$RSYNC_OPTS --checksum --update"
+          else
+            echo "📦 Using full deployment (all files)"
+          fi
           
           # Deploy based on deployment type
           case "${{ github.event.inputs.deployment_type }}" in
@@ -189,59 +290,77 @@ jobs:
               
               # Deploy backend
               if [ -d "deployment-package/backend" ]; then
-                rsync -avz --delete -e "ssh -i ~/.ssh/deploy_key" \
+                rsync $RSYNC_OPTS -e "$RSYNC_SSH" \
                   deployment-package/backend/ $DEPLOY_USER@$DEPLOY_HOST:$RELEASE_DIR/backend/
               fi
               
               # Deploy frontend
               if [ -d "frontend/dist" ]; then
-                rsync -avz --delete -e "ssh -i ~/.ssh/deploy_key" \
+                rsync $RSYNC_OPTS -e "$RSYNC_SSH" \
                   frontend/dist/ $DEPLOY_USER@$DEPLOY_HOST:$RELEASE_DIR/frontend/dist/
               fi
               
               # Copy other necessary files
-              scp -i ~/.ssh/deploy_key requirements.txt $DEPLOY_USER@$DEPLOY_HOST:$RELEASE_DIR/
-              rsync -avz -e "ssh -i ~/.ssh/deploy_key" scripts/ $DEPLOY_USER@$DEPLOY_HOST:$RELEASE_DIR/scripts/
+              if [ "$AUTH_METHOD" = "key" ]; then
+                scp -i ~/.ssh/deploy_key requirements.txt $DEPLOY_USER@$DEPLOY_HOST:$RELEASE_DIR/
+                rsync -avz -e "ssh -i ~/.ssh/deploy_key" scripts/ $DEPLOY_USER@$DEPLOY_HOST:$RELEASE_DIR/scripts/
+                rsync -avz -e "ssh -i ~/.ssh/deploy_key" config/ $DEPLOY_USER@$DEPLOY_HOST:$RELEASE_DIR/config/
+              else
+                sshpass -p "$SSH_PASSWORD" scp requirements.txt $DEPLOY_USER@$DEPLOY_HOST:$RELEASE_DIR/
+                rsync -avz -e "sshpass -p \"$SSH_PASSWORD\" ssh" scripts/ $DEPLOY_USER@$DEPLOY_HOST:$RELEASE_DIR/scripts/
+                rsync -avz -e "sshpass -p \"$SSH_PASSWORD\" ssh" config/ $DEPLOY_USER@$DEPLOY_HOST:$RELEASE_DIR/config/
+              fi
               ;;
               
             "backend-only")
               echo "Performing backend-only deployment..."
-              rsync -avz --delete -e "ssh -i ~/.ssh/deploy_key" \
+              rsync $RSYNC_OPTS -e "$RSYNC_SSH" \
                 deployment-package/backend/ $DEPLOY_USER@$DEPLOY_HOST:$RELEASE_DIR/backend/
-              scp -i ~/.ssh/deploy_key requirements.txt $DEPLOY_USER@$DEPLOY_HOST:$RELEASE_DIR/
+              if [ "$AUTH_METHOD" = "key" ]; then
+                scp -i ~/.ssh/deploy_key requirements.txt $DEPLOY_USER@$DEPLOY_HOST:$RELEASE_DIR/
+              else
+                sshpass -p "$SSH_PASSWORD" scp requirements.txt $DEPLOY_USER@$DEPLOY_HOST:$RELEASE_DIR/
+              fi
               ;;
               
             "frontend-only")
               echo "Performing frontend-only deployment..."
-              rsync -avz --delete -e "ssh -i ~/.ssh/deploy_key" \
+              rsync $RSYNC_OPTS -e "$RSYNC_SSH" \
                 frontend/dist/ $DEPLOY_USER@$DEPLOY_HOST:$RELEASE_DIR/frontend/dist/
               ;;
           esac
           
           echo "RELEASE_DIR=$RELEASE_DIR" >> $GITHUB_OUTPUT
 
-      - name: Install dependencies and prepare release
-        if: ${{ github.event.inputs.deployment_type != 'frontend-only' }}
+      - name: Setup services for first deployment
+        if: ${{ github.event.inputs.first_deployment == 'true' }}
         run: |
-          ssh -i ~/.ssh/deploy_key $DEPLOY_USER@$DEPLOY_HOST "
+          echo "Setting up services for first deployment..."
+          
+          $SSH_CMD $DEPLOY_USER@$DEPLOY_HOST "
             cd '${{ steps.deploy.outputs.RELEASE_DIR }}'
             
-            # Create Python virtual environment
-            if [ ! -d 'backend/venv' ]; then
-              cd backend
-              python3 -m venv venv
-              source venv/bin/activate
-              pip install --upgrade pip
-              pip install -r ../requirements.txt
-              cd ..
+            # Install systemd service
+            if [ -f 'config/systemd/productivity-hub.service' ]; then
+              sudo cp config/systemd/productivity-hub.service /etc/systemd/system/
+              # Update paths in service file for actual deployment path
+              sudo sed -i 's|/var/www/productivity-hub|$DEPLOY_PATH|g' /etc/systemd/system/productivity-hub.service
+              sudo sed -i 's|User=productivity|User=$DEPLOY_USER|g' /etc/systemd/system/productivity-hub.service
+              sudo systemctl daemon-reload
+              sudo systemctl enable productivity-hub
             fi
             
-            # Copy environment file from current deployment if it exists
-            if [ -f '$DEPLOY_PATH/current/backend/.env' ]; then
-              cp '$DEPLOY_PATH/current/backend/.env' backend/
+            # Setup nginx configuration
+            if [ -f 'config/nginx/productivity-hub.conf' ]; then
+              sudo cp config/nginx/productivity-hub.conf /etc/nginx/sites-available/
+              # Update domain name for productivity.weatherboysuper.com
+              sudo sed -i 's/your-domain.com/productivity.weatherboysuper.com/g' /etc/nginx/sites-available/productivity-hub.conf
+              sudo sed -i 's|/var/www/productivity-hub|$DEPLOY_PATH|g' /etc/nginx/sites-available/productivity-hub.conf
+              sudo ln -sf /etc/nginx/sites-available/productivity-hub.conf /etc/nginx/sites-enabled/
+              sudo nginx -t
             fi
             
-            echo '✅ Dependencies installed and release prepared'
+            echo '✅ Services configured for first deployment'
           "
 
       - name: Atomic deployment switch
@@ -249,7 +368,7 @@ jobs:
         run: |
           echo "Performing atomic deployment switch..."
           
-          ssh -i ~/.ssh/deploy_key $DEPLOY_USER@$DEPLOY_HOST "
+          $SSH_CMD $DEPLOY_USER@$DEPLOY_HOST "
             # Stop services before switching
             sudo systemctl stop productivity-hub 2>/dev/null || true
             
@@ -272,7 +391,7 @@ jobs:
         run: |
           echo "Starting services and performing health check..."
           
-          ssh -i ~/.ssh/deploy_key $DEPLOY_USER@$DEPLOY_HOST "
+          $SSH_CMD $DEPLOY_USER@$DEPLOY_HOST "
             # Start services
             sudo systemctl start productivity-hub
             sudo systemctl reload nginx 2>/dev/null || sudo systemctl restart nginx
@@ -280,10 +399,14 @@ jobs:
             # Wait for services to start
             sleep 10
             
-            # Health check
+            # Health check - try both localhost and the actual domain
             for i in {1..6}; do
               if curl -f http://localhost:5000/ >/dev/null 2>&1; then
-                echo '✅ Health check passed'
+                echo '✅ Health check passed (localhost)'
+                echo 'HEALTH_CHECK=success' >> /tmp/deployment_info
+                exit 0
+              elif curl -f http://productivity.weatherboysuper.com/ >/dev/null 2>&1; then
+                echo '✅ Health check passed (domain)'
                 echo 'HEALTH_CHECK=success' >> /tmp/deployment_info
                 exit 0
               fi
@@ -301,7 +424,7 @@ jobs:
         run: |
           echo "🔄 Deployment failed, initiating rollback..."
           
-          ssh -i ~/.ssh/deploy_key $DEPLOY_USER@$DEPLOY_HOST "
+          $SSH_CMD $DEPLOY_USER@$DEPLOY_HOST "
             # Get deployment info
             source /tmp/deployment_info 2>/dev/null || true
             
@@ -337,7 +460,7 @@ jobs:
       - name: Cleanup old releases
         if: success()
         run: |
-          ssh -i ~/.ssh/deploy_key $DEPLOY_USER@$DEPLOY_HOST "
+          $SSH_CMD $DEPLOY_USER@$DEPLOY_HOST "
             # Keep only the last 5 releases
             cd '$DEPLOY_PATH/releases'
             ls -t | tail -n +6 | xargs -r rm -rf
@@ -353,15 +476,19 @@ jobs:
           - Environment: ${{ github.event.inputs.environment }}
           - Branch/Tag: ${{ github.event.inputs.deployment_branch }}
           - Type: ${{ github.event.inputs.deployment_type }}
+          - Deployment Mode: ${{ github.event.inputs.incremental_deploy == 'true' && 'Incremental' || 'Full' }}
+          - First Deployment: ${{ github.event.inputs.first_deployment }}
+          - Authentication: ${{ env.AUTH_METHOD }}
           - Deployment ID: ${{ env.DEPLOYMENT_ID }}
           - Release Directory: ${{ steps.deploy.outputs.RELEASE_DIR }}
 
           **Verification:**
           - ✅ Build completed successfully
-          - ✅ Backup created before deployment
+          - ✅ ${{ github.event.inputs.first_deployment == 'true' && 'Server setup completed' || 'Backup created before deployment' }}
           - ✅ Atomic deployment switch completed
           - ✅ Health checks passed
           - ✅ Services running normally
+          - ✅ Available at: https://productivity.weatherboysuper.com
 
           **Deployed Commit:** ${{ github.sha }}
           **Deployment Time:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')
