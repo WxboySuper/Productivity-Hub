@@ -1,12 +1,12 @@
 # .gitignore
 # Python
 .venv/
+venv/
 __pycache__/
 */.pytest_cache/
 .pytest_cache/
 *.pyc
 instance/
-.env
 .coverage
 htmlcov/
 coverage.xml
@@ -26,10 +26,12 @@ Thumbs.db
 
 # Misc
 *.sqlite3
+*.db
 .vscode/*
 .vscode
 .qodo
 .qodo/*
+config/env/production.env
 
 # db
 */productivity_hub.db
@@ -41,5 +43,17 @@ docs/personal-docs/*
 docs/personal-docs
 */app.backup.py
 
-# Scripts
-scripts/*
+# Deployment artifacts
+logs/
+backups/
+ssl/
+
+# Docker
+.env.docker
+
+# Backup files
+*.bak
+
+# Internal Scripts
+scripts/bump-version.ps1
+scripts/create-random-branch.ps1
