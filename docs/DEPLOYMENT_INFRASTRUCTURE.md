@@ -11,6 +11,7 @@ This document summarizes the comprehensive deployment infrastructure improvement
 **Solution**: Created `scripts/deploy.ps1` with full feature parity to the bash version.
 
 **Features**:
+
 - ✅ PowerShell 5.1+ and PowerShell Core 6+ support
 - ✅ SSH client detection (OpenSSH, Git Bash, PuTTY)
 - ✅ rsync with scp fallback for efficient file transfers
@@ -19,6 +20,7 @@ This document summarizes the comprehensive deployment infrastructure improvement
 - ✅ Windows-specific setup instructions and troubleshooting
 
 **Usage**:
+
 ```powershell
 $env:DEPLOY_HOST="your-server.com"
 .\scripts\deploy.ps1                    # Full deployment
@@ -33,6 +35,7 @@ $env:DEPLOY_HOST="your-server.com"
 **Solution**: Implemented package-based deployment strategy with robust error handling.
 
 **Improvements**:
+
 - ✅ **Local dependency resolution**: Creates deployment package before transfer
 - ✅ **Retry logic**: 3 attempts with timeout protection (300s per attempt)
 - ✅ **Automatic rollback**: Backs up current environment before changes
@@ -41,6 +44,7 @@ $env:DEPLOY_HOST="your-server.com"
 - ✅ **Timeout protection**: Prevents hanging on network issues
 
 **Implementation**:
+
 - Creates temporary deployment package with install script
 - Transfers pre-validated requirements and installation logic
 - Executes with retry mechanism and automatic recovery
@@ -53,6 +57,7 @@ $env:DEPLOY_HOST="your-server.com"
 **Solution**: Enhanced SSL setup with validation and comprehensive documentation.
 
 **New Resources**:
+
 - ✅ **SSL Setup Guide**: `docs/SSL_SETUP.md` with detailed instructions
   - Let's Encrypt automated setup
   - Commercial certificate installation
@@ -70,6 +75,7 @@ $env:DEPLOY_HOST="your-server.com"
 - ✅ **Enhanced Nginx Config**: Clear placeholder comments and validation requirements
 
 **Usage**:
+
 ```bash
 # Validate configuration before deployment
 ./scripts/validate-nginx.sh config/nginx/productivity-hub.conf
@@ -83,6 +89,7 @@ $env:DEPLOY_HOST="your-server.com"
 **Problem Addressed**: Ensure deployment documentation addresses everything and is easy to understand.
 
 **Improvements**:
+
 - ✅ **Windows deployment section**: Complete PowerShell setup and usage guide
 - ✅ **Enhanced SSL documentation**: Step-by-step certificate setup with multiple options
 - ✅ **Deployment checklist**: Pre-deployment, configuration, deployment, and post-deployment steps
@@ -90,6 +97,7 @@ $env:DEPLOY_HOST="your-server.com"
 - ✅ **Configuration validation**: Automated checks and manual verification steps
 
 **Updated Documentation**:
+
 - `DEPLOYMENT.md`: Enhanced with Windows support and comprehensive SSL guidance
 - `docs/SSL_SETUP.md`: Complete SSL certificate management guide
 - `CHANGELOG.md`: Updated with infrastructure improvements
@@ -97,24 +105,28 @@ $env:DEPLOY_HOST="your-server.com"
 ## 📋 Deployment Checklist
 
 ### Pre-Deployment Requirements
+
 - [ ] Server meets minimum requirements (1GB RAM, 10GB storage)
 - [ ] Domain name configured and pointing to server IP
 - [ ] Firewall configured (ports 22, 80, 443 open)
 - [ ] SSH key authentication set up
 
 ### Windows-Specific Setup
+
 - [ ] PowerShell 5.1+ or PowerShell Core 6+ installed
 - [ ] SSH client available (OpenSSH, Git Bash, or PuTTY)
 - [ ] Node.js and npm installed for frontend builds
 - [ ] rsync available (via Git Bash or WSL) for efficient transfers
 
 ### Configuration Validation
+
 - [ ] Run `./scripts/validate-nginx.sh` to check for placeholder values
 - [ ] Update `server_name` in Nginx configuration with actual domain
 - [ ] Configure SSL certificate paths (Let's Encrypt or commercial)
 - [ ] Verify all application paths exist on server
 
 ### Deployment Execution
+
 - [ ] Set environment variables (`DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_PATH`)
 - [ ] Test SSH connectivity to server
 - [ ] Run deployment script with appropriate platform
@@ -123,6 +135,7 @@ $env:DEPLOY_HOST="your-server.com"
 ## 🔧 Quick Reference Commands
 
 ### Windows PowerShell
+
 ```powershell
 # Setup
 $env:DEPLOY_HOST="your-server.com"
@@ -136,6 +149,7 @@ $env:DEPLOY_USER="ubuntu"
 ```
 
 ### Linux/macOS
+
 ```bash
 # Setup
 export DEPLOY_HOST=your-server.com
@@ -149,6 +163,7 @@ export DEPLOY_USER=ubuntu
 ```
 
 ### SSL Certificate Setup
+
 ```bash
 # Let's Encrypt (recommended)
 sudo certbot --nginx -d your-domain.com

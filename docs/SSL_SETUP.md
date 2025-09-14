@@ -156,30 +156,30 @@ BACKUP_FILE="${CONFIG_FILE}.backup.$(date +%Y%m%d-%H%M%S)"
 
 validate_nginx_config() {
     echo "Validating Nginx configuration..."
-    
+
     # Check if config file exists
     if [ ! -f "$CONFIG_FILE" ]; then
         echo "ERROR: Configuration file not found: $CONFIG_FILE"
         exit 1
     fi
-    
+
     # Check for placeholder values
     echo "Checking for placeholder values..."
-    
+
     PLACEHOLDERS=(
         "your-domain.com"
         "/path/to/your/certificate.crt"
         "/path/to/your/private.key"
         "productivity.weatherboysuper.com"
     )
-    
+
     for placeholder in "${PLACEHOLDERS[@]}"; do
         if grep -q "$placeholder" "$CONFIG_FILE"; then
             echo "WARNING: Found placeholder value '$placeholder' in config file"
             echo "Please update this value before deploying"
         fi
     done
-    
+
     # Test Nginx configuration syntax
     echo "Testing Nginx syntax..."
     if sudo nginx -t; then
@@ -188,11 +188,11 @@ validate_nginx_config() {
         echo "✗ Nginx configuration syntax error"
         exit 1
     fi
-    
+
     # Check SSL certificate files (if specified)
     SSL_CERT=$(grep -o 'ssl_certificate [^;]*' "$CONFIG_FILE" | cut -d' ' -f2)
     SSL_KEY=$(grep -o 'ssl_certificate_key [^;]*' "$CONFIG_FILE" | cut -d' ' -f2)
-    
+
     if [ -n "$SSL_CERT" ] && [ "$SSL_CERT" != "/path/to/your/certificate.crt" ]; then
         if [ -f "$SSL_CERT" ]; then
             echo "✓ SSL certificate found: $SSL_CERT"
@@ -200,7 +200,7 @@ validate_nginx_config() {
             echo "✗ SSL certificate not found: $SSL_CERT"
         fi
     fi
-    
+
     if [ -n "$SSL_KEY" ] && [ "$SSL_KEY" != "/path/to/your/private.key" ]; then
         if [ -f "$SSL_KEY" ]; then
             echo "✓ SSL private key found: $SSL_KEY"
@@ -273,15 +273,17 @@ echo | openssl s_client -connect your-domain.com:443 2>/dev/null | openssl x509 
 ### Common Issues
 
 1. **Certificate Chain Issues**
+
    ```bash
    # Test certificate chain
    openssl s_client -connect your-domain.com:443 -servername your-domain.com
-   
+
    # If chain is incomplete, concatenate intermediate certificates
    cat your-domain.com.crt intermediate.crt > your-domain.com-chained.crt
    ```
 
 2. **Permission Errors**
+
    ```bash
    # Fix certificate permissions
    sudo chmod 644 /etc/ssl/certs/*.crt
@@ -291,11 +293,12 @@ echo | openssl s_client -connect your-domain.com:443 2>/dev/null | openssl x509 
    ```
 
 3. **Port Blocking**
+
    ```bash
    # Check if ports are open
    sudo netstat -tlnp | grep :443
    sudo ufw status
-   
+
    # Open required ports
    sudo ufw allow 80
    sudo ufw allow 443
