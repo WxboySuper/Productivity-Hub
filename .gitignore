@@ -53,3 +53,7 @@ ssl/
 
 # Backup files
 *.bak
+
+# Internal Scripts
+scripts/bump-version.ps1
+scripts/create-random-branch.ps1
