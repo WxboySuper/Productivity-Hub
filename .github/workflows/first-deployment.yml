@@ -83,7 +83,7 @@ jobs:
         run: |
           # Frontend dependencies
           cd frontend
-          npm ci --only=production
+          npm install
           cd ..
           
           # Backend dependencies
