@@ -24,6 +24,7 @@ This comprehensive guide will help you deploy Productivity Hub to production usi
 For the safest and most reliable deployment:
 
 1. **Configure GitHub Secrets** (one-time setup):
+
    ```bash
    # Run validation script for setup instructions
    ./scripts/validate-deployment.sh
@@ -67,6 +68,7 @@ The GitHub Actions deployment workflow provides automated, safe deployments with
 ### Quick Setup
 
 1. **Run the validation script**:
+
    ```bash
    ./scripts/validate-deployment.sh
    ```

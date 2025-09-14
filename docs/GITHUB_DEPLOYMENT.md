@@ -28,12 +28,14 @@ The deployment workflow provides:
 Navigate to your repository → Settings → Secrets and variables → Actions, then add:
 
 #### Production Environment:
+
 - `PROD_DEPLOY_HOST` - Production server hostname/IP (e.g., "your-server.com")
 - `PROD_DEPLOY_USER` - SSH username (e.g., "ubuntu", "productivity")
 - `PROD_DEPLOY_PATH` - Deployment path (e.g., "/var/www/productivity-hub")
 - `SSH_PRIVATE_KEY` - SSH private key content for server access
 
 #### Staging Environment (Optional):
+
 - `STAGING_DEPLOY_HOST` - Staging server hostname/IP
 - `STAGING_DEPLOY_USER` - SSH username for staging
 - `STAGING_DEPLOY_PATH` - Deployment path for staging
@@ -72,16 +74,19 @@ ssh -i ~/.ssh/productivity_hub_deploy user@your-server.com "echo 'Success'"
 ### Deployment Types
 
 #### Full Deployment
+
 - Builds and deploys both frontend and backend
 - Updates dependencies and configurations
 - Recommended for major releases
 
 #### Backend-Only Deployment
+
 - Deploys only backend changes
 - Useful for API updates, bug fixes, database migrations
 - Faster than full deployment
 
 #### Frontend-Only Deployment
+
 - Deploys only frontend changes
 - Useful for UI updates, styling changes
 - Fastest deployment option
@@ -91,11 +96,13 @@ ssh -i ~/.ssh/productivity_hub_deploy user@your-server.com "echo 'Success'"
 ### 1. Backup & Rollback
 
 **Automatic Backup Creation:**
+
 - Creates timestamped backup before every deployment
 - Includes application files and database
 - Verifies backup integrity before proceeding
 
 **Automatic Rollback:**
+
 - Triggers on deployment failure
 - Restores previous working state
 - Restarts services automatically
@@ -104,6 +111,7 @@ ssh -i ~/.ssh/productivity_hub_deploy user@your-server.com "echo 'Success'"
 ### 2. Atomic Deployments
 
 **Release Strategy:**
+
 ```
 /var/www/productivity-hub/
 ├── releases/
@@ -117,6 +125,7 @@ ssh -i ~/.ssh/productivity_hub_deploy user@your-server.com "echo 'Success'"
 ```
 
 **Benefits:**
+
 - Zero-downtime deployments
 - Instant rollback capability
 - Preserves previous releases
@@ -132,6 +141,7 @@ ssh -i ~/.ssh/productivity_hub_deploy user@your-server.com "echo 'Success'"
 ### 4. Failure Notifications
 
 **Automatic Issue Creation:**
+
 - Creates GitHub issue on deployment failure
 - Includes error logs and deployment details
 - Tags with appropriate labels
@@ -142,6 +152,7 @@ ssh -i ~/.ssh/productivity_hub_deploy user@your-server.com "echo 'Success'"
 ### Deployment Logs
 
 All deployment activities are logged with timestamps:
+
 - Pre-deployment validation
 - Backup creation and verification
 - Build and deployment steps
@@ -198,6 +209,7 @@ ssh user@your-server.com "ls -la /var/www/productivity-hub/current"
 ### Common Issues
 
 #### 1. SSH Connection Failed
+
 ```bash
 # Test SSH connection
 ssh -i ~/.ssh/deploy_key user@server "echo 'test'"
@@ -209,11 +221,12 @@ chmod 600 ~/.ssh/deploy_key
 ```
 
 #### 2. Build Failures
+
 ```bash
 # Check Node.js version
 node --version  # Should be 18+
 
-# Check Python version  
+# Check Python version
 python3 --version  # Should be 3.9+
 
 # Clear build caches
@@ -222,6 +235,7 @@ rm -rf backend/__pycache__
 ```
 
 #### 3. Service Start Failures
+
 ```bash
 # Check service logs
 sudo journalctl -u productivity-hub -f
@@ -234,6 +248,7 @@ ls -la /var/www/productivity-hub/current/
 ```
 
 #### 4. Health Check Failures
+
 ```bash
 # Manual health check
 curl -f http://localhost:5000/
@@ -248,6 +263,7 @@ sudo tail -f /var/log/nginx/error.log
 ### Emergency Procedures
 
 #### Manual Rollback
+
 If automated rollback fails:
 
 ```bash
@@ -269,6 +285,7 @@ sudo systemctl reload nginx
 ```
 
 #### Service Recovery
+
 If services are completely down:
 
 ```bash
