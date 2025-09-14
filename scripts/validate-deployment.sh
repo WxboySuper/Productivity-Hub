@@ -91,7 +91,9 @@ check_local_dependencies() {
         local node_version=$(node --version)
         log "Node.js found: $node_version"
         
-        if [[ "$node_version" < "v18" ]]; then
+        # Extract major version number (e.g., "v20.1.0" -> 20)
+        local node_major_version=$(echo "$node_version" | sed -E 's/^v([0-9]+).*/\1/')
+        if [ "$node_major_version" -lt 18 ]; then
             warn "Node.js version should be 18 or higher"
         fi
     else
@@ -109,10 +111,13 @@ check_local_dependencies() {
     
     # Check Python
     if command -v python3 >/dev/null 2>&1; then
-        local python_version=$(python3 --version)
+        local python_version=$(python3 --version 2>&1)
         log "Python found: $python_version"
         
-        if ! python3 -c "import sys; exit(0 if sys.version_info >= (3, 9) else 1)" 2>/dev/null; then
+        # Parse major and minor version from the version string
+        local py_major=$(echo "$python_version" | awk '{print $2}' | cut -d. -f1)
+        local py_minor=$(echo "$python_version" | awk '{print $2}' | cut -d. -f2)
+        if [ "$py_major" -lt 3 ] || { [ "$py_major" -eq 3 ] && [ "$py_minor" -lt 9 ]; }; then
             warn "Python version should be 3.9 or higher"
         fi
     else
