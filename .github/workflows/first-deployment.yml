@@ -83,7 +83,7 @@ jobs:
         run: |
           # Frontend dependencies
           cd frontend
-          npm install
+          npm ci
           cd ..
           
           # Backend dependencies
