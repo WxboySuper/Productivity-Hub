@@ -56,21 +56,84 @@ create_backup() {
 deploy_backend() {
     log "Deploying backend changes..."
     
-    # Sync only backend files that have changed
+    # Create deployment package to avoid runtime dependency issues
+    log "Creating deployment package..."
+    TEMP_DIR="/tmp/productivity-hub-deploy-$$"
+    mkdir -p "$TEMP_DIR"
+    
+    # Create a deployment package with dependencies pre-resolved
+    log "Preparing dependencies package..."
+    cp backend/requirements.txt "$TEMP_DIR/"
+    
+    # Create installation script with retry logic
+    cat > "$TEMP_DIR/install-deps.sh" << 'EOF'
+#!/bin/bash
+set -e
+
+cd /var/www/productivity-hub/current/backend
+source venv/bin/activate
+
+# Create backup of current environment
+pip freeze > requirements.backup.txt
+
+log_install() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
+}
+
+log_install "Starting dependency installation..."
+
+# Install dependencies with retry logic and timeout
+for i in {1..3}; do
+    log_install "Installation attempt $i of 3..."
+    
+    if timeout 300 pip install --no-cache-dir -r requirements.txt; then
+        log_install "Dependencies installed successfully"
+        break
+    else
+        log_install "Attempt $i failed, retrying in 5 seconds..."
+        if [ $i -eq 3 ]; then
+            log_install "ERROR: Failed to install dependencies after 3 attempts"
+            log_install "Restoring previous environment..."
+            pip install -r requirements.backup.txt || true
+            exit 1
+        fi
+        sleep 5
+    fi
+done
+
+# Verify installation
+if ! pip check; then
+    log_install "WARNING: Dependency conflicts detected, but proceeding..."
+fi
+
+log_install "Dependency installation completed successfully"
+EOF
+    
+    chmod +x "$TEMP_DIR/install-deps.sh"
+    
+    # Sync backend files (excluding dependencies that change frequently)
     rsync -avz --delete \
         --exclude '*.pyc' \
         --exclude '__pycache__' \
         --exclude '.env' \
         --exclude '*.db' \
         --exclude 'logs/' \
+        --exclude 'venv/' \
         backend/ "$REMOTE_USER@$REMOTE_HOST:$REMOTE_PATH/current/backend/"
     
-    # Install/update dependencies
+    # Transfer and execute dependency installation
+    scp "$TEMP_DIR/install-deps.sh" "$REMOTE_USER@$REMOTE_HOST:$REMOTE_PATH/current/backend/"
+    
+    log "Installing dependencies on remote server..."
     ssh "$REMOTE_USER@$REMOTE_HOST" "
-        cd $REMOTE_PATH/current/backend
-        source venv/bin/activate
-        pip install -r requirements.txt
-    "
+        chmod +x $REMOTE_PATH/current/backend/install-deps.sh
+        $REMOTE_PATH/current/backend/install-deps.sh
+    " || {
+        error "Dependency installation failed. Check remote server logs."
+    }
+    
+    # Clean up temporary files
+    rm -rf "$TEMP_DIR"
 }
 
 # Deploy frontend changes

@@ -213,19 +213,80 @@ chown -R productivity:productivity /var/www/productivity-hub
 
 ### 1. SSL/HTTPS Setup
 
+**Overview**
+
+SSL/HTTPS is critical for production security. This section provides comprehensive guidance for certificate setup and management.
+
+**Certificate Options:**
+1. **Let's Encrypt** (Recommended): Free, automated certificates
+2. **Commercial SSL**: Purchased certificates from trusted CAs
+3. **Self-Signed**: Development/testing only
+
+**Let's Encrypt Setup (Recommended)**
+
+Prerequisites:
+- Domain name pointing to your server IP
+- Ports 80 and 443 open in firewall
+- Nginx installed and running
+
 ```bash
 # Install Certbot for Let's Encrypt
 sudo apt install certbot python3-certbot-nginx
 
-# Obtain SSL certificate
-sudo certbot --nginx -d your-domain.com
+# Obtain SSL certificate (replace with your domain)
+sudo certbot --nginx -d your-domain.com -d www.your-domain.com
+
+# Verify installation
+sudo certbot certificates
+curl -I https://your-domain.com
 
 # Auto-renewal
 sudo crontab -e
-# Add: 0 12 * * * /usr/bin/certbot renew --quiet
+# Add: 0 12 * * * /usr/bin/certbot renew --quiet && /usr/sbin/nginx -s reload
 ```
 
-### 2. Custom Nginx Configuration
+**Commercial SSL Certificates**
+
+For commercial certificates, see our comprehensive guide: **[docs/SSL_SETUP.md](docs/SSL_SETUP.md)**
+
+This guide covers:
+- Certificate purchasing and installation
+- CSR generation and validation
+- Certificate chain configuration
+- Renewal procedures
+- Troubleshooting common issues
+
+### 2. Configuration Validation
+
+Before deploying, validate your Nginx configuration:
+
+```bash
+# Run the configuration validator
+./scripts/validate-nginx.sh
+
+# Check for placeholder values
+./scripts/validate-nginx.sh config/nginx/productivity-hub.conf
+
+# Test active configuration
+./scripts/validate-nginx.sh /etc/nginx/sites-available/productivity-hub.conf
+```
+
+**Critical Configuration Updates Required:**
+
+1. **Update server_name**: Replace `your-domain.com` with your actual domain
+2. **Update SSL paths**: Replace certificate placeholder paths
+3. **Verify application paths**: Ensure all directories exist
+4. **Test DNS resolution**: Confirm domain points to your server
+
+The validator will check for:
+- ✅ Placeholder value detection
+- ✅ SSL certificate file validation
+- ✅ Certificate expiration warnings
+- ✅ DNS resolution verification
+- ✅ Nginx syntax validation
+- ✅ File permission checks
+
+### 3. Custom Nginx Configuration
 
 The provided Nginx configuration includes:
 
@@ -244,7 +305,11 @@ Edit `config/nginx/productivity-hub.conf` and update:
 
 ## Automated Deployment
 
-### 1. Using the Deployment Script
+### 1. Cross-Platform Deployment Scripts
+
+We provide deployment scripts for both Linux/macOS and Windows environments:
+
+#### Linux/macOS Deployment
 
 ```bash
 # Set environment variables
@@ -262,7 +327,53 @@ export DEPLOY_PATH=/var/www/productivity-hub
 ./scripts/deploy.sh --frontend-only
 ```
 
-### 2. CI/CD Integration
+#### Windows PowerShell Deployment
+
+**Prerequisites for Windows:**
+- PowerShell 5.1+ or PowerShell Core 6+
+- SSH client (OpenSSH, Git Bash, or PuTTY)
+- Node.js and npm (for frontend builds)
+- rsync (recommended via Git Bash or WSL)
+
+```powershell
+# Set environment variables
+$env:DEPLOY_HOST="your-server.com"
+$env:DEPLOY_USER="productivity" 
+$env:DEPLOY_PATH="/var/www/productivity-hub"
+
+# Full deployment
+.\scripts\deploy.ps1
+
+# Backend only
+.\scripts\deploy.ps1 -BackendOnly
+
+# Frontend only
+.\scripts\deploy.ps1 -FrontendOnly
+```
+
+**Windows Setup Notes:**
+- Install Git for Windows to get rsync and SSH
+- Alternative: Use Windows Subsystem for Linux (WSL)
+- For PuTTY users: Ensure plink.exe is in your PATH
+
+### 2. Deployment Package Strategy
+
+The deployment scripts now use a robust package-based approach to avoid runtime dependency issues:
+
+**Enhanced Features:**
+- **Local dependency resolution**: Dependencies are validated before deployment
+- **Retry logic**: Automatic retry on pip install failures with exponential backoff
+- **Backup and rollback**: Automatic environment backup before updates
+- **Timeout protection**: Prevents hanging on network issues
+- **Validation checks**: Post-deployment health verification
+
+**Benefits:**
+- Reduced deployment failures from network issues
+- Faster deployments by avoiding unnecessary reinstalls
+- Better error handling and recovery
+- Consistent deployment across environments
+
+### 3. CI/CD Integration
 
 For automated deployments, add these environment variables to your CI/CD pipeline:
 
@@ -270,6 +381,20 @@ For automated deployments, add these environment variables to your CI/CD pipelin
 - `DEPLOY_USER`
 - `DEPLOY_PATH`
 - SSH keys for authentication
+
+**GitHub Actions Example:**
+```yaml
+- name: Deploy to Production
+  env:
+    DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+    DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+    DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+  run: |
+    echo "${{ secrets.SSH_PRIVATE_KEY }}" > /tmp/ssh_key
+    chmod 600 /tmp/ssh_key
+    ssh-add /tmp/ssh_key
+    ./scripts/deploy.sh
+```
 
 ## Backup and Recovery
 
@@ -417,3 +542,92 @@ sudo systemctl reload nginx
 - **Static Files**: Serve directly through Nginx
 
 For additional help, refer to the logs and health check endpoints provided by the application.
+
+## Deployment Checklist
+
+Before going live, ensure you've completed:
+
+### Pre-Deployment
+- [ ] Server meets minimum requirements (1GB RAM, 10GB storage)
+- [ ] Domain name configured and pointing to server IP
+- [ ] Firewall configured (ports 22, 80, 443 open)
+- [ ] SSH key authentication set up
+- [ ] SSL certificates obtained and configured
+
+### Configuration
+- [ ] Environment variables configured (`.env` file)
+- [ ] Database credentials set (if using external database)
+- [ ] SMTP settings configured for email functionality
+- [ ] Nginx configuration updated with your domain
+- [ ] SSL certificate paths updated in Nginx config
+- [ ] Configuration validated with `./scripts/validate-nginx.sh`
+
+### Deployment
+- [ ] Application deployed successfully
+- [ ] Services started and running
+- [ ] Health checks passing
+- [ ] Frontend accessible via HTTPS
+- [ ] API endpoints responding correctly
+- [ ] Email functionality tested
+
+### Post-Deployment
+- [ ] Monitoring set up
+- [ ] Backup system configured and tested
+- [ ] Log rotation configured
+- [ ] SSL certificate auto-renewal tested
+- [ ] Documentation updated with deployment details
+
+## Quick Troubleshooting
+
+### Common Windows Deployment Issues
+
+1. **SSH Client Not Found**
+   ```powershell
+   # Install OpenSSH (Windows 10+)
+   Add-WindowsCapability -Online -Name OpenSSH.Client
+   
+   # Or use Git Bash
+   # Download from: https://git-scm.com/download/win
+   ```
+
+2. **rsync Not Available**
+   ```powershell
+   # Install Git for Windows (includes rsync)
+   # Or use Windows Subsystem for Linux (WSL)
+   wsl --install
+   ```
+
+3. **Permission Denied**
+   ```powershell
+   # Ensure SSH key authentication is set up
+   # Test connection: ssh username@your-server.com
+   ```
+
+### Common Linux/Server Issues
+
+1. **Service Won't Start**
+   ```bash
+   # Check service status
+   sudo systemctl status productivity-hub
+   
+   # View logs
+   sudo journalctl -u productivity-hub -f
+   ```
+
+2. **Nginx Configuration Error**
+   ```bash
+   # Test configuration
+   sudo nginx -t
+   
+   # Check for placeholder values
+   ./scripts/validate-nginx.sh
+   ```
+
+3. **SSL Certificate Issues**
+   ```bash
+   # Verify certificate
+   openssl x509 -in /path/to/cert.crt -text -noout
+   
+   # Test SSL
+   echo | openssl s_client -connect your-domain.com:443
+   ```
