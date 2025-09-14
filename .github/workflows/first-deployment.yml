@@ -251,7 +251,7 @@ jobs:
             cd ..
             
             # Create production .env file
-            echo 'SECRET_KEY='\$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))') > backend/.env
+            echo \"SECRET_KEY=\$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')\" > backend/.env
             echo 'FLASK_ENV=production' >> backend/.env
             echo 'FLASK_DEBUG=0' >> backend/.env
             echo 'DATABASE_URL=sqlite:///productivity_hub.db' >> backend/.env
@@ -274,8 +274,8 @@ jobs:
             if [ -f 'config/systemd/productivity-hub.service' ]; then
               sudo cp config/systemd/productivity-hub.service /etc/systemd/system/
               # Update paths in service file
-              sudo sed -i 's|/var/www/productivity-hub|$DEPLOY_PATH|g' /etc/systemd/system/productivity-hub.service
-              sudo sed -i 's|User=productivity|User=$SERVER_USER|g' /etc/systemd/system/productivity-hub.service
+              sudo sed -i \"s|/var/www/productivity-hub|\$DEPLOY_PATH|g\" /etc/systemd/system/productivity-hub.service
+              sudo sed -i \"s|User=productivity|User=\$SERVER_USER|g\" /etc/systemd/system/productivity-hub.service
               sudo systemctl daemon-reload
               sudo systemctl enable productivity-hub
             fi
@@ -284,8 +284,8 @@ jobs:
             if [ -f 'config/nginx/productivity-hub.conf' ]; then
               sudo cp config/nginx/productivity-hub.conf /etc/nginx/sites-available/
               # Update domain name and paths
-              sudo sed -i 's/your-domain.com/$DOMAIN_NAME/g' /etc/nginx/sites-available/productivity-hub.conf
-              sudo sed -i 's|/var/www/productivity-hub|$DEPLOY_PATH|g' /etc/nginx/sites-available/productivity-hub.conf
+              sudo sed -i \"s/your-domain.com/\$DOMAIN_NAME/g\" /etc/nginx/sites-available/productivity-hub.conf
+              sudo sed -i \"s|/var/www/productivity-hub|\$DEPLOY_PATH|g\" /etc/nginx/sites-available/productivity-hub.conf
               
               # Remove default nginx site if it exists
               sudo rm -f /etc/nginx/sites-enabled/default
