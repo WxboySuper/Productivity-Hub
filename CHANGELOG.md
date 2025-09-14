@@ -8,6 +8,48 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - For every stable, alpha, or beta release, summarize all API changes (new endpoints, deleted endpoints, changes to endpoints, etc.) in the changelog, even if they were already documented in dev releases. This ensures the release notes provide a complete overview of API evolution for each version.
 
+## [v0.13.0-dev] - 2025-09-14
+
+### Added
+
+- **GitHub Actions Deployment Workflow**: On-demand deployment with manual triggering and branch/tag selection
+  - Atomic deployments with zero-downtime using symlink strategy
+  - Automatic backup creation before every deployment with integrity verification
+  - Auto-rollback on deployment failure with service recovery
+  - Multi-environment support (production/staging) with separate configurations
+  - Flexible deployment types: full, backend-only, frontend-only
+  - Automatic GitHub issue creation on deployment failure with detailed logs
+  - Comprehensive health checks and service validation post-deployment
+- **Enhanced Backup System**: Extended backup script with deployment-specific features
+  - Deployment-tagged backups with manifest generation
+  - Backup integrity verification with SQLite database checking
+  - Rollback functionality with pre-rollback backup creation
+  - Retention management and cleanup automation
+- **Deployment Validation Tools**: Configuration validation script for GitHub Actions setup
+  - GitHub secrets requirement checking and documentation
+  - SSH key setup guidance and server requirement validation
+  - Local dependency verification and build testing
+  - Comprehensive setup instructions and troubleshooting guides
+- **GitHub Actions Integration**: Leverages existing deployment scripts and Docker infrastructure
+  - Uses existing deploy.sh/deploy.ps1 scripts for compatibility
+  - Integrates with current backup.sh for safety measures
+  - Builds on Docker and docker-compose configurations
+  - Compatible with existing CI/CD workflows (backend.yml, frontend-tests.yml)
+
+### Changed
+
+- **Deployment Documentation**: Major update to DEPLOYMENT.md with GitHub Actions as recommended approach
+- **Repository Structure**: Added comprehensive documentation in docs/GITHUB_DEPLOYMENT.md
+- **Backup Strategy**: Enhanced backup.sh with deployment-specific functionality and better error handling
+
+### Technical Details
+
+- **Deployment Flow**: Build → Backup → Deploy → Health Check → Cleanup/Rollback
+- **Security**: SSH key-based authentication with GitHub Secrets management
+- **Safety**: Pre-deployment backup, atomic switching, automatic rollback on failure
+- **Monitoring**: Real-time logs in GitHub Actions with failure notification system
+- **Compatibility**: Works with existing VPS deployment and Docker configurations
+
 ## [v0.12.0-beta] - 2025-07-25
 
 ### Added

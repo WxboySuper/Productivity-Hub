@@ -5,6 +5,7 @@ This comprehensive guide will help you deploy Productivity Hub to production usi
 ## Table of Contents
 
 - [Quick Start](#quick-start)
+- [GitHub Actions Deployment (Recommended)](#github-actions-deployment-recommended)
 - [Prerequisites](#prerequisites)
 - [Traditional VPS Deployment](#traditional-vps-deployment)
 - [Docker Deployment](#docker-deployment)
@@ -18,7 +19,23 @@ This comprehensive guide will help you deploy Productivity Hub to production usi
 
 ## Quick Start
 
-For the fastest deployment using Docker:
+🎯 **Recommended: Use GitHub Actions Deployment**
+
+For the safest and most reliable deployment:
+
+1. **Configure GitHub Secrets** (one-time setup):
+
+   ```bash
+   # Run validation script for setup instructions
+   ./scripts/validate-deployment.sh
+   ```
+
+2. **Deploy via GitHub Actions**:
+   - Go to Actions → "Deploy to VPS" → "Run workflow"
+   - Select environment, branch, and deployment type
+   - Monitor deployment progress in real-time
+
+For traditional Docker deployment:
 
 ```bash
 # Clone the repository
@@ -32,6 +49,42 @@ cp .env.docker.template .env
 # Start with Docker Compose
 docker-compose up -d
 ```
+
+## GitHub Actions Deployment (Recommended)
+
+The GitHub Actions deployment workflow provides automated, safe deployments with backup and rollback capabilities.
+
+### Features
+
+- ✅ **Manual triggering** with branch/tag selection
+- ✅ **Atomic deployments** with zero-downtime
+- ✅ **Automatic backup** before every deployment
+- ✅ **Auto-rollback** on failure
+- ✅ **Multi-environment** support (production/staging)
+- ✅ **Deployment types**: full, backend-only, frontend-only
+- ✅ **Failure notifications** with GitHub issue creation
+- ✅ **Comprehensive logging** and health checks
+
+### Quick Setup
+
+1. **Run the validation script**:
+
+   ```bash
+   ./scripts/validate-deployment.sh
+   ```
+
+2. **Configure GitHub Secrets** in repository settings:
+   - `PROD_DEPLOY_HOST` - Your server hostname
+   - `PROD_DEPLOY_USER` - SSH username (e.g., "ubuntu")
+   - `PROD_DEPLOY_PATH` - Deployment path (e.g., "/var/www/productivity-hub")
+   - `SSH_PRIVATE_KEY` - SSH private key content
+
+3. **Deploy**:
+   - Go to GitHub Actions → "Deploy to VPS"
+   - Click "Run workflow"
+   - Select options and deploy
+
+📖 **Detailed documentation**: [docs/GITHUB_DEPLOYMENT.md](docs/GITHUB_DEPLOYMENT.md)
 
 ## Prerequisites
 
