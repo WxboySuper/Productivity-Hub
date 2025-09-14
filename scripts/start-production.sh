@@ -61,22 +61,10 @@ setup_logging() {
     if ! command -v sudo &> /dev/null; then
         error "sudo is required to create and modify system log directories."
     fi
-    sudo mkdir -p "$LOG_DIR"
-    if [ $? -ne 0 ]; then
-        error "Failed to create $LOG_DIR. Please check your permissions."
-    fi
-    sudo mkdir -p /var/log/gunicorn
-    if [ $? -ne 0 ]; then
-        error "Failed to create /var/log/gunicorn. Please check your permissions."
-    fi
-    sudo chown -R "$USER:$USER" "$LOG_DIR" 2>/dev/null || true
-    if [ $? -ne 0 ]; then
-        error "Failed to set ownership for $LOG_DIR. Please check your permissions."
-    fi
-    sudo chown -R "$USER:$USER" /var/log/gunicorn 2>/dev/null || true
-    if [ $? -ne 0 ]; then
-        error "Failed to set ownership for /var/log/gunicorn. Please check your permissions."
-    fi
+    sudo mkdir -p "$LOG_DIR" || error "Failed to create $LOG_DIR. Please check your permissions."
+    sudo mkdir -p /var/log/gunicorn || error "Failed to create /var/log/gunicorn. Please check your permissions."
+    sudo chown -R "$USER:$USER" "$LOG_DIR" 2>/dev/null || error "Failed to set ownership for $LOG_DIR. Please check your permissions."
+    sudo chown -R "$USER:$USER" /var/log/gunicorn 2>/dev/null || error "Failed to set ownership for /var/log/gunicorn. Please check your permissions."
 }
 
 # Setup Python virtual environment
