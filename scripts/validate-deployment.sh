@@ -358,10 +358,15 @@ main() {
         log "✅ Basic validation passed"
         echo
         info "Next steps:"
-        echo "1. Set up the required GitHub secrets"
-        echo "2. Configure your VPS server"
-        echo "3. Test the deployment workflow"
-        echo "4. Go to Actions → Deploy to VPS → Run workflow"
+        echo "For FIRST DEPLOYMENT (fresh server):"
+        echo "1. Use the 'First Deployment Setup' workflow in GitHub Actions"
+        echo "2. This will automatically set up the server and deploy the application"
+        echo "3. After first deployment, use the regular 'Deploy to VPS' workflow"
+        echo ""
+        echo "For REGULAR UPDATES:"
+        echo "1. Set up the required GitHub secrets (shown above)"
+        echo "2. Go to Actions → Deploy to VPS → Run workflow"
+        echo "3. Enable incremental deployment for faster updates"
     fi
 }
 

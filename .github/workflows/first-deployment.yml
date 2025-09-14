@@ -251,13 +251,11 @@ jobs:
             cd ..
             
             # Create production .env file
-            cat > backend/.env << 'EOF'
-SECRET_KEY=\$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')
-FLASK_ENV=production
-FLASK_DEBUG=0
-DATABASE_URL=sqlite:///productivity_hub.db
-FRONTEND_BASE_URL=https://$DOMAIN_NAME
-EOF
+            echo 'SECRET_KEY='\$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))') > backend/.env
+            echo 'FLASK_ENV=production' >> backend/.env
+            echo 'FLASK_DEBUG=0' >> backend/.env
+            echo 'DATABASE_URL=sqlite:///productivity_hub.db' >> backend/.env
+            echo 'FRONTEND_BASE_URL=https://$DOMAIN_NAME' >> backend/.env
             
             # Make scripts executable
             chmod +x scripts/*.sh
