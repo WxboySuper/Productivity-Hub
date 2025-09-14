@@ -34,12 +34,14 @@ The deployment workflow provides:
 Navigate to your repository → Settings → Secrets and variables → Actions, then add:
 
 **Production Environment:**
+
 - `PROD_DEPLOY_HOST` - Production server hostname/IP (e.g., "your-server.com")
 - `PROD_DEPLOY_USER` - SSH username (e.g., "ubuntu", "productivity")
 - `PROD_DEPLOY_PATH` - Deployment path (e.g., "/var/www/productivity-hub")
 - `SSH_PRIVATE_KEY` - SSH private key content for server access
 
 **Staging Environment (Optional):**
+
 - `STAGING_DEPLOY_HOST` - Staging server hostname/IP
 - `STAGING_DEPLOY_USER` - SSH username for staging
 - `STAGING_DEPLOY_PATH` - Deployment path for staging
@@ -47,12 +49,14 @@ Navigate to your repository → Settings → Secrets and variables → Actions, 
 #### Option B: SSH Password Authentication
 
 **Production Environment:**
+
 - `PROD_DEPLOY_HOST` - Production server hostname/IP
-- `PROD_DEPLOY_USER` - SSH username  
+- `PROD_DEPLOY_USER` - SSH username
 - `PROD_DEPLOY_PATH` - Deployment path
 - `PROD_SSH_PASSWORD` - SSH password for server access
 
 **Staging Environment (Optional):**
+
 - `STAGING_DEPLOY_HOST` - Staging server hostname/IP
 - `STAGING_DEPLOY_USER` - SSH username for staging
 - `STAGING_DEPLOY_PATH` - Deployment path for staging
@@ -110,6 +114,7 @@ For a completely new server setup, use the **First Deployment Setup** workflow:
 6. Click **"Run workflow"**
 
 This will automatically:
+
 - Install all required software (Python, Node.js, nginx, etc.)
 - Create deployment directories
 - Deploy the application
