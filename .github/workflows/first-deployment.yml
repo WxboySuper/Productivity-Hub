@@ -170,8 +170,8 @@ jobs:
                 echo "Check that the password is correct and sshd allows password auth for $SERVER_USER"
                 exit 1
               }
-            echo "SSH_CMD=sshpass -p \"${{ secrets.SSH_PASSWORD }}\" ssh -o StrictHostKeyChecking=no" >> $GITHUB_ENV
-            echo "RSYNC_SSH=sshpass -p \"${{ secrets.SSH_PASSWORD }}\" ssh -o StrictHostKeyChecking=no" >> $GITHUB_ENV
+            echo "SSH_CMD=sshpass -p \"${{ secrets.PROD_SSH_PASSWORD }}\" ssh -o StrictHostKeyChecking=no" >> $GITHUB_ENV
+            echo "RSYNC_SSH=sshpass -p \"${{ secrets.PROD_SSH_PASSWORD }}\" ssh -o StrictHostKeyChecking=no" >> $GITHUB_ENV
       
           else
             echo "❌ Unknown authentication method: $AUTH_METHOD"
@@ -182,7 +182,7 @@ jobs:
         run: |
           echo "🚀 Setting up server for first deployment..."
           
-          $SSH_CMD $SERVER_USER@$SERVER_HOST "
+          sshpass -p "${{ secrets.PROD_SSH_PASSWORD }}" ssh -o StrictHostKeyChecking=no root@145.79.2.154 "
             # Update system packages
             echo 'Updating system packages...'
             sudo apt update && sudo apt upgrade -y
@@ -226,7 +226,7 @@ jobs:
           # Create release directory
           RELEASE_DIR="$DEPLOY_PATH/releases/release-$DEPLOYMENT_TIMESTAMP"
           
-          $SSH_CMD $SERVER_USER@$SERVER_HOST "
+          sshpass -p "${{ secrets.PROD_SSH_PASSWORD }}" ssh -o StrictHostKeyChecking=no root@145.79.2.154 "
             mkdir -p '$RELEASE_DIR'
             echo 'Release directory created: $RELEASE_DIR'
           "
@@ -245,9 +245,9 @@ jobs:
             rsync -avz -e "ssh -i ~/.ssh/deploy_key" scripts/ $SERVER_USER@$SERVER_HOST:$RELEASE_DIR/scripts/
             rsync -avz -e "ssh -i ~/.ssh/deploy_key" config/ $SERVER_USER@$SERVER_HOST:$RELEASE_DIR/config/
           else
-            sshpass -p "${{ secrets.SSH_PASSWORD }}" scp requirements.txt $SERVER_USER@$SERVER_HOST:$RELEASE_DIR/
-            rsync -avz -e "sshpass -p \"${{ secrets.SSH_PASSWORD }}\" ssh" scripts/ $SERVER_USER@$SERVER_HOST:$RELEASE_DIR/scripts/
-            rsync -avz -e "sshpass -p \"${{ secrets.SSH_PASSWORD }}\" ssh" config/ $SERVER_USER@$SERVER_HOST:$RELEASE_DIR/config/
+            sshpass -p "${{ secrets.PROD_SSH_PASSWORD }}" scp requirements.txt $SERVER_USER@$SERVER_HOST:$RELEASE_DIR/
+            rsync -avz -e "sshpass -p \"${{ secrets.PROD_SSH_PASSWORD }}\" ssh" scripts/ $SERVER_USER@$SERVER_HOST:$RELEASE_DIR/scripts/
+            rsync -avz -e "sshpass -p \"${{ secrets.PROD_SSH_PASSWORD }}\" ssh" config/ $SERVER_USER@$SERVER_HOST:$RELEASE_DIR/config/
           fi
           
           echo "RELEASE_DIR=$RELEASE_DIR" >> $GITHUB_ENV
@@ -256,7 +256,7 @@ jobs:
         run: |
           echo "⚙️ Setting up application environment..."
           
-          $SSH_CMD $SERVER_USER@$SERVER_HOST "
+          sshpass -p "${{ secrets.PROD_SSH_PASSWORD }}" ssh -o StrictHostKeyChecking=no root@145.79.2.154 "
             cd '$RELEASE_DIR'
             
             # Create Python virtual environment
@@ -284,7 +284,7 @@ jobs:
         run: |
           echo "🔧 Setting up system services..."
           
-          $SSH_CMD $SERVER_USER@$SERVER_HOST "
+          sshpass -p "${{ secrets.PROD_SSH_PASSWORD }}" ssh -o StrictHostKeyChecking=no root@145.79.2.154 "
             cd '$RELEASE_DIR'
             
             # Install systemd service
@@ -322,7 +322,7 @@ jobs:
         run: |
           echo "🔒 Setting up SSL certificates..."
           
-          $SSH_CMD $SERVER_USER@$SERVER_HOST "
+          sshpass -p "${{ secrets.PROD_SSH_PASSWORD }}" ssh -o StrictHostKeyChecking=no root@145.79.2.154 "
             # Install Certbot
             sudo apt install -y certbot python3-certbot-nginx
             
@@ -339,7 +339,7 @@ jobs:
         run: |
           echo "🚀 Activating deployment..."
           
-          $SSH_CMD $SERVER_USER@$SERVER_HOST "
+          sshpass -p "${{ secrets.PROD_SSH_PASSWORD }}" ssh -o StrictHostKeyChecking=no root@145.79.2.154 "
             # Create symlink to current release
             ln -sfn '$RELEASE_DIR' '$DEPLOY_PATH/current'
             
@@ -362,7 +362,7 @@ jobs:
           sleep 15
           
           # Test local connection
-          $SSH_CMD $SERVER_USER@$SERVER_HOST "
+          sshpass -p "${{ secrets.PROD_SSH_PASSWORD }}" ssh -o StrictHostKeyChecking=no root@145.79.2.154 "
             # Check service status
             sudo systemctl is-active productivity-hub
             sudo systemctl is-active nginx
