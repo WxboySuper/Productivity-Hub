@@ -234,6 +234,10 @@ jobs:
           # Deploy backend
           rsync -avz -e "$RSYNC_SSH" \
             deployment-package/backend/ $SERVER_USER@$SERVER_HOST:$RELEASE_DIR/backend/
+
+          sshpass -p "${{ secrets.PROD_SSH_PASSWORD }}" ssh -o StrictHostKeyChecking=no root@145.79.2.154 "
+            mkdir -p '$RELEASE_DIR/frontend'
+          "
           
           # Deploy frontend
           rsync -avz -e "$RSYNC_SSH" \
