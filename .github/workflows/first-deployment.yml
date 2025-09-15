@@ -316,30 +316,22 @@ jobs:
               
               # Enable our site
               sudo ln -sf /etc/nginx/sites-available/productivity-hub.conf /etc/nginx/sites-enabled/
+
+              # Install Certbot
+              sudo apt install -y certbot python3-certbot-nginx
+              
+              # Obtain SSL certificate
+              sudo certbot --nginx -d $DOMAIN_NAME --non-interactive --agree-tos --email admin@$DOMAIN_NAME
+              
+              # Set up auto-renewal
+              echo '0 12 * * * /usr/bin/certbot renew --quiet && /usr/sbin/nginx -s reload' | sudo crontab -
               
               # Test nginx configuration
               sudo nginx -t
             fi
-            
-            echo '✅ System services configured'
-          "
 
-      - name: Setup SSL certificates
-        if: ${{ github.event.inputs.setup_ssl == true }}
-        run: |
-          echo "🔒 Setting up SSL certificates..."
-          
-          sshpass -p "${{ secrets.PROD_SSH_PASSWORD }}" ssh -o StrictHostKeyChecking=no root@145.79.2.154 "
-            # Install Certbot
-            sudo apt install -y certbot python3-certbot-nginx
-            
-            # Obtain SSL certificate
-            sudo certbot --nginx -d $DOMAIN_NAME --non-interactive --agree-tos --email admin@$DOMAIN_NAME
-            
-            # Set up auto-renewal
-            echo '0 12 * * * /usr/bin/certbot renew --quiet && /usr/sbin/nginx -s reload' | sudo crontab -
-            
             echo '✅ SSL certificates configured'
+            echo '✅ System services configured'
           "
 
       - name: Activate deployment
