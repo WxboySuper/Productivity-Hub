@@ -125,11 +125,11 @@ jobs:
           echo "SERVER_HOST: $SERVER_HOST"
           ssh -V || true
       
+          mkdir -p ~/.ssh
+          touch ~/.ssh/known_hosts  # Ensure known_hosts file always exists
+      
           if [ "$AUTH_METHOD" = "key" ]; then
             echo "Setting up SSH key authentication..."
-            mkdir -p ~/.ssh
-      
-            # Write private key to file and check permissions
             echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
             chmod 600 ~/.ssh/deploy_key
             ls -l ~/.ssh/deploy_key
