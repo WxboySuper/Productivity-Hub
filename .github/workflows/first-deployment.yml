@@ -117,47 +117,64 @@ jobs:
           
           echo "✅ Backend deployment package prepared"
 
-      - name: Set up SSH authentication
+      - name: Set up SSH authentication (verbose)
         run: |
+          set -x
+          echo "AUTH_METHOD: $AUTH_METHOD"
+          echo "SERVER_USER: $SERVER_USER"
+          echo "SERVER_HOST: $SERVER_HOST"
+          ssh -V || true
+      
           if [ "$AUTH_METHOD" = "key" ]; then
             echo "Setting up SSH key authentication..."
             mkdir -p ~/.ssh
+      
+            # Write private key to file and check permissions
             echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
             chmod 600 ~/.ssh/deploy_key
-            
+            ls -l ~/.ssh/deploy_key
+      
+            # Show fingerprint for troubleshooting
+            ssh-keygen -lf ~/.ssh/deploy_key || true
+      
             # Add known hosts
             ssh-keyscan -H $SERVER_HOST >> ~/.ssh/known_hosts 2>/dev/null || true
-            
-            # Test SSH connection
-            ssh -i ~/.ssh/deploy_key -o ConnectTimeout=10 -o StrictHostKeyChecking=no \
-                $SERVER_USER@$SERVER_HOST "echo 'SSH key connection successful'" || {
-              echo "❌ SSH key connection failed"
-              exit 1
-            }
+            cat ~/.ssh/known_hosts
+      
+            # Test SSH connection with verbose mode
+            ssh -i ~/.ssh/deploy_key -o ConnectTimeout=10 -o StrictHostKeyChecking=no -v \
+              $SERVER_USER@$SERVER_HOST "echo 'SSH key connection successful'" \
+              || {
+                echo "❌ SSH key connection failed"
+                echo "Troubleshooting details:"
+                echo "Check that the server $SERVER_HOST allows key auth for $SERVER_USER"
+                exit 1
+              }
             echo "SSH_CMD=ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" >> $GITHUB_ENV
             echo "RSYNC_SSH=ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" >> $GITHUB_ENV
-          
+      
           elif [ "$AUTH_METHOD" = "password" ]; then
             echo "Setting up SSH password authentication..."
-            
-            # Install sshpass
             sudo apt-get update
             sudo apt-get install -y sshpass
-            
-            # Add known hosts
+      
             ssh-keyscan -H $SERVER_HOST >> ~/.ssh/known_hosts 2>/dev/null || true
-            
-            # Test SSH connection
-            sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no \
-                $SERVER_USER@$SERVER_HOST "echo 'SSH password connection successful'" || {
-              echo "❌ SSH password connection failed"
-              exit 1
-            }
+            cat ~/.ssh/known_hosts
+      
+            # Test SSH connection with verbose mode
+            sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no -v \
+              $SERVER_USER@$SERVER_HOST "echo 'SSH password connection successful'" \
+              || {
+                echo "❌ SSH password connection failed"
+                echo "Troubleshooting details:"
+                echo "Check that the password is correct and sshd allows password auth for $SERVER_USER"
+                exit 1
+              }
             echo "SSH_CMD=sshpass -p \"${{ secrets.SSH_PASSWORD }}\" ssh -o StrictHostKeyChecking=no" >> $GITHUB_ENV
             echo "RSYNC_SSH=sshpass -p \"${{ secrets.SSH_PASSWORD }}\" ssh -o StrictHostKeyChecking=no" >> $GITHUB_ENV
-          
+      
           else
-            echo "❌ Unknown authentication method"
+            echo "❌ Unknown authentication method: $AUTH_METHOD"
             exit 1
           fi
 
