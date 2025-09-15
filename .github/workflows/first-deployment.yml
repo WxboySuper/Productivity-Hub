@@ -162,7 +162,7 @@ jobs:
             cat ~/.ssh/known_hosts
       
             # Test SSH connection with verbose mode
-            sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no -v \
+            sshpass -p "${{ secrets.PROD_SSH_PASSWORD }}" ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no -v \
               $SERVER_USER@$SERVER_HOST "echo 'SSH password connection successful'" \
               || {
                 echo "❌ SSH password connection failed"
