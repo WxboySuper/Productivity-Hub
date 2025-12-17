@@ -35,6 +35,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   - Integrates with current backup.sh for safety measures
   - Builds on Docker and docker-compose configurations
   - Compatible with existing CI/CD workflows (backend.yml, frontend-tests.yml)
+- **Roadmap documentation refactor**: Reorganized ROADMAP.md sections for clarity, refined milestone descriptions, and aligned terminology with CHANGELOG and VERSIONING policies
+  - Shift from React-based SPA to Server-Side Rendered architecture with HTMX
+  - Introduction of "The Great Refactor" phases
+  - Reorganization of v0.13.0-v0.26.0 milestones
+  - Removal of legacy milestone progress task list
 
 ### Changed
 
