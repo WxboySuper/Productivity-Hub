@@ -57,3 +57,5 @@ ssl/
 # Internal Scripts
 scripts/bump-version.ps1
 scripts/create-random-branch.ps1
+
+.idea/

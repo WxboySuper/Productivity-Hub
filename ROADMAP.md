@@ -121,7 +121,7 @@ This roadmap is a step-by-step checklist for building your productivity assistan
 - [ ] Add HTMX CDN to `base.html`
 - [ ] Implement `POST /api/tasks/<id>/toggle` (Return swapped HTML row)
 - [ ] Add "Quick Add" form to top of task list (Append row via HTMX)
-- [ ] Implement Inline Editing (Click title -> Swap with Input -> Save on Blur)
+- [ ] Implement Inline Editing (Click title -> Swap with Input -> Save on Enter key or with an explicit save button)
 
 ## v0.16.0-beta: The Great Refactor - Parity & Cleanup
 
@@ -175,7 +175,7 @@ This roadmap is a step-by-step checklist for building your productivity assistan
 **Goal:** A focused view for daily execution.
 
 - [ ] Implement "My Day" view (Select tasks from backlog to work on today)
-- [ ] Add "Day Review" mode (End of day summary)
+- [ ] Add "Day Review" mode (End-of-day summary)
 
 ## v0.23.0-beta: Settings & Customization
 
@@ -200,13 +200,13 @@ This roadmap is a step-by-step checklist for building your productivity assistan
 ## v0.26.0-beta: Admin Dashboard & Developer Tools
 
 - [ ] Admin Dashboard: manage users, settings, and content
-- [ ] Visual test coverage map
-- [ ] Performance dashboard: track render times, DB latency
-- [ ] Codebase health report
+- [ ] Visual test coverage map: See which templates and backend routes have test coverage
+- [ ] Performance dashboard: Track server-side render times, API/DB latency, and resource usage
+- [ ] Codebase health report: Generate a summary of linting status, testing coverage, and accessibility scores
 
 ## v1.0.0: First Stable Release 🎉
 
-**Core Productivity Platform - Ready for Production**
+### Core Productivity Platform - Ready for Production
 
 - [ ] Final testing and bug fixes
 - [ ] Prepare backend for production (env vars, security, etc.)
@@ -258,7 +258,7 @@ This roadmap is a step-by-step checklist for building your productivity assistan
 
 - [ ] Add email notification improvements (Digest emails, specific alerts)
 
-## v2.0.0+: Long Term Maintenance & Stability
+## v2.0.0+: Long-Term Maintenance & Stability
 
 **Goal:** Keeping the platform stable and adding high-value features only as needed.
 
