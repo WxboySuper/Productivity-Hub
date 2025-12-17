@@ -15,34 +15,6 @@ This roadmap is a step-by-step checklist for building your productivity assistan
 
 ---
 
-<details>
-<summary>🗂️ <strong>Milestone Progress Task List</strong></summary>
-
-- [x] Project Initialization
-- [x] Backend Environment
-- [x] Basic Models
-- [x] User Authentication
-- [x] Core API Endpoints
-- [x] Task Scheduling Fields
-- [x] API Testing
-- [x] Password Reset (Backend)
-- [x] Frontend Environment
-- [x] Auth UI
-- [x] Main Page
-- [x] Project Management UI & UI/UX Overhaul
-- [ ] Accessibility Audit & Forms
-- [ ] List/Kanban Views
-- [ ] Calendar/Timeline Views
-- [ ] Analytics & Charts
-- [ ] Custom Dashboard & Widgets
-- [ ] Scheduling UI
-- [ ] Settings & Customization
-- [ ] Notifications & Data Export
-- [ ] Info & Help Pages
-- [ ] First Stable Release 🎉
-
-</details>
-
 ## v0.1.0-alpha: Project Initialization
 
 - [x] Initialize Git repository
@@ -122,65 +94,115 @@ This roadmap is a step-by-step checklist for building your productivity assistan
 - [ ] Accessibility: audit for color contrast, focus management, screen reader output; expand automated accessibility tests for keyboard navigation, tab order, edge cases; review accessibility coverage after each major UI/UX change
 - [ ] Add forms for creating/editing tasks and projects
 
-## v0.13.0-beta: Task Views & Carryover
+## v0.13.0-beta: The Great Refactor - Foundation (Current)
 
-- New: List view and Kanban view for tasks
-- Rollovers: Project management UI, forms for tasks/projects, and technical debt from v0.12.0
+**Goal:** Initialize the new Server-Side Rendered architecture without breaking the database.
 
-## v0.14.0-beta: Task Views - Calendar & Timeline
+- [ ] Initialize `app_simple.py` (New lightweight Flask entry point)
+- [ ] Configure Tailwind CLI for standalone usage (No Node.js runtime dependency)
+- [ ] Create `templates/base.html` (Port AppHeader/Sidebar/Background components to Jinja2)
+- [ ] Create `templates/login.html` (Port Login design to Jinja2)
+- [ ] Implement `GET /login` route (Render login template)
+- [ ] Implement `POST /login` route (Handle form submission without JSON)
 
-- [ ] Implement Calendar view
-- [ ] Implement Timeline view
+## v0.14.0-beta: The Great Refactor - Task Visualization
 
-## v0.15.0-beta: Analytics & Charts
+**Goal:** Rebuild the core "All Tasks" view using the new architecture.
 
-- [ ] Add analytics/charts (using a chart library)
+- [ ] Create `templates/tasks.html` (Port Task Card HTML from React)
+- [ ] Implement `GET /tasks` route (Server-side render incomplete tasks)
+- [ ] Implement `GET /tasks/completed` route (Server-side render completed tasks)
+- [ ] Verify Tailwind styles match the original React design pixel-perfectly
 
-## v0.16.0-beta: Custom Dashboard - Overview & Quick Links
+## v0.15.0-beta: The Great Refactor - Interactions (HTMX)
 
-- [ ] Dashboard Overview: tasks, projects, productivity status
-- [ ] Dashboard Quick Links: tasks, projects, settings, etc.
+**Goal:** Restore interactivity (checking boxes, deleting) using HTMX instead of React state.
 
-## v0.17.0-beta: Custom Dashboard - Widgets & Extensibility
+- [ ] Add HTMX CDN to `base.html`
+- [ ] Implement `POST /api/tasks/<id>/toggle` (Return swapped HTML row)
+- [ ] Add "Quick Add" form to top of task list (Append row via HTMX)
+- [ ] Implement Inline Editing (Click title -> Swap with Input -> Save on Blur)
 
-- [ ] Dashboard Widgets: add/remove/rearrange preset widgets
-- [ ] Dashboard Extensibility: support for future widgets, charts, integrations
+## v0.16.0-beta: The Great Refactor - Parity & Cleanup
 
-## v0.18.0-beta: Custom Dashboard - Customization UI
+**Goal:** Full feature parity with the old frontend and removal of legacy code.
 
-- [ ] Dashboard Customization UI: add/remove/reorder widgets
+- [ ] Migrate Projects Page (Templates + Routes)
+- [ ] Migrate Settings Page (Templates + Routes)
+- [ ] **The Purge:** Delete `frontend/` directory
+- [ ] **The Unshackling:** Remove `docker-compose.yml` and complex Nginx configs
+- [ ] Update documentation to reflect new `python app.py` workflow
 
-## v0.19.0-beta: Scheduling UI
+## v0.17.0-beta: Advanced List View & Filtering
 
-- [ ] Add scheduling UI (calendar, drag-and-drop)
+**Goal:** A powerful, customizable list view that replaces the need for Kanban.
 
-## v0.20.0-beta: Settings & Customization - Settings Page & Theming
+- [ ] Implement advanced sorting (Sort by Priority, Due Date, Project) with backend query parameters
+- [ ] Implement advanced filtering (Filter by Tag, Status, Priority)
+- [ ] Add bulk actions (Select multiple -> Delete/Complete)
+- [ ] Implement list view density toggles (Compact/Comfortable)
 
-- [ ] Settings Page: theme, integrations, notifications
-- [ ] Theming: light/dark mode
+## v0.18.0-beta: Calendar & Timeline Views
 
-## v0.21.0-beta: Settings & Customization - Custom Fields & Widget Dashboard
+**Goal:** Visualizing tasks over time using lightweight JS libraries.
 
-- [ ] Custom Fields: tasks/projects
-- [ ] Widget-Based Dashboard Customization
+- [ ] Implement Calendar view (using FullCalendar + HTMX)
+- [ ] Implement basic Timeline view for Projects
 
-## v0.22.0-beta: Notifications & Data Export
+## v0.19.0-beta: Analytics & Charts
+
+**Goal:** Visualizing productivity data.
+
+- [ ] Add analytics/charts (using a lightweight chart library like Chart.js)
+- [ ] Create "Productivity Pulse" chart (Tasks completed over time)
+
+## v0.20.0-beta: Dashboard Core
+
+**Goal:** A centralized hub for productivity status.
+
+- [ ] Dashboard Overview: Show tasks due today, active projects, and productivity stats
+- [ ] Dashboard Quick Links: Add navigation shortcuts to common actions
+
+## v0.21.0-beta: Dashboard Customization
+
+**Goal:** User-controlled dashboard layout.
+
+- [ ] Implement "Widget Toggle" system (Show/Hide sections via User Settings)
+- [ ] Allow reordering of dashboard sections (if feasible without heavy JS)
+
+## v0.22.0-beta: Day Planner
+
+**Goal:** A focused view for daily execution.
+
+- [ ] Implement "My Day" view (Select tasks from backlog to work on today)
+- [ ] Add "Day Review" mode (End of day summary)
+
+## v0.23.0-beta: Settings & Customization
+
+**Goal:** Deep user control over the experience.
+
+- [ ] Settings Page: Theme selection (Light/Dark/System), Notification preferences
+- [ ] Profile Management
+
+## v0.24.0-beta: Notifications & Data Export
+
+**Goal:** Keeping the user informed and safe.
 
 - [ ] Add notifications/reminders (browser, email)
 - [ ] Add data export/import (CSV, JSON)
 
-## v0.23.0-beta: Info & Help Pages
+## v0.25.0-beta: Info & Help Pages
 
 - [ ] Add info pages (About, Features, Development, Contact) - _See docs/temp/info-pages-plan.md_
 - [ ] Add footer with links to GitHub, roadmap, and documentation
 - [ ] Add help/FAQ section
 
-## v0.24.0-beta: Admin Dashboard & Developer Tools
+## v0.26.0-beta: Admin Dashboard & Developer Tools
 
 - [ ] Admin Dashboard: manage users, settings, and content
-- [ ] Visual test coverage map: see which components/pages have test coverage
-- [ ] Performance dashboard: track render times, API latency, resource usage
-- [ ] Codebase health report: summary of lint, test, coverage, and accessibility status
+- [ ] Visual test coverage map
+- [ ] Performance dashboard: track render times, DB latency
+- [ ] Codebase health report
 
 ## v1.0.0: First Stable Release 🎉
 
@@ -188,9 +210,7 @@ This roadmap is a step-by-step checklist for building your productivity assistan
 
 - [ ] Final testing and bug fixes
 - [ ] Prepare backend for production (env vars, security, etc.)
-- [ ] Prepare frontend for production build
-- [ ] Set up deployment on Hostinger VPS
-- [ ] Set up domain and HTTPS
+- [ ] Set up simplified deployment (Docker-less or minimal Docker)
 - [ ] Create release notes and user documentation
 - [ ] Celebrate the first stable release! 🚀
 
@@ -198,70 +218,54 @@ This roadmap is a step-by-step checklist for building your productivity assistan
 
 ## Post-v1.0.0: Advanced Features & Integrations
 
-## v1.1.0: Build System Modernization
+## v1.1.0: External API & Mobile Integration
 
-- [ ] Migrate frontend build system from `react-scripts` to Vite for better performance and security
-- [ ] Update all build, test, and deployment scripts
-- [ ] Refactor configuration and documentation as needed
-- [ ] Verify all existing features work after migration
-- [ ] Remove legacy `react-scripts` dependencies
+**Goal:** Open the platform to the TravelBlock companion app.
 
-## v1.2.0: Google Drive Integration
+- [ ] Implement API Key generation for users
+- [ ] Create standardized JSON API endpoints (`/api/v1/...`) alongside HTML routes
+- [ ] Implement endpoints specifically for "TravelBlock" (Fetch tasks by tag, update status)
+- [ ] Write API documentation for the external developer (you!)
 
-- [ ] Add Google Drive/Docs integration endpoints (backend)
-- [ ] Add Google Drive/Docs UI integration (frontend)
-- [ ] Add file attachment support for tasks and projects
+## v1.2.0: Gamification System - Badges & Streaks
 
-## v1.3.0: Discord Integration
-
-- [ ] Add Discord integration endpoints (backend)
-- [ ] Add Discord UI integration (frontend)
-
-## v1.4.0: Email Notification Improvements
-
-- [ ] Add email notification improvements
-
-## v1.5.0: Smart Scheduling
-
-- [ ] Design algorithm for auto-scheduling/prioritizing tasks
-- [ ] Implement backend logic for smart scheduling
-- [ ] Add frontend UI for smart scheduling suggestions
-
-## v1.6.0: AI-Powered Task Suggestions
-
-- [ ] Add AI-powered task suggestions
-
-## v1.7.0: Gamification System - Badges & Streaks
+**Goal:** Make productivity rewarding.
 
 - [ ] Design gamification system (define goals, rewards, and progression)
 - [ ] Implement badge system (e.g., for task streaks, project completions)
 - [ ] Implement streak tracking (daily/weekly task completion)
 
-## v1.8.0: Gamification System - Achievements & XP
+## v1.3.0: Gamification System - Achievements & XP
+
+**Goal:** Deepen the reward system.
 
 - [ ] Add achievement system (e.g., milestones, productivity challenges)
 - [ ] Add points/XP system for completing tasks and projects
 - [ ] Add progress bar or level system (visualize user progress)
 - [ ] Add gamification UI components and notifications
 
-## v1.9.0: Voice & Smart Home Integration
+## v1.4.0: Google Drive Integration
 
-- [ ] Add Alexa integration endpoints (backend)
-- [ ] Add Alexa UI integration (frontend)
-- [ ] Add Google Assistant support
-- [ ] Add voice command processing
+**Goal:** Better organization for attachments.
 
-## v2.0.0+: Major Platform Upgrade
+- [ ] Add Google Drive/Docs integration endpoints (backend)
+- [ ] Add Google Drive/Docs UI integration (frontend)
+- [ ] Add file attachment support for tasks and projects
 
-- [ ] Desktop app (Electron)
-- [ ] Mobile apps (Progressive Web App or React Native)
-- [ ] Advanced AI/ML features (productivity insights, habit tracking)
-- [ ] Team collaboration features (shared projects, real-time editing)
-- [ ] Offline support with sync
-- [ ] Integration with other productivity tools (Notion, Trello, Microsoft To Do, Asana)
-- [ ] Advanced analytics and reporting
-- [ ] Custom workflows and automation
-- [ ] Third-party plugin system
+## v1.5.0: Email Notification Improvements
+
+**Goal:** Better communication.
+
+- [ ] Add email notification improvements (Digest emails, specific alerts)
+
+## v2.0.0+: Long Term Maintenance & Stability
+
+**Goal:** Keeping the platform stable and adding high-value features only as needed.
+
+- [ ] **Maintenance Mode:** Focus on security updates, bug fixes, and performance tuning.
+- [ ] **Feature Freeze:** No new major modules unless strictly requested or identified as high-value.
+- [ ] **Desktop App:** Optional Electron wrapper if a standalone desktop experience is desired.
+- [ ] **Advanced Integrations:** Integration with other tools (Notion, Trello) only if you personally adopt them.
 
 ---
 
