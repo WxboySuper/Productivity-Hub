@@ -23,17 +23,20 @@ This document provides a high-level overview of the Productivity Hub architectur
   - Discord (planned)
 
 ## Data Flow
+
 1. User interacts with the frontend (React UI)
 2. Frontend sends API requests to the backend (Flask)
 3. Backend processes requests, interacts with the database, and returns responses
 4. Integrations are handled by the backend, with results/data sent to the frontend as needed
 
 ## Deployment
+
 - Both frontend and backend are deployed on your Hostinger VPS
 - Nginx (or similar) can be used as a reverse proxy
 - See DEPLOYMENT.md for details
 
 ## Diagrams
+
 - Add diagrams here as your architecture evolves (e.g., sequence diagrams, ER diagrams, integration flows)
 
 ---
@@ -47,17 +50,18 @@ This document provides a high-level overview of the Productivity Hub architectur
 - **Current User Helper:** The backend provides a `get_current_user()` helper to retrieve the logged-in user from the session for use in protected endpoints.
 - **Security:** All authentication endpoints require JSON requests. Passwords are hashed using Werkzeug's `generate_password_hash` and checked with `check_password_hash`.
 - **Session Cookie Security (Recommended):**
-    - Set `SESSION_COOKIE_SECURE = True` to enforce HTTPS-only cookies in production.
-    - Set `SESSION_COOKIE_HTTPONLY = True` to prevent JavaScript access to the session cookie.
-    - Set `SESSION_COOKIE_SAMESITE = "Lax"` to help mitigate CSRF risks.
+  - Set `SESSION_COOKIE_SECURE = True` to enforce HTTPS-only cookies in production.
+  - Set `SESSION_COOKIE_HTTPONLY = True` to prevent JavaScript access to the session cookie.
+  - Set `SESSION_COOKIE_SAMESITE = "Lax"` to help mitigate CSRF risks.
 - **CSRF Protection:**
-    - All state-changing API requests (POST, PUT, DELETE) require a valid CSRF token sent in the `X-CSRF-Token` header. The token is generated per session and must match the value stored in the session. Login and register endpoints are excluded for demonstration.
-    - If the CSRF token is missing or invalid, the API returns a 400 error.
-    - To obtain the CSRF token, call an authenticated endpoint and extract the token from the session (see API.md for usage).
+  - All state-changing API requests (POST, PUT, DELETE) require a valid CSRF token sent in the `X-CSRF-Token` header. The token is generated per session and must match the value stored in the session. Login and register endpoints are excluded for demonstration.
+  - If the CSRF token is missing or invalid, the API returns a 400 error.
+  - To obtain the CSRF token, call an authenticated endpoint and extract the token from the session (see API.md for usage).
 
 ---
 
 ## Security & Session Management (Updated)
+
 - **Production Warning:** The backend now issues a warning at startup if not running in debug or development mode, reminding you to check all security settings, including CSRF protection.
 - **Session Cookie Security:** The backend sets `SESSION_COOKIE_SECURE`, `SESSION_COOKIE_HTTPONLY`, and `SESSION_COOKIE_SAMESITE` in the Flask config for best security practices.
 - **CSRF Protection:**
@@ -82,4 +86,4 @@ This document provides a high-level overview of the Productivity Hub architectur
 
 ---
 
-*Expand this document as your project grows!*
+_Expand this document as your project grows!_

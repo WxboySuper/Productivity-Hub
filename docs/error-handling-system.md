@@ -11,12 +11,14 @@ The Productivity Hub error handling system provides comprehensive error manageme
 A React Error Boundary that catches JavaScript errors anywhere in the component tree and displays a fallback UI.
 
 #### Features
+
 - **Error Catching:** Catches errors during rendering, lifecycle methods, and constructors
 - **Graceful Fallback:** Displays user-friendly error messages instead of white screen
 - **Error Reporting:** Logs detailed error information for debugging
 - **Recovery Options:** Provides refresh and navigation options for users
 
 #### Usage
+
 ```tsx
 <ErrorBoundary fallback={(error, errorInfo) => <CustomErrorUI />}>
   <App />
@@ -24,6 +26,7 @@ A React Error Boundary that catches JavaScript errors anywhere in the component 
 ```
 
 #### Implementation
+
 ```tsx
 interface Props {
   children: ReactNode;
@@ -36,14 +39,17 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    console.error("ErrorBoundary caught an error:", error, errorInfo);
     // Report to error tracking service in production
   }
 
   render() {
     if (this.state.hasError) {
-      return this.props.fallback?.(this.state.error!, this.state.errorInfo!) || 
-        <DefaultErrorFallback />;
+      return (
+        this.props.fallback?.(this.state.error!, this.state.errorInfo!) || (
+          <DefaultErrorFallback />
+        )
+      );
     }
     return this.props.children;
   }
@@ -55,6 +61,7 @@ class ErrorBoundary extends Component<Props, State> {
 A comprehensive toast notification system for user feedback with multiple severity levels.
 
 #### Features
+
 - **Multiple Types:** Success, Error, Warning, Info
 - **Auto-dismiss:** Configurable timeout for automatic dismissal
 - **Manual Dismiss:** Click to dismiss functionality
@@ -63,9 +70,10 @@ A comprehensive toast notification system for user feedback with multiple severi
 - **Accessibility:** Screen reader announcements
 
 #### API
+
 ```tsx
 interface ToastContextType {
-  showToast: (toast: Omit<Toast, 'id'>) => void;
+  showToast: (toast: Omit<Toast, "id">) => void;
   showSuccess: (title: string, message?: string) => void;
   showError: (title: string, message?: string) => void;
   showWarning: (title: string, message?: string) => void;
@@ -76,38 +84,42 @@ interface ToastContextType {
 // Usage
 const { showSuccess, showError } = useToast();
 
-showSuccess('Task created', 'Your task has been successfully created');
-showError('Failed to save', 'Please check your connection and try again');
+showSuccess("Task created", "Your task has been successfully created");
+showError("Failed to save", "Please check your connection and try again");
 ```
 
 #### Implementation
+
 ```tsx
 export function ToastProvider({ children }: ToastProviderProps) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const showToast = useCallback((toast: Omit<Toast, 'id'>) => {
+  const showToast = useCallback((toast: Omit<Toast, "id">) => {
     const id = Math.random().toString(36).substr(2, 9);
     const newToast = { ...toast, id };
-    
-    setToasts(prev => [...prev, newToast]);
-    
+
+    setToasts((prev) => [...prev, newToast]);
+
     if (toast.duration !== 0) {
       setTimeout(() => removeToast(id), toast.duration || 5000);
     }
   }, []);
 
-  const contextValue = useMemo(() => ({
-    showToast,
-    showSuccess: (title: string, message?: string) => 
-      showToast({ type: 'success', title, message }),
-    showError: (title: string, message?: string) => 
-      showToast({ type: 'error', title, message }),
-    showWarning: (title: string, message?: string) => 
-      showToast({ type: 'warning', title, message }),
-    showInfo: (title: string, message?: string) => 
-      showToast({ type: 'info', title, message }),
-    removeToast
-  }), [showToast]);
+  const contextValue = useMemo(
+    () => ({
+      showToast,
+      showSuccess: (title: string, message?: string) =>
+        showToast({ type: "success", title, message }),
+      showError: (title: string, message?: string) =>
+        showToast({ type: "error", title, message }),
+      showWarning: (title: string, message?: string) =>
+        showToast({ type: "warning", title, message }),
+      showInfo: (title: string, message?: string) =>
+        showToast({ type: "info", title, message }),
+      removeToast,
+    }),
+    [showToast],
+  );
 
   return (
     <ToastContext.Provider value={contextValue}>
@@ -123,50 +135,58 @@ export function ToastProvider({ children }: ToastProviderProps) {
 ### 1. Network Errors
 
 #### API Request Failures
+
 ```tsx
 // Centralized API error handling
 async function apiRequest<T>(
-  url: string, 
-  options: RequestInit = {}
+  url: string,
+  options: RequestInit = {},
 ): Promise<T> {
   try {
     const response = await fetch(url, {
       ...options,
-      credentials: 'include',
+      credentials: "include",
       headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-      }
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
     });
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new APIError(errorData.error || `HTTP ${response.status}`, response.status);
+      throw new APIError(
+        errorData.error || `HTTP ${response.status}`,
+        response.status,
+      );
     }
 
     return await response.json();
   } catch (error) {
     if (error instanceof APIError) throw error;
-    throw new NetworkError('Network request failed');
+    throw new NetworkError("Network request failed");
   }
 }
 
 class APIError extends Error {
-  constructor(message: string, public status: number) {
+  constructor(
+    message: string,
+    public status: number,
+  ) {
     super(message);
-    this.name = 'APIError';
+    this.name = "APIError";
   }
 }
 
 class NetworkError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = 'NetworkError';
+    this.name = "NetworkError";
   }
 }
 ```
 
 #### Error Handling Patterns
+
 ```tsx
 // Component-level error handling
 function TaskList() {
@@ -178,14 +198,13 @@ function TaskList() {
     try {
       setLoading(true);
       setError(null);
-      const tasks = await apiRequest<Task[]>('/api/tasks');
+      const tasks = await apiRequest<Task[]>("/api/tasks");
       setTasks(tasks);
     } catch (error) {
-      const message = error instanceof APIError 
-        ? error.message 
-        : 'Failed to load tasks';
+      const message =
+        error instanceof APIError ? error.message : "Failed to load tasks";
       setError(message);
-      showError('Load Failed', message);
+      showError("Load Failed", message);
     } finally {
       setLoading(false);
     }
@@ -202,6 +221,7 @@ function TaskList() {
 ### 2. Form Validation Errors
 
 #### Real-time Validation
+
 ```tsx
 interface FormErrors {
   [field: string]: string;
@@ -209,28 +229,37 @@ interface FormErrors {
 
 function useFormValidation<T>(
   initialValues: T,
-  validate: (values: T) => FormErrors
+  validate: (values: T) => FormErrors,
 ) {
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState<FormErrors>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
 
-  const validateField = useCallback((name: string, value: any) => {
-    const fieldErrors = validate({ ...values, [name]: value });
-    setErrors(prev => ({ ...prev, [name]: fieldErrors[name] || '' }));
-  }, [values, validate]);
+  const validateField = useCallback(
+    (name: string, value: any) => {
+      const fieldErrors = validate({ ...values, [name]: value });
+      setErrors((prev) => ({ ...prev, [name]: fieldErrors[name] || "" }));
+    },
+    [values, validate],
+  );
 
-  const handleChange = useCallback((name: string, value: any) => {
-    setValues(prev => ({ ...prev, [name]: value }));
-    if (touched[name]) {
-      validateField(name, value);
-    }
-  }, [touched, validateField]);
+  const handleChange = useCallback(
+    (name: string, value: any) => {
+      setValues((prev) => ({ ...prev, [name]: value }));
+      if (touched[name]) {
+        validateField(name, value);
+      }
+    },
+    [touched, validateField],
+  );
 
-  const handleBlur = useCallback((name: string) => {
-    setTouched(prev => ({ ...prev, [name]: true }));
-    validateField(name, values[name as keyof T]);
-  }, [values, validateField]);
+  const handleBlur = useCallback(
+    (name: string) => {
+      setTouched((prev) => ({ ...prev, [name]: true }));
+      validateField(name, values[name as keyof T]);
+    },
+    [values, validateField],
+  );
 
   return {
     values,
@@ -238,24 +267,19 @@ function useFormValidation<T>(
     touched,
     handleChange,
     handleBlur,
-    isValid: Object.keys(errors).every(key => !errors[key])
+    isValid: Object.keys(errors).every((key) => !errors[key]),
   };
 }
 ```
 
 #### Field-level Error Display
+
 ```tsx
-function FormField({ 
-  label, 
-  name, 
-  error, 
-  touched, 
-  children 
-}: FormFieldProps) {
+function FormField({ label, name, error, touched, children }: FormFieldProps) {
   const hasError = touched && error;
 
   return (
-    <div className={`phub-field-group ${hasError ? 'phub-field-error' : ''}`}>
+    <div className={`phub-field-group ${hasError ? "phub-field-error" : ""}`}>
       <label className="phub-field-label">{label}</label>
       {children}
       {hasError && (
@@ -272,44 +296,55 @@ function FormField({
 ### 3. Authentication Errors
 
 #### Session Management
+
 ```tsx
 function useAuth() {
   const [authError, setAuthError] = useState<string | null>(null);
   const { showError } = useToast();
 
-  const handleAuthError = useCallback((error: Error) => {
-    if (error instanceof APIError && error.status === 401) {
-      setAuthError('Your session has expired. Please log in again.');
-      showError('Session Expired', 'Please log in again to continue');
-      // Redirect to login
-      window.location.href = '/login';
-    } else if (error instanceof APIError && error.status === 403) {
-      setAuthError('You do not have permission to perform this action.');
-      showError('Permission Denied', 'You do not have permission for this action');
-    } else {
-      setAuthError('Authentication failed. Please try again.');
-      showError('Authentication Error', 'Please try logging in again');
-    }
-  }, [showError]);
+  const handleAuthError = useCallback(
+    (error: Error) => {
+      if (error instanceof APIError && error.status === 401) {
+        setAuthError("Your session has expired. Please log in again.");
+        showError("Session Expired", "Please log in again to continue");
+        // Redirect to login
+        window.location.href = "/login";
+      } else if (error instanceof APIError && error.status === 403) {
+        setAuthError("You do not have permission to perform this action.");
+        showError(
+          "Permission Denied",
+          "You do not have permission for this action",
+        );
+      } else {
+        setAuthError("Authentication failed. Please try again.");
+        showError("Authentication Error", "Please try logging in again");
+      }
+    },
+    [showError],
+  );
 
   return { authError, handleAuthError };
 }
 ```
 
 #### CSRF Token Errors
+
 ```tsx
 function useCsrfToken() {
   const [csrfError, setCsrfError] = useState<string | null>(null);
   const { showError } = useToast();
 
-  const handleCsrfError = useCallback((error: Error) => {
-    if (error instanceof APIError && error.status === 403) {
-      setCsrfError('Security token expired. Please refresh the page.');
-      showError('Security Error', 'Please refresh the page and try again');
-      // Auto-refresh after a delay
-      setTimeout(() => window.location.reload(), 3000);
-    }
-  }, [showError]);
+  const handleCsrfError = useCallback(
+    (error: Error) => {
+      if (error instanceof APIError && error.status === 403) {
+        setCsrfError("Security token expired. Please refresh the page.");
+        showError("Security Error", "Please refresh the page and try again");
+        // Auto-refresh after a delay
+        setTimeout(() => window.location.reload(), 3000);
+      }
+    },
+    [showError],
+  );
 
   return { csrfError, handleCsrfError };
 }
@@ -320,6 +355,7 @@ function useCsrfToken() {
 ### 1. Error States
 
 #### Inline Errors
+
 ```tsx
 function InlineError({ message, action }: InlineErrorProps) {
   return (
@@ -339,12 +375,13 @@ function InlineError({ message, action }: InlineErrorProps) {
 ```
 
 #### Full Page Errors
+
 ```tsx
-function ErrorPage({ 
-  title = 'Something went wrong',
-  message = 'An unexpected error occurred',
+function ErrorPage({
+  title = "Something went wrong",
+  message = "An unexpected error occurred",
   onRetry,
-  showHome = true
+  showHome = true,
 }: ErrorPageProps) {
   return (
     <div className="phub-error-page">
@@ -373,13 +410,14 @@ function ErrorPage({
 ### 2. Loading States
 
 #### Skeleton Loading
+
 ```tsx
-function SkeletonLoader({ type = 'card', count = 1 }: SkeletonProps) {
+function SkeletonLoader({ type = "card", count = 1 }: SkeletonProps) {
   return (
     <div className="phub-skeleton-container">
       {Array.from({ length: count }).map((_, index) => (
         <div key={index} className={`phub-skeleton phub-skeleton-${type}`}>
-          {type === 'card' && (
+          {type === "card" && (
             <>
               <div className="phub-skeleton-header" />
               <div className="phub-skeleton-content">
@@ -389,7 +427,7 @@ function SkeletonLoader({ type = 'card', count = 1 }: SkeletonProps) {
               </div>
             </>
           )}
-          {type === 'list' && (
+          {type === "list" && (
             <div className="phub-skeleton-list-item">
               <div className="phub-skeleton-circle" />
               <div className="phub-skeleton-text">
@@ -406,14 +444,15 @@ function SkeletonLoader({ type = 'card', count = 1 }: SkeletonProps) {
 ```
 
 #### Spinner Loading
+
 ```tsx
-function LoadingSpinner({ 
-  size = 'medium', 
+function LoadingSpinner({
+  size = "medium",
   message,
-  overlay = false 
+  overlay = false,
 }: LoadingSpinnerProps) {
-  const Component = overlay ? 'div' : Fragment;
-  const overlayProps = overlay ? { className: 'phub-loading-overlay' } : {};
+  const Component = overlay ? "div" : Fragment;
+  const overlayProps = overlay ? { className: "phub-loading-overlay" } : {};
 
   return (
     <Component {...overlayProps}>
@@ -429,6 +468,7 @@ function LoadingSpinner({
 ## 📱 Responsive Error Handling
 
 ### Mobile-Optimized Errors
+
 ```css
 /* Mobile error styles */
 @media (max-width: 640px) {
@@ -469,11 +509,12 @@ function LoadingSpinner({
 ### 1. Error Retry Logic
 
 #### Exponential Backoff
+
 ```tsx
 function useRetryableRequest<T>(
   request: () => Promise<T>,
   maxRetries = 3,
-  baseDelay = 1000
+  baseDelay = 1000,
 ) {
   const [retryCount, setRetryCount] = useState(0);
   const [isRetrying, setIsRetrying] = useState(false);
@@ -487,10 +528,10 @@ function useRetryableRequest<T>(
       if (retryCount < maxRetries) {
         setIsRetrying(true);
         const delay = baseDelay * Math.pow(2, retryCount);
-        
-        await new Promise(resolve => setTimeout(resolve, delay));
-        
-        setRetryCount(prev => prev + 1);
+
+        await new Promise((resolve) => setTimeout(resolve, delay));
+
+        setRetryCount((prev) => prev + 1);
         setIsRetrying(false);
         return executeWithRetry();
       }
@@ -505,6 +546,7 @@ function useRetryableRequest<T>(
 ### 2. Error Reporting
 
 #### Error Tracking Integration
+
 ```tsx
 interface ErrorReport {
   error: Error;
@@ -539,7 +581,7 @@ componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
       environment: process.env.NODE_ENV
     }
   };
-  
+
   reportError(errorReport);
 }
 ```
@@ -547,55 +589,60 @@ componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
 ## 🧪 Testing Error Handling
 
 ### Error Boundary Testing
+
 ```tsx
 // Test utilities
 function ThrowError({ shouldThrow }: { shouldThrow: boolean }) {
   if (shouldThrow) {
-    throw new Error('Test error');
+    throw new Error("Test error");
   }
   return <div>No error</div>;
 }
 
 // Test cases
-describe('ErrorBoundary', () => {
-  it('catches and displays errors', () => {
+describe("ErrorBoundary", () => {
+  it("catches and displays errors", () => {
     const { getByText } = render(
       <ErrorBoundary>
         <ThrowError shouldThrow={true} />
-      </ErrorBoundary>
+      </ErrorBoundary>,
     );
-    
+
     expect(getByText(/something went wrong/i)).toBeInTheDocument();
   });
 
-  it('renders children when no error', () => {
+  it("renders children when no error", () => {
     const { getByText } = render(
       <ErrorBoundary>
         <ThrowError shouldThrow={false} />
-      </ErrorBoundary>
+      </ErrorBoundary>,
     );
-    
-    expect(getByText('No error')).toBeInTheDocument();
+
+    expect(getByText("No error")).toBeInTheDocument();
   });
 });
 ```
 
 ### Toast Testing
+
 ```tsx
-describe('Toast System', () => {
-  it('shows and auto-dismisses toasts', async () => {
+describe("Toast System", () => {
+  it("shows and auto-dismisses toasts", async () => {
     const { getByText, queryByText } = render(
       <ToastProvider>
         <TestComponent />
-      </ToastProvider>
+      </ToastProvider>,
     );
-    
-    fireEvent.click(getByText('Show Toast'));
-    expect(getByText('Test message')).toBeInTheDocument();
-    
-    await waitFor(() => {
-      expect(queryByText('Test message')).not.toBeInTheDocument();
-    }, { timeout: 6000 });
+
+    fireEvent.click(getByText("Show Toast"));
+    expect(getByText("Test message")).toBeInTheDocument();
+
+    await waitFor(
+      () => {
+        expect(queryByText("Test message")).not.toBeInTheDocument();
+      },
+      { timeout: 6000 },
+    );
   });
 });
 ```
@@ -603,6 +650,7 @@ describe('Toast System', () => {
 ## 📊 Monitoring & Analytics
 
 ### Error Metrics
+
 ```tsx
 interface ErrorMetrics {
   errorCount: number;
@@ -619,12 +667,13 @@ function useErrorMetrics(): ErrorMetrics {
     errorRate: 0,
     topErrors: [],
     userAffected: 0,
-    resolvedErrors: 0
+    resolvedErrors: 0,
   };
 }
 ```
 
 ### Performance Impact
+
 ```tsx
 // Monitor error handling performance
 function useErrorPerformance() {
@@ -632,14 +681,14 @@ function useErrorPerformance() {
     const observer = new PerformanceObserver((list) => {
       const entries = list.getEntries();
       entries.forEach((entry) => {
-        if (entry.name.includes('error-')) {
+        if (entry.name.includes("error-")) {
           console.log(`Error handling took ${entry.duration}ms`);
         }
       });
     });
-    
-    observer.observe({ entryTypes: ['measure'] });
-    
+
+    observer.observe({ entryTypes: ["measure"] });
+
     return () => observer.disconnect();
   }, []);
 }
@@ -648,24 +697,28 @@ function useErrorPerformance() {
 ## 🚀 Best Practices
 
 ### 1. Error Prevention
+
 - **Input Validation:** Validate all user inputs before processing
 - **Type Safety:** Use TypeScript for compile-time error prevention
 - **API Contracts:** Define clear API contracts and validate responses
 - **Defensive Programming:** Handle edge cases and null/undefined values
 
 ### 2. User Experience
+
 - **Clear Messaging:** Use user-friendly, actionable error messages
 - **Recovery Options:** Always provide ways for users to recover from errors
 - **Progressive Enhancement:** Gracefully degrade functionality when errors occur
 - **Accessibility:** Ensure error messages are accessible to screen readers
 
 ### 3. Developer Experience
+
 - **Error Boundaries:** Implement error boundaries at appropriate component levels
 - **Centralized Handling:** Use centralized error handling for consistency
 - **Logging:** Log errors with sufficient context for debugging
 - **Testing:** Test error scenarios and edge cases thoroughly
 
 ### 4. Performance
+
 - **Lazy Loading:** Load error handling components only when needed
 - **Debouncing:** Debounce validation to avoid excessive error checking
 - **Caching:** Cache error states to avoid repeated error processing
