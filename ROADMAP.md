@@ -206,7 +206,7 @@ This roadmap is a step-by-step checklist for building your productivity assistan
 
 ## v1.0.0: First Stable Release 🎉
 
-## Core Productivity Platform - Ready for Production
+### Core Productivity Platform - Ready for Production
 
 - [ ] Final testing and bug fixes
 - [ ] Prepare backend for production (env vars, security, etc.)
