@@ -175,7 +175,7 @@ This roadmap is a step-by-step checklist for building your productivity assistan
 **Goal:** A focused view for daily execution.
 
 - [ ] Implement "My Day" view (Select tasks from backlog to work on today)
-- [ ] Add "Day Review" mode (End-of-day summary)
+- [ ] Add "Day Review" mode (end-of-day summary)
 
 ## v0.23.0-beta: Settings & Customization
 
@@ -206,7 +206,7 @@ This roadmap is a step-by-step checklist for building your productivity assistan
 
 ## v1.0.0: First Stable Release 🎉
 
-### Core Productivity Platform - Ready for Production
+## Core Productivity Platform - Ready for Production
 
 - [ ] Final testing and bug fixes
 - [ ] Prepare backend for production (env vars, security, etc.)
