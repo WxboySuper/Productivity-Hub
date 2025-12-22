@@ -86,8 +86,8 @@ Best practices:
 - Note any manual test scenarios and edge cases verified.
 -->
 
-- Tested locally: yes/no — describe steps
-- Unit/integration tests added: yes/no — describe
+- Tested locally:
+- Unit/integration tests added:
 
 ### Test configuration
 <!--
