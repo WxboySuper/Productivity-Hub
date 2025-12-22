@@ -32,6 +32,7 @@ Thumbs.db
 .qodo
 .qodo/*
 config/env/production.env
+*/.env
 
 # db
 */productivity_hub.db
@@ -59,5 +60,3 @@ scripts/bump-version.ps1
 scripts/create-random-branch.ps1
 
 .idea/
-
-.env

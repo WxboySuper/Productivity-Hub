@@ -23,6 +23,7 @@ Recommended repository scopes (pick the most specific):
 - `settings` — configuration and environment files
 - `docs` — documentation and docs/ updates
 - `infra` — deployment, Docker, nginx, systemd, CI/CD
+- `github` — GitHub config and automation (.github/ workflows, actions, templates)
 - `scripts` — scripts/* and tooling (bump, deploy, backups)
 - `tests` — test infra and fixtures
 - `deps` — dependency bumps (requirements, package.json)
@@ -64,8 +65,6 @@ Best practices / what to include:
 - Backwards-incompatible changes and necessary follow-up steps
 -->
 
--
-
 ## Screenshots / Recordings (if applicable)
 <!--
 Add images or short recordings that demonstrate UI changes or important behavior differences.
@@ -106,13 +105,12 @@ Provide environment details so reviewers can reproduce tests:
 These are interactive checkboxes and are intended as a true pre-merge checklist — keep them as checkboxes.
 -->
 
+- [ ] I have performed a self-review of my code
 - [ ] I have tested these changes locally
-- [ ] All existing tests pass
-- [ ] I added tests that cover my changes (where applicable)
-- [ ] I updated documentation where necessary
+- [ ] I have added tests that cover my changes (if applicable)
+- [ ] All new and existing tests pass
+- [ ] I have updated the documentation (if applicable)
 - [ ] My code follows the project's style guidelines
-- [ ] I performed a self-review of my code
-- [ ] New and existing unit tests pass locally with my changes
 
 ## Additional notes
 <!--
