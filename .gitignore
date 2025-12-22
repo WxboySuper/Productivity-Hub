@@ -32,6 +32,7 @@ Thumbs.db
 .qodo
 .qodo/*
 config/env/production.env
+*/.env
 
 # db
 */productivity_hub.db
